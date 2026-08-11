@@ -6,7 +6,7 @@
 
 ## Status
 
-Starting from the synchronized `developer` baseline; repository rules and tracked hooks verified. Primary-source research and implementation remain pending.
+Primary-source verification complete. The current OpenCode contract and GitHub transport constraints are established; manifest-driven bridge implementation is next.
 
 ## Task-start developer SHA
 
@@ -1538,7 +1538,7 @@ Implement and validate the GitHub-mediated OpenCode bridge and migrate the gener
 
 ## Current position
 
-The repository was located at `/home/bliss/Projects/Active/agentic-workflow-template`. All remote refs match the supplied research baseline, the checkout is clean on synchronized `developer`, and tracked hooks are active. This task record is being created before substantive research or implementation.
+The exact task brief is pushed at `3b8334f41a808ed36dd8ea4c9a136a0a56871ece`. Primary-source research is complete against OpenCode `1.18.16`, its released SDK/source and live authenticated `/doc`, plus current GitHub and OpenAI documentation. Implementation will use the live contract as the pinned parity boundary.
 
 ## Observed
 
@@ -1547,18 +1547,28 @@ The repository was located at `/home/bliss/Projects/Active/agentic-workflow-temp
 - `origin/web-orchestration` is `6c7666bfd754704345f60ecace9d085d95ad6b48`.
 - `./scripts/bootstrap-agent-workflow.sh --check` reports that tracked hooks are active.
 - No other worktree or active task record was present.
+- npm and upstream tag evidence identify OpenCode and `@opencode-ai/sdk` `1.18.16` as current; the release tag is `a3647eb025c7615159d417dcc49fc39fdaeba65b`.
+- The authenticated loopback `1.18.16` server reports 188 OpenAPI operation IDs and a stable `/doc` SHA-256 of `c3a9f94af0c3324d97b482b14c692e810ce7ccac3136319ba46334de972b4cf1` across server restarts/directories.
+- The contract has ordinary JSON/text/binary HTTP, three SSE operations, and two PTY WebSocket operations; the generated SDK models PTY connect as ordinary GET, so a dedicated WebSocket adapter is required.
+- Legacy `/event` payloads deliberately omit SSE `id:` fields. Release `1.18.16` also provides direct durable per-session history/SSE and retains project-wide `/sync/history`.
+- GitHub's current REST version is `2026-03-10`; App installation tokens expire after one hour, can be down-scoped, and Issues write plus Contents read supports the intended transport/evidence guards.
+- Correctly authorized conditional GETs returning `304` do not consume primary rate limit, though GitHub still recommends webhooks over polling generally.
+- GitHub continues to document that all-branch template generation creates unrelated branch histories.
+- Current OpenAI documentation confirms connected apps can have write actions when enabled, but available GitHub action details and a live ChatGPT account cannot be exercised from this environment.
 
 ## Interpretation
 
-The supplied baseline remains current and implementation can proceed serially on `developer` without history reconciliation.
+The supplied branch baseline remains current. A generic operation runner derived from the pinned manifest can cover all HTTP operations while explicit adapters handle SSE and PTY WebSockets. Recovery should combine legacy live events, direct durable session replay, sync history, deduplication, and canonical reconciliation without a capture plugin. GitHub polling remains the required outbound-only exception to the general webhook preference and must be conditional, serial, adaptive, and backoff-aware.
 
 ## Attempts
 
 - The mandatory first creation attempt at `/Projects/Active/deviations.md` failed because that absolute parent is unavailable in this runtime; the operator-side record was created at the actual workspace path `/home/bliss/Projects/Active/deviations.md`. Full details remain outside Git in that log.
+- The installed OpenCode CLI was `1.18.15`; direct `npx` reused an incomplete package without its postinstall binary. An isolated `1.18.16` package was installed under `/tmp/opencode`, its documented postinstall was run explicitly, and that binary supplied live contract evidence.
 
 ## Changed approach
 
 - Operator-side references to `/Projects/Active/deviations.md` and the adjacent progress file map to `/home/bliss/Projects/Active/` in this runtime. Repository paths and intended implementation scope are unchanged.
+- Durable recovery will additionally use the current per-session v2 stream/history APIs rather than relying only on the context package's legacy SSE plus project-wide sync-history route.
 
 ## Checks
 
@@ -1567,14 +1577,17 @@ The supplied baseline remains current and implementation can proceed serially on
 - `git rev-list --left-right --count developer...origin/developer` returned `0 0`.
 - `git status --porcelain=v1` returned no entries.
 - `./scripts/bootstrap-agent-workflow.sh --check` passed.
+- `npm view`, upstream tag/source inspection, official OpenCode docs, and live `/global/health` all established release `1.18.16`.
+- Two authenticated live `/doc` captures from separate server working directories produced the same SHA-256 and 188-operation inventory.
+- OpenCode source inspection confirmed legacy SSE emits payload IDs only inside JSON, PTY uses short-lived single-use tickets plus a cursor control frame, and session v2 offers durable sequence-based replay.
+- Current official GitHub documentation confirmed App permission/token behavior, ETags/304s, REST API versioning, template branch ancestry, and public self-hosted-runner risk.
 
 ## Blockers / required decisions
 
-None at task start.
+No implementation blocker. Live GitHub App and native ChatGPT action validation require human-owned credentials/account interaction; deterministic mocks and a residual live-validation record will cover that external boundary.
 
 ## Remaining work
 
-- Re-verify OpenCode and GitHub primary sources and the running OpenAPI contract.
 - Implement all bridge, compatibility, durability, polling, protocol, safety, PTY, bootstrap, and template initialization requirements.
 - Add comprehensive deterministic and local integration coverage.
 - Keep architecture and AS-BUILT records current.
@@ -1582,7 +1595,7 @@ None at task start.
 
 ## Next action
 
-Commit and push this task-start record, then perform primary-source research and pin the verified OpenCode contract.
+Generate the pinned operation manifest and implement the transport, compatibility, and durable-state core under `tools/opencode-bridge/` with atomic AS-BUILT updates.
 
 ## Relevant durable records
 
