@@ -1,0 +1,21 @@
+{
+  // Scouting index only. Exclusions improve relevance and minimize indexed data; they are not access controls.
+  "extra_ignore_patterns": [
+    "raw-evidence",
+    "raw-evidence/**",
+    "research/**",
+    "evidence/**",
+    "docs/work/archive/**",
+    "docs/work/handoffs/**"
+  ],
+  "watch_extra_ignore": [
+    "raw-evidence",
+    "raw-evidence/**",
+    "research/**",
+    "evidence/**",
+    "docs/work/archive/**",
+    "docs/work/handoffs/**"
+  ],
+  "freshness_mode": "strict",
+  "strict_timeout_ms": 15000
+}

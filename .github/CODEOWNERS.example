@@ -1,0 +1,8 @@
+# Copy this to CODEOWNERS only after real GitHub users or teams have accepted ownership.
+# Protect the resulting CODEOWNERS file and workflow directory through branch rules.
+
+*                         @organization/repository-maintainers
+/docs/adr/                @organization/architecture-owners
+/.github/workflows/       @organization/security-and-platform-owners
+/research/                @organization/research-evidence-owners
+/evidence/                @organization/data-and-privacy-owners

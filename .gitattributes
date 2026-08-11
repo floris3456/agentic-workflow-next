@@ -1,0 +1,20 @@
+* text=auto
+
+# Repository-owned scripts and hooks must use LF on every platform.
+*.sh text eol=lf
+*.mjs text eol=lf
+.githooks/* text eol=lf
+
+# Preserve externally produced evidence bytes across checkouts when a future
+# project deliberately adds them. This is not an access-control mechanism.
+raw-evidence/** -text
+research/**/attachments/** -text
+research/**/result*.md -text
+research/**/result*.json -text
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.pdf binary
+*.pptx binary
+*.mp4 binary

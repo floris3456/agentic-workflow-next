@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+remote_name="${1:-}"
+git_dir="$(git rev-parse --git-dir)"
+zero="0000000000000000000000000000000000000000"
+promotion="$git_dir/agent-workflow-promotion-authorized"
+
+while read -r local_ref local_oid remote_ref remote_oid; do
+  [[ -n "$remote_ref" ]] || continue
+
+  if [[ "$local_oid" == "$zero" ]]; then
+    echo "Branch/ref deletion is blocked by the agentic workflow." >&2
+    exit 1
+  fi
+
+  if [[ "$remote_oid" != "$zero" ]] && ! git merge-base --is-ancestor "$remote_oid" "$local_oid"; then
+    echo "Non-fast-forward push to $remote_ref is blocked. Preserve auditable shared history." >&2
+    exit 1
+  fi
+
+  if [[ "$remote_ref" == "refs/heads/main" ]]; then
+    if [[ ! -f "$promotion" ]]; then
+      echo "Direct main push is blocked. Use scripts/promote-developer-to-main.sh after exact human approval." >&2
+      exit 1
+    fi
+
+    read -r expected_merge approved_developer expected_main < "$promotion"
+    if [[ "$local_oid" != "$expected_merge" ]]; then
+      echo "Main push does not match the guarded promotion merge commit." >&2
+      exit 1
+    fi
+    if [[ "$(git rev-parse "$local_oid^2" 2>/dev/null || true)" != "$approved_developer" ]]; then
+      echo "Promotion merge second parent is not the human-approved developer SHA." >&2
+      exit 1
+    fi
+    if [[ "$(git rev-list --parents -n 1 "$local_oid" | wc -w)" -ne 3 ]]; then
+      echo "Promotion merge must have exactly two parents." >&2
+      exit 1
+    fi
+    if [[ "$(git rev-parse "$local_oid^{tree}")" != "$(git rev-parse "$approved_developer^{tree}")" ]]; then
+      echo "Promotion merge tree differs from the human-approved developer tree." >&2
+      exit 1
+    fi
+    if [[ "$remote_oid" != "$expected_main" ]]; then
+      echo "origin/main moved after promotion preparation; re-review is required." >&2
+      exit 1
+    fi
+  fi
+done
+
+exit 0

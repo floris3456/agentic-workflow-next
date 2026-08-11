@@ -1,0 +1,40 @@
+name: Implementation task
+description: Define one small, testable repository change.
+title: "[TASK] "
+labels: []
+body:
+  - type: textarea
+    id: outcome
+    attributes:
+      label: User-visible outcome
+      description: Explain the useful result in simple language.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: In scope and out of scope
+      description: State both. Link the active milestone or gate.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance evidence
+      description: List observable checks, tests, or measurements that would prove completion.
+    validations:
+      required: true
+  - type: textarea
+    id: risk
+    attributes:
+      label: Safety, failure, and rollback
+      description: Cover privacy, security, failure recovery, and a safe reversal.
+    validations:
+      required: true
+  - type: textarea
+    id: decisions
+    attributes:
+      label: Human decisions and unknowns
+      description: Name decisions code or research must not make.
+    validations:
+      required: true

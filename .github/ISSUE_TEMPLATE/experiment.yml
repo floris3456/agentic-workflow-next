@@ -1,0 +1,33 @@
+name: Falsifying experiment
+description: Test an uncertain architecture claim before building around it.
+title: "[EXPERIMENT] "
+labels: []
+body:
+  - type: textarea
+    id: claim
+    attributes:
+      label: Claim to test
+      description: Write a claim that could be proven wrong.
+    validations:
+      required: true
+  - type: textarea
+    id: method
+    attributes:
+      label: Smallest useful experiment
+      description: Include environment, inputs, procedure, and controlled faults.
+    validations:
+      required: true
+  - type: textarea
+    id: measures
+    attributes:
+      label: Measures and pass/fail rule
+      description: Define units, sample size, thresholds, and stored evidence before running it.
+    validations:
+      required: true
+  - type: textarea
+    id: limits
+    attributes:
+      label: Limits and safety
+      description: State what this cannot prove and how test data/systems stay safe.
+    validations:
+      required: true

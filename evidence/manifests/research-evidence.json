@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 4,
+  "classification": "Research evidence manifest; contains paths, sizes, and hashes but no research content",
+  "generation": "node scripts/generate-research-evidence-manifest.mjs",
+  "resultCount": 0,
+  "entryCount": 0,
+  "resultFileCount": 0,
+  "promptFileCount": 0,
+  "results": [],
+  "limitations": [
+    "Only populated results of at least 100 bytes are recorded; each research package defines its own required evidence.",
+    "A hash proves file identity, not correctness or human acceptance.",
+    "Research conclusions remain subject to experiments, gates, and current primary-source verification."
+  ]
+}
