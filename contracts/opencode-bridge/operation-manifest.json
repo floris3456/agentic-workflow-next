@@ -1,0 +1,6128 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "opencodeVersion": "1.18.16",
+    "sdkVersion": "1.18.16",
+    "sdkIntegrity": "sha512-UvaHyL93spLm7MttoprWTOBSYQN3aYWd7/3Ie5WNnG2pRAPq/U/d51qt0smYBTrkjxqlQmg+AJoGw8MEH6lGUg==",
+    "upstreamCommit": "a3647eb025c7615159d417dcc49fc39fdaeba65b",
+    "openapiSha256": "c3a9f94af0c3324d97b482b14c692e810ce7ccac3136319ba46334de972b4cf1"
+  },
+  "operations": [
+    {
+      "operationId": "app.agents",
+      "method": "GET",
+      "path": "/agent",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "instance"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "app.log",
+      "method": "POST",
+      "path": "/log",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "control"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "app.skills",
+      "method": "GET",
+      "path": "/skill",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "instance"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "auth.remove",
+      "method": "DELETE",
+      "path": "/auth/{providerID}",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "control"
+      ],
+      "parameters": [
+        {
+          "name": "providerID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "auth.set",
+      "method": "PUT",
+      "path": "/auth/{providerID}",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "local-secret",
+      "tags": [
+        "control"
+      ],
+      "parameters": [
+        {
+          "name": "providerID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "command.list",
+      "method": "GET",
+      "path": "/command",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "instance"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "config.get",
+      "method": "GET",
+      "path": "/config",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "config"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "config.providers",
+      "method": "GET",
+      "path": "/config/providers",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "config"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "config.update",
+      "method": "PATCH",
+      "path": "/config",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "local-secret",
+      "tags": [
+        "config"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "event.subscribe",
+      "method": "GET",
+      "path": "/event",
+      "transport": "sse",
+      "effect": "subscribe",
+      "policy": "read",
+      "tags": [
+        "event"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "text/event-stream"
+      ]
+    },
+    {
+      "operationId": "experimental.capabilities.get",
+      "method": "GET",
+      "path": "/experimental/capabilities",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "experimental"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "experimental.console.get",
+      "method": "GET",
+      "path": "/experimental/console",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "experimental"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "experimental.console.listOrgs",
+      "method": "GET",
+      "path": "/experimental/console/orgs",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "experimental"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "experimental.console.switchOrg",
+      "method": "POST",
+      "path": "/experimental/console/switch",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "experimental"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "experimental.controlPlane.moveSession",
+      "method": "POST",
+      "path": "/experimental/control-plane/move-session",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "controlPlane"
+      ],
+      "parameters": [],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "experimental.projectCopy.generateName",
+      "method": "POST",
+      "path": "/experimental/project/{projectID}/copy/generate-name",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "projectCopy"
+      ],
+      "parameters": [
+        {
+          "name": "projectID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "experimental.resource.list",
+      "method": "GET",
+      "path": "/experimental/resource",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "experimental"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "experimental.session.background",
+      "method": "POST",
+      "path": "/experimental/session/{sessionID}/background",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "experimental"
+      ],
+      "parameters": [
+        {
+          "name": "sessionID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "experimental.session.list",
+      "method": "GET",
+      "path": "/experimental/session",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "experimental"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "roots",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "start",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "search",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "archived",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "experimental.workspace.adapter.list",
+      "method": "GET",
+      "path": "/experimental/workspace/adapter",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "workspace"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "experimental.workspace.create",
+      "method": "POST",
+      "path": "/experimental/workspace",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "workspace"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "experimental.workspace.list",
+      "method": "GET",
+      "path": "/experimental/workspace",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "workspace"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "experimental.workspace.remove",
+      "method": "DELETE",
+      "path": "/experimental/workspace/{id}",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "workspace"
+      ],
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "experimental.workspace.status",
+      "method": "GET",
+      "path": "/experimental/workspace/status",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "workspace"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "experimental.workspace.syncList",
+      "method": "POST",
+      "path": "/experimental/workspace/sync-list",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "workspace"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "experimental.workspace.warp",
+      "method": "POST",
+      "path": "/experimental/workspace/warp",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "workspace"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "file.list",
+      "method": "GET",
+      "path": "/file",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "file"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "path",
+          "in": "query",
+          "required": true,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "file.read",
+      "method": "GET",
+      "path": "/file/content",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "file"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "path",
+          "in": "query",
+          "required": true,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "file.status",
+      "method": "GET",
+      "path": "/file/status",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "file"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "find.files",
+      "method": "GET",
+      "path": "/find/file",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "file"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "query",
+          "in": "query",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "dirs",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "type",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "find.symbols",
+      "method": "GET",
+      "path": "/find/symbol",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "file"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "query",
+          "in": "query",
+          "required": true,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "find.text",
+      "method": "GET",
+      "path": "/find",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "file"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "pattern",
+          "in": "query",
+          "required": true,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "formatter.status",
+      "method": "GET",
+      "path": "/formatter",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "instance"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "global.config.get",
+      "method": "GET",
+      "path": "/global/config",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "global"
+      ],
+      "parameters": [],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "global.config.update",
+      "method": "PATCH",
+      "path": "/global/config",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "local-secret",
+      "tags": [
+        "global"
+      ],
+      "parameters": [],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "global.dispose",
+      "method": "POST",
+      "path": "/global/dispose",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "global"
+      ],
+      "parameters": [],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "global.event",
+      "method": "GET",
+      "path": "/global/event",
+      "transport": "sse",
+      "effect": "subscribe",
+      "policy": "read",
+      "tags": [
+        "global"
+      ],
+      "parameters": [],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json",
+        "text/event-stream"
+      ]
+    },
+    {
+      "operationId": "global.health",
+      "method": "GET",
+      "path": "/global/health",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "global"
+      ],
+      "parameters": [],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "global.upgrade",
+      "method": "POST",
+      "path": "/global/upgrade",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "global"
+      ],
+      "parameters": [],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "instance.dispose",
+      "method": "POST",
+      "path": "/instance/dispose",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "instance"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "lsp.status",
+      "method": "GET",
+      "path": "/lsp",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "instance"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "mcp.add",
+      "method": "POST",
+      "path": "/mcp",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "local-secret",
+      "tags": [
+        "mcp"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "mcp.auth.authenticate",
+      "method": "POST",
+      "path": "/mcp/{name}/auth/authenticate",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "local-secret",
+      "tags": [
+        "mcp"
+      ],
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "mcp.auth.callback",
+      "method": "POST",
+      "path": "/mcp/{name}/auth/callback",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "local-secret",
+      "tags": [
+        "mcp"
+      ],
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "mcp.auth.remove",
+      "method": "DELETE",
+      "path": "/mcp/{name}/auth",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "local-secret",
+      "tags": [
+        "mcp"
+      ],
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "mcp.auth.start",
+      "method": "POST",
+      "path": "/mcp/{name}/auth",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "local-secret",
+      "tags": [
+        "mcp"
+      ],
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "mcp.connect",
+      "method": "POST",
+      "path": "/mcp/{name}/connect",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "mcp"
+      ],
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "mcp.disconnect",
+      "method": "POST",
+      "path": "/mcp/{name}/disconnect",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "mcp"
+      ],
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "mcp.status",
+      "method": "GET",
+      "path": "/mcp",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "mcp"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "part.delete",
+      "method": "DELETE",
+      "path": "/session/{sessionID}/message/{messageID}/part/{partID}",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "session"
+      ],
+      "parameters": [
+        {
+          "name": "sessionID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "messageID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "partID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "part.update",
+      "method": "PATCH",
+      "path": "/session/{sessionID}/message/{messageID}/part/{partID}",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "session"
+      ],
+      "parameters": [
+        {
+          "name": "sessionID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "messageID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "partID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "path.get",
+      "method": "GET",
+      "path": "/path",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "instance"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "permission.list",
+      "method": "GET",
+      "path": "/permission",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "permission"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "permission.reply",
+      "method": "POST",
+      "path": "/permission/{requestID}/reply",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "permission"
+      ],
+      "parameters": [
+        {
+          "name": "requestID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "permission.respond",
+      "method": "POST",
+      "path": "/session/{sessionID}/permissions/{permissionID}",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "session"
+      ],
+      "parameters": [
+        {
+          "name": "sessionID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "permissionID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "project.current",
+      "method": "GET",
+      "path": "/project/current",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "project"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "project.directories",
+      "method": "GET",
+      "path": "/project/{projectID}/directories",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "project"
+      ],
+      "parameters": [
+        {
+          "name": "projectID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "project.initGit",
+      "method": "POST",
+      "path": "/project/git/init",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "project"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "project.list",
+      "method": "GET",
+      "path": "/project",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "project"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "project.update",
+      "method": "PATCH",
+      "path": "/project/{projectID}",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "project"
+      ],
+      "parameters": [
+        {
+          "name": "projectID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "provider.auth",
+      "method": "GET",
+      "path": "/provider/auth",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "provider"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "provider.list",
+      "method": "GET",
+      "path": "/provider",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "provider"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "provider.oauth.authorize",
+      "method": "POST",
+      "path": "/provider/{providerID}/oauth/authorize",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "provider"
+      ],
+      "parameters": [
+        {
+          "name": "providerID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "provider.oauth.callback",
+      "method": "POST",
+      "path": "/provider/{providerID}/oauth/callback",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "local-secret",
+      "tags": [
+        "provider"
+      ],
+      "parameters": [
+        {
+          "name": "providerID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "pty.connect",
+      "method": "GET",
+      "path": "/pty/{ptyID}/connect",
+      "transport": "websocket",
+      "effect": "subscribe",
+      "policy": "read",
+      "tags": [
+        "pty"
+      ],
+      "parameters": [
+        {
+          "name": "ptyID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "ticket",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "pty.connectToken",
+      "method": "POST",
+      "path": "/pty/{ptyID}/connect-token",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "pty"
+      ],
+      "parameters": [
+        {
+          "name": "ptyID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "pty.create",
+      "method": "POST",
+      "path": "/pty",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "pty"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "pty.get",
+      "method": "GET",
+      "path": "/pty/{ptyID}",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "pty"
+      ],
+      "parameters": [
+        {
+          "name": "ptyID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "pty.list",
+      "method": "GET",
+      "path": "/pty",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "pty"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "pty.remove",
+      "method": "DELETE",
+      "path": "/pty/{ptyID}",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "pty"
+      ],
+      "parameters": [
+        {
+          "name": "ptyID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "pty.shells",
+      "method": "GET",
+      "path": "/pty/shells",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "pty"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "pty.update",
+      "method": "PUT",
+      "path": "/pty/{ptyID}",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "pty"
+      ],
+      "parameters": [
+        {
+          "name": "ptyID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "question.list",
+      "method": "GET",
+      "path": "/question",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "question"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "question.reject",
+      "method": "POST",
+      "path": "/question/{requestID}/reject",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "question"
+      ],
+      "parameters": [
+        {
+          "name": "requestID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "question.reply",
+      "method": "POST",
+      "path": "/question/{requestID}/reply",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "question"
+      ],
+      "parameters": [
+        {
+          "name": "requestID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "session.abort",
+      "method": "POST",
+      "path": "/session/{sessionID}/abort",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "session"
+      ],
+      "parameters": [
+        {
+          "name": "sessionID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "session.children",
+      "method": "GET",
+      "path": "/session/{sessionID}/children",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "session"
+      ],
+      "parameters": [
+        {
+          "name": "sessionID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "session.command",
+      "method": "POST",
+      "path": "/session/{sessionID}/command",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "session"
+      ],
+      "parameters": [
+        {
+          "name": "sessionID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "session.create",
+      "method": "POST",
+      "path": "/session",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "session"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "session.delete",
+      "method": "DELETE",
+      "path": "/session/{sessionID}",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "session"
+      ],
+      "parameters": [
+        {
+          "name": "sessionID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "session.deleteMessage",
+      "method": "DELETE",
+      "path": "/session/{sessionID}/message/{messageID}",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "session"
+      ],
+      "parameters": [
+        {
+          "name": "sessionID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "messageID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "session.diff",
+      "method": "GET",
+      "path": "/session/{sessionID}/diff",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "session"
+      ],
+      "parameters": [
+        {
+          "name": "sessionID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "messageID",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "session.fork",
+      "method": "POST",
+      "path": "/session/{sessionID}/fork",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "session"
+      ],
+      "parameters": [
+        {
+          "name": "sessionID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "session.get",
+      "method": "GET",
+      "path": "/session/{sessionID}",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "session"
+      ],
+      "parameters": [
+        {
+          "name": "sessionID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "session.init",
+      "method": "POST",
+      "path": "/session/{sessionID}/init",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "session"
+      ],
+      "parameters": [
+        {
+          "name": "sessionID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "session.list",
+      "method": "GET",
+      "path": "/session",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "session"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "scope",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "path",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "roots",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "start",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "search",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "session.message",
+      "method": "GET",
+      "path": "/session/{sessionID}/message/{messageID}",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "session"
+      ],
+      "parameters": [
+        {
+          "name": "sessionID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "messageID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "session.messages",
+      "method": "GET",
+      "path": "/session/{sessionID}/message",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "session"
+      ],
+      "parameters": [
+        {
+          "name": "sessionID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "before",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "session.prompt",
+      "method": "POST",
+      "path": "/session/{sessionID}/message",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "session"
+      ],
+      "parameters": [
+        {
+          "name": "sessionID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "session.prompt_async",
+      "method": "POST",
+      "path": "/session/{sessionID}/prompt_async",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "session"
+      ],
+      "parameters": [
+        {
+          "name": "sessionID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "session.revert",
+      "method": "POST",
+      "path": "/session/{sessionID}/revert",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "session"
+      ],
+      "parameters": [
+        {
+          "name": "sessionID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "session.share",
+      "method": "POST",
+      "path": "/session/{sessionID}/share",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "blocked-web",
+      "tags": [
+        "session"
+      ],
+      "parameters": [
+        {
+          "name": "sessionID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "session.shell",
+      "method": "POST",
+      "path": "/session/{sessionID}/shell",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "session"
+      ],
+      "parameters": [
+        {
+          "name": "sessionID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "session.status",
+      "method": "GET",
+      "path": "/session/status",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "session"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "session.summarize",
+      "method": "POST",
+      "path": "/session/{sessionID}/summarize",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "session"
+      ],
+      "parameters": [
+        {
+          "name": "sessionID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "session.todo",
+      "method": "GET",
+      "path": "/session/{sessionID}/todo",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "session"
+      ],
+      "parameters": [
+        {
+          "name": "sessionID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "session.unrevert",
+      "method": "POST",
+      "path": "/session/{sessionID}/unrevert",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "session"
+      ],
+      "parameters": [
+        {
+          "name": "sessionID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "session.unshare",
+      "method": "DELETE",
+      "path": "/session/{sessionID}/share",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "blocked-web",
+      "tags": [
+        "session"
+      ],
+      "parameters": [
+        {
+          "name": "sessionID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "session.update",
+      "method": "PATCH",
+      "path": "/session/{sessionID}",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "session"
+      ],
+      "parameters": [
+        {
+          "name": "sessionID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "sync.history.list",
+      "method": "POST",
+      "path": "/sync/history",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "sync"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "sync.replay",
+      "method": "POST",
+      "path": "/sync/replay",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "sync"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "sync.start",
+      "method": "POST",
+      "path": "/sync/start",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "sync"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "sync.steal",
+      "method": "POST",
+      "path": "/sync/steal",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "sync"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "tool.ids",
+      "method": "GET",
+      "path": "/experimental/tool/ids",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "experimental"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "tool.list",
+      "method": "GET",
+      "path": "/experimental/tool",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "experimental"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "provider",
+          "in": "query",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "model",
+          "in": "query",
+          "required": true,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "tui.appendPrompt",
+      "method": "POST",
+      "path": "/tui/append-prompt",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "tui"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "tui.clearPrompt",
+      "method": "POST",
+      "path": "/tui/clear-prompt",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "tui"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "tui.control.next",
+      "method": "GET",
+      "path": "/tui/control/next",
+      "transport": "http",
+      "effect": "consume",
+      "policy": "expert",
+      "tags": [
+        "tui"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "tui.control.response",
+      "method": "POST",
+      "path": "/tui/control/response",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "tui"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "tui.executeCommand",
+      "method": "POST",
+      "path": "/tui/execute-command",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "tui"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "tui.openHelp",
+      "method": "POST",
+      "path": "/tui/open-help",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "tui"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "tui.openModels",
+      "method": "POST",
+      "path": "/tui/open-models",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "tui"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "tui.openSessions",
+      "method": "POST",
+      "path": "/tui/open-sessions",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "tui"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "tui.openThemes",
+      "method": "POST",
+      "path": "/tui/open-themes",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "tui"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "tui.publish",
+      "method": "POST",
+      "path": "/tui/publish",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "tui"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "tui.selectSession",
+      "method": "POST",
+      "path": "/tui/select-session",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "tui"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "tui.showToast",
+      "method": "POST",
+      "path": "/tui/show-toast",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "tui"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "tui.submitPrompt",
+      "method": "POST",
+      "path": "/tui/submit-prompt",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "tui"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.agent.list",
+      "method": "GET",
+      "path": "/api/agent",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "opencode HttpApi"
+      ],
+      "parameters": [
+        {
+          "name": "location",
+          "in": "query",
+          "required": false,
+          "style": "deepObject",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.command.list",
+      "method": "GET",
+      "path": "/api/command",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "commands"
+      ],
+      "parameters": [
+        {
+          "name": "location",
+          "in": "query",
+          "required": false,
+          "style": "deepObject",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.credential.remove",
+      "method": "DELETE",
+      "path": "/api/credential/{credentialID}",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "opencode HttpApi"
+      ],
+      "parameters": [
+        {
+          "name": "credentialID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "location",
+          "in": "query",
+          "required": false,
+          "style": "deepObject",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.credential.update",
+      "method": "PATCH",
+      "path": "/api/credential/{credentialID}",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "local-secret",
+      "tags": [
+        "opencode HttpApi"
+      ],
+      "parameters": [
+        {
+          "name": "credentialID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "location",
+          "in": "query",
+          "required": false,
+          "style": "deepObject",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.event.subscribe",
+      "method": "GET",
+      "path": "/api/event",
+      "transport": "sse",
+      "effect": "subscribe",
+      "policy": "read",
+      "tags": [
+        "events"
+      ],
+      "parameters": [],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json",
+        "text/event-stream"
+      ]
+    },
+    {
+      "operationId": "v2.fs.find",
+      "method": "GET",
+      "path": "/api/fs/find",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "filesystem"
+      ],
+      "parameters": [
+        {
+          "name": "location",
+          "in": "query",
+          "required": false,
+          "style": "deepObject",
+          "explode": true
+        },
+        {
+          "name": "query",
+          "in": "query",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "type",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.fs.list",
+      "method": "GET",
+      "path": "/api/fs/list",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "filesystem"
+      ],
+      "parameters": [
+        {
+          "name": "location",
+          "in": "query",
+          "required": false,
+          "style": "deepObject",
+          "explode": true
+        },
+        {
+          "name": "path",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.fs.read",
+      "method": "GET",
+      "path": "/api/fs/read/*",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "filesystem"
+      ],
+      "parameters": [
+        {
+          "name": "location",
+          "in": "query",
+          "required": false,
+          "style": "deepObject",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json",
+        "application/octet-stream"
+      ]
+    },
+    {
+      "operationId": "v2.health.get",
+      "method": "GET",
+      "path": "/api/health",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "opencode HttpApi"
+      ],
+      "parameters": [],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.integration.attempt.cancel",
+      "method": "DELETE",
+      "path": "/api/integration/attempt/{attemptID}",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "integrations"
+      ],
+      "parameters": [
+        {
+          "name": "attemptID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "location",
+          "in": "query",
+          "required": false,
+          "style": "deepObject",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.integration.attempt.complete",
+      "method": "POST",
+      "path": "/api/integration/attempt/{attemptID}/complete",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "integrations"
+      ],
+      "parameters": [
+        {
+          "name": "attemptID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "location",
+          "in": "query",
+          "required": false,
+          "style": "deepObject",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.integration.attempt.status",
+      "method": "GET",
+      "path": "/api/integration/attempt/{attemptID}",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "integrations"
+      ],
+      "parameters": [
+        {
+          "name": "attemptID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "location",
+          "in": "query",
+          "required": false,
+          "style": "deepObject",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.integration.connect.key",
+      "method": "POST",
+      "path": "/api/integration/{integrationID}/connect/key",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "integrations"
+      ],
+      "parameters": [
+        {
+          "name": "integrationID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "location",
+          "in": "query",
+          "required": false,
+          "style": "deepObject",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.integration.connect.oauth",
+      "method": "POST",
+      "path": "/api/integration/{integrationID}/connect/oauth",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "integrations"
+      ],
+      "parameters": [
+        {
+          "name": "integrationID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "location",
+          "in": "query",
+          "required": false,
+          "style": "deepObject",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.integration.get",
+      "method": "GET",
+      "path": "/api/integration/{integrationID}",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "integrations"
+      ],
+      "parameters": [
+        {
+          "name": "integrationID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "location",
+          "in": "query",
+          "required": false,
+          "style": "deepObject",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.integration.list",
+      "method": "GET",
+      "path": "/api/integration",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "integrations"
+      ],
+      "parameters": [
+        {
+          "name": "location",
+          "in": "query",
+          "required": false,
+          "style": "deepObject",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.location.get",
+      "method": "GET",
+      "path": "/api/location",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "opencode HttpApi"
+      ],
+      "parameters": [
+        {
+          "name": "location",
+          "in": "query",
+          "required": false,
+          "style": "deepObject",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.model.list",
+      "method": "GET",
+      "path": "/api/model",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "models"
+      ],
+      "parameters": [
+        {
+          "name": "location",
+          "in": "query",
+          "required": false,
+          "style": "deepObject",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.permission.request.list",
+      "method": "GET",
+      "path": "/api/permission/request",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "permissions"
+      ],
+      "parameters": [
+        {
+          "name": "location",
+          "in": "query",
+          "required": false,
+          "style": "deepObject",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.permission.saved.list",
+      "method": "GET",
+      "path": "/api/permission/saved",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "permissions"
+      ],
+      "parameters": [
+        {
+          "name": "projectID",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.permission.saved.remove",
+      "method": "DELETE",
+      "path": "/api/permission/saved/{id}",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "permissions"
+      ],
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.projectCopy.create",
+      "method": "POST",
+      "path": "/experimental/project/{projectID}/copy",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "projectCopy"
+      ],
+      "parameters": [
+        {
+          "name": "projectID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "location",
+          "in": "query",
+          "required": false,
+          "style": "deepObject",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.projectCopy.refresh",
+      "method": "POST",
+      "path": "/experimental/project/{projectID}/copy/refresh",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "projectCopy"
+      ],
+      "parameters": [
+        {
+          "name": "projectID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "location",
+          "in": "query",
+          "required": false,
+          "style": "deepObject",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.projectCopy.remove",
+      "method": "DELETE",
+      "path": "/experimental/project/{projectID}/copy",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "projectCopy"
+      ],
+      "parameters": [
+        {
+          "name": "projectID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "location",
+          "in": "query",
+          "required": false,
+          "style": "deepObject",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.provider.get",
+      "method": "GET",
+      "path": "/api/provider/{providerID}",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "providers"
+      ],
+      "parameters": [
+        {
+          "name": "providerID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "location",
+          "in": "query",
+          "required": false,
+          "style": "deepObject",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.provider.list",
+      "method": "GET",
+      "path": "/api/provider",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "providers"
+      ],
+      "parameters": [
+        {
+          "name": "location",
+          "in": "query",
+          "required": false,
+          "style": "deepObject",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.pty.connect",
+      "method": "GET",
+      "path": "/api/pty/{ptyID}/connect",
+      "transport": "websocket",
+      "effect": "subscribe",
+      "policy": "read",
+      "tags": [
+        "pty"
+      ],
+      "parameters": [
+        {
+          "name": "ptyID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "location[directory]",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "location[workspace]",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "ticket",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.pty.connectToken",
+      "method": "POST",
+      "path": "/api/pty/{ptyID}/connect-token",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "pty"
+      ],
+      "parameters": [
+        {
+          "name": "ptyID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "location",
+          "in": "query",
+          "required": false,
+          "style": "deepObject",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.pty.create",
+      "method": "POST",
+      "path": "/api/pty",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "pty"
+      ],
+      "parameters": [
+        {
+          "name": "location",
+          "in": "query",
+          "required": false,
+          "style": "deepObject",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.pty.get",
+      "method": "GET",
+      "path": "/api/pty/{ptyID}",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "pty"
+      ],
+      "parameters": [
+        {
+          "name": "ptyID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "location",
+          "in": "query",
+          "required": false,
+          "style": "deepObject",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.pty.list",
+      "method": "GET",
+      "path": "/api/pty",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "pty"
+      ],
+      "parameters": [
+        {
+          "name": "location",
+          "in": "query",
+          "required": false,
+          "style": "deepObject",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.pty.remove",
+      "method": "DELETE",
+      "path": "/api/pty/{ptyID}",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "pty"
+      ],
+      "parameters": [
+        {
+          "name": "ptyID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "location",
+          "in": "query",
+          "required": false,
+          "style": "deepObject",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.pty.update",
+      "method": "PUT",
+      "path": "/api/pty/{ptyID}",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "pty"
+      ],
+      "parameters": [
+        {
+          "name": "ptyID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "location",
+          "in": "query",
+          "required": false,
+          "style": "deepObject",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.question.request.list",
+      "method": "GET",
+      "path": "/api/question/request",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "session questions"
+      ],
+      "parameters": [
+        {
+          "name": "location",
+          "in": "query",
+          "required": false,
+          "style": "deepObject",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.reference.list",
+      "method": "GET",
+      "path": "/api/reference",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "reference"
+      ],
+      "parameters": [
+        {
+          "name": "location",
+          "in": "query",
+          "required": false,
+          "style": "deepObject",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.session.active",
+      "method": "GET",
+      "path": "/api/session/active",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "sessions"
+      ],
+      "parameters": [],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.session.compact",
+      "method": "POST",
+      "path": "/api/session/{sessionID}/compact",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "sessions"
+      ],
+      "parameters": [
+        {
+          "name": "sessionID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.session.context",
+      "method": "GET",
+      "path": "/api/session/{sessionID}/context",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "sessions"
+      ],
+      "parameters": [
+        {
+          "name": "sessionID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.session.create",
+      "method": "POST",
+      "path": "/api/session",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "sessions"
+      ],
+      "parameters": [],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.session.events",
+      "method": "GET",
+      "path": "/api/session/{sessionID}/event",
+      "transport": "sse",
+      "effect": "subscribe",
+      "policy": "read",
+      "tags": [
+        "sessions"
+      ],
+      "parameters": [
+        {
+          "name": "sessionID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "after",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json",
+        "text/event-stream"
+      ]
+    },
+    {
+      "operationId": "v2.session.get",
+      "method": "GET",
+      "path": "/api/session/{sessionID}",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "sessions"
+      ],
+      "parameters": [
+        {
+          "name": "sessionID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.session.history",
+      "method": "GET",
+      "path": "/api/session/{sessionID}/history",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "sessions"
+      ],
+      "parameters": [
+        {
+          "name": "sessionID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "after",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.session.interrupt",
+      "method": "POST",
+      "path": "/api/session/{sessionID}/interrupt",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "sessions"
+      ],
+      "parameters": [
+        {
+          "name": "sessionID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.session.list",
+      "method": "GET",
+      "path": "/api/session",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "sessions"
+      ],
+      "parameters": [
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "order",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "search",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "project",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "subpath",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.session.message",
+      "method": "GET",
+      "path": "/api/session/{sessionID}/message/{messageID}",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "sessions"
+      ],
+      "parameters": [
+        {
+          "name": "sessionID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "messageID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.session.messages",
+      "method": "GET",
+      "path": "/api/session/{sessionID}/message",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "messages"
+      ],
+      "parameters": [
+        {
+          "name": "sessionID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "order",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.session.permission.create",
+      "method": "POST",
+      "path": "/api/session/{sessionID}/permission",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "permissions"
+      ],
+      "parameters": [
+        {
+          "name": "sessionID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.session.permission.get",
+      "method": "GET",
+      "path": "/api/session/{sessionID}/permission/{requestID}",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "permissions"
+      ],
+      "parameters": [
+        {
+          "name": "sessionID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "requestID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.session.permission.list",
+      "method": "GET",
+      "path": "/api/session/{sessionID}/permission",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "permissions"
+      ],
+      "parameters": [
+        {
+          "name": "sessionID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.session.permission.reply",
+      "method": "POST",
+      "path": "/api/session/{sessionID}/permission/{requestID}/reply",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "permissions"
+      ],
+      "parameters": [
+        {
+          "name": "sessionID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "requestID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.session.prompt",
+      "method": "POST",
+      "path": "/api/session/{sessionID}/prompt",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "sessions"
+      ],
+      "parameters": [
+        {
+          "name": "sessionID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.session.question.list",
+      "method": "GET",
+      "path": "/api/session/{sessionID}/question",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "session questions"
+      ],
+      "parameters": [
+        {
+          "name": "sessionID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.session.question.reject",
+      "method": "POST",
+      "path": "/api/session/{sessionID}/question/{requestID}/reject",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "session questions"
+      ],
+      "parameters": [
+        {
+          "name": "sessionID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "requestID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.session.question.reply",
+      "method": "POST",
+      "path": "/api/session/{sessionID}/question/{requestID}/reply",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "session questions"
+      ],
+      "parameters": [
+        {
+          "name": "sessionID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "requestID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.session.revert.clear",
+      "method": "POST",
+      "path": "/api/session/{sessionID}/revert/clear",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "sessions"
+      ],
+      "parameters": [
+        {
+          "name": "sessionID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.session.revert.commit",
+      "method": "POST",
+      "path": "/api/session/{sessionID}/revert/commit",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "sessions"
+      ],
+      "parameters": [
+        {
+          "name": "sessionID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.session.revert.stage",
+      "method": "POST",
+      "path": "/api/session/{sessionID}/revert/stage",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "sessions"
+      ],
+      "parameters": [
+        {
+          "name": "sessionID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.session.switchAgent",
+      "method": "POST",
+      "path": "/api/session/{sessionID}/agent",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "sessions"
+      ],
+      "parameters": [
+        {
+          "name": "sessionID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.session.switchModel",
+      "method": "POST",
+      "path": "/api/session/{sessionID}/model",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "sessions"
+      ],
+      "parameters": [
+        {
+          "name": "sessionID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.session.wait",
+      "method": "POST",
+      "path": "/api/session/{sessionID}/wait",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "sessions"
+      ],
+      "parameters": [
+        {
+          "name": "sessionID",
+          "in": "path",
+          "required": true,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "v2.skill.list",
+      "method": "GET",
+      "path": "/api/skill",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "skills"
+      ],
+      "parameters": [
+        {
+          "name": "location",
+          "in": "query",
+          "required": false,
+          "style": "deepObject",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "vcs.apply",
+      "method": "POST",
+      "path": "/vcs/apply",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "instance"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "vcs.diff",
+      "method": "GET",
+      "path": "/vcs/diff",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "instance"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "mode",
+          "in": "query",
+          "required": true,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "context",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "vcs.diff.raw",
+      "method": "GET",
+      "path": "/vcs/diff/raw",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "instance"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json",
+        "text/x-diff; charset=utf-8"
+      ]
+    },
+    {
+      "operationId": "vcs.get",
+      "method": "GET",
+      "path": "/vcs",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "instance"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "vcs.status",
+      "method": "GET",
+      "path": "/vcs/status",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "instance"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "worktree.create",
+      "method": "POST",
+      "path": "/experimental/worktree",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "experimental"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "worktree.list",
+      "method": "GET",
+      "path": "/experimental/worktree",
+      "transport": "http",
+      "effect": "read",
+      "policy": "read",
+      "tags": [
+        "experimental"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": null,
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "worktree.remove",
+      "method": "DELETE",
+      "path": "/experimental/worktree",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "experimental"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    },
+    {
+      "operationId": "worktree.reset",
+      "method": "POST",
+      "path": "/experimental/worktree/reset",
+      "transport": "http",
+      "effect": "mutation",
+      "policy": "expert",
+      "tags": [
+        "experimental"
+      ],
+      "parameters": [
+        {
+          "name": "directory",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        },
+        {
+          "name": "workspace",
+          "in": "query",
+          "required": false,
+          "style": "form",
+          "explode": true
+        }
+      ],
+      "requestMediaType": "application/json",
+      "responseMediaTypes": [
+        "application/json"
+      ]
+    }
+  ]
+}

@@ -24,9 +24,11 @@
 │       ├── future/                  non-normative proposals
 │       └── templates/
 ├── contracts/                       versioned schemas/examples
+│   └── opencode-bridge/             pinned bridge compatibility and operation inventory
 ├── src/                             deployable implementation and component AS-BUILT
 ├── tests/                           automated tests and fictional fixtures
 ├── tools/ and scripts/              deterministic repository utilities
+│   └── opencode-bridge/             isolated TypeScript bridge implementation and tests
 ├── research/                        research packages and workflow
 ├── evidence/                        sanitized derived evidence/provenance
 └── raw-evidence/                    optional immutable external evidence

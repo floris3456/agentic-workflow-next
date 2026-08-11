@@ -1,0 +1,22 @@
+{
+  "name": "@agentic-workflow/opencode-bridge",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "npm run build && node --test --test-concurrency=1 dist/tests/*.test.js",
+    "check": "npm run build && node --test --test-concurrency=1 dist/tests/*.test.js",
+    "generate-manifest": "node scripts/generate-manifest.mjs"
+  },
+  "dependencies": {
+    "@opencode-ai/sdk": "1.18.16"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.1",
+    "typescript": "7.0.2"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "bridgeProtocolVersion": "agentic-bridge/1",
+  "operationManifestSchemaVersion": 1,
+  "testedOpenCodeVersion": "1.18.16",
+  "testedSdkVersion": "1.18.16",
+  "sdkIntegrity": "sha512-UvaHyL93spLm7MttoprWTOBSYQN3aYWd7/3Ie5WNnG2pRAPq/U/d51qt0smYBTrkjxqlQmg+AJoGw8MEH6lGUg==",
+  "upstreamReleaseCommit": "a3647eb025c7615159d417dcc49fc39fdaeba65b",
+  "openapiSha256": "c3a9f94af0c3324d97b482b14c692e810ce7ccac3136319ba46334de972b4cf1",
+  "operationCount": 188,
+  "githubRestApiVersion": "2026-03-10"
+}
