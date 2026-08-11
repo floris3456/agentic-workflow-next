@@ -36,6 +36,7 @@ The generalized Project instruction and nineteen procedure files are published a
 - Existing implementation documentation states that web operating instructions live outside Git.
 - The orchestration package validator reports all 21 required Project files and trigger references present.
 - Targeted scans report no source-project identifiers on any remote branch.
+- A broad scan found migration-only deleted-path assertions in the generic agent-system validator; those named checks were removed because they were historical archaeology rather than reusable invariants.
 
 ## Interpretation
 
@@ -57,6 +58,7 @@ None.
 - Generalized package validation passed before publication.
 - Remote orchestration update completed at `6c7666bfd754704345f60ecace9d085d95ad6b48`.
 - All three remote branches passed targeted residual-identifier scans.
+- Remote orchestration-package validation passed from an archive of the published branch.
 
 ## Blockers / required decisions
 

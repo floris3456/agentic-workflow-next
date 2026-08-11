@@ -138,27 +138,6 @@ for (const file of ["README.md", "SECURITY.md", "evidence/README.md", "docs/arch
     `${file} still requires private repository hosting`);
 }
 
-assert(!exists("docs/web-lane/developer-instructions.md"), "Repository must not duplicate web-orchestrator operating instructions");
-assert(!exists("opencode.example.json"), "Obsolete opencode.example.json must be deleted");
-assert(!exists("scripts/check-lane-boundaries.sh"), "Retired protected-lane validator remains");
-assert(!exists("scripts/agent-system-deleted-paths.txt"), "Migration-only deleted-path inventory remains");
-assert(!exists("scripts/generate-research-code-reference.sh"), "Project-specific code-reference generator remains");
-assert(!exists("scripts/profile-detailed-application-catalogue.mjs"), "Project-specific catalogue profiler remains");
-assert(!exists("scripts/profile-original-application-catalogue.mjs"), "Project-specific catalogue profiler remains");
-assert(!exists(".github/workflows/validate-handover.yml"), "Project-specific handover workflow remains");
-
-// Keep machine/load-bearing configuration free of paths that this template intentionally does not ship.
-const machineSources = [
-  "opencode.json", "AGENTS.md", ".github/copilot-instructions.md",
-  ".github/workflows/validate-repository.yml",
-  "scripts/validate-repository.sh", "scripts/validate-preimplementation.mjs",
-];
-for (const source of machineSources) {
-  if (!exists(source)) continue;
-  const text = read(source);
-  assert(!text.includes(["U", "A", "M"].join("")), `${source} contains a residual source-project identifier`);
-}
-
 // Deliberately narrow residual scan: exact source names/identifiers only, not
 // generic substrings that may legitimately occur in another project.
 const sourceProjectTerms = [
