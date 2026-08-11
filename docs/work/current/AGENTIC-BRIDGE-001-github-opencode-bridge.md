@@ -6,7 +6,7 @@
 
 ## Status
 
-Bridge implementation and the independent Project-package migration are pushed; durable record reconciliation and the dedicated developer handoff snapshot remain.
+Ready for independent review: bridge implementation, Project-package migration, and durable record reconciliation are pushed; this task-progress update is the dedicated developer handoff boundary.
 
 ## Task-start developer SHA
 
@@ -1538,11 +1538,12 @@ Implement and validate the GitHub-mediated OpenCode bridge and migrate the gener
 
 ## Current position
 
-The complete developer-side bridge is implemented, validated, and pushed at `6e1d2f8a205b5b68ae2ae327a101f19f1e38d730`. The independent generalized Project package is migrated and pushed at `f1f7f98372f5bd28073b02fca3e9d5d925ccd2ab` without merging histories. The active developer phase is final durable-record reconciliation followed by the required task-progress-only handoff snapshot.
+The complete developer-side bridge is implemented and pushed at `6e1d2f8a205b5b68ae2ae327a101f19f1e38d730`; final developer durable records are pushed at `cdd492bd59163400cc4121917dbfb4a5855cdd16`. The independent generalized Project package is migrated and pushed at `f1f7f98372f5bd28073b02fca3e9d5d925ccd2ab` without merging histories. All locally controllable validation is complete, and no further developer change is pending before independent review.
 
 ## Observed
 
 - The complete bridge implementation commit is on `origin/developer` at `6e1d2f8a205b5b68ae2ae327a101f19f1e38d730`; local `developer` matched it `0 0` before final record reconciliation.
+- Final durable-record reconciliation is pushed on `origin/developer` at `cdd492bd59163400cc4121917dbfb4a5855cdd16`; local `developer` matched it `0 0` and clean before this handoff snapshot.
 - `origin/main` is `9d9b5d8f54dfa052b7c745e9644ae1c3ddc40c0e`.
 - The independent migrated package is on `origin/web-orchestration` at `f1f7f98372f5bd28073b02fca3e9d5d925ccd2ab`; local `web-orchestration` matched it `0 0` and clean after push.
 - `./scripts/bootstrap-agent-workflow.sh --check` reports that tracked hooks are active.
@@ -1626,19 +1627,20 @@ The pinned manifest plus wildcard extension prepares every classified HTTP opera
 - `git diff --check` and repeated independent protocol, package-coherence, and validator reviews found no remaining material tracked-package issue before `f1f7f98372f5bd28073b02fca3e9d5d925ccd2ab` was pushed.
 - Final remote verification returned `0 0` for both local/remote branch pairs and exact refs `developer=6e1d2f8a205b5b68ae2ae327a101f19f1e38d730`, `web-orchestration=f1f7f98372f5bd28073b02fca3e9d5d925ccd2ab`, and unchanged `main=9d9b5d8f54dfa052b7c745e9644ae1c3ddc40c0e` before this record reconciliation.
 - After restoring ignored dependencies, the final developer-side `./scripts/validate-repository.sh` rerun passed structure, links, agent system, research, bridge contracts, 42/42 bridge tests, three disposable-Git tests, and hook checks.
+- The record-reconciliation commit `cdd492bd59163400cc4121917dbfb4a5855cdd16` pushed successfully through the tracked post-commit synchronization hook; a fresh fetch confirmed local and `origin/developer` at `0 0` before the snapshot.
 
 ## Blockers / required decisions
 
-No remaining implementation or package blocker. Live GitHub App registration/installation-token access and native ChatGPT GitHub write-action validation require human-owned credentials/account interaction unavailable here. Deterministic App/REST/control/workflow doubles cover the local path, and the operator-only `/Projects/Active/deviations.md` record captures the residual live exercise without claiming it passed.
+No remaining developer implementation or package blocker. Live GitHub App registration/installation-token access and native ChatGPT GitHub write-action validation require human-owned credentials/account interaction unavailable here. Deterministic App/REST/control/workflow doubles cover the local path, and the operator-only `/Projects/Active/deviations.md` record captures the residual live exercise without claiming it passed. Independent remote review and any exact-SHA acceptance decision remain outside developer authority.
 
 ## Remaining work
 
-- Commit and immediately push the reconciled developer records.
-- Update task-progress to the completed handoff state, then create and push the dedicated task-progress-only snapshot.
+- No additional developer work before independent review.
+- The credentialed live GitHub App/native ChatGPT issue exercise remains an operator acceptance step and is not claimed complete.
 
 ## Next action
 
-Validate, commit, and push final record reconciliation, then create and push the dedicated task-progress-only handoff snapshot.
+The web orchestrator should independently review `developer` from task-start `2d05204c2e3368ba29cc5fe2ff2ee37097f01fd7` through the handoff SHA reported in the five-field response, inspect independent package commit `f1f7f98372f5bd28073b02fca3e9d5d925ccd2ab`, and decide whether steering or finalization is warranted.
 
 ## Relevant durable records
 
