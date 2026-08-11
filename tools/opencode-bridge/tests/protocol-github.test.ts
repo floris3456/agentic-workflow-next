@@ -6,7 +6,7 @@ import { join } from "node:path";
 import test, { type TestContext } from "node:test";
 import { GitHubAppAuth, type InstallationTokenProvider } from "../src/github-auth.js";
 import { GitHubClient, GitHubCommandPoller, GitHubOutbox } from "../src/github.js";
-import { commandStatusComment, parseCommandEnvelope, scanCommandEnvelopes } from "../src/protocol.js";
+import { commandStatusComment, invalidCommandComment, parseCommandEnvelope, scanCommandEnvelopes } from "../src/protocol.js";
 import { BridgeState } from "../src/state.js";
 import type { CommandEnvelope } from "../src/types.js";
 import { sha256 } from "../src/util.js";
@@ -72,6 +72,7 @@ test("protocol scanner validates complete envelopes and isolates malformed marke
   ].join("\n"));
   assert.equal(scanned.length, 2);
   assert.equal(scanned[0]?.valid, true);
+  assert.equal(scanned[0]?.markerHash, sha256(`${JSON.stringify(command)}\n`));
   assert.equal(scanned[1]?.valid, false);
   assert.match(scanned[1]?.valid === false ? scanned[1].error : "", /JSON|property/i);
 
@@ -90,8 +91,21 @@ test("status projection never includes command arguments and neutralizes active 
     state: "rejected",
   }, "bad @mention <script> `code`");
   assert.match(body, /agentic-bridge-status/);
+  assert.ok(body.startsWith(`<!-- agentic-bridge-status\n${JSON.stringify({
+    protocol: "agentic-bridge/1",
+    command_id: "11111111-1111-4111-8111-111111111111",
+    task_id: "TASK-1",
+    sequence: 1,
+    state: "rejected",
+  })}\n-->\n`));
   assert.doesNotMatch(body, /@mention|<script>|`code`/);
   assert.doesNotMatch(body, /prompt|arguments|secret/);
+  const invalid = invalidCommandComment("f".repeat(64), "bad marker");
+  assert.ok(invalid.startsWith(`<!-- agentic-bridge-status\n${JSON.stringify({
+    protocol: "agentic-bridge/1",
+    marker_hash: "f".repeat(64),
+    state: "rejected",
+  })}\n-->\n`));
 });
 
 test("GitHub App auth signs JWTs, downscopes tokens, caches, and refreshes near expiry", async () => {

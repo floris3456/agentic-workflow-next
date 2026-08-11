@@ -20,6 +20,10 @@ Raw externally produced research evidence is readable when required but immutabl
 
 OpenCode must listen only on a project-unique loopback port with authentication. The local bridge makes outbound GitHub requests and never exposes an inbound webhook. Keep each operator config, password, private key, and referenced secret in mode `0600` files outside Git. The GitHub App requires Issues write and Contents read, not Contents write. GitHub-visible bridge output is always public disclosure: use public aliases and `secret_ref` indirection, and inspect raw retained results only in the protected local database.
 
+## Repository controls
+
+Tracked Git hooks are advisory client-side safeguards. A user who can replace or bypass local hooks can also bypass their branch checks, so hooks are defense in depth rather than a server-side security boundary. Repository operators should add a GitHub ruleset for `main` that blocks force pushes and deletion and restricts updates to designated promotion operators using the reviewed exact-SHA procedure.
+
 ## Reporting
 
 Do not open a public issue containing a suspected secret or sensitive value. Use the human operator's approved private security route and remove exposed credentials at their source.

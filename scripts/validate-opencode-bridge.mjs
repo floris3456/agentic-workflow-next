@@ -49,7 +49,7 @@ try {
   assert(packageDocument.engines?.node === ">=22.13.0", "Bridge minimum Node version must be explicit");
   assert(packageLock.packages?.[""]?.dependencies?.["@opencode-ai/sdk"] === "1.18.16", "Lockfile SDK version is not exact");
   assert(example.schema_version === 1 && example.policy?.pty_enabled === false && example.policy?.promotion_enabled === false, "Example config must default-deny PTY and promotion");
-  assert(!/PRIVATE KEY-----\n(?!test)/.test(read("tools/opencode-bridge/config.example.json")), "Example config appears to contain a private key");
+  assert(!/-----BEGIN (?:[A-Z]+ )?PRIVATE KEY-----/.test(read("tools/opencode-bridge/config.example.json")), "Example config appears to contain a private key");
 } catch (error) {
   failures.push(`Bridge JSON validation failed: ${error.message}`);
 }

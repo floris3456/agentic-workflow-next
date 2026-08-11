@@ -17,8 +17,8 @@ const identity = {
   GIT_COMMITTER_DATE: "2026-01-01T00:00:00Z",
 };
 
-function git(cwd, args, expected = 0) {
-  const result = spawnSync("git", args, { cwd, env: identity, encoding: "utf8" });
+function git(cwd, args, expected = 0, environment = identity) {
+  const result = spawnSync("git", args, { cwd, env: environment, encoding: "utf8" });
   assert.equal(result.status, expected, `git ${args.join(" ")}\nstdout: ${result.stdout}\nstderr: ${result.stderr}`);
   return result.stdout.trim();
 }
@@ -44,14 +44,19 @@ function populate(repository, marker) {
   }
 }
 
-function rootBranch(parent, remote, branch, marker, extraCommit = false, subject = "Initial commit") {
+function rootBranch(parent, remote, branch, marker, options = {}) {
   const repository = join(parent, `${branch}-source`);
   mkdirSync(repository);
   git(repository, ["init", "-b", branch]);
   populate(repository, marker);
+  if (options.activeTask) writeFileSync(join(repository, "docs", "work", "current", "ACTIVE.md"), "# Active task\n");
+  if (options.mismatchedTreeShape) writeFileSync(join(repository, "developer-only.txt"), "unexpected root shape\n");
   git(repository, ["add", "."]);
-  git(repository, ["commit", "-m", subject]);
-  if (extraCommit) {
+  const commitIdentity = options.mismatchedAuthorDate
+    ? { ...identity, GIT_AUTHOR_DATE: "2026-01-02T00:00:00Z" }
+    : identity;
+  git(repository, ["commit", "-m", options.subject ?? "Initial commit"], 0, commitIdentity);
+  if (options.established) {
     writeFileSync(join(repository, "established-work.txt"), "not fresh\n");
     git(repository, ["add", "."]);
     git(repository, ["commit", "-m", "established work"]);
@@ -61,19 +66,51 @@ function rootBranch(parent, remote, branch, marker, extraCommit = false, subject
   return git(repository, ["rev-parse", "HEAD"]);
 }
 
-function fixture(context, establishedDeveloper = false, mismatchedMetadata = false, shallow = false) {
+function fixture(context, options = {}) {
   const directory = mkdtempSync(join(tmpdir(), "template-branch-test-"));
   context.after(() => rmSync(directory, { recursive: true, force: true }));
   const remote = join(directory, "remote.git");
   mkdirSync(remote);
   git(remote, ["init", "--bare"]);
-  const main = rootBranch(directory, remote, "main", "main");
-  const developer = rootBranch(directory, remote, "developer", "developer", establishedDeveloper, mismatchedMetadata ? "Different root" : "Initial commit");
+  const main = rootBranch(directory, remote, "main", "main", { activeTask: options.activeTask });
+  const developer = rootBranch(directory, remote, "developer", "developer", {
+    established: options.establishedDeveloper,
+    subject: options.mismatchedSubject ? "Different root" : "Initial commit",
+    mismatchedAuthorDate: options.mismatchedAuthorDate,
+    mismatchedTreeShape: options.mismatchedTreeShape,
+    activeTask: options.activeTask,
+  });
   const checkout = join(directory, "checkout");
-  git(directory, ["clone", "--branch", "developer", ...(shallow ? ["--depth", "1", "--no-single-branch", pathToFileURL(remote).href] : [remote]), checkout]);
-  if (!shallow) git(checkout, ["fetch", "origin", "main:refs/remotes/origin/main"]);
+  git(directory, ["clone", "--branch", "developer", ...(options.shallow ? ["--depth", "1", "--no-single-branch", pathToFileURL(remote).href] : [remote]), checkout]);
+  if (!options.shallow) git(checkout, ["fetch", "origin", "main:refs/remotes/origin/main"]);
   git(checkout, ["config", "core.hooksPath", ".githooks"]);
   return { checkout, main, developer };
+}
+
+function sharedAncestryFixture(context) {
+  const directory = mkdtempSync(join(tmpdir(), "template-branch-shared-test-"));
+  context.after(() => rmSync(directory, { recursive: true, force: true }));
+  const remote = join(directory, "remote.git");
+  mkdirSync(remote);
+  git(remote, ["init", "--bare"]);
+  const source = join(directory, "source");
+  mkdirSync(source);
+  git(source, ["init", "-b", "developer"]);
+  populate(source, "shared");
+  git(source, ["add", "."]);
+  git(source, ["commit", "-m", "Initial commit"]);
+  const developer = git(source, ["rev-parse", "HEAD"]);
+  git(source, ["checkout", "-b", "main"]);
+  writeFileSync(join(source, "main-only.txt"), "main diverged\n");
+  git(source, ["add", "."]);
+  git(source, ["commit", "-m", "Main diverged"]);
+  git(source, ["remote", "add", "origin", remote]);
+  git(source, ["push", "origin", "main:refs/heads/main", "developer:refs/heads/developer"]);
+  const checkout = join(directory, "checkout");
+  git(directory, ["clone", "--branch", "developer", remote, checkout]);
+  git(checkout, ["fetch", "origin", "main:refs/remotes/origin/main"]);
+  git(checkout, ["config", "core.hooksPath", ".githooks"]);
+  return { checkout, developer };
 }
 
 test("fresh unrelated template branches are repaired without changing the developer tree", (context) => {
@@ -85,6 +122,7 @@ test("fresh unrelated template branches are repaired without changing the develo
   assert.notEqual(repaired, developer);
   assert.equal(git(checkout, ["rev-parse", `${repaired}^1`]), main);
   assert.equal(git(checkout, ["rev-parse", `${repaired}^{tree}`]), oldTree);
+  assert.equal(git(checkout, ["rev-parse", `refs/agentic-workflow/backups/template-repair/${developer}`]), developer);
   assert.equal(git(checkout, ["status", "--porcelain"]), "");
 
   const second = spawnSync("./scripts/initialize-template-branches.sh", [], { cwd: checkout, env: identity, encoding: "utf8" });
@@ -94,25 +132,77 @@ test("fresh unrelated template branches are repaired without changing the develo
 });
 
 test("unrelated established or shallow history is refused without rewriting remote state", (context) => {
-  const { checkout, developer } = fixture(context, true);
+  const { checkout, developer } = fixture(context, { establishedDeveloper: true });
   const result = spawnSync("./scripts/initialize-template-branches.sh", [], { cwd: checkout, env: identity, encoding: "utf8" });
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /not a one-commit fresh-template root/);
   git(checkout, ["fetch", "origin", "developer"]);
   assert.equal(git(checkout, ["rev-parse", "origin/developer"]), developer);
 
-  const shallow = fixture(context, false, false, true);
+  const shallow = fixture(context, { shallow: true });
   const shallowResult = spawnSync("./scripts/initialize-template-branches.sh", [], { cwd: shallow.checkout, env: identity, encoding: "utf8" });
   assert.notEqual(shallowResult.status, 0);
   assert.match(shallowResult.stderr, /Fetch complete branch history/);
   assert.equal(git(shallow.checkout, ["rev-parse", "origin/developer"]), shallow.developer);
 });
 
-test("one-commit unrelated roots without matching generated metadata are refused", (context) => {
-  const { checkout, developer } = fixture(context, false, true);
+test("one-commit unrelated roots without a matching generated fingerprint are refused", (context) => {
+  for (const options of [
+    { mismatchedSubject: true },
+    { mismatchedAuthorDate: true },
+    { mismatchedTreeShape: true },
+  ]) {
+    const { checkout, developer } = fixture(context, options);
+    const result = spawnSync("./scripts/initialize-template-branches.sh", [], { cwd: checkout, env: identity, encoding: "utf8" });
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /do not share template-generation commit metadata and tree shape/);
+    git(checkout, ["fetch", "origin", "developer"]);
+    assert.equal(git(checkout, ["rev-parse", "origin/developer"]), developer);
+  }
+});
+
+test("local HEAD differing from origin/developer is refused", (context) => {
+  const { checkout, developer } = fixture(context);
+  writeFileSync(join(checkout, "local-only.txt"), "local commit\n");
+  git(checkout, ["add", "."]);
+  git(checkout, ["-c", "core.hooksPath=/dev/null", "commit", "-m", "Local only"]);
   const result = spawnSync("./scripts/initialize-template-branches.sh", [], { cwd: checkout, env: identity, encoding: "utf8" });
   assert.notEqual(result.status, 0);
-  assert.match(result.stderr, /do not share template-generation commit metadata/);
-  git(checkout, ["fetch", "origin", "developer"]);
+  assert.match(result.stderr, /Local developer must equal origin\/developer/);
+  assert.equal(git(checkout, ["rev-parse", "origin/developer"]), developer);
+});
+
+test("shared ancestry that does not descend from main is refused", (context) => {
+  const { checkout, developer } = sharedAncestryFixture(context);
+  const result = spawnSync("./scripts/initialize-template-branches.sh", [], { cwd: checkout, env: identity, encoding: "utf8" });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /share ancestry/);
+  assert.equal(git(checkout, ["rev-parse", "origin/developer"]), developer);
+});
+
+test("a dirty working tree is refused", (context) => {
+  const { checkout, developer } = fixture(context);
+  writeFileSync(join(checkout, "untracked.txt"), "dirty\n");
+  const result = spawnSync("./scripts/initialize-template-branches.sh", [], { cwd: checkout, env: identity, encoding: "utf8" });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /Working tree must be clean/);
+  assert.equal(git(checkout, ["rev-parse", "origin/developer"]), developer);
+});
+
+test("an active task record is refused", (context) => {
+  const { checkout, developer } = fixture(context, { activeTask: true });
+  const result = spawnSync("./scripts/initialize-template-branches.sh", [], { cwd: checkout, env: identity, encoding: "utf8" });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /blocked by an active task record/);
+  assert.equal(git(checkout, ["rev-parse", "origin/developer"]), developer);
+});
+
+test("a synchronization-failure marker is refused", (context) => {
+  const { checkout, developer } = fixture(context);
+  const gitDirectory = resolve(checkout, git(checkout, ["rev-parse", "--git-dir"]));
+  writeFileSync(join(gitDirectory, "agent-workflow-sync-failed"), `${developer} developer\n`);
+  const result = spawnSync("./scripts/initialize-template-branches.sh", [], { cwd: checkout, env: identity, encoding: "utf8" });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /Resolve synchronization failure/);
   assert.equal(git(checkout, ["rev-parse", "origin/developer"]), developer);
 });

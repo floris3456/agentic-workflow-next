@@ -29,12 +29,18 @@ fi
 root_commit() {
   [[ "$(git rev-list --count "$1")" -eq 1 && "$(git rev-list --parents -n 1 "$1" | wc -w)" -eq 1 ]]
 }
+root_fingerprint() {
+  local commit="$1"
+  local tree_shape
+  tree_shape="$(git ls-tree -r --format='%(objectmode) %(objecttype) %(path)' "$commit" | git hash-object --stdin)"
+  printf '%s\x1f%s\n' "$(git show -s --format='%an%x1f%ae%x1f%at%x1f%cn%x1f%ce%x1f%ct%x1f%s' "$commit")" "$tree_shape"
+}
 root_commit "$main" || { echo "Unrelated main is not a one-commit fresh-template root; refuse history replacement." >&2; exit 1; }
 root_commit "$developer" || { echo "Unrelated developer is not a one-commit fresh-template root; refuse history replacement." >&2; exit 1; }
-main_fingerprint="$(git show -s --format='%an%x1f%ae%x1f%cn%x1f%ce%x1f%ct%x1f%s' "$main")"
-developer_fingerprint="$(git show -s --format='%an%x1f%ae%x1f%cn%x1f%ce%x1f%ct%x1f%s' "$developer")"
+main_fingerprint="$(root_fingerprint "$main")"
+developer_fingerprint="$(root_fingerprint "$developer")"
 [[ "$main_fingerprint" == "$developer_fingerprint" ]] || {
-  echo "Unrelated roots do not share template-generation commit metadata; refuse history replacement." >&2
+  echo "Unrelated roots do not share template-generation commit metadata and tree shape; refuse history replacement." >&2
   exit 1
 }
 
@@ -44,6 +50,9 @@ active_records="$(git ls-tree -r --name-only "$developer" -- docs/work/current |
 tree="$(git rev-parse "$developer^{tree}")"
 new_developer="$(printf '%s\n' "Initialize developer ancestry from template main" | git commit-tree "$tree" -p "$main")"
 [[ "$(git rev-parse "$new_developer^{tree}")" == "$tree" ]] || { echo "Reconstructed developer tree changed unexpectedly." >&2; exit 1; }
+backup_ref="refs/agentic-workflow/backups/template-repair/$developer"
+git update-ref "$backup_ref" "$developer"
+[[ "$(git rev-parse "$backup_ref")" == "$developer" ]] || { echo "Could not verify the developer backup ref." >&2; exit 1; }
 marker="$git_dir/agent-workflow-template-repair-authorized"
 cleanup() { rm -f "$marker"; }
 trap cleanup EXIT
@@ -57,4 +66,4 @@ git reset --mixed HEAD >/dev/null
 [[ -z "$(git status --porcelain)" ]] || { echo "Template repair did not preserve the developer working tree." >&2; exit 1; }
 git merge-base --is-ancestor "$main" "$new_developer" || { echo "Repaired developer does not descend from main." >&2; exit 1; }
 
-echo "Repaired fresh template developer ancestry: $developer -> $new_developer (parent $main)."
+echo "Repaired fresh template developer ancestry: $developer -> $new_developer (parent $main; backup $backup_ref)."

@@ -6,7 +6,7 @@
 
 ## Status
 
-Ready for independent review: bridge implementation, Project-package migration, and durable record reconciliation are pushed; this task-progress update is the dedicated developer handoff boundary.
+Independent review steering is active; remote baselines are verified and no promotion is authorized.
 
 ## Task-start developer SHA
 
@@ -14,7 +14,7 @@ Ready for independent review: bridge implementation, Project-package migration, 
 
 ## Review-base developer SHA
 
-`2d05204c2e3368ba29cc5fe2ff2ee37097f01fd7`
+`0d515b6cb89366c5913c4864a177ca852c561e9c`
 
 ## Original task brief
 
@@ -1534,15 +1534,16 @@ all without requiring `opencode-mcp` as the ChatGPT implementation transport.
 
 ## Current objective
 
-Implement and validate the GitHub-mediated OpenCode bridge and migrate the generalized Project package while preserving existing authority, synchronization, acceptance, and branch boundaries.
+Apply the independent review corrections across `developer` and the unrelated `web-orchestration` package while preserving transport idempotency, security checks, exact-SHA human authority, branch isolation, and the operator-owned live-E2E boundary.
 
 ## Current position
 
-The complete developer-side bridge is implemented and pushed at `6e1d2f8a205b5b68ae2ae327a101f19f1e38d730`; final developer durable records are pushed at `cdd492bd59163400cc4121917dbfb4a5855cdd16`. The independent generalized Project package is migrated and pushed at `f1f7f98372f5bd28073b02fca3e9d5d925ccd2ab` without merging histories. All locally controllable validation is complete, and no further developer change is pending before independent review.
+The independent review covered `developer` through handoff `0d515b6cb89366c5913c4864a177ca852c561e9c` and `web-orchestration` through `f1f7f98372f5bd28073b02fca3e9d5d925ccd2ab`, expressed no acceptance, and steered corrections F1-F16 plus an F18 judgment. Both branch tips and unchanged `main` were fetched and verified before this round. The developer correction slice is implemented and the full repository validator passes under exact Node `22.13.0`; it is ready for commit/push before the separate web-package correction.
 
 ## Observed
 
 - The complete bridge implementation commit is on `origin/developer` at `6e1d2f8a205b5b68ae2ae327a101f19f1e38d730`; local `developer` matched it `0 0` before final record reconciliation.
+- Steering-round start refs are `origin/developer=0d515b6cb89366c5913c4864a177ca852c561e9c`, `origin/web-orchestration=f1f7f98372f5bd28073b02fca3e9d5d925ccd2ab`, and unchanged `origin/main=9d9b5d8f54dfa052b7c745e9644ae1c3ddc40c0e`; local `developer` was clean and `0 0` synchronized.
 - Final durable-record reconciliation is pushed on `origin/developer` at `cdd492bd59163400cc4121917dbfb4a5855cdd16`; local `developer` matched it `0 0` and clean before this handoff snapshot.
 - `origin/main` is `9d9b5d8f54dfa052b7c745e9644ae1c3ddc40c0e`.
 - The independent migrated package is on `origin/web-orchestration` at `f1f7f98372f5bd28073b02fca3e9d5d925ccd2ab`; local `web-orchestration` matched it `0 0` and clean after push.
@@ -1562,9 +1563,9 @@ The complete developer-side bridge is implemented and pushed at `6e1d2f8a205b5b6
 - The App token provider signs short-lived JWTs, requests a one-repository token downscoped to Issues write and Contents read, rejects broader/insufficient returned permissions, and refreshes automatically.
 - Conditional issue/comment polling persists ETags, validates pagination origin/loops, adapts between active and idle intervals, and honors primary/secondary retry timing. GitHub writes are paced in strict durable FIFO order so a retry cannot be overtaken by newer status labels.
 - Public projection assigns globally unique task-owned aliases to private session/PTY/permission/question/message/workspace/event IDs including embedded text and object keys, rejects cross-task alias resolution plus raw IDs/absolute paths/literal secrets/unknown or malformed transport fields, prevents generic directory/workspace/location rerouting, resolves local `secret_ref` files only for explicit local-secret operations, redacts/bounds output, and retains raw results and sensitive failure detail locally.
-- High-level commands cover start/status/steer/route, permission/question replies, abort, event pages, PTY lifecycle/I/O, finalization, recovery, guarded promotion, and generic operation-ID requests. Generic mutations, local-secret operations, PTY, and promotion are default-denied independently.
+- High-level commands cover start/status/steer/route, permission/question replies, abort, event pages, PTY lifecycle/I/O, finalization, recovery, guarded promotion, and generic operation-ID requests. Generic mutations, local-secret operations, state-changing PTY operations, and promotion are default-denied independently; bounded `pty.read` remains diagnostic.
 - The foreground service uses strict mode-restricted operator config, unique per-project identity/port/state/App mapping, a single-process lock, heartbeat/status metadata, graceful signals, loopback OpenCode, and separate normal-TUI attach.
-- The template initializer uses a hook-authorized exact `force-with-lease` only for complete-history, clean synchronized one-commit unrelated roots with matching generated metadata and no active task; correct ancestry no-ops and shallow, established, or ambiguous history is refused.
+- The template initializer uses a hook-authorized exact `force-with-lease` only for complete-history, clean synchronized one-commit unrelated roots with matching generated metadata/tree shape and no active task; it creates a local old-root backup first, while correct ancestry no-ops and shallow, established, or ambiguous history is refused.
 - The migrated Project package keeps its existing MCP-ON/MCP-OFF/shared trigger structure, removes the direct Project OpenCode transport, and uses connected/native GitHub for exact evidence, narrow runtime-continuity writes, and serialized issue commands to the outbound bridge.
 - Bridge command continuity is written before issue publication: exact envelopes remain pending through ambiguous/pre-ledger/indeterminate paths, resolved commands retain command/result refs, human promotion approval has a distinct exact-SHA record, and bridge reports remain non-authoritative.
 - The web-package validator now enforces exact source shape, grouped trigger/reference structure, placeholder counts, a parsed strict command example, continuity fields, regular files, valid UTF-8, and stale direct-transport/source-project residue.
@@ -1591,6 +1592,7 @@ The pinned manifest plus wildcard extension prepares every classified HTTP opera
 - Web-package review also found that substantive orchestrator approval was insufficient continuity for guarded promotion. The task-context template now records finalization, explicit human-approved promotion, and verified post-promotion SHAs separately.
 - The active API skill registry did not expose the checkout's three required repository-local skills. Their exact tracked `SKILL.md` files were read and followed directly; the operator-only deviation log records the unavailable native-discovery path.
 - Final record validation initially stopped at `tsc: command not found` because cross-branch generated-artifact cleanup had also removed ignored package dependencies. `npm ci` restored the exact lockfile set with zero reported vulnerabilities, and the full rerun passed.
+- The first new local-HEAD refusal fixture unexpectedly reached the established-history guard because the tracked post-commit hook correctly pushed the fixture commit. Disabling hooks only for that disposable fixture's intentionally local-only setup commit exercised the intended HEAD mismatch; the production hook and initializer were not weakened.
 
 ## Changed approach
 
@@ -1601,6 +1603,31 @@ The pinned manifest plus wildcard extension prepares every classified HTTP opera
 - Core bridge operation remains a portable foreground CLI. OS-specific service files were not added because they are optional convenience rather than a cross-platform correctness requirement.
 - The Project migration preserves the established mode/skill trigger layout rather than adding a parallel bridge skill set; MCP-ON is redefined around connected/native GitHub plus the outbound issue bridge, while the symbol scout remains optional.
 - Package validation was expanded in place and exercised by an external mutation-fixture matrix rather than adding test-only artifacts to the independent branch.
+- Independent-review steering keeps the existing bridge behavior and narrows its documented contract: the issue body is intentionally scanned for the initial `start`, later commands remain fresh comments, and bounded `pty.read` remains diagnostic while state-changing PTY commands require local enablement.
+- Fresh-template provenance now includes author time and path/mode/type tree shape while intentionally allowing branch-specific blob differences. A local old-root backup is created before the exact leased replacement.
+- F18 is deferred rather than treated as a message-only edit because an approval URL would need to remain bound through the command contract, merge creation, pending tuple, and resumed-promotion proof. The existing one-SHA promotion interface remains unchanged and the operator-only deviation log records the judgment.
+
+## Independent review dispositions
+
+- F1 implemented: local hooks are explicitly advisory, and operators are told to add a server-side `main` ruleset; hook enforcement is unchanged.
+- F2 implemented: all five PTY rows and architecture records now distinguish diagnostic `pty.read` from locally gated create/input/resize/remove.
+- F3 implemented: AS-BUILT records the actual owner-only permission check and recommends `0600` rather than claiming exact-mode enforcement.
+- F4 implemented: AS-BUILT precisely limits symlink rejection to an existing final state path and does not claim all ancestor components are checked.
+- F5 implemented: both research validators are mandatory repository checks.
+- F6 implemented: generated-root fingerprinting includes author date and matching path/mode/type tree shape, and a local backup ref precedes force-with-lease.
+- F7 pending on `web-orchestration`: make stale direct-transport matching tolerant to formatting variants.
+- F8 pending on `web-orchestration`: pin and print the co-deployed bridge protocol/schema revision.
+- F9 partially implemented in the developer contract; the web package still needs `applying = wait; pre-indeterminate` recovery guidance.
+- F10 implemented in the developer contract and tests: status marker shapes and the exact command `marker_hash` byte range, including the trailing newline, are explicit; web wording remains to be aligned.
+- F11 implemented by documenting body scanning as intentional for initial `start`, with subsequent commands restricted to fresh comments.
+- F12 pending on `web-orchestration`: add selected high-risk negative/inversion guards and matrix cases.
+- F13 pending on `web-orchestration`: document `abort` authority, use, and terminal interpretation.
+- F14 implemented: five new refusal tests cover local HEAD mismatch, shared ancestry, dirty state, active task state, and synchronization-failure marker state.
+- F15 implemented: supported runtime and exact-minimum versus newer-host validation evidence are separated.
+- F16 implemented: both research scripts use `fileURLToPath`, and the example private-key check uses a direct PEM-header absence pattern.
+- F17 no action: steering explicitly requested no implementation change.
+- F18 deferred as non-trivial; rationale is in the operator-only deviation log and no promotion behavior changed.
+- F19 no action: steering explicitly requested no implementation change.
 
 ## Checks
 
@@ -1619,28 +1646,31 @@ The pinned manifest plus wildcard extension prepares every classified HTTP opera
 - The emitted 42-test suite also passes under the exact declared minimum Node `22.13.0`; that release prints its expected upstream `node:sqlite` experimental warning.
 - A bounded authenticated loopback integration run against the isolated OpenCode `1.18.16` binary returned healthy version `1.18.16`, the expected OpenAPI hash, 188 operations, and `compatible: true`.
 - The final real loopback run also completed an authenticated `project.current` read through the compiled client.
-- Three disposable-Git tests pass for fresh unrelated-root repair/tree identity, repeat no-op, and refusal of shallow, established, or generated-metadata-mismatched history.
+- Eight disposable-Git tests pass for fresh unrelated-root repair/tree identity/backup, repeat no-op, and refusal of shallow, established, generated-fingerprint-mismatched, local-HEAD-mismatched, shared-ancestry, dirty, active-task, and synchronization-failed-marker states.
 - `node scripts/validate-opencode-bridge.mjs`, the credential-free App registration URL command, `git diff --check`, and full `./scripts/validate-repository.sh` pass.
 - CI now pins exact Node `22.13.0`, installs the nested lockfile, and runs the same repository validation without a self-hosted runner.
 - `node web-orchestration-only/validate-package.mjs` passed on the migrated `web-orchestration` tree with 19 Project Sources, package instructions, and five continuity files.
 - The external `/tmp/opencode/test-web-validator.mjs` matrix passed 23/23 valid and malformed-package cases, including missing/blank/wrong-type files, symlinks, extra or misplaced Sources, broken references/placeholders/triggers, invalid command markers, invalid UTF-8, stale static transport text, and allowed runtime history.
 - `git diff --check` and repeated independent protocol, package-coherence, and validator reviews found no remaining material tracked-package issue before `f1f7f98372f5bd28073b02fca3e9d5d925ccd2ab` was pushed.
 - Final remote verification returned `0 0` for both local/remote branch pairs and exact refs `developer=6e1d2f8a205b5b68ae2ae327a101f19f1e38d730`, `web-orchestration=f1f7f98372f5bd28073b02fca3e9d5d925ccd2ab`, and unchanged `main=9d9b5d8f54dfa052b7c745e9644ae1c3ddc40c0e` before this record reconciliation.
-- After restoring ignored dependencies, the final developer-side `./scripts/validate-repository.sh` rerun passed structure, links, agent system, research, bridge contracts, 42/42 bridge tests, three disposable-Git tests, and hook checks.
+- After restoring ignored dependencies, the original developer-side `./scripts/validate-repository.sh` rerun passed structure, links, agent system, research, bridge contracts, 42/42 bridge tests, three disposable-Git tests, and hook checks.
 - The record-reconciliation commit `cdd492bd59163400cc4121917dbfb4a5855cdd16` pushed successfully through the tracked post-commit synchronization hook; a fresh fetch confirmed local and `origin/developer` at `0 0` before the snapshot.
+- Steering validation used exact Node `22.13.0`; `npm test` passed 42/42 after the protocol marker assertions, and `node --test tests/template-branches.test.mjs` passed 8/8 after the five new refusal cases.
+- The steering-round full `./scripts/validate-repository.sh` passed under exact Node `22.13.0`: structure/links, agent system, mandatory research checks, current evidence manifest, active hooks, bridge contracts, 42/42 bridge tests, and 8/8 disposable-Git tests all passed. The host npm CLI emitted its compatibility warning while invoking exact Node, but compilation and all tests completed successfully.
 
 ## Blockers / required decisions
 
-No remaining developer implementation or package blocker. Live GitHub App registration/installation-token access and native ChatGPT GitHub write-action validation require human-owned credentials/account interaction unavailable here. Deterministic App/REST/control/workflow doubles cover the local path, and the operator-only `/Projects/Active/deviations.md` record captures the residual live exercise without claiming it passed. Independent remote review and any exact-SHA acceptance decision remain outside developer authority.
+No developer-side correction blocker remains; the validated developer slice still needs commit/push and the independent web-package corrections remain pending. Live GitHub App registration/installation-token access and native ChatGPT GitHub write-action validation require human-owned credentials/account interaction unavailable here. Deterministic App/REST/control/workflow doubles cover the local path, and the operator-only `/Projects/Active/deviations.md` record captures the residual live exercise without claiming it passed. Independent remote review and any exact-SHA acceptance decision remain outside developer authority.
 
 ## Remaining work
 
-- No additional developer work before independent review.
-- The credentialed live GitHub App/native ChatGPT issue exercise remains an operator acceptance step and is not claimed complete.
+- Commit and push the validated developer correction slice, then verify local/remote `0 0` synchronization.
+- Independently update/validate/push web findings F7-F10, F12, and F13 without merging histories.
+- Return to `developer`, reconcile exact refs and per-finding dispositions, then push a task-progress-only handoff snapshot.
 
 ## Next action
 
-The web orchestrator should independently review `developer` from task-start `2d05204c2e3368ba29cc5fe2ff2ee37097f01fd7` through the handoff SHA reported in the five-field response, inspect independent package commit `f1f7f98372f5bd28073b02fca3e9d5d925ccd2ab`, and decide whether steering or finalization is warranted.
+Review the complete developer diff, commit/push it through tracked hooks, and verify exact synchronization before switching to the unrelated web package.
 
 ## Relevant durable records
 
@@ -1653,4 +1683,4 @@ The web orchestrator should independently review `developer` from task-start `2d
 
 ## Last handoff commit
 
-None
+`0d515b6cb89366c5913c4864a177ca852c561e9c`

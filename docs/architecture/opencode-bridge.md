@@ -24,7 +24,7 @@ Operator configuration and secret files are mode `0600` outside Git. SQLite live
 
 The pinned manifest records OpenCode and SDK `1.18.16`, release commit `a3647eb025c7615159d417dcc49fc39fdaeba65b`, OpenAPI hash `c3a9f94af0c3324d97b482b14c692e810ce7ccac3136319ba46334de972b4cf1`, and all 188 operation IDs. It classifies 182 HTTP operations, four SSE operations, and two PTY WebSockets. Generic serialization covers all HTTP operations, including the explicit `v2.fs.read` wildcard missing from generated parameters. SSE and PTY use dedicated transport adapters.
 
-Live version/hash/inventory drift blocks consequential OpenCode operations while diagnostic reads remain possible. Capability does not imply GitHub policy: generic reads are available, ordinary mutations and local-secret operations require exact local allowlists, two sharing operations remain web-blocked, and PTY/promotion are independently disabled by default.
+Live version/hash/inventory drift blocks consequential OpenCode operations while diagnostic reads remain possible. Capability does not imply GitHub policy: generic reads and bounded `pty.read` are available, ordinary mutations and local-secret operations require exact local allowlists, two sharing operations remain web-blocked, state-changing PTY create/input/resize/remove commands require `policy.pty_enabled`, and promotion is independently disabled by default.
 
 ## Control and durability
 
@@ -44,7 +44,7 @@ Raw events/results remain local. The public projection maps session/PTY/permissi
 
 ## Template repair
 
-GitHub all-branch template generation can create unrelated `main` and `developer` roots. `initialize-template-branches.sh` no-ops when ancestry is valid. It repairs only synchronized, clean, one-commit unrelated roots with matching template-generation author/committer/time/subject metadata and no active task record. It creates one developer-tree-preserving commit on top of main and uses an exact guarded `force-with-lease`. The pre-push hook validates old/new/main identities, root shape, parent, and tree. Any established or ambiguous history is refused. `web-orchestration` remains deliberately unrelated.
+GitHub all-branch template generation can create unrelated `main` and `developer` roots. `initialize-template-branches.sh` no-ops when ancestry is valid. It repairs only synchronized, clean, one-commit unrelated roots with matching template-generation author/committer identities, both timestamps, subject, and path/mode/type tree shape, plus no active task record. Branch-specific blob identities may differ; the exact developer tree is preserved. The initializer records the old root under a local backup ref before an exact guarded `force-with-lease`. The pre-push hook validates old/new/main identities, root shape, parent, and tree. Any established or ambiguous history is refused. `web-orchestration` remains deliberately unrelated.
 
 ## Interfaces
 
