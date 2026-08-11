@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The system separates human acceptance, web orchestration, remote evidence, and local implementation without duplicating the full operating prompt in the repository.
+The system separates human acceptance, web orchestration, remote evidence, and local implementation. Git stores a generalized public-safe web-orchestrator installation source, not private live Project state.
 
 ## Authority
 
@@ -14,7 +14,7 @@ The system separates human acceptance, web orchestration, remote evidence, and l
 
 ## Web orchestrator
 
-The web orchestrator is the primary reasoning, task-design, routing, steering, and review layer. Its operating instructions and conditional skills live in the orchestration environment, not this repository.
+The web orchestrator is the primary reasoning, task-design, routing, steering, and review layer. Generalized installation instructions and conditional skills live under `web-orchestration-only/chatgpt-project/` on the independent branch. The installed Project configuration, private conversations, connector credentials, and runtime service configuration remain outside Git.
 
 In MCP-ON mode it uses:
 
@@ -39,7 +39,7 @@ Routing policy is web-side and intentionally is not frozen through a validator t
 
 - `developer`: active implementation and task-progress.
 - `main`: exact implementation deliberately accepted by the human.
-- `web-orchestration`: independent orphan-style tree containing only `web-orchestration-only/**`.
+- `web-orchestration`: independent orphan-style tree containing only `web-orchestration-only/**`, including public-safe continuity and Project installation sources.
 
 No normal merge crosses between `web-orchestration` and implementation branches.
 
@@ -64,7 +64,8 @@ The configured symbol scout is non-authoritative context. `.jcodemunch.jsonc` us
 | Commit, push, handoff, recovery, promotion | `.opencode/skills/git-sync-and-handoff/SKILL.md` and tracked hooks/scripts |
 | Task file and response shapes | `docs/work/templates/` |
 | Branch and human acceptance procedure | `docs/architecture/branch-workflow.md` |
-| Web operating instructions | Orchestration environment, outside repository |
+| Generalized web installation source | `web-orchestration-only/chatgpt-project/` on `web-orchestration` |
+| Installed Project state and private runtime configuration | Orchestration environment, outside Git |
 | Public Git persistence | `SECURITY.md` |
 | Current architecture | this document and focused architecture documents |
 | Reliable structural checks | `scripts/validate-agent-system.mjs` |

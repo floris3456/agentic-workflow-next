@@ -32,7 +32,7 @@
 └── raw-evidence/                    optional immutable external evidence
 ```
 
-Web-orchestrator operating instructions and project-specific external skills are deliberately **not** stored in this repository. The independent `web-orchestration` branch contains only `web-orchestration-only/**` and is not part of the normal implementation tree.
+The independent `web-orchestration` branch contains only `web-orchestration-only/**` and is not part of the normal implementation tree. It holds public-safe continuity plus a generalized ChatGPT Project installation source. Installed Project state, private conversations, connector credentials, and project-specific private context are deliberately not stored in Git.
 
 ## Placement rules
 

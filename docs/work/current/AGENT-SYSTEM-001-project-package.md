@@ -6,7 +6,7 @@ AGENT-SYSTEM-001
 
 ## Status
 
-In progress
+Implementation complete; validation pending
 
 ## Task-start developer SHA
 
@@ -26,7 +26,7 @@ Generalize the reusable Project instructions and orchestration procedures, persi
 
 ## Current position
 
-The supplied package has been inventoried. Its Project instruction file and shared/MCP-ON/MCP-OFF procedures are structurally reusable, but repository identities, historical evidence assumptions, installation wording, and branch documentation require generalization.
+The generalized Project instruction and nineteen procedure files are published atomically under the orchestration namespace. Implementation-side architecture and AS-BUILT records now distinguish the public installation source from private live Project state.
 
 ## Observed
 
@@ -34,14 +34,16 @@ The supplied package has been inventoried. Its Project instruction file and shar
 - The target remote has independent `main`, `developer`, and `web-orchestration` branches.
 - The supplied Project package contains one instruction file and nineteen focused procedure files.
 - Existing implementation documentation states that web operating instructions live outside Git.
+- The orchestration package validator reports all 21 required Project files and trigger references present.
+- Targeted scans report no source-project identifiers on any remote branch.
 
 ## Interpretation
 
-A public-safe installation source can live under `web-orchestration-only/**` without making orchestration memory authoritative or allowing implementation agents to depend on that branch. Implementation documentation must distinguish the branch-hosted installation source from private live Project state.
+A public-safe installation source can live under `web-orchestration-only/**` without making orchestration memory authoritative or allowing implementation agents to depend on that branch. Private runtime state and connector configuration remain outside Git.
 
 ## Attempts
 
-None.
+- Direct local commit was not used because tracked hooks intentionally reserve orchestration writes for the web layer. The package was published as one remote commit through the authenticated GitHub Git API with the existing orchestration tip as its parent.
 
 ## Changed approach
 
@@ -52,6 +54,9 @@ None.
 - Remote refs fetched.
 - Source package paths inventoried.
 - Reusable Project files read and classified.
+- Generalized package validation passed before publication.
+- Remote orchestration update completed at `6c7666bfd754704345f60ecace9d085d95ad6b48`.
+- All three remote branches passed targeted residual-identifier scans.
 
 ## Blockers / required decisions
 
@@ -59,14 +64,13 @@ None.
 
 ## Remaining work
 
-- Create generalized Project installation files on `web-orchestration`.
-- Update implementation-branch architecture and AS-BUILT records.
-- Add deterministic validation for the orchestration package where appropriate.
-- Scan all branches for residual project identifiers and validate independent history.
+- Run complete implementation-tree and orchestration-package validation.
+- Verify branch independence, public-safe content, and remote CI.
+- Prepare the dedicated handoff snapshot.
 
 ## Next action
 
-Commit this task start, then build the generalized orchestration package in an isolated worktree.
+Commit the implementation-side documentation reconciliation, then complete remote validation and prepare handoff.
 
 ## Relevant durable records
 

@@ -6,7 +6,7 @@
 | --- | --- | --- |
 | `developer` | Active shared implementation and task-progress | Delegated OpenCode developer |
 | `main` | Exact implementation deliberately accepted by the human | Luna through guarded promotion after approval |
-| `web-orchestration` | Web-orchestrator-only persistent task context | Web orchestrator through connected GitHub MCP |
+| `web-orchestration` | Public-safe task context, routing memory, and generalized Project installation sources | Web orchestrator through connected GitHub MCP |
 
 ## Developer synchronization
 
@@ -53,4 +53,4 @@ Any conflict or unsafe ref movement aborts. The merge must have exactly two pare
 
 ## `web-orchestration`
 
-Its current tree contains only `web-orchestration-only/**`. It is not synchronized with implementation branches and is never a source of code or implementation truth.
+Its current tree contains only `web-orchestration-only/**`. It is not synchronized with implementation branches and is never a source of code or implementation truth. Its `chatgpt-project/` package is an installation source; private live Project state remains outside Git.
