@@ -2,7 +2,7 @@
 
 ## Trigger
 
-Use when implementation is needed but opencode-mcp is unavailable.
+Use when implementation is needed but connected GitHub bridge-control actions are unavailable.
 
 ## Procedure
 
@@ -10,4 +10,4 @@ Use when implementation is needed but opencode-mcp is unavailable.
 2. Establish task ID, start SHA, scope, records, checks, stop conditions, and response contract.
 3. Do not claim the task was sent or started.
 4. Preserve it in current chat context only as needed.
-5. When MCP-ON returns, reconcile decisions into task context, recheck remote state, update a stale brief, then delegate normally.
+5. When MCP-ON returns, reconcile decisions into task context, recheck remote state, update a stale brief, confirm there is no conflicting open control issue, then delegate normally.

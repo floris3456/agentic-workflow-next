@@ -2,7 +2,7 @@
 
 ## Trigger
 
-Use before selecting Sol, after a failed Luna approach, or when classifying an attempt.
+Use before every initial agent selection, before selecting Sol, after a failed Luna approach, or when classifying an attempt.
 
 ## Default
 
@@ -22,6 +22,12 @@ Do not count missing information, permissions, connector failure, poor task spec
 - Luna never promotes itself; there is no automatic tier after Sol.
 - The next independent task returns to Luna.
 
+## Bridge routing
+
+- Set the orchestrator-selected agent explicitly in the initial `start` command.
+- To change the existing task's route, prepare `route` on the same issue with a fresh UUID, the next sequence, required `arguments.agent` of `luna` or `sol`, and an optional public-safe `arguments.message`. Persist the pending envelope before posting it.
+- A correlated `succeeded` result confirms route-command handling, not implementation success. The developer or bridge never selects Sol independently.
+
 ## Persistence
 
-Update `web-orchestration-only/agent-routing/<task-id>.md` with date, ref, attempt count, route, reason, result, and retrospective. Keep developer diagnosis separate from orchestrator classification.
+Create `web-orchestration-only/agent-routing/<task-id>.md` when the initial default-Luna or exceptional-Sol route is selected. Record date, remote ref, attempt count, route, and reason before delegation, then add the start issue/command ref after exact readback. Append every later route change and retain result/retrospective. Keep developer and bridge diagnosis separate from orchestrator classification.

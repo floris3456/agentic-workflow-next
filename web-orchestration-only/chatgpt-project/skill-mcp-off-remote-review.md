@@ -12,4 +12,4 @@ Use when visible implementation must be reviewed without MCP connectors.
 4. Treat task records as navigation, not proof.
 5. Do not claim checks or diffs were verified when the public interface did not expose them.
 6. Record unresolved evidence gaps in the response or local reasoning; direct orchestration writes are unavailable.
-7. Do not pretend delegation or repository writes occurred.
+7. Do not pretend bridge commands, delegation, or repository writes occurred.

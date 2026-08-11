@@ -11,5 +11,5 @@ Use whenever exact repository evidence is needed in MCP-OFF mode.
 3. Use public file, commit, history, compare, raw, or API/web endpoints.
 4. Revisit exact evidence when uncertainty becomes material.
 5. Treat remote GitHub as authoritative over local notes or downloads.
-6. Do not substitute OpenCode, unrelated connectors, or an indexer.
+6. Do not substitute bridge/OpenCode reports, unrelated connectors, or an indexer for remote evidence.
 7. Label facts unresolved when public navigation cannot establish them.
