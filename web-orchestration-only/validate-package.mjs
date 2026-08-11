@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.join(root, "chatgpt-project");
+const bridgeProtocolRevision = "agentic-bridge/1";
 const failures = [];
 
 const requiredProjectFiles = [
@@ -203,8 +204,8 @@ for (const [file, placeholders] of placeholderCoverage) {
 
 const procedureTerms = new Map([
   ["skill-mcp-on-task-delegation.md", ["`start`", "expected", "<bridge-control-label>"]],
-  ["skill-mcp-on-delegation-recovery.md", ["`status`", "`indeterminate`", "marker_hash"]],
-  ["skill-mcp-on-task-review-and-steering.md", ["`steer`", "`permission.reply`", "`question.reply`"]],
+  ["skill-mcp-on-delegation-recovery.md", ["`status`", "`applying`", "`indeterminate`", "marker_hash"]],
+  ["skill-mcp-on-task-review-and-steering.md", ["`steer`", "`permission.reply`", "`question.reply`", "`abort`"]],
   ["skill-mcp-on-agent-routing-and-escalation.md", ["`route`"]],
   ["skill-mcp-on-synchronization-recovery.md", ["`sync.recover`"]],
   ["skill-mcp-on-finalization-review.md", ["`finalize`"]],
@@ -221,7 +222,7 @@ for (const [file, terms] of procedureTerms) {
 
 const templateTerms = new Map([
   ["task-context/TEMPLATE.md", [
-    "Continuity schema: agentic-bridge/1",
+    `Continuity schema: ${bridgeProtocolRevision}`,
     "Finalization handoff developer SHA:",
     "Human-approved promotion SHA:",
     "Human approval date/reference:",
@@ -268,7 +269,7 @@ if (instructions) {
       failures.push("Bridge command example must be a JSON object");
     } else {
       if (!hasExactKeys(envelope, ["protocol", "sequence", "command_id", "task_id", "kind", "arguments", "expected"])) failures.push("Bridge command example has incorrect envelope fields");
-      if (envelope.protocol !== "agentic-bridge/1") failures.push("Bridge command example has an incorrect protocol");
+      if (envelope.protocol !== bridgeProtocolRevision) failures.push("Bridge command example has an incorrect protocol");
       if (!Number.isSafeInteger(envelope.sequence) || envelope.sequence < 1) failures.push("Bridge command example has an invalid sequence");
       if (typeof envelope.command_id !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(envelope.command_id)) failures.push("Bridge command example has an invalid command UUID");
       if (typeof envelope.task_id !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(envelope.task_id)) failures.push("Bridge command example has an invalid task ID");
@@ -287,15 +288,31 @@ const sourceTerms = [
   ["ADR", "-FS-"].join(""),
 ];
 
-const staleTransportTerms = ["opencode-mcp", "jcodemunch", "create or continue the session", "inspect the delegated session conversation"];
+const staleTransportPatterns = [
+  [/\bopencode[\s._`*-]*mcp\b/i, "opencode-mcp"],
+  [/\bjcode[\s._`*-]*munch\b/i, "jcodemunch"],
+  [/\bcreate[\s_`*-]+or[\s_`*-]+continue[\s_`*-]+the[\s_`*-]+session\b/i, "create or continue the session"],
+  [/\binspect[\s_`*-]+the[\s_`*-]+delegated[\s_`*-]+session[\s_`*-]+conversation\b/i, "inspect the delegated session conversation"],
+];
+
+const unsafePolicyInversions = [
+  [/\b(?:bridge|opencode)\s+(?:reports?|output)\s+(?:is|are|becomes?)\s+authoritative\b/i, "bridge reports as authoritative evidence"],
+  [/\bdeveloper\s+push\s+(?:is|means|constitutes)\s+(?:human\s+)?acceptance\b/i, "developer push as human acceptance"],
+  [/\b(?:always|automatically|may|must|should)\s+retry\b[^.\n]{0,80}\bindeterminate\b/i, "automatic retry after indeterminate state"],
+  [/\b(?:may|can|should|must|always)\s+(?:send|store|persist|publish)\s+(?:secrets|credentials)\b/i, "persistence of secrets or credentials"],
+  [/\b(?:may|can|should|must|always)\s+promote\b[^.\n]{0,80}\bwithout\s+(?:explicit\s+)?human\s+approval\b/i, "promotion without human approval"],
+  [/\b(?:may|can|should|must|always)\s+(?:post|place)\s+commands?\s+in\s+(?:the\s+)?issue\s+body\b/i, "issue-body command publication"],
+];
 
 for (const [file, source] of texts) {
-  const text = source.toLowerCase();
   for (const term of sourceTerms) {
-    if (text.includes(term.toLowerCase())) failures.push(`${file} contains a source-project identifier`);
+    if (source.toLowerCase().includes(term.toLowerCase())) failures.push(`${file} contains a source-project identifier`);
   }
-  for (const term of staleTransportTerms) {
-    if (text.includes(term)) failures.push(`${file} contains stale direct-transport text: ${term}`);
+  for (const [pattern, label] of staleTransportPatterns) {
+    if (pattern.test(source)) failures.push(`${file} contains stale direct-transport text: ${label}`);
+  }
+  for (const [pattern, label] of unsafePolicyInversions) {
+    if (pattern.test(source)) failures.push(`${file} contains an unsafe policy inversion: ${label}`);
   }
 }
 
@@ -306,4 +323,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log(`Orchestration package validation passed: ${skills.length} Project Sources, package instructions, and ${requiredBranchFiles.length} continuity files.`);
+console.log(`Orchestration package validation passed: ${skills.length} Project Sources, package instructions, ${requiredBranchFiles.length} continuity files, bridge protocol ${bridgeProtocolRevision}.`);
