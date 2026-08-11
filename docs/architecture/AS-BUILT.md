@@ -1,6 +1,6 @@
 # AS-BUILT: repository workflow
 
-**Status:** Template baseline with implemented GitHub-mediated OpenCode bridge; `AGENTIC-BRIDGE-001` web-package migration remains active
+**Status:** Template baseline with implemented GitHub-mediated OpenCode bridge and migrated web-orchestration installation package
 
 ## Purpose
 
@@ -11,8 +11,9 @@ This repository is a reusable workflow template rather than a product implementa
 - `developer` is the active implementation branch and is pushed after every commit.
 - `main` is advanced only by the guarded exact-SHA promotion script after human approval.
 - `web-orchestration` is an independent root history containing only `web-orchestration-only/**`.
-- `web-orchestration-only/chatgpt-project/` contains a generalized public-safe Project instruction file and shared, MCP-ON, and MCP-OFF procedure files. It is an installation source, not private live Project state.
-- The orchestration branch validates its required Project files, trigger references, repository placeholder, and residual source identifiers through `web-orchestration-only/validate-package.mjs`.
+- `web-orchestration-only/chatgpt-project/` contains a generalized public-safe Project instruction file and shared, MCP-ON, and MCP-OFF procedure files. MCP-ON reaches local OpenCode indirectly through authenticated GitHub issue commands and the outbound bridge, not a direct Project OpenCode tool. It is an installation source, not private live Project state.
+- Normal web-orchestrator writes are limited to public-safe runtime continuity under `web-orchestration-only/task-context/**` and `web-orchestration-only/agent-routing/**`; Project instructions, skills, templates, and validation remain read-only unless the human commissions agent-system maintenance.
+- The orchestration branch validator checks its exact source inventory and file types, grouped trigger/reference structure, placeholder coverage, bridge command example, continuity fields, UTF-8, and stale direct-transport/source-project residue through `web-orchestration-only/validate-package.mjs`.
 - `small-developer` is the default Luna route; `large-developer` is the exceptional Sol route selected by the web orchestrator.
 - Local agents deny subagent/task launches and do not perform orchestration, acceptance, or independent review.
 - `tools/opencode-bridge/` implements the pinned OpenCode `1.18.16` HTTP/SSE/PTY transports, durable recovery/state, GitHub App conditional polling/outbox, strict issue protocol, public projection, default-deny operation policy, and foreground service/configuration CLI. `contracts/opencode-bridge/` records its exact 188-operation compatibility boundary and public command/result protocol.

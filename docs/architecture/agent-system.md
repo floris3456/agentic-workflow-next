@@ -10,7 +10,7 @@ The system separates human acceptance, web orchestration, remote evidence, and l
 2. Remote Git is authoritative repository evidence.
 3. The web orchestrator independently reasons about and reviews that evidence.
 4. Developer responses and task-progress are navigation and developer reasoning, not proof.
-5. jCodeMunch is scouting context only.
+5. The optional symbol scout is scouting context only.
 
 ## Web orchestrator
 
@@ -18,9 +18,9 @@ The web orchestrator is the primary reasoning, task-design, routing, steering, a
 
 In MCP-ON mode it uses:
 
-- an authenticated native GitHub integration for exact remote evidence, narrow `web-orchestration` writes, and public-safe bridge-control issues;
+- an authenticated native GitHub integration for exact remote evidence, writes limited to `task-context/**` and `agent-routing/**`, and public-safe bridge-control issue actions;
 - an optional symbol-scouting integration for code context; and
-- the outbound local GitHub App bridge to reach OpenCode indirectly for implementation delegation, steering, and recovery.
+- the outbound local GitHub App bridge to reach OpenCode indirectly for implementation delegation, steering, recovery, finalization, and guarded promotion.
 
 In MCP-OFF mode it uses the public GitHub website for repository inspection and cannot pretend delegation or direct orchestration writes occurred.
 
@@ -54,7 +54,7 @@ The configured symbol scout is non-authoritative context. `.jcodemunch.jsonc` us
 - The local developer's task-progress file survives compaction, reconnects, multiple commits, steering, and Luna-to-Sol transition.
 - AS-BUILT is live implementation memory and durable reality.
 - Deviation records are live intended-versus-actual truth.
-- The web orchestrator keeps concise task context and routing records on `web-orchestration` when its authenticated write capability is available.
+- The web orchestrator keeps concise task context, pre-publication command envelopes, command/result refs, human approval boundaries, and routing records under the two runtime-continuity directories on `web-orchestration` when its authenticated write capability is available.
 
 ## Normative homes
 

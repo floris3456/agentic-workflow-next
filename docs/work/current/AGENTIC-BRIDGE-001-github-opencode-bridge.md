@@ -6,7 +6,7 @@
 
 ## Status
 
-Developer-side bridge implementation and validation complete locally; push and independent `web-orchestration` package migration remain.
+Bridge implementation and the independent Project-package migration are pushed; durable record reconciliation and the dedicated developer handoff snapshot remain.
 
 ## Task-start developer SHA
 
@@ -1538,13 +1538,13 @@ Implement and validate the GitHub-mediated OpenCode bridge and migrate the gener
 
 ## Current position
 
-The exact task brief, research, and transport/durability core are pushed through `6ce9ef8d12810dd79eb3af8269d98fe1f572ce25`. The complete developer-side bridge is implemented and validated locally on top of that synchronized commit: recovery, GitHub App control plane, strict command execution, public projection, foreground configuration/service CLI, bootstrap/TUI helpers, guarded template-branch repair, contracts, documentation, and CI/repository validation. The next independent phase is the `web-orchestration` Project-package migration after this developer implementation commit is pushed.
+The complete developer-side bridge is implemented, validated, and pushed at `6e1d2f8a205b5b68ae2ae327a101f19f1e38d730`. The independent generalized Project package is migrated and pushed at `f1f7f98372f5bd28073b02fca3e9d5d925ccd2ab` without merging histories. The active developer phase is final durable-record reconciliation followed by the required task-progress-only handoff snapshot.
 
 ## Observed
 
-- The synchronized implementation base for this slice is `origin/developer` at `6ce9ef8d12810dd79eb3af8269d98fe1f572ce25`.
+- The complete bridge implementation commit is on `origin/developer` at `6e1d2f8a205b5b68ae2ae327a101f19f1e38d730`; local `developer` matched it `0 0` before final record reconciliation.
 - `origin/main` is `9d9b5d8f54dfa052b7c745e9644ae1c3ddc40c0e`.
-- `origin/web-orchestration` is `6c7666bfd754704345f60ecace9d085d95ad6b48`.
+- The independent migrated package is on `origin/web-orchestration` at `f1f7f98372f5bd28073b02fca3e9d5d925ccd2ab`; local `web-orchestration` matched it `0 0` and clean after push.
 - `./scripts/bootstrap-agent-workflow.sh --check` reports that tracked hooks are active.
 - No other worktree or active task record was present.
 - npm and upstream tag evidence identify OpenCode and `@opencode-ai/sdk` `1.18.16` as current; the release tag is `a3647eb025c7615159d417dcc49fc39fdaeba65b`.
@@ -1564,6 +1564,9 @@ The exact task brief, research, and transport/durability core are pushed through
 - High-level commands cover start/status/steer/route, permission/question replies, abort, event pages, PTY lifecycle/I/O, finalization, recovery, guarded promotion, and generic operation-ID requests. Generic mutations, local-secret operations, PTY, and promotion are default-denied independently.
 - The foreground service uses strict mode-restricted operator config, unique per-project identity/port/state/App mapping, a single-process lock, heartbeat/status metadata, graceful signals, loopback OpenCode, and separate normal-TUI attach.
 - The template initializer uses a hook-authorized exact `force-with-lease` only for complete-history, clean synchronized one-commit unrelated roots with matching generated metadata and no active task; correct ancestry no-ops and shallow, established, or ambiguous history is refused.
+- The migrated Project package keeps its existing MCP-ON/MCP-OFF/shared trigger structure, removes the direct Project OpenCode transport, and uses connected/native GitHub for exact evidence, narrow runtime-continuity writes, and serialized issue commands to the outbound bridge.
+- Bridge command continuity is written before issue publication: exact envelopes remain pending through ambiguous/pre-ledger/indeterminate paths, resolved commands retain command/result refs, human promotion approval has a distinct exact-SHA record, and bridge reports remain non-authoritative.
+- The web-package validator now enforces exact source shape, grouped trigger/reference structure, placeholder counts, a parsed strict command example, continuity fields, regular files, valid UTF-8, and stale direct-transport/source-project residue.
 
 ## Interpretation
 
@@ -1583,6 +1586,10 @@ The pinned manifest plus wildcard extension prepares every classified HTTP opera
 - Final secret-path review found that an upstream local-secret failure could echo a resolved value in public error detail. The detailed failure is now retained only in local durable state while GitHub receives fixed non-sensitive text.
 - Final transport review found that independently normalizing stream chunks could misread a CRLF split at the network boundary as an SSE event separator. The parser now carries trailing carriage-return state across chunks and the stream test exercises split multiline framing.
 - Final routing review found that OpenCode accepts relative caller-supplied directory/location query routing, so an input such as `..` could leave the configured project without triggering the absolute-path guard. Generic transport arguments are now shape-checked and directory/workspace/location routing is exclusively injected by the local bridge.
+- Web-package review found that direct-session retry wording could not safely express issue-command ambiguity. The migrated procedures persist each exact UUID/sequence envelope before publication, distinguish pre-ledger rejection from accepted terminal states, and never automatically retry an indeterminate side effect.
+- Web-package review also found that substantive orchestrator approval was insufficient continuity for guarded promotion. The task-context template now records finalization, explicit human-approved promotion, and verified post-promotion SHAs separately.
+- The active API skill registry did not expose the checkout's three required repository-local skills. Their exact tracked `SKILL.md` files were read and followed directly; the operator-only deviation log records the unavailable native-discovery path.
+- Final record validation initially stopped at `tsc: command not found` because cross-branch generated-artifact cleanup had also removed ignored package dependencies. `npm ci` restored the exact lockfile set with zero reported vulnerabilities, and the full rerun passed.
 
 ## Changed approach
 
@@ -1591,6 +1598,8 @@ The pinned manifest plus wildcard extension prepares every classified HTTP opera
 - The operation inventory is corrected from three to four SSE operations, and `v2.fs.read` receives an explicit wildcard argument because upstream OpenAPI/SDK generation does not model that route suffix.
 - Template ancestry repair uses a tree-preserving `commit-tree` child plus a narrowly recognized pre-push authorization marker rather than merging unrelated generated roots; this leaves the intended developer tree exact and keeps `web-orchestration` unrelated.
 - Core bridge operation remains a portable foreground CLI. OS-specific service files were not added because they are optional convenience rather than a cross-platform correctness requirement.
+- The Project migration preserves the established mode/skill trigger layout rather than adding a parallel bridge skill set; MCP-ON is redefined around connected/native GitHub plus the outbound issue bridge, while the symbol scout remains optional.
+- Package validation was expanded in place and exercised by an external mutation-fixture matrix rather than adding test-only artifacts to the independent branch.
 
 ## Checks
 
@@ -1612,20 +1621,24 @@ The pinned manifest plus wildcard extension prepares every classified HTTP opera
 - Three disposable-Git tests pass for fresh unrelated-root repair/tree identity, repeat no-op, and refusal of shallow, established, or generated-metadata-mismatched history.
 - `node scripts/validate-opencode-bridge.mjs`, the credential-free App registration URL command, `git diff --check`, and full `./scripts/validate-repository.sh` pass.
 - CI now pins exact Node `22.13.0`, installs the nested lockfile, and runs the same repository validation without a self-hosted runner.
+- `node web-orchestration-only/validate-package.mjs` passed on the migrated `web-orchestration` tree with 19 Project Sources, package instructions, and five continuity files.
+- The external `/tmp/opencode/test-web-validator.mjs` matrix passed 23/23 valid and malformed-package cases, including missing/blank/wrong-type files, symlinks, extra or misplaced Sources, broken references/placeholders/triggers, invalid command markers, invalid UTF-8, stale static transport text, and allowed runtime history.
+- `git diff --check` and repeated independent protocol, package-coherence, and validator reviews found no remaining material tracked-package issue before `f1f7f98372f5bd28073b02fca3e9d5d925ccd2ab` was pushed.
+- Final remote verification returned `0 0` for both local/remote branch pairs and exact refs `developer=6e1d2f8a205b5b68ae2ae327a101f19f1e38d730`, `web-orchestration=f1f7f98372f5bd28073b02fca3e9d5d925ccd2ab`, and unchanged `main=9d9b5d8f54dfa052b7c745e9644ae1c3ddc40c0e` before this record reconciliation.
+- After restoring ignored dependencies, the final developer-side `./scripts/validate-repository.sh` rerun passed structure, links, agent system, research, bridge contracts, 42/42 bridge tests, three disposable-Git tests, and hook checks.
 
 ## Blockers / required decisions
 
-No developer implementation blocker. Live GitHub App registration/installation-token access and native ChatGPT GitHub write-action validation require human-owned credentials/account interaction unavailable here. Deterministic App/REST/control/workflow doubles cover the local path, and the operator-only `/Projects/Active/deviations.md` record captures the residual live exercise without claiming it passed.
+No remaining implementation or package blocker. Live GitHub App registration/installation-token access and native ChatGPT GitHub write-action validation require human-owned credentials/account interaction unavailable here. Deterministic App/REST/control/workflow doubles cover the local path, and the operator-only `/Projects/Active/deviations.md` record captures the residual live exercise without claiming it passed.
 
 ## Remaining work
 
-- Commit and immediately push the complete developer implementation and current records.
-- Independently migrate and validate the generalized Project package on `web-orchestration` without merging histories.
-- Return to `developer`, record both exact pushed refs, and create the dedicated pushed handoff snapshot.
+- Commit and immediately push the reconciled developer records.
+- Update task-progress to the completed handoff state, then create and push the dedicated task-progress-only snapshot.
 
 ## Next action
 
-Commit and push the validated developer bridge, then begin the separately authorized `web-orchestration` migration.
+Validate, commit, and push final record reconciliation, then create and push the dedicated task-progress-only handoff snapshot.
 
 ## Relevant durable records
 
