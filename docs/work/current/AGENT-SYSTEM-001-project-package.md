@@ -6,7 +6,7 @@ AGENT-SYSTEM-001
 
 ## Status
 
-Implementation complete; validation pending
+Ready for independent review
 
 ## Task-start developer SHA
 
@@ -26,7 +26,7 @@ Generalize the reusable Project instructions and orchestration procedures, persi
 
 ## Current position
 
-The generalized Project instruction and nineteen procedure files are published atomically under the orchestration namespace. Implementation-side architecture and AS-BUILT records now distinguish the public installation source from private live Project state.
+The generalized Project instruction and nineteen procedure files are published atomically under the orchestration namespace. Implementation-side architecture and AS-BUILT records distinguish the public installation source from private live Project state, and migration-only validator archaeology is removed on `developer`.
 
 ## Observed
 
@@ -37,6 +37,7 @@ The generalized Project instruction and nineteen procedure files are published a
 - The orchestration package validator reports all 21 required Project files and trigger references present.
 - Targeted scans report no source-project identifiers on any remote branch.
 - A broad scan found migration-only deleted-path assertions in the generic agent-system validator; those named checks were removed because they were historical archaeology rather than reusable invariants.
+- `main` remains at its initial accepted SHA and therefore retains those validator assertions until an exact reviewed `developer` SHA is explicitly approved and promoted.
 
 ## Interpretation
 
@@ -59,20 +60,23 @@ None.
 - Remote orchestration update completed at `6c7666bfd754704345f60ecace9d085d95ad6b48`.
 - All three remote branches passed targeted residual-identifier scans.
 - Remote orchestration-package validation passed from an archive of the published branch.
+- Complete implementation validation and GitHub CI passed at `a9501bf9cefcbaee562bfbf17965b0e838ece709`.
+- The orchestration branch remains an independent history containing only `web-orchestration-only/**`.
+- Secret-shaped scans of the published Project package found no matches.
+- GitHub still reports a public template repository with default branch `main`.
 
 ## Blockers / required decisions
 
-None.
+Independent review and exact-SHA human acceptance are required before `developer` can be promoted to `main`.
 
 ## Remaining work
 
-- Run complete implementation-tree and orchestration-package validation.
-- Verify branch independence, public-safe content, and remote CI.
-- Prepare the dedicated handoff snapshot.
+- Independent review of `45794a60c7980408673854cbe22aaf17cf7dff3e..current handoff` on `developer` and `e2368507c7e69481c0f2a2b85a509783ffffc642..6c7666bfd754704345f60ecace9d085d95ad6b48` on `web-orchestration`.
+- Substantive approval, finalization, exact-SHA human acceptance, and guarded promotion to `main`.
 
 ## Next action
 
-Commit the implementation-side documentation reconciliation, then complete remote validation and prepare handoff.
+Create and push the dedicated handoff snapshot for independent review.
 
 ## Relevant durable records
 
