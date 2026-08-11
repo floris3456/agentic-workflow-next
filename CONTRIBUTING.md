@@ -6,9 +6,11 @@ This repository uses a serialized, human-directed implementation workflow. It is
 
 1. Begin from a clean checkout whose `developer` branch matches `origin/developer`.
 2. Run `./scripts/bootstrap-agent-workflow.sh --check`; run it without `--check` once per clone to activate tracked hooks.
-3. Read `AGENTS.md` and load the skills triggered by the task.
-4. Use the stable task ID supplied by the web orchestrator.
-5. Create `docs/work/current/<task-id>-<slug>.md` from the task-progress template before substantive work.
+3. On a newly generated all-branch repository, run `./scripts/initialize-template-branches.sh` before any implementation; never use it to rewrite established unrelated history.
+4. If using GitHub-mediated delegation, run `./scripts/bootstrap-opencode-bridge.sh --check --config <operator-config>`.
+5. Read `AGENTS.md` and load the skills triggered by the task.
+6. Use the stable task ID supplied by the web orchestrator.
+7. Create `docs/work/current/<task-id>-<slug>.md` from the task-progress template before substantive work.
 
 ## During implementation
 
@@ -60,4 +62,5 @@ Promotion is mechanical and is not a normal implementation task. Do not create o
 
 ```bash
 ./scripts/validate-repository.sh
+./scripts/validate-opencode-bridge.sh
 ```

@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/agentic-workflow/opencode-bridge/command.schema.json",
+  "title": "Agentic bridge command envelope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["protocol", "sequence", "command_id", "task_id", "kind", "arguments"],
+  "properties": {
+    "protocol": { "const": "agentic-bridge/1" },
+    "sequence": { "type": "integer", "minimum": 1 },
+    "command_id": {
+      "type": "string",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+    },
+    "task_id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" },
+    "kind": {
+      "enum": [
+        "start", "status", "steer", "route", "permission.reply", "question.reply", "abort",
+        "events.page", "pty.create", "pty.input", "pty.read", "pty.resize", "pty.remove",
+        "finalize", "sync.recover", "promotion.apply", "opencode.request"
+      ]
+    },
+    "arguments": { "type": "object" },
+    "expected": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "developer_sha": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+        "ref": { "type": "string", "minLength": 1, "maxLength": 255 }
+      }
+    }
+  }
+}

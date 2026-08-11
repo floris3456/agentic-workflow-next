@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "bin": {
+    "opencode-bridge": "dist/src/cli.js"
+  },
   "engines": {
     "node": ">=22.13.0"
   },
@@ -10,7 +13,8 @@
     "build": "tsc -p tsconfig.json",
     "test": "npm run build && node --test --test-concurrency=1 dist/tests/*.test.js",
     "check": "npm run build && node --test --test-concurrency=1 dist/tests/*.test.js",
-    "generate-manifest": "node scripts/generate-manifest.mjs"
+    "generate-manifest": "node scripts/generate-manifest.mjs",
+    "start": "node dist/src/cli.js run"
   },
   "dependencies": {
     "@opencode-ai/sdk": "1.18.16"

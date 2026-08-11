@@ -18,9 +18,9 @@ The web orchestrator is the primary reasoning, task-design, routing, steering, a
 
 In MCP-ON mode it uses:
 
-- an authenticated GitHub integration for exact remote evidence and narrow `web-orchestration` writes;
+- an authenticated native GitHub integration for exact remote evidence, narrow `web-orchestration` writes, and public-safe bridge-control issues;
 - an optional symbol-scouting integration for code context; and
-- an OpenCode integration for implementation delegation.
+- the outbound local GitHub App bridge to reach OpenCode indirectly for implementation delegation, steering, and recovery.
 
 In MCP-OFF mode it uses the public GitHub website for repository inspection and cannot pretend delegation or direct orchestration writes occurred.
 
@@ -32,6 +32,8 @@ The current approved implementation agents are:
 - `large-developer`: exceptional path, configured-provider GPT 5.6 Sol at `high` reasoning effort.
 
 The web orchestrator chooses the agent. Local developers do not launch subagents, review their own work, select escalation, or accept changes.
+
+The bridge is transport and local durability, not a new authority. It maps public task aliases to private OpenCode sessions, projects bounded status, and invokes Luna/Sol against the same loopback server a human can attach to with the normal TUI. Direct GitHub inspection remains the proof route.
 
 Routing policy is web-side and intentionally is not frozen through a validator that counts agent files.
 
@@ -65,6 +67,7 @@ The configured symbol scout is non-authoritative context. `.jcodemunch.jsonc` us
 | Task file and response shapes | `docs/work/templates/` |
 | Branch and human acceptance procedure | `docs/architecture/branch-workflow.md` |
 | Generalized web installation source | `web-orchestration-only/chatgpt-project/` on `web-orchestration` |
+| GitHub-mediated OpenCode transport | `docs/architecture/opencode-bridge.md`, `contracts/opencode-bridge/`, and `tools/opencode-bridge/` |
 | Installed Project state and private runtime configuration | Orchestration environment, outside Git |
 | Public Git persistence | `SECURITY.md` |
 | Current architecture | this document and focused architecture documents |

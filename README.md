@@ -8,7 +8,8 @@ This repository is a reusable template for human-controlled, web-orchestrated so
 2. Read [`docs/architecture/agent-system.md`](docs/architecture/agent-system.md) for authority boundaries.
 3. Read [`docs/architecture/branch-workflow.md`](docs/architecture/branch-workflow.md) for branch semantics.
 4. Read [`docs/work/README.md`](docs/work/README.md) before starting delegated work.
-5. Use [`docs/architecture/repository-layout.md`](docs/architecture/repository-layout.md) to place new files.
+5. Read [`docs/architecture/opencode-bridge.md`](docs/architecture/opencode-bridge.md) for the GitHub-mediated implementation transport.
+6. Use [`docs/architecture/repository-layout.md`](docs/architecture/repository-layout.md) to place new files.
 
 ## Three-branch model
 
@@ -20,7 +21,9 @@ The workflow deliberately uses three branches with different authorities:
 
 The web orchestrator designs bounded tasks, routes the normal Luna or exceptional Sol developer, steers work, and independently reviews exact remote ranges. OpenCode developers implement only the delegated task. The human remains the consequential acceptance authority.
 
-Consumers who need the complete workflow should create from this template with all branches included. The independent `web-orchestration` branch is intentional and is not folded into `main` for convenience. Install and customize its `web-orchestration-only/chatgpt-project/` package in the target ChatGPT Project, then run `./scripts/bootstrap-agent-workflow.sh` on a local `developer` checkout to activate the tracked hooks.
+Consumers who need the complete workflow should create from this template with all branches included. GitHub can generate included branches with unrelated histories, so first run `./scripts/initialize-template-branches.sh` from a clean `developer` checkout; it safely no-ops for correct ancestry and refuses established ambiguous histories. The independent `web-orchestration` branch is intentional and is never repaired or folded into `main`. Install and customize its `web-orchestration-only/chatgpt-project/` package in the target ChatGPT Project, then run `./scripts/bootstrap-agent-workflow.sh` to activate tracked hooks.
+
+The normal web-to-local implementation path uses ChatGPT's native GitHub integration, a dedicated public-safe control issue, and the outbound local bridge under [`tools/opencode-bridge/`](tools/opencode-bridge/). It does not require a custom OpenCode MCP, inbound webhook, tunnel, or self-hosted runner. Follow the component [setup guide](tools/opencode-bridge/README.md), then use `./scripts/bootstrap-opencode-bridge.sh`, `./scripts/opencode-bridge-status.sh`, and `./scripts/opencode-attach.sh`.
 
 ## Records and evidence
 
@@ -36,6 +39,7 @@ Anything committed must be safe for public disclosure. See [`SECURITY.md`](SECUR
 
 ```bash
 ./scripts/bootstrap-agent-workflow.sh
+./scripts/bootstrap-opencode-bridge.sh --check --config ~/.config/agentic-workflow/opencode-bridge.json
 ./scripts/validate-repository.sh
 ```
 

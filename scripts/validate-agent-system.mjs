@@ -113,7 +113,9 @@ for (const file of [
 for (const file of [
   ".githooks/pre-commit", ".githooks/pre-merge-commit", ".githooks/post-commit", ".githooks/pre-push",
   "scripts/bootstrap-agent-workflow.sh", "scripts/recover-remote-sync.sh",
-  "scripts/promote-developer-to-main.sh", "scripts/validate-repository.sh",
+  "scripts/promote-developer-to-main.sh", "scripts/initialize-template-branches.sh",
+  "scripts/bootstrap-opencode-bridge.sh", "scripts/opencode-bridge-status.sh",
+  "scripts/opencode-attach.sh", "scripts/validate-opencode-bridge.sh", "scripts/validate-repository.sh",
 ]) {
   assert(exists(file), `Missing required executable: ${file}`);
   if (exists(file) && process.platform !== "win32") {

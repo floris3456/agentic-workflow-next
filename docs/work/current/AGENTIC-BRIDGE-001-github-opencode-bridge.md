@@ -6,7 +6,7 @@
 
 ## Status
 
-Primary-source verification complete. The current OpenCode contract and GitHub transport constraints are established; manifest-driven bridge implementation is next.
+Developer-side bridge implementation and validation complete locally; push and independent `web-orchestration` package migration remain.
 
 ## Task-start developer SHA
 
@@ -1538,11 +1538,11 @@ Implement and validate the GitHub-mediated OpenCode bridge and migrate the gener
 
 ## Current position
 
-The exact task brief and primary-source findings are pushed through `37ab46e5fdc83077812c8feb11a381a5c1f68866`. The first implementation slice provides the pinned 188-operation manifest, generic HTTP transport, explicit SSE and PTY adapters, compatibility checks, and durable SQLite state with deterministic tests. The GitHub control service and recovery coordinator remain next.
+The exact task brief, research, and transport/durability core are pushed through `6ce9ef8d12810dd79eb3af8269d98fe1f572ce25`. The complete developer-side bridge is implemented and validated locally on top of that synchronized commit: recovery, GitHub App control plane, strict command execution, public projection, foreground configuration/service CLI, bootstrap/TUI helpers, guarded template-branch repair, contracts, documentation, and CI/repository validation. The next independent phase is the `web-orchestration` Project-package migration after this developer implementation commit is pushed.
 
 ## Observed
 
-- The synchronized implementation base for this slice is `origin/developer` at `37ab46e5fdc83077812c8feb11a381a5c1f68866`.
+- The synchronized implementation base for this slice is `origin/developer` at `6ce9ef8d12810dd79eb3af8269d98fe1f572ce25`.
 - `origin/main` is `9d9b5d8f54dfa052b7c745e9644ae1c3ddc40c0e`.
 - `origin/web-orchestration` is `6c7666bfd754704345f60ecace9d085d95ad6b48`.
 - `./scripts/bootstrap-agent-workflow.sh --check` reports that tracked hooks are active.
@@ -1557,24 +1557,40 @@ The exact task brief and primary-source findings are pushed through `37ab46e5fdc
 - Correctly authorized conditional GETs returning `304` do not consume primary rate limit, though GitHub still recommends webhooks over polling generally.
 - GitHub continues to document that all-branch template generation creates unrelated branch histories.
 - Current OpenAI documentation confirms connected apps can have write actions when enabled, but available GitHub action details and a live ChatGPT account cannot be exercised from this environment.
+- GitHub control uses a strict hidden `agentic-bridge/1` envelope, exact configured author allowlist plus trusted repository association, one open serialized task issue, and durable UUID/sequence handling.
+- The App token provider signs short-lived JWTs, requests a one-repository token downscoped to Issues write and Contents read, rejects broader/insufficient returned permissions, and refreshes automatically.
+- Conditional issue/comment polling persists ETags, validates pagination origin/loops, adapts between active and idle intervals, and honors primary/secondary retry timing. GitHub writes are paced in strict durable FIFO order so a retry cannot be overtaken by newer status labels.
+- Public projection assigns globally unique task-owned aliases to private session/PTY/permission/question/message/workspace/event IDs including embedded text and object keys, rejects cross-task alias resolution plus raw IDs/absolute paths/literal secrets/unknown or malformed transport fields, prevents generic directory/workspace/location rerouting, resolves local `secret_ref` files only for explicit local-secret operations, redacts/bounds output, and retains raw results and sensitive failure detail locally.
+- High-level commands cover start/status/steer/route, permission/question replies, abort, event pages, PTY lifecycle/I/O, finalization, recovery, guarded promotion, and generic operation-ID requests. Generic mutations, local-secret operations, PTY, and promotion are default-denied independently.
+- The foreground service uses strict mode-restricted operator config, unique per-project identity/port/state/App mapping, a single-process lock, heartbeat/status metadata, graceful signals, loopback OpenCode, and separate normal-TUI attach.
+- The template initializer uses a hook-authorized exact `force-with-lease` only for complete-history, clean synchronized one-commit unrelated roots with matching generated metadata and no active task; correct ancestry no-ops and shallow, established, or ambiguous history is refused.
 
 ## Interpretation
 
-The pinned manifest plus wildcard extension prepares every classified HTTP operation while explicit adapters handle all released SSE and PTY WebSocket transports. Commands with the same task sequence but a different UUID conflict without another side effect, and an interrupted `applying` command remains non-reissuable until reconciled. Recovery should combine legacy live events, direct durable session replay, sync history, deduplication, and canonical reconciliation without a capture plugin. GitHub polling remains the required outbound-only exception to the general webhook preference and must be conditional, serial, adaptive, and backoff-aware.
+The pinned manifest plus wildcard extension prepares every classified HTTP operation while explicit adapters handle all released SSE and PTY WebSocket transports. Recovery now combines legacy live events, direct durable session replay, sync history, deduplication, and canonical reconciliation without a capture plugin. Commands with the same task sequence but a different UUID conflict without another side effect; a command interrupted while applying becomes terminally indeterminate rather than being guessed or reissued. The bridge reports control/developer state only; remote GitHub inspection remains independent evidence. Exact-SHA promotion remains human-authorized because web policy defaults it off, the envelope must bind one exact synchronized SHA, and the existing guarded script independently verifies the operation.
 
 ## Attempts
 
-- The mandatory first creation attempt at `/Projects/Active/deviations.md` failed because that absolute parent is unavailable in this runtime; the operator-side record was created at the actual workspace path `/home/bliss/Projects/Active/deviations.md`. Full details remain outside Git in that log.
-- The installed OpenCode CLI was `1.18.15`; direct `npx` reused an incomplete package without its postinstall binary. An isolated `1.18.16` package was installed under `/tmp/opencode`, its documented postinstall was run explicitly, and that binary supplied live contract evidence.
+- The mandatory first creation attempt at `/Projects/Active/deviations.md` failed because that absolute parent is unavailable in this runtime; the operator-side record was created beside the active workspace, outside every repository. Full details remain outside Git in that log.
+- The installed OpenCode CLI was `1.18.15`; direct `npx` reused an incomplete package without its postinstall binary. An isolated temporary `1.18.16` package was installed outside the repository, its documented postinstall was run explicitly, and that binary supplied live contract evidence.
 - Initial strict compilation exposed missing Node type activation and WebSocket structural typing defects; both were corrected without weakening compiler options.
 - The first test command compiled but Node treated `dist/tests` as a module path. Restricting discovery to emitted `dist/tests/*.test.js` files made execution deterministic.
 - Two early real-server harness wrappers timed out during unbounded readiness/cleanup handling. A bounded probe and forced temporary-process cleanup isolated the harness issue; the same compiled client then passed the live compatibility gate.
+- A first retry-after outbox test mixed a synthetic outbox clock with the GitHub client's real clock, producing a one-second assertion skew. Injecting the same clock into both components made the deterministic test model the production default correctly.
+- Security review found that an untrusted commenter could pre-post a predictable plain dedupe marker. Marker detection now requires the configured GitHub App bot author, and an adversarial test proves another author cannot suppress delivery.
+- Status-label retries could otherwise be overtaken by newer outbox items and later regress the visible state. The outbox now preserves strict FIFO ordering across retry delays.
+- Final multi-task review found that aliases were globally keyed but numbered per task, creating a second-task collision and allowing generic cross-task resolution. Alias numbering is now global and task-bound alias resolution fails closed; inline private IDs are also aliased before publication.
+- Final secret-path review found that an upstream local-secret failure could echo a resolved value in public error detail. The detailed failure is now retained only in local durable state while GitHub receives fixed non-sensitive text.
+- Final transport review found that independently normalizing stream chunks could misread a CRLF split at the network boundary as an SSE event separator. The parser now carries trailing carriage-return state across chunks and the stream test exercises split multiline framing.
+- Final routing review found that OpenCode accepts relative caller-supplied directory/location query routing, so an input such as `..` could leave the configured project without triggering the absolute-path guard. Generic transport arguments are now shape-checked and directory/workspace/location routing is exclusively injected by the local bridge.
 
 ## Changed approach
 
-- Operator-side references to `/Projects/Active/deviations.md` and the adjacent progress file map to `/home/bliss/Projects/Active/` in this runtime. Repository paths and intended implementation scope are unchanged.
+- Operator-side references to `/Projects/Active/deviations.md` and the adjacent progress file map to the active workspace outside the repository in this runtime. Repository paths and intended implementation scope are unchanged.
 - Durable recovery will additionally use the current per-session v2 stream/history APIs rather than relying only on the context package's legacy SSE plus project-wide sync-history route.
 - The operation inventory is corrected from three to four SSE operations, and `v2.fs.read` receives an explicit wildcard argument because upstream OpenAPI/SDK generation does not model that route suffix.
+- Template ancestry repair uses a tree-preserving `commit-tree` child plus a narrowly recognized pre-push authorization marker rather than merging unrelated generated roots; this leaves the intended developer tree exact and keeps `web-orchestration` unrelated.
+- Core bridge operation remains a portable foreground CLI. OS-specific service files were not added because they are optional convenience rather than a cross-platform correctness requirement.
 
 ## Checks
 
@@ -1587,26 +1603,29 @@ The pinned manifest plus wildcard extension prepares every classified HTTP opera
 - Two authenticated live `/doc` captures from separate server working directories produced the same SHA-256 and 188-operation inventory.
 - OpenCode source inspection confirmed legacy SSE emits payload IDs only inside JSON, PTY uses short-lived single-use tickets plus a cursor control frame, and session v2 offers durable sequence-based replay.
 - Current official GitHub documentation confirmed App permission/token behavior, ETags/304s, REST API versioning, template branch ancestry, and public self-hosted-runner risk.
-- `node scripts/generate-manifest.mjs --openapi /tmp/opencode/opencode-1.18.16-openapi.json --output ../../contracts/opencode-bridge/operation-manifest.json` wrote 188 operations with the expected hash.
+- `node scripts/generate-manifest.mjs --openapi <temporary-openapi.json> --output ../../contracts/opencode-bridge/operation-manifest.json` wrote 188 operations with the expected hash.
 - `npm install` installed the exact lockfile dependency set with zero reported vulnerabilities.
-- `npm test` compiles under strict TypeScript and passes 21/21 deterministic contract, HTTP, SSE, PTY, timeout, restart, idempotency, durability, outbox, alias, and paging tests.
-- The emitted 21-test suite also passes under the exact declared minimum Node `22.13.0`; that release prints its expected upstream `node:sqlite` experimental warning.
+- `npm test` compiles under strict TypeScript and passes 42/42 deterministic contract, HTTP, SSE, PTY, recovery, durability, App auth, polling, protocol, projection, policy, outbox, workflow, promotion-transport, restart, and security tests.
+- The emitted 42-test suite also passes under the exact declared minimum Node `22.13.0`; that release prints its expected upstream `node:sqlite` experimental warning.
 - A bounded authenticated loopback integration run against the isolated OpenCode `1.18.16` binary returned healthy version `1.18.16`, the expected OpenAPI hash, 188 operations, and `compatible: true`.
+- The final real loopback run also completed an authenticated `project.current` read through the compiled client.
+- Three disposable-Git tests pass for fresh unrelated-root repair/tree identity, repeat no-op, and refusal of shallow, established, or generated-metadata-mismatched history.
+- `node scripts/validate-opencode-bridge.mjs`, the credential-free App registration URL command, `git diff --check`, and full `./scripts/validate-repository.sh` pass.
+- CI now pins exact Node `22.13.0`, installs the nested lockfile, and runs the same repository validation without a self-hosted runner.
 
 ## Blockers / required decisions
 
-No implementation blocker. Live GitHub App and native ChatGPT action validation require human-owned credentials/account interaction; deterministic mocks and a residual live-validation record will cover that external boundary.
+No developer implementation blocker. Live GitHub App registration/installation-token access and native ChatGPT GitHub write-action validation require human-owned credentials/account interaction unavailable here. Deterministic App/REST/control/workflow doubles cover the local path, and the operator-only `/Projects/Active/deviations.md` record captures the residual live exercise without claiming it passed.
 
 ## Remaining work
 
-- Implement the recovery coordinator, GitHub control plane, command protocol, public-safety projection, configuration/service CLI, bootstrap helpers, and template initialization requirements on top of the completed core slice.
-- Add comprehensive deterministic and local integration coverage.
-- Keep architecture and AS-BUILT records current.
-- Validate, commit, and push `developer`, then independently migrate and push `web-orchestration`.
+- Commit and immediately push the complete developer implementation and current records.
+- Independently migrate and validate the generalized Project package on `web-orchestration` without merging histories.
+- Return to `developer`, record both exact pushed refs, and create the dedicated pushed handoff snapshot.
 
 ## Next action
 
-Implement the recovery coordinator and GitHub App control plane on the validated transport/compatibility/durable-state core.
+Commit and push the validated developer bridge, then begin the separately authorized `web-orchestration` migration.
 
 ## Relevant durable records
 

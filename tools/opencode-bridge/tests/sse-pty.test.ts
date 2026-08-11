@@ -78,8 +78,10 @@ test("SSE subscription streams framed events with auth, directory, and media neg
   const requests: Request[] = [];
   const stream = new ReadableStream<Uint8Array>({
     start(controller) {
-      controller.enqueue(encoder.encode("data: {\"type\":\"server.connected\"}\n\nid: durable-2\n"));
-      controller.enqueue(encoder.encode("data: {\"type\":\"message.updated\"}\n\n"));
+      controller.enqueue(encoder.encode("data: {\"type\":\r"));
+      controller.enqueue(encoder.encode("\ndata: \"server.connected\"}\r\n\r"));
+      controller.enqueue(encoder.encode("\nid: durable-2\r\ndata: {\"type\":\"message.updated\"}\r\n\r"));
+      controller.enqueue(encoder.encode("\n"));
       controller.close();
     },
   });

@@ -45,17 +45,35 @@ export async function* subscribeSse(
   if (!response.body) throw new Error(`${operationId} returned no SSE body`);
   const reader = response.body.pipeThrough(new TextDecoderStream()).getReader();
   let buffer = "";
+  let pendingCarriageReturn = false;
   try {
     while (!signal.aborted) {
       const { done, value } = await reader.read();
-      if (done) break;
-      buffer += value.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+      if (done) {
+        if (pendingCarriageReturn) {
+          buffer += "\n";
+          pendingCarriageReturn = false;
+        }
+      } else {
+        let text = value;
+        if (pendingCarriageReturn) {
+          buffer += "\n";
+          if (text.startsWith("\n")) text = text.slice(1);
+          pendingCarriageReturn = false;
+        }
+        if (text.endsWith("\r")) {
+          pendingCarriageReturn = true;
+          text = text.slice(0, -1);
+        }
+        buffer += text.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+      }
       const chunks = buffer.split("\n\n");
       buffer = chunks.pop() ?? "";
       for (const chunk of chunks) {
         const event = parseChunk(chunk);
         if (event) yield event;
       }
+      if (done) break;
     }
   } finally {
     await reader.cancel().catch(() => undefined);

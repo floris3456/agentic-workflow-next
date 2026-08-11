@@ -1,4 +1,4 @@
-import { chmodSync } from "node:fs";
+import { chmodSync, existsSync, lstatSync } from "node:fs";
 import { DatabaseSync } from "node:sqlite";
 import type {
   AcceptedCommand,
@@ -13,6 +13,7 @@ import type {
 import { asJson, ensureParent, now, stableJson } from "./util.js";
 
 type Row = Record<string, unknown>;
+const taskBoundAliasKinds = new Set(["session", "pty", "permission", "question", "message", "part", "event"]);
 
 function parseJson(value: unknown): JsonValue {
   return asJson(JSON.parse(String(value)));
@@ -42,6 +43,11 @@ export class BridgeState {
   constructor(path: string) {
     this.path = path;
     ensureParent(path);
+    if (existsSync(path)) {
+      const existing = lstatSync(path);
+      if (existing.isSymbolicLink() || !existing.isFile()) throw new Error(`Bridge state must be a regular non-symlink file: ${path}`);
+      if ((existing.mode & 0o077) !== 0) throw new Error(`Bridge state must not be accessible by group or other users: ${path}`);
+    }
     this.db = new DatabaseSync(path);
     chmodSync(path, 0o600);
     this.db.exec("PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;");
@@ -280,6 +286,41 @@ export class BridgeState {
     };
   }
 
+  taskSessionForInternal(sessionId: string): TaskSession | undefined {
+    const row = this.db.prepare("SELECT * FROM task_sessions WHERE session_id=?").get(sessionId) as Row | undefined;
+    if (!row) return undefined;
+    return {
+      taskId: String(row.task_id),
+      sessionId: String(row.session_id),
+      issueNumber: Number(row.issue_number),
+      agent: String(row.agent),
+      createdAt: Number(row.created_at),
+      updatedAt: Number(row.updated_at),
+    };
+  }
+
+  taskForIssue(issueNumber: number): string | undefined {
+    const row = this.db.prepare("SELECT task_id FROM issue_tasks WHERE issue_number=?").get(issueNumber) as Row | undefined;
+    return row ? String(row.task_id) : undefined;
+  }
+
+  issueForTask(taskId: string): number | undefined {
+    const row = this.db.prepare("SELECT issue_number FROM issue_tasks WHERE task_id=?").get(taskId) as Row | undefined;
+    return row ? Number(row.issue_number) : undefined;
+  }
+
+  bindIssueTask(issueNumber: number, taskId: string): void {
+    const timestamp = now();
+    const byIssue = this.taskForIssue(issueNumber);
+    const byTask = this.issueForTask(taskId);
+    if (byIssue && byIssue !== taskId) throw new Error(`Issue ${issueNumber} is already bound to ${byIssue}`);
+    if (byTask !== undefined && byTask !== issueNumber) throw new Error(`Task ${taskId} is already bound to issue ${byTask}`);
+    this.db.prepare(`
+      INSERT INTO issue_tasks(issue_number, task_id, updated_at) VALUES (?, ?, ?)
+      ON CONFLICT(issue_number) DO UPDATE SET updated_at=excluded.updated_at
+    `).run(issueNumber, taskId, timestamp);
+  }
+
   listTaskSessions(): TaskSession[] {
     return (this.db.prepare("SELECT * FROM task_sessions ORDER BY task_id").all() as Row[]).map((row) => ({
       taskId: String(row.task_id), sessionId: String(row.session_id), issueNumber: Number(row.issue_number),
@@ -287,23 +328,37 @@ export class BridgeState {
     }));
   }
 
+  listCommands(states?: CommandState[]): StoredCommand[] {
+    if (!states || states.length === 0) {
+      return (this.db.prepare("SELECT * FROM commands ORDER BY created_at, command_id").all() as Row[]).map(commandFromRow);
+    }
+    const placeholders = states.map(() => "?").join(",");
+    return (this.db.prepare(`SELECT * FROM commands WHERE state IN (${placeholders}) ORDER BY created_at, command_id`).all(...states) as Row[]).map(commandFromRow);
+  }
+
   updateTaskAgent(taskId: string, agent: string): void {
     this.db.prepare("UPDATE task_sessions SET agent=?, updated_at=? WHERE task_id=?").run(agent, now(), taskId);
   }
 
   ensureAlias(kind: string, internalId: string, taskId?: string): string {
-    const existing = this.db.prepare("SELECT alias FROM aliases WHERE internal_id=?").get(internalId) as Row | undefined;
-    if (existing) return String(existing.alias);
-    const count = this.db.prepare("SELECT COUNT(*) AS count FROM aliases WHERE kind=? AND (task_id=? OR (? IS NULL AND task_id IS NULL))").get(kind, taskId ?? null, taskId ?? null) as Row;
+    const existing = this.db.prepare("SELECT alias, task_id FROM aliases WHERE internal_id=?").get(internalId) as Row | undefined;
+    if (existing) {
+      if (taskId && taskBoundAliasKinds.has(kind) && existing.task_id === null) {
+        this.db.prepare("UPDATE aliases SET task_id=? WHERE internal_id=? AND task_id IS NULL").run(taskId, internalId);
+      }
+      return String(existing.alias);
+    }
+    const count = this.db.prepare("SELECT COUNT(*) AS count FROM aliases WHERE kind=?").get(kind) as Row;
     const alias = `${kind}-${Number(count.count) + 1}`;
     this.db.prepare("INSERT INTO aliases(alias, kind, internal_id, task_id, created_at) VALUES (?, ?, ?, ?, ?)").run(alias, kind, internalId, taskId ?? null, now());
     return alias;
   }
 
-  resolveAlias(alias: string, expectedKind?: string): string {
-    const row = this.db.prepare("SELECT kind, internal_id FROM aliases WHERE alias=?").get(alias) as Row | undefined;
+  resolveAlias(alias: string, expectedKind?: string, taskId?: string): string {
+    const row = this.db.prepare("SELECT kind, internal_id, task_id FROM aliases WHERE alias=?").get(alias) as Row | undefined;
     if (!row) throw new Error(`Unknown local alias ${alias}`);
     if (expectedKind && row.kind !== expectedKind) throw new Error(`${alias} is ${String(row.kind)}, not ${expectedKind}`);
+    if (taskId && taskBoundAliasKinds.has(String(row.kind)) && row.task_id !== taskId) throw new Error(`${alias} is not available to task ${taskId}`);
     return String(row.internal_id);
   }
 
@@ -320,7 +375,14 @@ export class BridgeState {
       INSERT OR IGNORE INTO events(event_key, source, event_type, task_id, session_id, payload_json, aggregate_id, durable_seq, received_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(input.eventKey, input.source, input.eventType, input.taskId ?? null, input.sessionId ?? null, stableJson(input.payload), input.aggregateId ?? null, input.durableSeq ?? null, now());
-    if (result.changes && input.aggregateId && input.durableSeq !== undefined) this.setDurableCursor(input.source, input.aggregateId, input.durableSeq);
+    if (result.changes === 0) {
+      this.db.prepare(`
+        UPDATE events SET task_id=COALESCE(task_id, ?), session_id=COALESCE(session_id, ?),
+          aggregate_id=COALESCE(aggregate_id, ?), durable_seq=COALESCE(durable_seq, ?)
+        WHERE event_key=?
+      `).run(input.taskId ?? null, input.sessionId ?? null, input.aggregateId ?? null, input.durableSeq ?? null, input.eventKey);
+    }
+    if (input.aggregateId && input.durableSeq !== undefined) this.setDurableCursor(input.source, input.aggregateId, input.durableSeq);
     return result.changes > 0;
   }
 
@@ -346,6 +408,11 @@ export class BridgeState {
       .map((row) => [String(row.aggregate_id), Number(row.sequence)]));
   }
 
+  durableCursor(source: string, aggregateId: string): number | undefined {
+    const row = this.db.prepare("SELECT sequence FROM durable_cursors WHERE source=? AND aggregate_id=?").get(source, aggregateId) as Row | undefined;
+    return row ? Number(row.sequence) : undefined;
+  }
+
   enqueue(dedupeKey: string, kind: string, issueNumber: number, payload: JsonValue): void {
     const timestamp = now();
     this.db.prepare(`
@@ -361,6 +428,21 @@ export class BridgeState {
       id: Number(row.id), dedupeKey: String(row.dedupe_key), kind: String(row.kind), issueNumber: Number(row.issue_number),
       payload: parseJson(row.payload_json), attempts: Number(row.attempts), nextAttemptAt: Number(row.next_attempt_at),
     }));
+  }
+
+  orderedOutbox(timestamp = now(), limit = 25): OutboxItem[] {
+    const rows = this.db.prepare(`
+      SELECT * FROM github_outbox WHERE delivered_at IS NULL ORDER BY id LIMIT ?
+    `).all(limit) as Row[];
+    const ready: OutboxItem[] = [];
+    for (const row of rows) {
+      if (Number(row.next_attempt_at) > timestamp) break;
+      ready.push({
+        id: Number(row.id), dedupeKey: String(row.dedupe_key), kind: String(row.kind), issueNumber: Number(row.issue_number),
+        payload: parseJson(row.payload_json), attempts: Number(row.attempts), nextAttemptAt: Number(row.next_attempt_at),
+      });
+    }
+    return ready;
   }
 
   deliverOutbox(id: number): void {
@@ -399,6 +481,11 @@ export class BridgeState {
     `).run(key, stableJson(value), now());
   }
 
+  reconciliation(key: string): { value: JsonValue; reconciledAt: number } | undefined {
+    const row = this.db.prepare("SELECT value_json, reconciled_at FROM reconciliation WHERE key=?").get(key) as Row | undefined;
+    return row ? { value: parseJson(row.value_json), reconciledAt: Number(row.reconciled_at) } : undefined;
+  }
+
   setEtag(key: string, etag: string | undefined, value?: JsonValue): void {
     this.db.prepare(`
       INSERT INTO github_cache(key, etag, value_json, updated_at) VALUES (?, ?, ?, ?)
@@ -411,13 +498,32 @@ export class BridgeState {
     return row?.etag === null || row?.etag === undefined ? undefined : String(row.etag);
   }
 
+  cache(key: string): { etag?: string; value?: JsonValue; updatedAt: number } | undefined {
+    const row = this.db.prepare("SELECT etag, value_json, updated_at FROM github_cache WHERE key=?").get(key) as Row | undefined;
+    if (!row) return undefined;
+    return {
+      ...(row.etag === null ? {} : { etag: String(row.etag) }),
+      ...(row.value_json === null ? {} : { value: parseJson(row.value_json) }),
+      updatedAt: Number(row.updated_at),
+    };
+  }
+
   mapPty(alias: string, ptyId: string, taskId: string): void {
     const timestamp = now();
     this.transaction(() => {
-      this.db.prepare("INSERT INTO aliases(alias, kind, internal_id, task_id, created_at) VALUES (?, 'pty', ?, ?, ?)").run(alias, ptyId, taskId, timestamp);
+      const existingAlias = this.aliasFor(ptyId);
+      if (existingAlias !== undefined && existingAlias !== alias) throw new Error(`PTY ${ptyId} is already mapped as ${existingAlias}`);
+      this.db.prepare("INSERT OR IGNORE INTO aliases(alias, kind, internal_id, task_id, created_at) VALUES (?, 'pty', ?, ?, ?)").run(alias, ptyId, taskId, timestamp);
       this.db.prepare("INSERT INTO pty_sessions(alias, pty_id, task_id, cursor, status, created_at, updated_at) VALUES (?, ?, ?, 0, 'created', ?, ?)")
         .run(alias, ptyId, taskId, timestamp, timestamp);
     });
+  }
+
+  listPtys(): Array<{ alias: string; ptyId: string; taskId: string; cursor: number; status: string }> {
+    return (this.db.prepare("SELECT * FROM pty_sessions ORDER BY alias").all() as Row[]).map((row) => ({
+      alias: String(row.alias), ptyId: String(row.pty_id), taskId: String(row.task_id),
+      cursor: Number(row.cursor), status: String(row.status),
+    }));
   }
 
   pty(alias: string): { ptyId: string; taskId: string; cursor: number; status: string } | undefined {

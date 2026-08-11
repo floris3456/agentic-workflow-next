@@ -15,5 +15,6 @@ if [[ -f scripts/generate-research-evidence-manifest.mjs ]]; then
 fi
 
 ./scripts/bootstrap-agent-workflow.sh --check
+./scripts/validate-opencode-bridge.sh
 
 echo "Repository validation passed."

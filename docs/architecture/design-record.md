@@ -10,6 +10,7 @@ This repository uses a human-controlled web-orchestrated implementation system w
 - Remote Git is authoritative repository evidence.
 - The ChatGPT web orchestrator designs tasks, routes agents, steers implementation, and independently reviews exact remote commit ranges.
 - OpenCode agents implement bounded tasks on `developer`; they do not orchestrate or review.
+- ChatGPT reaches local OpenCode through native GitHub control issues and an outbound local GitHub App bridge; the bridge is not repository evidence or an acceptance authority.
 - `main` contains exact implementation explicitly accepted by the human.
 - `web-orchestration` is an orphan-style branch containing public-safe task context, routing memory, and generalized Project installation sources.
 - jCodeMunch scouts code symbols only.
@@ -28,6 +29,8 @@ This routing rule is an orchestration policy, not a permanent validator rule abo
 Task-progress preserves procedural context and the public-safe delegated brief. AS-BUILT preserves current implementation truth and is also live developer memory. Deviations preserve material intended-versus-actual differences. AS-BUILT and deviations change atomically with implementation commits.
 
 The web orchestrator keeps per-task context and routing records on the independent branch when MCP-ON GitHub write capability is available. The branch also provides a public-safe Project installation package; installed private Project state remains outside Git.
+
+GitHub commands use durable UUID/sequence semantics rather than direct-MCP delivery assumptions. The bridge stores private OpenCode mappings and raw recovery data locally, while only a bounded redacted projection enters public issues. Capability parity comes from the pinned OpenCode operation manifest; consequential generic web operations remain locally allowlisted.
 
 ## Synchronization and handoff
 

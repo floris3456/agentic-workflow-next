@@ -1,24 +1,49 @@
 # AS-BUILT: OpenCode bridge
 
-**Status:** Implementation in progress for `AGENTIC-BRIDGE-001`
+**Status:** Developer implementation complete for `AGENTIC-BRIDGE-001`; live GitHub App/native ChatGPT account exercise remains operator-owned
 
-## Contract boundary
+## Contract and transport
 
-The bridge pins OpenCode and `@opencode-ai/sdk` `1.18.16`, upstream release commit `a3647eb025c7615159d417dcc49fc39fdaeba65b`, and live OpenAPI SHA-256 `c3a9f94af0c3324d97b482b14c692e810ce7ccac3136319ba46334de972b4cf1`. The generated operation manifest classifies all 188 released operations: 182 ordinary HTTP operations, four SSE operations, and two PTY WebSocket operations. It records method, path, transport, effect, and web policy. Missing, added, or transport-changed operations are compatibility failures rather than silently ignored capabilities.
+The bridge pins OpenCode and `@opencode-ai/sdk` `1.18.16`, upstream release commit `a3647eb025c7615159d417dcc49fc39fdaeba65b`, and live OpenAPI SHA-256 `c3a9f94af0c3324d97b482b14c692e810ce7ccac3136319ba46334de972b4cf1`. The generated manifest classifies all 188 released operations: 182 ordinary HTTP operations, four SSE operations, and two PTY WebSocket operations. It records method, path, transport, effect, and web policy. Added, removed, or routing-changed operations are explicit compatibility failures.
 
-## Core transports
+`OpenCodeClient` rejects non-loopback or credential-bearing URLs, keeps Basic Auth internal, exposes the exact SDK for health, and serializes every HTTP operation from operation ID plus path/query/body arguments. It handles deep-object query values, JSON/text/diff/binary/empty responses, and the explicit `v2.fs.read` wildcard that upstream OpenAPI/SDK generation omits. SSE parsing is explicit and preserves CRLF semantics across arbitrary stream-chunk boundaries. PTY obtains one-use tickets, connects real WebSockets for either released prefix, persists cursor-addressed bounded output before advancing, supports input, and reconnects with fresh tickets.
 
-- `OpenCodeClient` rejects non-loopback server URLs, uses Basic Auth internally, exposes the official generated SDK client for typed health checks, and serializes every manifest-classified JSON HTTP operation from operation ID plus path/query/body arguments.
-- The HTTP serializer supports path parameters, form query values, OpenAPI deep-object query values, JSON requests, JSON/text/diff responses, and local base64 retention for binary responses. An explicit wildcard argument covers `v2.fs.read`, whose released `*` route is not represented as an OpenAPI path parameter and cannot be populated by the generated SDK.
-- SSE parsing is explicit so events can be persisted before projection and so reconnect/recovery policy is controlled by the bridge rather than hidden inside the generated SDK.
-- PTY support uses the released short-lived ticket endpoint followed by a real WebSocket. It serializes received frames, parses OpenCode's cursor control frame, captures bounded output with absolute cursors, supports input, and can run a persistent reconnect loop that obtains a fresh ticket from its persisted cursor.
+Consequential OpenCode commands re-run live version/hash compatibility and fail closed on drift. Diagnostic reads remain available. API capability is independent of web policy.
 
-## Durable state
+## Durable recovery
 
-SQLite state uses Node's built-in `node:sqlite` API and therefore requires Node `22.13.0` or newer. The database is created mode `0600` beneath a mode `0700` parent, enables WAL, full synchronization, foreign keys, and a busy timeout, and stores command/idempotency state, task/session and public-alias mappings, event journals/cursors, GitHub outbox work, compatibility checks, reconciliation snapshots, ETags, and PTY output. Command UUID and task-sequence uniqueness fail closed; an applying command is never automatically reissued after an ambiguous interruption.
+`RecoveryCoordinator` combines legacy project SSE, direct per-session v2 history/SSE, project sync history, event-ID deduplication, aggregate cursors, and canonical session/status/permission/question/message reconciliation. Events enter SQLite before callbacks. Reconnect loops use bounded exponential backoff and jitter. It does not send or claim standard SSE `Last-Event-ID`; a transient event that upstream never durably records can remain unrecoverable after complete outage.
+
+SQLite uses Node's built-in `node:sqlite` and requires Node `22.13.0` or newer. It refuses broad or symlinked state paths, creates a mode `0700` parent and mode `0600` database, and enables WAL, full synchronization, foreign keys, and a busy timeout. It stores command state/results, task/session and issue mappings, public aliases, events/cursors, GitHub outbox/cache, compatibility, reconciliation, PTY metadata/output, and service health. UUID and task-sequence uniqueness are fail-closed. An interrupted `applying` command becomes `indeterminate` on restart and is never reissued.
+
+## GitHub control plane
+
+The foreground service authenticates as a GitHub App by signed JWT, requests a one-repository installation token downscoped to Issues write and Contents read, rejects broader/insufficient returned permissions, caches until near expiry, and refreshes once after `401`. REST uses version `2026-03-10`, HTTPS-only credential-free API URLs, serial pagination with origin/loop limits, persisted ETags, and primary/secondary rate-limit timing.
+
+Polling reads open labeled issues and comments only from exact configured authors with `OWNER`, `MEMBER`, or `COLLABORATOR` association. One open mapped control issue serializes repository work. The first command must be `start`; issue/task binding, UUID, and sequence state are durable. Polling is faster while a control issue is open and slower while idle.
+
+Bridge comments and label changes use a paced durable outbox. Comments carry deterministic dedupe markers, but only a marker authored by the configured App bot suppresses a retry. Status publication removes stale bridge-owned labels and adds one current label without replacing unrelated labels. Outbox completion can be reconstructed from terminal commands after restart.
+
+## Commands and policy
+
+`agentic-bridge/1` provides guarded start, status, steer, Luna/Sol route, permission reply, question reply, abort, bounded event pages, PTY create/input/read/resize/remove, finalization, synchronization recovery, exact-SHA promotion, and generic `opencode.request`. Start and promotion require a clean synchronized `developer` checkout plus exact expected ref/SHA. Promotion is disabled by default and delegates to the existing guarded script only after the web orchestrator has received explicit human exact-SHA approval.
+
+Generic HTTP reads are available from the manifest. Expert mutations and local-secret operations require separate exact local allowlists; sharing remains blocked from web transport. PTY and promotion have independent default-deny switches. Generic requests accept only well-shaped path/query/wildcard/body transport fields, remain pinned to the bridge's configured project rather than caller-supplied directory/workspace/location routing, resolve task-owned local aliases, reject raw OpenCode IDs and absolute paths, and permit `secret_ref` only for local-secret operations.
+
+`PublicProjection` maps private session/PTY/permission/question/message/workspace/event IDs, including IDs embedded in text and object keys, to globally unique durable aliases. Task-bound aliases cannot be resolved from another task. It redacts sensitive fields and token-like text, replaces absolute/private paths, neutralizes active Markdown in comments, and bounds depth, collections, strings, and total bytes. Raw results/events remain local. Local-secret operations and their failure details publish only a safe local-TUI action or fixed non-sensitive error; detailed results remain local.
+
+## Configuration and operation
+
+The strict schema-v1 JSON loader rejects unknown fields, requires mode `0600` config/password/private-key/secret files, validates one repository identity and minimum polling intervals, and keeps runtime values outside Git. Each instance has a unique ID, loopback URL/port, state path, App installation mapping, and process lock. Stale locks are recoverable; live duplicate processes are refused. Heartbeat, errors, compatibility, command backlog, and outbox backlog are available through the status CLI.
+
+OpenCode and the bridge remain separate portable foreground processes. `bootstrap-opencode-bridge.sh` installs/builds and verifies or creates prerequisites; `--check` does not create labels/state. `opencode-attach.sh` passes credentials through child environment rather than command arguments and attaches the ordinary TUI to the same server. No systemd, webhook, tunnel, self-hosted runner, public OpenCode listener, or custom ChatGPT MCP is required.
+
+The template initializer repairs only complete-history, synchronized clean one-commit unrelated `main`/`developer` roots with no active task record. It creates one developer-tree-preserving child of main and uses hook-validated exact `force-with-lease`. Correct ancestry no-ops; shallow, established, or ambiguous history is refused; `web-orchestration` is untouched.
 
 ## Verification
 
-`npm test` compiles the package under strict TypeScript and runs 21 deterministic tests covering the complete transport inventory, generic preparation of every classified HTTP operation, serialization and response handling, request timeouts, fail-closed contract drift, SSE framing/media checks, PTY ticket/cursor/input/reconnect and persistence-failure behavior, SQLite permissions, command idempotency and restart ambiguity, event cursors, outbox behavior, aliases, and bounded PTY output. The same emitted suite passes under the declared minimum Node `22.13.0`; `node:sqlite` emits its upstream experimental warning at that runtime floor. A real authenticated loopback OpenCode `1.18.16` check also returns the expected version, contract hash, and compatible result.
+Strict TypeScript build and `npm test` pass 42 deterministic tests on the host and exact minimum Node `22.13.0`. Coverage includes all-operation preparation, contract drift, serialization, SSE, PTY, SQLite security/durability, recovery/reconciliation, App auth/token rotation/permissions, conditional polling, authorization/serialization, outbox spoof/rate-limit handling, projection/redaction, secret/alias policy, high-level workflow commands, promotion transport, and restart recovery. Node `22.13.0` emits its expected upstream `node:sqlite` experimental warning.
 
-The current package is a core library only. It does not yet contain the long-lived recovery coordinator, GitHub App control plane, public projection, configuration loader, service CLI, bootstrap scripts, or template-branch initializer required to complete `AGENTIC-BRIDGE-001`.
+Three disposable-Git tests prove correct-ancestry no-op, fresh unrelated-root repair with identical developer tree, and refusal of established or generated-metadata-mismatched unrelated history. Repository validation includes bridge structure/contracts, package tests, branch tests, existing agent-system/research checks, and active hooks. A real authenticated loopback OpenCode `1.18.16` run returned the exact version/hash, 188-operation manifest, `compatible: true`, and a successful project read.
+
+No GitHub App private key/installation and no native ChatGPT connected-app account are available in this environment. Those live external interactions are not claimed; deterministic doubles cover the complete local command path and the operator log records the residual exercise.

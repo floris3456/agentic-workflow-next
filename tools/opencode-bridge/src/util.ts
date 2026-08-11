@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { chmodSync, mkdirSync, realpathSync, statSync } from "node:fs";
+import { chmodSync, existsSync, mkdirSync, realpathSync, statSync } from "node:fs";
 import { dirname } from "node:path";
 import type { JsonValue } from "./types.js";
 
@@ -52,8 +52,13 @@ export function backoff(attempt: number, base = 500, cap = 30_000, random = Math
 }
 
 export function ensurePrivateDirectory(path: string): void {
+  const existed = existsSync(path);
   mkdirSync(path, { recursive: true, mode: 0o700 });
-  chmodSync(path, 0o700);
+  if (!statSync(path).isDirectory()) throw new Error(`Private state parent is not a directory: ${path}`);
+  if (existed && (statSync(path).mode & 0o077) !== 0) {
+    throw new Error(`Private state parent must not be accessible by group or other users: ${path}`);
+  }
+  if (!existed) chmodSync(path, 0o700);
 }
 
 export function ensureParent(path: string): void {

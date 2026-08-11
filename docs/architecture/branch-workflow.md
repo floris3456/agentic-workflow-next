@@ -54,3 +54,7 @@ Any conflict or unsafe ref movement aborts. The merge must have exactly two pare
 ## `web-orchestration`
 
 Its current tree contains only `web-orchestration-only/**`. It is not synchronized with implementation branches and is never a source of code or implementation truth. Its `chatgpt-project/` package is an installation source; private live Project state remains outside Git.
+
+## Fresh template initialization
+
+GitHub all-branch template generation may produce unrelated `main` and `developer` roots. Before beginning work in a generated repository, run `./scripts/initialize-template-branches.sh` from clean, synchronized `developer`. Correct ancestry is unchanged. Automatic repair is limited to two one-commit unrelated roots with matching generated-commit metadata and no active task record; it creates one content-preserving developer commit whose parent is main and pushes with an exact hook-authorized `force-with-lease`. Shared or ambiguous established history is refused. The deliberately unrelated `web-orchestration` branch is never modified by this initializer.

@@ -36,6 +36,8 @@
 
 The independent `web-orchestration` branch contains only `web-orchestration-only/**` and is not part of the normal implementation tree. It holds public-safe continuity plus a generalized ChatGPT Project installation source. Installed Project state, private conversations, connector credentials, and project-specific private context are deliberately not stored in Git.
 
+Bridge runtime configuration, GitHub App keys/tokens, OpenCode passwords, `secret_ref` files, SQLite state, locks, and generated package output remain outside tracked paths. Bridge contracts are tracked; operator values are not.
+
 ## Placement rules
 
 | Change | Location |
