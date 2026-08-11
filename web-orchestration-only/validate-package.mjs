@@ -208,7 +208,17 @@ const procedureTerms = new Map([
   ["skill-mcp-on-task-review-and-steering.md", ["`steer`", "`permission.reply`", "`question.reply`", "`abort`"]],
   ["skill-mcp-on-agent-routing-and-escalation.md", ["`route`"]],
   ["skill-mcp-on-synchronization-recovery.md", ["`sync.recover`"]],
-  ["skill-mcp-on-finalization-review.md", ["`finalize`"]],
+  ["skill-mcp-on-finalization-review.md", [
+    "`finalize`",
+    "substantive-approval SHA",
+    "`docs/work/current/`",
+    "`docs/work/archive/`",
+    "same basename",
+    "must not exist",
+    "current path is absent",
+    "identical Git blob OID",
+    "immutable, non-authoritative benchmark history",
+  ]],
   ["skill-mcp-on-main-promotion.md", ["`promotion.apply`"]],
 ]);
 
@@ -304,6 +314,10 @@ const unsafePolicyInversions = [
   [/\b(?:may|can|should|must|always)\s+(?:post|place)\s+commands?\s+in\s+(?:the\s+)?issue\s+body\b/i, "issue-body command publication"],
 ];
 
+const obsoleteFinalizationPatterns = [
+  [/(?:\b(?:delete|remove)\w*\b[^.\n]{0,60}\btask-progress\b|\btask-progress\b[^.\n]{0,60}\b(?:delete|remove)\w*\b)/i, "task-progress removal"],
+];
+
 for (const [file, source] of texts) {
   for (const term of sourceTerms) {
     if (source.toLowerCase().includes(term.toLowerCase())) failures.push(`${file} contains a source-project identifier`);
@@ -313,6 +327,9 @@ for (const [file, source] of texts) {
   }
   for (const [pattern, label] of unsafePolicyInversions) {
     if (pattern.test(source)) failures.push(`${file} contains an unsafe policy inversion: ${label}`);
+  }
+  for (const [pattern, label] of obsoleteFinalizationPatterns) {
+    if (pattern.test(source)) failures.push(`${file} contains obsolete finalization policy: ${label}`);
   }
 }
 
