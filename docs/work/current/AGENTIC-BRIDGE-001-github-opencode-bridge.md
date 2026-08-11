@@ -6,7 +6,7 @@
 
 ## Status
 
-Active after human steering: preserve the final reviewed task-progress record as immutable benchmark history during finalization instead of deleting it, without changing reconciliation, review, acceptance, promotion, or branch-authority boundaries.
+Implementation complete after human steering; final durable reconciliation and developer handoff are in progress. Finalization now preserves the exact reviewed task-progress record as immutable benchmark history without changing reconciliation, review, acceptance, promotion, or branch-authority boundaries.
 
 ## Task-start developer SHA
 
@@ -1538,7 +1538,7 @@ Change finalization across `developer` and the unrelated `web-orchestration` pac
 
 ## Current position
 
-The correction handoff is pushed at `developer=d4fa1810f04cbc2ee85eac9a0037c2edbd08aa6d`, the unrelated corrected package is pushed at `web-orchestration=9cfd77169ce65a6648de3a1241b9a6f9e0856214`, and the independent reviewer reported no actionable findings while stopping short of human acceptance. Before finalization, the human requested one additional workflow change: retain the exact approved task-progress file for benchmarking instead of deleting it. The developer lifecycle, skills, durable records, archive/current validation boundaries, and fail-closed policy checks now implement that behavior and pass full exact-Node validation. The unrelated web-orchestration procedure still requires alignment; `main` remains `9d9b5d8f54dfa052b7c745e9644ae1c3ddc40c0e`.
+The developer archive contract is pushed at `b1ff922bc5e5020f7af10f0389510ea3065f76d0`, and the unrelated web finalization-review contract is pushed at `36adae35552c8e32ce8ee8f446aa586eec20b969`. Developer procedure preserves the exact substantive-approval blob through a collision-free same-basename move; web review proves that preservation through exact remote tree/blob evidence. Both branch pairs are verified `0 0`, all targeted and full checks pass, `main` remains `9d9b5d8f54dfa052b7c745e9644ae1c3ddc40c0e`, and final developer record reconciliation plus the task-progress-only handoff remain.
 
 ## Observed
 
@@ -1578,6 +1578,10 @@ The correction handoff is pushed at `developer=d4fa1810f04cbc2ee85eac9a0037c2edb
 - Developer finalization now verifies the task path against the substantive-approval Git blob, refuses an existing same-name archive target, uses `git mv`, verifies the resulting archive hash, and reports the archived path without creating another handoff snapshot.
 - Archived task snapshots are immutable/non-authoritative and excluded from active-task discovery, symbol scouting, broad current source-residue checks, and generic link-health checks; the mutable archive policy README remains a required validated file.
 - The agent-system validator rejects task-record removal wording across normative lifecycle files, requires the guarded archive procedure/response/policy, and requires both jCodeMunch archive exclusions.
+- The developer archive-contract commit is pushed at `b1ff922bc5e5020f7af10f0389510ea3065f76d0`; a post-push check confirmed local and `origin/developer` at `0 0`.
+- The unrelated web finalization-review commit is pushed at `36adae35552c8e32ce8ee8f446aa586eec20b969` and changes only `web-orchestration-only/chatgpt-project/skill-mcp-on-finalization-review.md` plus `web-orchestration-only/validate-package.mjs`.
+- Web review now proves that the current path existed and its same-name archive target did not at substantive approval, then verifies the current path is absent and the archive holds the identical Git blob OID at finalization. A mismatch, collision, or substantive change reopens normal review and blocks acceptance.
+- A fresh post-push fetch confirmed `developer=b1ff922bc5e5020f7af10f0389510ea3065f76d0`, `web-orchestration=36adae35552c8e32ce8ee8f446aa586eec20b969`, unchanged `main=9d9b5d8f54dfa052b7c745e9644ae1c3ddc40c0e`, and `0 0` synchronization for both implementation branch pairs.
 
 ## Interpretation
 
@@ -1677,6 +1681,9 @@ The pinned manifest plus wildcard extension prepares every classified HTTP opera
 - Exact Node `22.13.0` targeted agent-system and preimplementation checks pass, and `git diff --check` reports no errors.
 - An external archive-policy mutation matrix passes 3/3 cases: obsolete task-record removal and a missing scouting exclusion fail closed, while immutable history containing a stale link and historical source identifier is ignored by current-state checks.
 - Full exact-Node `./scripts/validate-repository.sh` passes preimplementation links/structure, agent-system and research validation, bridge contracts, 42/42 bridge tests, 8/8 disposable-Git tests, and active-hook checks.
+- On `web-orchestration`, exact Node `22.13.0` package validation passes with 19 Project Sources, five continuity files, and bridge protocol `agentic-bridge/1`.
+- The external web validator mutation matrix passes 27/27 cases, including a new task-progress-removal regression fixture.
+- `git diff --check -- web-orchestration-only` reported no errors before web commit `36adae35552c8e32ce8ee8f446aa586eec20b969` was pushed.
 
 ## Blockers / required decisions
 
@@ -1684,14 +1691,13 @@ No implementation blocker remains for the benchmark-archive steering. Live GitHu
 
 ## Remaining work
 
-- Commit and push the validated developer archive contract.
-- Update the unrelated web-orchestration finalization-review source and package validation without merging histories.
-- Validate and push both histories, then create a new developer handoff for independent review.
+- Complete and push developer durable-record reconciliation for the now-pushed web package behavior.
+- Run final full developer validation, then create and push the dedicated task-progress-only handoff for independent review.
 - The credentialed live GitHub App/native ChatGPT exercise remains an operator-owned acceptance step and is not claimed complete.
 
 ## Next action
 
-Commit and push the validated developer-side archive contract, then update the unrelated web-orchestration finalization review against its current remote tip.
+Validate and push the final developer record reconciliation, then create the dedicated task-progress-only handoff.
 
 ## Relevant durable records
 
