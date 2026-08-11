@@ -5,6 +5,25 @@ remote_name="${1:-}"
 git_dir="$(git rev-parse --git-dir)"
 zero="0000000000000000000000000000000000000000"
 promotion="$git_dir/agent-workflow-promotion-authorized"
+template_repair="$git_dir/agent-workflow-template-repair-authorized"
+
+valid_template_repair() {
+  local local_oid="$1"
+  local remote_ref="$2"
+  local remote_oid="$3"
+  [[ "$remote_name" == "origin" && "$remote_ref" == "refs/heads/developer" && -f "$template_repair" ]] || return 1
+  local expected_old=""
+  local expected_new=""
+  local expected_main=""
+  local extra=""
+  read -r expected_old expected_new expected_main extra < "$template_repair" || return 1
+  [[ -z "$extra" && "$remote_oid" == "$expected_old" && "$local_oid" == "$expected_new" ]] || return 1
+  [[ "$(git rev-list --parents -n 1 "$expected_old" | wc -w)" -eq 1 ]] || return 1
+  [[ "$(git rev-list --parents -n 1 "$expected_main" | wc -w)" -eq 1 ]] || return 1
+  [[ "$(git rev-list --parents -n 1 "$expected_new" | wc -w)" -eq 2 ]] || return 1
+  [[ "$(git rev-parse "$expected_new^1")" == "$expected_main" ]] || return 1
+  [[ "$(git rev-parse "$expected_new^{tree}")" == "$(git rev-parse "$expected_old^{tree}")" ]] || return 1
+}
 
 while read -r local_ref local_oid remote_ref remote_oid; do
   [[ -n "$remote_ref" ]] || continue
@@ -14,7 +33,8 @@ while read -r local_ref local_oid remote_ref remote_oid; do
     exit 1
   fi
 
-  if [[ "$remote_oid" != "$zero" ]] && ! git merge-base --is-ancestor "$remote_oid" "$local_oid"; then
+  if [[ "$remote_oid" != "$zero" ]] && ! git merge-base --is-ancestor "$remote_oid" "$local_oid" \
+    && ! valid_template_repair "$local_oid" "$remote_ref" "$remote_oid"; then
     echo "Non-fast-forward push to $remote_ref is blocked. Preserve auditable shared history." >&2
     exit 1
   fi

@@ -110,10 +110,46 @@ for (const file of [
   assert(read(file).includes(expectedResponse.trim()), `${file} does not contain the canonical response fields`);
 }
 
+const finalizationPolicyFiles = [
+  "README.md",
+  "CONTRIBUTING.md",
+  ".opencode/skills/task-workflow/SKILL.md",
+  ".opencode/skills/git-sync-and-handoff/SKILL.md",
+  ".opencode/skills/implementation-records/SKILL.md",
+  "docs/work/README.md",
+  "docs/work/current/README.md",
+  "docs/work/archive/README.md",
+  "docs/architecture/implementation-records.md",
+  "docs/architecture/repository-layout.md",
+  "docs/architecture/agent-system.md",
+  "docs/architecture/AS-BUILT.md",
+];
+const obsoleteTaskRemoval = /(?:(?:delet|remov)\w*\s+(?:the\s+)?task(?:-progress|\s+record)|task(?:-progress|\s+record)[^\n.]{0,80}\b(?:delet|remov)\w*)/i;
+for (const file of finalizationPolicyFiles) {
+  const text = read(file);
+  assert(!obsoleteTaskRemoval.test(text), `${file} still prescribes task-record removal`);
+  assert(/\barchiv/i.test(text), `${file} does not preserve the task-record archive contract`);
+}
+
+const taskFinalization = read(".opencode/skills/task-workflow/SKILL.md").split("## Finalization")[1] ?? "";
+for (const term of ["substantive-approval SHA", "exact approved Git blob", "same basename", "already exists", "`git mv`", "hashes to the approved blob", "non-authoritative benchmark history"]) {
+  assert(taskFinalization.includes(term), `task-workflow finalization is missing archive guard: ${term}`);
+}
+const finalizationResponse = read(".opencode/skills/git-sync-and-handoff/SKILL.md").split("## Finalization response")[1]?.split("## Promotion")[0] ?? "";
+for (const term of ["docs/work/archive/<task>.md", "archived unchanged", "substantive-approval SHA", "immutable", "non-authoritative"]) {
+  assert(finalizationResponse.includes(term), `git-sync finalization response is missing archive contract: ${term}`);
+}
+const archivePolicy = read("docs/work/archive/README.md");
+for (const term of ["immutable", "benchmark", "exact substantively approved blob", "same basename", "non-authoritative", "excluded from active-task discovery", "Do not edit, replace, or reuse"]) {
+  assert(archivePolicy.includes(term), `Work archive policy is missing: ${term}`);
+}
+
 for (const file of [
   ".githooks/pre-commit", ".githooks/pre-merge-commit", ".githooks/post-commit", ".githooks/pre-push",
   "scripts/bootstrap-agent-workflow.sh", "scripts/recover-remote-sync.sh",
-  "scripts/promote-developer-to-main.sh", "scripts/validate-repository.sh",
+  "scripts/promote-developer-to-main.sh", "scripts/initialize-template-branches.sh",
+  "scripts/bootstrap-opencode-bridge.sh", "scripts/opencode-bridge-status.sh",
+  "scripts/opencode-attach.sh", "scripts/validate-opencode-bridge.sh", "scripts/validate-repository.sh",
 ]) {
   assert(exists(file), `Missing required executable: ${file}`);
   if (exists(file) && process.platform !== "win32") {
@@ -124,7 +160,7 @@ for (const file of [
 try {
   const raw = read(".jcodemunch.jsonc");
   const parsed = JSON.parse(raw.replace(/^\s*\/\/.*$/gm, ""));
-  for (const required of ["raw-evidence", "raw-evidence/**", "research/**", "evidence/**"]) {
+  for (const required of ["raw-evidence", "raw-evidence/**", "research/**", "evidence/**", "docs/work/archive/**"]) {
     assert(parsed.extra_ignore_patterns?.includes(required), `.jcodemunch.jsonc missing relevance exclusion: ${required}`);
     assert(parsed.watch_extra_ignore?.includes(required), `.jcodemunch.jsonc missing watch exclusion: ${required}`);
   }
@@ -136,27 +172,6 @@ try {
 for (const file of ["README.md", "SECURITY.md", "evidence/README.md", "docs/architecture/agent-system.md", "docs/architecture/design-record.md"]) {
   assert(!/repository (?:itself )?must remain private|keep the github repository private/i.test(read(file)),
     `${file} still requires private repository hosting`);
-}
-
-assert(!exists("docs/web-lane/developer-instructions.md"), "Repository must not duplicate web-orchestrator operating instructions");
-assert(!exists("opencode.example.json"), "Obsolete opencode.example.json must be deleted");
-assert(!exists("scripts/check-lane-boundaries.sh"), "Retired protected-lane validator remains");
-assert(!exists("scripts/agent-system-deleted-paths.txt"), "Migration-only deleted-path inventory remains");
-assert(!exists("scripts/generate-research-code-reference.sh"), "Project-specific code-reference generator remains");
-assert(!exists("scripts/profile-detailed-application-catalogue.mjs"), "Project-specific catalogue profiler remains");
-assert(!exists("scripts/profile-original-application-catalogue.mjs"), "Project-specific catalogue profiler remains");
-assert(!exists(".github/workflows/validate-handover.yml"), "Project-specific handover workflow remains");
-
-// Keep machine/load-bearing configuration free of paths that this template intentionally does not ship.
-const machineSources = [
-  "opencode.json", "AGENTS.md", ".github/copilot-instructions.md",
-  ".github/workflows/validate-repository.yml",
-  "scripts/validate-repository.sh", "scripts/validate-preimplementation.mjs",
-];
-for (const source of machineSources) {
-  if (!exists(source)) continue;
-  const text = read(source);
-  assert(!text.includes(["U", "A", "M"].join("")), `${source} contains a residual source-project identifier`);
 }
 
 // Deliberately narrow residual scan: exact source names/identifiers only, not
@@ -175,6 +190,7 @@ for (const file of allRepositoryFiles(root)) {
   const bytes = fs.readFileSync(file);
   if (bytes.includes(0)) continue;
   const relative = path.relative(root, file).split(path.sep).join("/");
+  if (relative.startsWith("docs/work/archive/")) continue;
   const text = bytes.toString("utf8");
   for (const term of sourceProjectTerms) {
     if (text.toLocaleLowerCase().includes(term.value.toLocaleLowerCase())) {

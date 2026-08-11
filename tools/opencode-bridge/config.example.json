@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "instance_id": "owner-repository",
+  "repository_root": "/absolute/path/to/repository",
+  "state_file": "/absolute/path/to/repository/.git/opencode-bridge/owner-repository/bridge.sqlite",
+  "opencode": {
+    "base_url": "http://127.0.0.1:44123",
+    "username": "opencode",
+    "password_file": "/home/operator/.config/agentic-workflow/owner-repository/opencode-password"
+  },
+  "github": {
+    "app_id": "123456",
+    "installation_id": 12345678,
+    "private_key_file": "/home/operator/.config/agentic-workflow/owner-repository/github-app.pem",
+    "owner": "owner",
+    "repository": "repository",
+    "allowed_authors": [
+      "trusted-orchestrator-login"
+    ],
+    "comment_author": "agentic-bridge-owner-repository[bot]",
+    "control_label": "agentic-bridge",
+    "active_interval_ms": 5000,
+    "idle_interval_ms": 30000
+  },
+  "policy": {
+    "allowed_mutations": [],
+    "allowed_local_secret_operations": [],
+    "secret_refs": {},
+    "pty_enabled": false,
+    "promotion_enabled": false
+  }
+}

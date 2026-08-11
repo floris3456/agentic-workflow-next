@@ -10,20 +10,24 @@ const required = [
   "docs/architecture/agent-system.md", "docs/architecture/branch-workflow.md",
   "docs/architecture/implementation-records.md", "docs/architecture/repository-layout.md",
   "docs/architecture/AS-BUILT.md", "docs/architecture/deviations.md",
-  "docs/work/README.md", "docs/work/templates/task-progress-template.md",
+  "docs/work/README.md", "docs/work/current/README.md", "docs/work/archive/README.md",
+  "docs/work/templates/task-progress-template.md",
   "docs/work/templates/developer-response-template.md",
 ];
 for (const file of required) if (!fs.existsSync(path.join(root, file))) failures.push(`Missing ${file}`);
 
 function walk(target) {
   const relative = path.relative(root, target);
-  if (relative.split(path.sep).includes("node_modules") || relative === "docs/work/handoffs" || relative.startsWith(`docs/work/handoffs${path.sep}`)) return [];
+  const retiredHandoff = relative === "docs/work/handoffs" || relative.startsWith(`docs/work/handoffs${path.sep}`);
+  const archivedSnapshot = relative.startsWith(`docs/work/archive${path.sep}`) && relative !== `docs/work/archive${path.sep}README.md`;
+  if (relative.split(path.sep).includes("node_modules") || retiredHandoff || archivedSnapshot) return [];
   const stat = fs.statSync(target);
   if (stat.isFile()) return [target];
   return fs.readdirSync(target, { withFileTypes: true })
     .flatMap((entry) => walk(path.join(target, entry.name)));
 }
 
+// Historical snapshots are immutable; current link health must not require rewriting them.
 // Research has its own parser-aware validator; avoid re-parsing immutable evidence with a generic Markdown regex.
 const roots = ["README.md", "AGENTS.md", "CONTRIBUTING.md", "SECURITY.md", ".github", ".opencode", "docs"];
 for (const relative of roots) {

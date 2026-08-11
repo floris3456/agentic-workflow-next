@@ -80,13 +80,13 @@ Task record: <path>; remote copy may be stale.
 
 ## Finalization response
 
-After the finalization commit deletes the task record:
+After the finalization commit moves the exact approved task record to its same-name archive path:
 
 ```text
-Task record: docs/work/current/<task>.md; deleted by this finalization commit after reconciliation.
+Task record: docs/work/archive/<task>.md; archived unchanged from docs/work/current/<task>.md at substantive-approval SHA <sha> by this finalization commit after reconciliation.
 ```
 
-The finalization commit itself is pushed before response; no extra task snapshot follows deletion.
+The finalization commit itself is pushed before response; no extra task snapshot follows archival. The archived task-progress blob is immutable and non-authoritative.
 
 ## Promotion
 

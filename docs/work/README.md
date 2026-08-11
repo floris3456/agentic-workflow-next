@@ -1,6 +1,6 @@
 # Work lifecycle
 
-`docs/work/current/` contains one temporary task-progress file per active delegated implementation task. It is public-safe procedural memory, not authoritative implementation evidence. A pre-existing human decision brief, such as a gate-owner decision, may also remain there but does not use the implementation handoff lifecycle.
+`docs/work/current/` contains one task-progress file per active delegated implementation task. It is public-safe procedural memory, not authoritative implementation evidence. `docs/work/archive/` retains each final approved task-progress blob as immutable, non-authoritative benchmark history after the task leaves the active lifecycle. A pre-existing human decision brief, such as a gate-owner decision, may also remain in `current/` but does not use the implementation handoff lifecycle.
 
 ## Task lifecycle
 
@@ -11,7 +11,7 @@
 5. Every commit is pushed immediately.
 6. Before returning control, the developer creates and pushes a dedicated handoff snapshot commit.
 7. The web orchestrator independently reviews the exact remote range.
-8. After substantive approval, the implementing developer reconciles durable records and deletes task-progress in the finalization commit.
+8. After substantive approval, the implementing developer reconciles durable records and moves the exact approved task-progress blob unchanged to the same basename under `docs/work/archive/` in the finalization commit.
 9. The web orchestrator reviews finalization.
 10. The human may approve an exact `developer` SHA for promotion to `main`.
 
@@ -43,4 +43,4 @@ The task-progress template carries the task-start and orchestrator-supplied revi
 
 ## Completion
 
-Move durable facts into their proper records. Delete task-progress in finalization; do not archive it as a permanent diary.
+Move durable facts into their proper records before archival. Confirm the archive target does not already exist, preserve the substantively approved task-progress blob without cleanup or summarization, and use `git mv` so it leaves `docs/work/current/` in the finalization commit. A target collision or content mismatch is a blocker; never overwrite, rename around, or rewrite benchmark history. Archived task-progress is not active work, durable implementation truth, or a substitute for AS-BUILT and deviation records.

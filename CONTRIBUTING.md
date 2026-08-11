@@ -6,9 +6,11 @@ This repository uses a serialized, human-directed implementation workflow. It is
 
 1. Begin from a clean checkout whose `developer` branch matches `origin/developer`.
 2. Run `./scripts/bootstrap-agent-workflow.sh --check`; run it without `--check` once per clone to activate tracked hooks.
-3. Read `AGENTS.md` and load the skills triggered by the task.
-4. Use the stable task ID supplied by the web orchestrator.
-5. Create `docs/work/current/<task-id>-<slug>.md` from the task-progress template before substantive work.
+3. On a newly generated all-branch repository, run `./scripts/initialize-template-branches.sh` before any implementation; never use it to rewrite established unrelated history.
+4. If using GitHub-mediated delegation, run `./scripts/bootstrap-opencode-bridge.sh --check --config <operator-config>`.
+5. Read `AGENTS.md` and load the skills triggered by the task.
+6. Use the stable task ID supplied by the web orchestrator.
+7. Create `docs/work/current/<task-id>-<slug>.md` from the task-progress template before substantive work.
 
 ## During implementation
 
@@ -39,10 +41,13 @@ The web orchestrator reviews the exact remote commit range independently. Develo
 After substantive approval, the implementing developer:
 
 1. reconciles AS-BUILT, deviations, design, and other durable records;
-2. removes temporary procedural residue;
-3. deletes the task-progress file;
-4. commits and pushes finalization; and
-5. returns the finalization form identifying the deleted task record.
+2. verifies the task-progress file still has the exact blob approved by the web orchestrator;
+3. refuses to overwrite an existing same-name archive file;
+4. moves task-progress without editing it to the same basename under `docs/work/archive/`;
+5. commits and pushes finalization; and
+6. returns the finalization form identifying the archived task record.
+
+Archived task-progress is immutable, public-safe benchmark history, not an active task or an authoritative implementation record. Correct durable records separately; never rewrite an archived task file.
 
 The web orchestrator reviews the finalization range before asking the human to accept an exact `developer` SHA.
 
@@ -60,4 +65,5 @@ Promotion is mechanical and is not a normal implementation task. Do not create o
 
 ```bash
 ./scripts/validate-repository.sh
+./scripts/validate-opencode-bridge.sh
 ```

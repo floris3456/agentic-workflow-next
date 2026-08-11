@@ -19,26 +19,31 @@
 │   ├── milestones/                  gate plans and evidence
 │   ├── plain-language/              first-reader explanation
 │   └── work/
-│       ├── current/                 temporary task-progress
-│       ├── archive/                 durable closed work records only
+│       ├── current/                 active task-progress
+│       ├── archive/                 immutable non-authoritative benchmark snapshots
 │       ├── future/                  non-normative proposals
 │       └── templates/
 ├── contracts/                       versioned schemas/examples
+│   └── opencode-bridge/             pinned bridge compatibility and operation inventory
 ├── src/                             deployable implementation and component AS-BUILT
 ├── tests/                           automated tests and fictional fixtures
 ├── tools/ and scripts/              deterministic repository utilities
+│   └── opencode-bridge/             isolated TypeScript bridge implementation and tests
 ├── research/                        research packages and workflow
 ├── evidence/                        sanitized derived evidence/provenance
 └── raw-evidence/                    optional immutable external evidence
 ```
 
-Web-orchestrator operating instructions and project-specific external skills are deliberately **not** stored in this repository. The independent `web-orchestration` branch contains only `web-orchestration-only/**` and is not part of the normal implementation tree.
+The independent `web-orchestration` branch contains only `web-orchestration-only/**` and is not part of the normal implementation tree. It holds public-safe continuity plus a generalized ChatGPT Project installation source. Installed Project state, private conversations, connector credentials, and project-specific private context are deliberately not stored in Git.
+
+Bridge runtime configuration, GitHub App keys/tokens, OpenCode passwords, `secret_ref` files, SQLite state, locks, and generated package output remain outside tracked paths. Bridge contracts are tracked; operator values are not.
 
 ## Placement rules
 
 | Change | Location |
 | --- | --- |
 | Active task process | `docs/work/current/<task>.md` |
+| Closed task benchmark snapshot | `docs/work/archive/<task>.md`, moved unchanged during finalization |
 | Current implemented component facts | `src/<component>/AS-BUILT.md` or the component's established AS-BUILT location |
 | Planned-versus-actual difference | applicable milestone/component deviation record |
 | Architecture authority/branch model | `docs/architecture/` |

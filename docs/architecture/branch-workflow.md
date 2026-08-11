@@ -6,13 +6,13 @@
 | --- | --- | --- |
 | `developer` | Active shared implementation and task-progress | Delegated OpenCode developer |
 | `main` | Exact implementation deliberately accepted by the human | Luna through guarded promotion after approval |
-| `web-orchestration` | Web-orchestrator-only persistent task context | Web orchestrator through connected GitHub MCP |
+| `web-orchestration` | Public-safe task context, routing memory, and generalized Project installation sources | Web orchestrator through connected/native GitHub integration |
 
 ## Developer synchronization
 
 Every commit on `developer` is pushed immediately. A failed push creates a local failure marker and stops further implementation commits until an auditable recovery restores synchronization.
 
-The post-commit hook attempts `git push origin developer`. The pre-commit hook never clears a failed-push marker merely because the current head matches its upstream; only directed recovery may clear it after proving that the recorded failed commit is present in synchronized local and remote history. The pre-push hook rejects ordinary direct pushes to `main`, branch deletion, and non-fast-forward updates.
+The post-commit hook attempts `git push origin developer`. The pre-commit hook never clears a failed-push marker merely because the current head matches its upstream; only directed recovery may clear it after proving that the recorded failed commit is present in synchronized local and remote history. The pre-push hook rejects ordinary direct pushes to `main`, branch deletion, and non-fast-forward updates. These local hooks are advisory defense in depth, not a server-side authority boundary: an operator should also configure a GitHub ruleset that blocks force pushes/deletion and restricts `main` updates to designated promotion operators.
 
 Recovery validates the marker and restores a discarded local branch only by fast-forwarding it to the recorded failed commit. It then uses fast-forward operations when either side contains the other. True divergence may be resolved only by the repository recovery script creating one exact-head, non-conflicting two-parent merge whose parents are the failed local head and the fetched remote head. The merge is pushed as a fast-forward. The marker clears only when both refs match and their history contains the originally recorded failed commit. Conflicts, missing commits, ambiguous local movement, or concurrent ref movement retain the failure state and stop recovery.
 
@@ -53,4 +53,8 @@ Any conflict or unsafe ref movement aborts. The merge must have exactly two pare
 
 ## `web-orchestration`
 
-Its current tree contains only `web-orchestration-only/**`. It is not synchronized with implementation branches and is never a source of code or implementation truth.
+Its current tree contains only `web-orchestration-only/**`. It is not synchronized with implementation branches and is never a source of code or implementation truth. Its `chatgpt-project/` package routes implementation control through public-safe GitHub issue commands and the outbound bridge; private live Project state remains outside Git. Normal runtime writes stay under `task-context/**` and `agent-routing/**`.
+
+## Fresh template initialization
+
+GitHub all-branch template generation may produce unrelated `main` and `developer` roots. Before beginning work in a generated repository, run `./scripts/initialize-template-branches.sh` from clean, synchronized `developer`. Correct ancestry is unchanged. Automatic repair is limited to two one-commit unrelated roots with matching generated-commit author/committer identities, author/committer times, subjects, and path/mode/type tree shape, plus no active task record. Branch-specific blob contents may differ and the exact developer tree is preserved. Before the exact hook-authorized `force-with-lease`, the initializer creates a local backup ref for the old developer root. Shared or ambiguous established history is refused. The deliberately unrelated `web-orchestration` branch is never modified by this initializer.
