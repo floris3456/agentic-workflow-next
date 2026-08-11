@@ -110,6 +110,40 @@ for (const file of [
   assert(read(file).includes(expectedResponse.trim()), `${file} does not contain the canonical response fields`);
 }
 
+const finalizationPolicyFiles = [
+  "README.md",
+  "CONTRIBUTING.md",
+  ".opencode/skills/task-workflow/SKILL.md",
+  ".opencode/skills/git-sync-and-handoff/SKILL.md",
+  ".opencode/skills/implementation-records/SKILL.md",
+  "docs/work/README.md",
+  "docs/work/current/README.md",
+  "docs/work/archive/README.md",
+  "docs/architecture/implementation-records.md",
+  "docs/architecture/repository-layout.md",
+  "docs/architecture/agent-system.md",
+  "docs/architecture/AS-BUILT.md",
+];
+const obsoleteTaskRemoval = /(?:(?:delet|remov)\w*\s+(?:the\s+)?task(?:-progress|\s+record)|task(?:-progress|\s+record)[^\n.]{0,80}\b(?:delet|remov)\w*)/i;
+for (const file of finalizationPolicyFiles) {
+  const text = read(file);
+  assert(!obsoleteTaskRemoval.test(text), `${file} still prescribes task-record removal`);
+  assert(/\barchiv/i.test(text), `${file} does not preserve the task-record archive contract`);
+}
+
+const taskFinalization = read(".opencode/skills/task-workflow/SKILL.md").split("## Finalization")[1] ?? "";
+for (const term of ["substantive-approval SHA", "exact approved Git blob", "same basename", "already exists", "`git mv`", "hashes to the approved blob", "non-authoritative benchmark history"]) {
+  assert(taskFinalization.includes(term), `task-workflow finalization is missing archive guard: ${term}`);
+}
+const finalizationResponse = read(".opencode/skills/git-sync-and-handoff/SKILL.md").split("## Finalization response")[1]?.split("## Promotion")[0] ?? "";
+for (const term of ["docs/work/archive/<task>.md", "archived unchanged", "substantive-approval SHA", "immutable", "non-authoritative"]) {
+  assert(finalizationResponse.includes(term), `git-sync finalization response is missing archive contract: ${term}`);
+}
+const archivePolicy = read("docs/work/archive/README.md");
+for (const term of ["immutable", "benchmark", "exact substantively approved blob", "same basename", "non-authoritative", "excluded from active-task discovery", "Do not edit, replace, or reuse"]) {
+  assert(archivePolicy.includes(term), `Work archive policy is missing: ${term}`);
+}
+
 for (const file of [
   ".githooks/pre-commit", ".githooks/pre-merge-commit", ".githooks/post-commit", ".githooks/pre-push",
   "scripts/bootstrap-agent-workflow.sh", "scripts/recover-remote-sync.sh",
@@ -126,7 +160,7 @@ for (const file of [
 try {
   const raw = read(".jcodemunch.jsonc");
   const parsed = JSON.parse(raw.replace(/^\s*\/\/.*$/gm, ""));
-  for (const required of ["raw-evidence", "raw-evidence/**", "research/**", "evidence/**"]) {
+  for (const required of ["raw-evidence", "raw-evidence/**", "research/**", "evidence/**", "docs/work/archive/**"]) {
     assert(parsed.extra_ignore_patterns?.includes(required), `.jcodemunch.jsonc missing relevance exclusion: ${required}`);
     assert(parsed.watch_extra_ignore?.includes(required), `.jcodemunch.jsonc missing watch exclusion: ${required}`);
   }
@@ -156,6 +190,7 @@ for (const file of allRepositoryFiles(root)) {
   const bytes = fs.readFileSync(file);
   if (bytes.includes(0)) continue;
   const relative = path.relative(root, file).split(path.sep).join("/");
+  if (relative.startsWith("docs/work/archive/")) continue;
   const text = bytes.toString("utf8");
   for (const term of sourceProjectTerms) {
     if (text.toLocaleLowerCase().includes(term.value.toLocaleLowerCase())) {

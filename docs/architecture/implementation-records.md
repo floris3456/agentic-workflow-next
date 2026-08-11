@@ -2,7 +2,9 @@
 
 ## Task-progress
 
-Temporary per-task procedural memory under `docs/work/current/`. It preserves the public-safe delegated brief, current position, observations, interpretations, attempts, steering, checks, blockers, remaining work, and next action. It is deleted during finalization.
+Active per-task procedural memory under `docs/work/current/`. It preserves the public-safe delegated brief, current position, observations, interpretations, attempts, steering, checks, blockers, remaining work, and next action. During finalization its exact substantively approved blob moves to the same basename under `docs/work/archive/` as immutable benchmark history.
+
+Archived task-progress remains non-authoritative procedural history. It is excluded from active-task discovery and scouting, is never edited, and does not reduce the requirement to keep durable implementation records current.
 
 ## AS-BUILT
 
@@ -18,4 +20,4 @@ Failed approaches belong in task-progress unless they create a durable system co
 
 ## Finalization
 
-After substantive web review approval, the implementing developer reconciles all three layers, promotes durable task-only information, deletes task-progress, and pushes finalization. Finalization is a double-check; it does not replace continuous maintenance.
+After substantive web review approval, the implementing developer reconciles all three layers, promotes durable task-only information, verifies task-progress still matches the approved blob, moves it unchanged to its collision-free same-name archive path, and pushes finalization. Finalization is a double-check; it does not replace continuous maintenance or make the archive authoritative.

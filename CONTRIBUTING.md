@@ -41,10 +41,13 @@ The web orchestrator reviews the exact remote commit range independently. Develo
 After substantive approval, the implementing developer:
 
 1. reconciles AS-BUILT, deviations, design, and other durable records;
-2. removes temporary procedural residue;
-3. deletes the task-progress file;
-4. commits and pushes finalization; and
-5. returns the finalization form identifying the deleted task record.
+2. verifies the task-progress file still has the exact blob approved by the web orchestrator;
+3. refuses to overwrite an existing same-name archive file;
+4. moves task-progress without editing it to the same basename under `docs/work/archive/`;
+5. commits and pushes finalization; and
+6. returns the finalization form identifying the archived task record.
+
+Archived task-progress is immutable, public-safe benchmark history, not an active task or an authoritative implementation record. Correct durable records separately; never rewrite an archived task file.
 
 The web orchestrator reviews the finalization range before asking the human to accept an exact `developer` SHA.
 

@@ -88,9 +88,12 @@ Only after the web orchestrator approves substantive implementation:
 
 1. reconcile actual implementation with AS-BUILT, deviations, design, and other durable records;
 2. promote any durable task-only information to its correct home;
-3. remove temporary procedural residue;
-4. delete the task-progress file;
-5. commit and push finalization; and
-6. use the finalization task-record wording defined by `git-sync-and-handoff`.
+3. use the substantive-approval SHA to verify that the current task-progress path still resolves to the exact approved Git blob;
+4. derive `docs/work/archive/<task-id>-<slug>.md` with the same basename and stop if that target already exists;
+5. use `git mv` to move the task-progress file without editing its contents, then verify the archive file hashes to the approved blob;
+6. commit and push finalization; and
+7. use the finalization task-record wording defined by `git-sync-and-handoff`.
+
+A content mismatch or archive collision is a blocker. Do not clean up the approved task-progress blob, overwrite benchmark history, invent a different archive name, or reuse an archived task identity. Archived task-progress is immutable, public-safe, non-authoritative benchmark history; it is no longer active work and never replaces durable records.
 
 Finalization is a reconciliation pass, not deferred documentation. If it exposes substantive implementation errors or requires product code changes, restore/recreate the task record and return to normal implementation.

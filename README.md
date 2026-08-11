@@ -27,7 +27,7 @@ The normal web-to-local implementation path uses ChatGPT's native GitHub integra
 
 ## Records and evidence
 
-- Task-progress is temporary procedural memory under `docs/work/current/` and is deleted during finalization.
+- Task-progress is active procedural memory under `docs/work/current/`. Finalization moves the exact approved file unchanged to `docs/work/archive/` as immutable, non-authoritative benchmark history after durable facts are reconciled.
 - AS-BUILT records are continuously maintained implementation truth.
 - Deviation records describe material intended-versus-actual differences.
 - Research packages are evidence and recommendations, not human acceptance.

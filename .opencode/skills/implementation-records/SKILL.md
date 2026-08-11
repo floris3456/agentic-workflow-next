@@ -49,4 +49,4 @@ Write only public-safe information. Externally produced evidence is immutable; r
 
 ## Final reconciliation
 
-At orchestrator-approved finalization, compare durable records against exact implementation one last time and promote any durable fact still found only in task-progress. This is a double-check. It does not excuse stale records during implementation.
+At orchestrator-approved finalization, compare durable records against exact implementation one last time and promote any durable fact still found only in task-progress. The approved task-progress blob then moves unchanged into the non-authoritative benchmark archive; do not edit the archived snapshot or treat it as durable truth. This is a double-check. It does not excuse stale records during implementation.

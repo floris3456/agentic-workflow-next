@@ -6,7 +6,7 @@
 
 ## Status
 
-Ready for independent re-review: all corrections and durable reconciliation are pushed on both implementation histories; this task-progress update is the dedicated developer handoff boundary, with no acceptance or promotion claimed.
+Active after human steering: preserve the final reviewed task-progress record as immutable benchmark history during finalization instead of deleting it, without changing reconciliation, review, acceptance, promotion, or branch-authority boundaries.
 
 ## Task-start developer SHA
 
@@ -14,7 +14,7 @@ Ready for independent re-review: all corrections and durable reconciliation are 
 
 ## Review-base developer SHA
 
-`0d515b6cb89366c5913c4864a177ca852c561e9c`
+`d4fa1810f04cbc2ee85eac9a0037c2edbd08aa6d`
 
 ## Original task brief
 
@@ -1534,11 +1534,11 @@ all without requiring `opencode-mcp` as the ChatGPT implementation transport.
 
 ## Current objective
 
-Apply the independent review corrections across `developer` and the unrelated `web-orchestration` package while preserving transport idempotency, security checks, exact-SHA human authority, branch isolation, and the operator-owned live-E2E boundary.
+Change finalization across `developer` and the unrelated `web-orchestration` package so the exact substantively approved task-progress blob moves from `docs/work/current/` to the same basename under `docs/work/archive/` as public-safe benchmark history, while durable reconciliation, independent review, exact-SHA human authority, branch isolation, and the operator-owned live-E2E boundary remain unchanged.
 
 ## Current position
 
-The independent review covered `developer` through handoff `0d515b6cb89366c5913c4864a177ca852c561e9c` and `web-orchestration` through `f1f7f98372f5bd28073b02fca3e9d5d925ccd2ab`, expressed no acceptance, and steered corrections F1-F16 plus an F18 judgment. The developer correction is pushed at `3df6922f1553f82947c2c3835cd3f916e108c1f2`, final developer contract/record reconciliation is pushed at `114294ebde25b248398fa62a0df69b8e25c8e75e`, and the unrelated web-package correction is pushed at `9cfd77169ce65a6648de3a1241b9a6f9e0856214`. Both branch pairs are verified `0 0`, `main` remains `9d9b5d8f54dfa052b7c745e9644ae1c3ddc40c0e`, all locally controllable checks pass, and this update is the final task-progress-only handoff snapshot.
+The correction handoff is pushed at `developer=d4fa1810f04cbc2ee85eac9a0037c2edbd08aa6d`, the unrelated corrected package is pushed at `web-orchestration=9cfd77169ce65a6648de3a1241b9a6f9e0856214`, and the independent reviewer reported no actionable findings while stopping short of human acceptance. Before finalization, the human requested one additional workflow change: retain the exact approved task-progress file for benchmarking instead of deleting it. The developer lifecycle, skills, durable records, archive/current validation boundaries, and fail-closed policy checks now implement that behavior and pass full exact-Node validation. The unrelated web-orchestration procedure still requires alignment; `main` remains `9d9b5d8f54dfa052b7c745e9644ae1c3ddc40c0e`.
 
 ## Observed
 
@@ -1572,6 +1572,12 @@ The independent review covered `developer` through handoff `0d515b6cb89366c5913c
 - The migrated Project package keeps its existing MCP-ON/MCP-OFF/shared trigger structure, removes the direct Project OpenCode transport, and uses connected/native GitHub for exact evidence, narrow runtime-continuity writes, and serialized issue commands to the outbound bridge.
 - Bridge command continuity is written before issue publication: exact envelopes remain pending through ambiguous/pre-ledger/indeterminate paths, resolved commands retain command/result refs, human promotion approval has a distinct exact-SHA record, and bridge reports remain non-authoritative.
 - The web-package validator now pins/prints protocol `agentic-bridge/1` and enforces exact source shape, grouped trigger/reference structure, placeholder counts, a parsed strict command example, continuity fields, regular files, valid UTF-8, formatting-tolerant stale direct-transport/source-project residue, and selected high-risk policy inversions.
+- Independent re-review of `developer` through `d4fa1810f04cbc2ee85eac9a0037c2edbd08aa6d` and `web-orchestration` through `9cfd77169ce65a6648de3a1241b9a6f9e0856214` reported no actionable findings and judged the correction ready for substantive approval; no human acceptance or promotion followed.
+- Human steering requires finalization to preserve the exact substantively approved task-progress blob under `docs/work/archive/` for benchmarking rather than delete it. Archived task-progress remains public-safe, closed, non-authoritative, excluded from active-task discovery and scouting, and subordinate to reconciled durable records.
+- A fresh fetch confirmed `developer=d4fa1810f04cbc2ee85eac9a0037c2edbd08aa6d`, `web-orchestration=9cfd77169ce65a6648de3a1241b9a6f9e0856214`, unchanged `main=9d9b5d8f54dfa052b7c745e9644ae1c3ddc40c0e`, clean local `developer`, and `0 0` local/remote synchronization.
+- Developer finalization now verifies the task path against the substantive-approval Git blob, refuses an existing same-name archive target, uses `git mv`, verifies the resulting archive hash, and reports the archived path without creating another handoff snapshot.
+- Archived task snapshots are immutable/non-authoritative and excluded from active-task discovery, symbol scouting, broad current source-residue checks, and generic link-health checks; the mutable archive policy README remains a required validated file.
+- The agent-system validator rejects task-record removal wording across normative lifecycle files, requires the guarded archive procedure/response/policy, and requires both jCodeMunch archive exclusions.
 
 ## Interpretation
 
@@ -1609,6 +1615,7 @@ The pinned manifest plus wildcard extension prepares every classified HTTP opera
 - Independent-review steering keeps the existing bridge behavior and narrows its documented contract: issue bodies and comments are intentionally scanned, the generalized package publishes every command including `start` as a fresh comment, and bounded `pty.read` remains diagnostic while state-changing PTY commands require local enablement.
 - Fresh-template provenance now includes author time and path/mode/type tree shape while intentionally allowing branch-specific blob differences. A local old-root backup is created before the exact leased replacement.
 - F18 is deferred rather than treated as a message-only edit because an approval URL would need to remain bound through the command contract, merge creation, pending tuple, and resumed-promotion proof. The existing one-SHA promotion interface remains unchanged and the operator-only deviation log records the judgment.
+- Human post-review steering changes finalization from deletion to a same-basename, content-preserving move into `docs/work/archive/`. The archive is retained only as immutable benchmark history: it does not become an implementation record, substitute for durable reconciliation, or participate in active-task discovery.
 
 ## Independent review dispositions
 
@@ -1666,19 +1673,25 @@ The pinned manifest plus wildcard extension prepares every classified HTTP opera
 - After aligning F11's scanner capability with the package's comment-only publication policy and reconciling durable records, full developer `./scripts/validate-repository.sh` again passed under exact Node `22.13.0`, including 42/42 bridge tests and 8/8 disposable-Git tests.
 - Reconciliation commit `114294ebde25b248398fa62a0df69b8e25c8e75e` pushed successfully through the tracked post-commit synchronization hook; a fresh fetch confirmed exact local/remote `0 0` synchronization before this task-progress-only snapshot.
 - The handoff-boundary full repository validation passes under exact Node `22.13.0`, including mandatory research validation, 42/42 bridge tests, 8/8 disposable-Git tests, and active-hook checks.
+- Post-review resumption fetch and status checks confirmed the three exact remote refs, a clean synchronized `developer`, and no promotion to `main`.
+- Exact Node `22.13.0` targeted agent-system and preimplementation checks pass, and `git diff --check` reports no errors.
+- An external archive-policy mutation matrix passes 3/3 cases: obsolete task-record removal and a missing scouting exclusion fail closed, while immutable history containing a stale link and historical source identifier is ignored by current-state checks.
+- Full exact-Node `./scripts/validate-repository.sh` passes preimplementation links/structure, agent-system and research validation, bridge contracts, 42/42 bridge tests, 8/8 disposable-Git tests, and active-hook checks.
 
 ## Blockers / required decisions
 
-No correction blocker remains. Live GitHub App registration/installation-token access and native ChatGPT GitHub write-action validation require human-owned credentials/account interaction unavailable here. Deterministic App/REST/control/workflow doubles cover the local path, and the operator-only `/Projects/Active/deviations.md` record captures the residual live exercise without claiming it passed. Independent remote review and any exact-SHA acceptance decision remain outside developer authority.
+No implementation blocker remains for the benchmark-archive steering. Live GitHub App registration/installation-token access and native ChatGPT GitHub write-action validation require human-owned credentials/account interaction unavailable here. Deterministic App/REST/control/workflow doubles cover the local path, and the operator-only `/Projects/Active/deviations.md` record captures the residual live exercise without claiming it passed. Independent remote review and any exact-SHA acceptance decision remain outside developer authority.
 
 ## Remaining work
 
-- No further implementation correction is pending before independent re-review.
+- Commit and push the validated developer archive contract.
+- Update the unrelated web-orchestration finalization-review source and package validation without merging histories.
+- Validate and push both histories, then create a new developer handoff for independent review.
 - The credentialed live GitHub App/native ChatGPT exercise remains an operator-owned acceptance step and is not claimed complete.
 
 ## Next action
 
-The web orchestrator should independently review `developer` from prior handoff `0d515b6cb89366c5913c4864a177ca852c561e9c` through the handoff SHA reported in the five-field response, and review unrelated `web-orchestration` range `f1f7f98372f5bd28073b02fca3e9d5d925ccd2ab..9cfd77169ce65a6648de3a1241b9a6f9e0856214`, before deciding on further steering or substantive approval.
+Commit and push the validated developer-side archive contract, then update the unrelated web-orchestration finalization review against its current remote tip.
 
 ## Relevant durable records
 
@@ -1691,4 +1704,4 @@ The web orchestrator should independently review `developer` from prior handoff 
 
 ## Last handoff commit
 
-`0d515b6cb89366c5913c4864a177ca852c561e9c`
+`d4fa1810f04cbc2ee85eac9a0037c2edbd08aa6d`

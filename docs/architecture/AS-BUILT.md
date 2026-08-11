@@ -22,10 +22,11 @@ This repository is a reusable workflow template rather than a product implementa
 - Tracked hooks enforce checks against direct `main` changes, branch deletion, non-fast-forward pushes, and continued work after failed synchronization within a configured local checkout. They are advisory client-side defense in depth rather than a server-side boundary; operators should also restrict `main` through a GitHub ruleset.
 - Recovery and promotion scripts fail closed on ambiguous synchronization or authorization evidence.
 - Validators check deterministic structure, links, configuration, executable bits, clean research shape, and residual source-project terminology; they do not establish semantic correctness or human acceptance.
+- Finalization reconciles durable records, verifies task-progress against the substantive-approval blob, refuses archive collisions, and moves the unchanged file to the same basename under `docs/work/archive/`. Archived task files are immutable, non-authoritative benchmark history excluded from active-task discovery, scouting, current-policy residue scans, and generic link-health checks.
 
 ## Durable records
 
-Task-progress is temporary process memory. AS-BUILT records current implementation reality. Deviation records capture material intended-versus-actual differences. When implementation changes a fact described by AS-BUILT or a deviation, the record changes in the same commit.
+Task-progress is active process memory and later immutable benchmark history, never implementation authority. AS-BUILT records current implementation reality. Deviation records capture material intended-versus-actual differences. When implementation changes a fact described by AS-BUILT or a deviation, the record changes in the same commit.
 
 ## Verification routes
 

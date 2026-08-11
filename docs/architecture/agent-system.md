@@ -52,6 +52,7 @@ The configured symbol scout is non-authoritative context. `.jcodemunch.jsonc` us
 ## Persistent continuity
 
 - The local developer's task-progress file survives compaction, reconnects, multiple commits, steering, and Luna-to-Sol transition.
+- Finalization moves the exact substantively approved task-progress blob to `docs/work/archive/` as immutable, non-authoritative benchmark history; archived records are excluded from active-task discovery and scouting.
 - AS-BUILT is live implementation memory and durable reality.
 - Deviation records are live intended-versus-actual truth.
 - The web orchestrator keeps concise task context, pre-publication command envelopes, command/result refs, human approval boundaries, and routing records under the two runtime-continuity directories on `web-orchestration` when its authenticated write capability is available.

@@ -19,8 +19,8 @@
 │   ├── milestones/                  gate plans and evidence
 │   ├── plain-language/              first-reader explanation
 │   └── work/
-│       ├── current/                 temporary task-progress
-│       ├── archive/                 durable closed work records only
+│       ├── current/                 active task-progress
+│       ├── archive/                 immutable non-authoritative benchmark snapshots
 │       ├── future/                  non-normative proposals
 │       └── templates/
 ├── contracts/                       versioned schemas/examples
@@ -43,6 +43,7 @@ Bridge runtime configuration, GitHub App keys/tokens, OpenCode passwords, `secre
 | Change | Location |
 | --- | --- |
 | Active task process | `docs/work/current/<task>.md` |
+| Closed task benchmark snapshot | `docs/work/archive/<task>.md`, moved unchanged during finalization |
 | Current implemented component facts | `src/<component>/AS-BUILT.md` or the component's established AS-BUILT location |
 | Planned-versus-actual difference | applicable milestone/component deviation record |
 | Architecture authority/branch model | `docs/architecture/` |
