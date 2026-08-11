@@ -6,7 +6,7 @@ GENESIS-001
 
 ## Status
 
-In progress — repository genesis and remote publication
+Ready for handoff — repository genesis and remote publication complete
 
 ## Task-start developer SHA
 
@@ -26,7 +26,7 @@ Finish the clean template repository, verify its branch and GitHub state, and le
 
 ## Current position
 
-The clean template is the root commit on `main` and `developer`; the independent orchestration root has been created and published. Tracked hooks are active on `developer`.
+The clean template is the root commit on `main`; `developer` contains the temporary progress record and the independent orchestration root has been created and published. Tracked hooks are active on `developer`.
 
 ## Observed
 
@@ -35,6 +35,10 @@ The clean template is the root commit on `main` and `developer`; the independent
 - `main` and `developer` initially pointed to that exact commit.
 - The orchestration branch contains only its dedicated namespace.
 - Local structural, agent-system, and clean research validators pass.
+- The generic repository CI workflow completed successfully for the clean `main` state and the current `developer` state.
+- GitHub reports the repository as public, with `main` as default and template status enabled.
+- The direct `main` commit probe was blocked by the tracked hook.
+- The source checkout remains clean and its required refs remain unchanged.
 
 ## Interpretation
 
@@ -56,6 +60,7 @@ Repository genesis is being kept separate from the resulting template's normal t
 - Remote repository creation and initial `main`/`developer` publication completed.
 - Tracked hook bootstrap and check passed.
 - Direct `main` commit probe was blocked by the tracked hook.
+- Remote branch, root-history, clean-content, terminology, path, and secret-material scans completed; the only secret-pattern match is a deliberate validator regex literal, not secret material.
 
 ## Blockers / required decisions
 
@@ -63,13 +68,12 @@ None observed. Human acceptance remains required for any future promotion of a r
 
 ## Remaining work
 
-- Verify all remote branch metadata, exact SHAs, template status, and independent history.
-- Run the final tracked-content, commit-message, source-repository, and public-safety scans.
-- Update this record for the handoff snapshot, push it, then delete the temporary record in the genesis cleanup commit.
+- Create and push the dedicated handoff snapshot.
+- Delete this temporary genesis record in the cleanup commit so the template tree has no active task.
 
 ## Next action
 
-Complete the remote and tracked-content verification, then create the dedicated handoff snapshot commit.
+Create the dedicated handoff snapshot commit, verify its remote SHA, then delete this temporary record in the genesis cleanup commit.
 
 ## Relevant durable records
 
