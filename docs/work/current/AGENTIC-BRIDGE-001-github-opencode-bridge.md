@@ -6,7 +6,7 @@
 
 ## Status
 
-Independent review corrections are pushed on both implementation histories; final developer reconciliation and handoff are active, with no promotion authorized.
+Ready for independent re-review: all corrections and durable reconciliation are pushed on both implementation histories; this task-progress update is the dedicated developer handoff boundary, with no acceptance or promotion claimed.
 
 ## Task-start developer SHA
 
@@ -1538,7 +1538,7 @@ Apply the independent review corrections across `developer` and the unrelated `w
 
 ## Current position
 
-The independent review covered `developer` through handoff `0d515b6cb89366c5913c4864a177ca852c561e9c` and `web-orchestration` through `f1f7f98372f5bd28073b02fca3e9d5d925ccd2ab`, expressed no acceptance, and steered corrections F1-F16 plus an F18 judgment. The developer correction is pushed at `3df6922f1553f82947c2c3835cd3f916e108c1f2`; the unrelated web-package correction is pushed at `9cfd77169ce65a6648de3a1241b9a6f9e0856214`. Both were independently verified `0 0`, `main` remains `9d9b5d8f54dfa052b7c745e9644ae1c3ddc40c0e`, and final developer-side contract/record reconciliation passes full validation under exact Node `22.13.0` and is ready to push.
+The independent review covered `developer` through handoff `0d515b6cb89366c5913c4864a177ca852c561e9c` and `web-orchestration` through `f1f7f98372f5bd28073b02fca3e9d5d925ccd2ab`, expressed no acceptance, and steered corrections F1-F16 plus an F18 judgment. The developer correction is pushed at `3df6922f1553f82947c2c3835cd3f916e108c1f2`, final developer contract/record reconciliation is pushed at `114294ebde25b248398fa62a0df69b8e25c8e75e`, and the unrelated web-package correction is pushed at `9cfd77169ce65a6648de3a1241b9a6f9e0856214`. Both branch pairs are verified `0 0`, `main` remains `9d9b5d8f54dfa052b7c745e9644ae1c3ddc40c0e`, all locally controllable checks pass, and this update is the final task-progress-only handoff snapshot.
 
 ## Observed
 
@@ -1549,6 +1549,7 @@ The independent review covered `developer` through handoff `0d515b6cb89366c5913c
 - The independent migrated package is on `origin/web-orchestration` at `f1f7f98372f5bd28073b02fca3e9d5d925ccd2ab`; local `web-orchestration` matched it `0 0` and clean after push.
 - The developer independent-review correction is pushed at `3df6922f1553f82947c2c3835cd3f916e108c1f2`; a fresh fetch confirmed local and `origin/developer` at `0 0` with unchanged `main`.
 - The independent web-package correction is pushed at `9cfd77169ce65a6648de3a1241b9a6f9e0856214`; a fresh fetch confirmed local and `origin/web-orchestration` at `0 0` with only `web-orchestration-only/**` changed.
+- Final developer contract/record reconciliation is pushed at `114294ebde25b248398fa62a0df69b8e25c8e75e`; a fresh fetch confirmed local and `origin/developer` at `0 0`, with `origin/web-orchestration=9cfd77169ce65a6648de3a1241b9a6f9e0856214` and unchanged `origin/main`.
 - `./scripts/bootstrap-agent-workflow.sh --check` reports that tracked hooks are active.
 - No other worktree or active task record was present.
 - npm and upstream tag evidence identify OpenCode and `@opencode-ai/sdk` `1.18.16` as current; the release tag is `a3647eb025c7615159d417dcc49fc39fdaeba65b`.
@@ -1663,6 +1664,8 @@ The pinned manifest plus wildcard extension prepares every classified HTTP opera
 - The extended external `/tmp/opencode/test-web-validator.mjs` matrix passed 26/26 cases, adding formatted stale-transport, authoritative-bridge-report, and automatic-indeterminate-retry mutations.
 - Post-push fetches verified `developer=3df6922f1553f82947c2c3835cd3f916e108c1f2`, `web-orchestration=9cfd77169ce65a6648de3a1241b9a6f9e0856214`, and unchanged `main=9d9b5d8f54dfa052b7c745e9644ae1c3ddc40c0e`; each checked-out implementation branch matched its origin at `0 0`.
 - After aligning F11's scanner capability with the package's comment-only publication policy and reconciling durable records, full developer `./scripts/validate-repository.sh` again passed under exact Node `22.13.0`, including 42/42 bridge tests and 8/8 disposable-Git tests.
+- Reconciliation commit `114294ebde25b248398fa62a0df69b8e25c8e75e` pushed successfully through the tracked post-commit synchronization hook; a fresh fetch confirmed exact local/remote `0 0` synchronization before this task-progress-only snapshot.
+- The handoff-boundary full repository validation passes under exact Node `22.13.0`, including mandatory research validation, 42/42 bridge tests, 8/8 disposable-Git tests, and active-hook checks.
 
 ## Blockers / required decisions
 
@@ -1670,12 +1673,12 @@ No correction blocker remains. Live GitHub App registration/installation-token a
 
 ## Remaining work
 
-- Push this validated final developer-side contract/record reconciliation, then verify local/remote `0 0` synchronization.
-- Create, push, and verify the dedicated task-progress-only handoff snapshot.
+- No further implementation correction is pending before independent re-review.
+- The credentialed live GitHub App/native ChatGPT exercise remains an operator-owned acceptance step and is not claimed complete.
 
 ## Next action
 
-Review and push the validated reconciliation through tracked hooks, verify exact synchronization, then prepare the dedicated task-progress-only handoff snapshot.
+The web orchestrator should independently review `developer` from prior handoff `0d515b6cb89366c5913c4864a177ca852c561e9c` through the handoff SHA reported in the five-field response, and review unrelated `web-orchestration` range `f1f7f98372f5bd28073b02fca3e9d5d925ccd2ab..9cfd77169ce65a6648de3a1241b9a6f9e0856214`, before deciding on further steering or substantive approval.
 
 ## Relevant durable records
 
