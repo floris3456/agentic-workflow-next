@@ -6,7 +6,7 @@
 
 ## Status
 
-Implementation complete after human steering; final durable reconciliation and developer handoff are in progress. Finalization now preserves the exact reviewed task-progress record as immutable benchmark history without changing reconciliation, review, acceptance, promotion, or branch-authority boundaries.
+Ready for independent re-review: benchmark-archive behavior, web verification, validators, and durable reconciliation are pushed on both independent histories; this task-progress update is the dedicated developer handoff boundary, with no acceptance or promotion claimed.
 
 ## Task-start developer SHA
 
@@ -1538,7 +1538,7 @@ Change finalization across `developer` and the unrelated `web-orchestration` pac
 
 ## Current position
 
-The developer archive contract is pushed at `b1ff922bc5e5020f7af10f0389510ea3065f76d0`, and the unrelated web finalization-review contract is pushed at `36adae35552c8e32ce8ee8f446aa586eec20b969`. Developer procedure preserves the exact substantive-approval blob through a collision-free same-basename move; web review proves that preservation through exact remote tree/blob evidence. Both branch pairs are verified `0 0`, all targeted and full checks pass, `main` remains `9d9b5d8f54dfa052b7c745e9644ae1c3ddc40c0e`, and final developer record reconciliation plus the task-progress-only handoff remain.
+The developer archive contract is pushed at `b1ff922bc5e5020f7af10f0389510ea3065f76d0`, final developer record reconciliation is pushed at `5a96293d050144b2c3c1540fc0b7728801c1fc89`, and the unrelated web finalization-review contract is pushed at `36adae35552c8e32ce8ee8f446aa586eec20b969`. Developer procedure preserves the exact substantive-approval blob through a collision-free same-basename move; web review proves that preservation through exact remote tree/blob evidence. Both branch pairs are verified `0 0`, all targeted and full checks pass, `main` remains `9d9b5d8f54dfa052b7c745e9644ae1c3ddc40c0e`, and this update is the final task-progress-only handoff snapshot.
 
 ## Observed
 
@@ -1582,6 +1582,7 @@ The developer archive contract is pushed at `b1ff922bc5e5020f7af10f0389510ea3065
 - The unrelated web finalization-review commit is pushed at `36adae35552c8e32ce8ee8f446aa586eec20b969` and changes only `web-orchestration-only/chatgpt-project/skill-mcp-on-finalization-review.md` plus `web-orchestration-only/validate-package.mjs`.
 - Web review now proves that the current path existed and its same-name archive target did not at substantive approval, then verifies the current path is absent and the archive holds the identical Git blob OID at finalization. A mismatch, collision, or substantive change reopens normal review and blocks acceptance.
 - A fresh post-push fetch confirmed `developer=b1ff922bc5e5020f7af10f0389510ea3065f76d0`, `web-orchestration=36adae35552c8e32ce8ee8f446aa586eec20b969`, unchanged `main=9d9b5d8f54dfa052b7c745e9644ae1c3ddc40c0e`, and `0 0` synchronization for both implementation branch pairs.
+- Final developer durable-record reconciliation is pushed at `5a96293d050144b2c3c1540fc0b7728801c1fc89`; a fresh fetch confirmed local and `origin/developer` at `0 0`, unrelated `web-orchestration` at `36adae35552c8e32ce8ee8f446aa586eec20b969`, and unchanged `main` before this handoff snapshot.
 
 ## Interpretation
 
@@ -1684,6 +1685,8 @@ The pinned manifest plus wildcard extension prepares every classified HTTP opera
 - On `web-orchestration`, exact Node `22.13.0` package validation passes with 19 Project Sources, five continuity files, and bridge protocol `agentic-bridge/1`.
 - The external web validator mutation matrix passes 27/27 cases, including a new task-progress-removal regression fixture.
 - `git diff --check -- web-orchestration-only` reported no errors before web commit `36adae35552c8e32ce8ee8f446aa586eec20b969` was pushed.
+- After web-package alignment and AS-BUILT reconciliation, final exact-Node `./scripts/validate-repository.sh` again passes all repository checks, including 42/42 bridge tests and 8/8 disposable-Git tests.
+- Reconciliation commit `5a96293d050144b2c3c1540fc0b7728801c1fc89` pushed successfully through the tracked synchronization hook; post-push fetch confirmed both implementation histories at `0 0` before this task-progress-only snapshot.
 
 ## Blockers / required decisions
 
@@ -1691,13 +1694,12 @@ No implementation blocker remains for the benchmark-archive steering. Live GitHu
 
 ## Remaining work
 
-- Complete and push developer durable-record reconciliation for the now-pushed web package behavior.
-- Run final full developer validation, then create and push the dedicated task-progress-only handoff for independent review.
+- No further benchmark-archive implementation is pending before independent re-review.
 - The credentialed live GitHub App/native ChatGPT exercise remains an operator-owned acceptance step and is not claimed complete.
 
 ## Next action
 
-Validate and push the final developer record reconciliation, then create the dedicated task-progress-only handoff.
+The web orchestrator should independently review `developer` from prior handoff `d4fa1810f04cbc2ee85eac9a0037c2edbd08aa6d` through the handoff SHA reported in the five-field response, and review unrelated `web-orchestration` range `9cfd77169ce65a6648de3a1241b9a6f9e0856214..36adae35552c8e32ce8ee8f446aa586eec20b969`, before deciding on further steering or substantive approval.
 
 ## Relevant durable records
 
