@@ -52,6 +52,7 @@ test("public projection aliases private IDs, redacts secrets and paths, and boun
     path: "/home/operator/project/src/private.ts",
     text: "notify @team <script>, session ses_private123, token=secret-value, and sk-abcdefghijklmnop",
     eventId: "evt_private123",
+    projectID: "d85910b40169bd2af241432892d1e99817ea8eaf",
     otherPath: "/custom/work/repository/file.ts",
     ses_keyed123: { state: "idle" },
   }, "TASK-1");
@@ -62,6 +63,7 @@ test("public projection aliases private IDs, redacts secrets and paths, and boun
     path: "[local-path]/src/private.ts",
     text: "notify @team <script>, session session-1, [redacted], and [redacted]",
     eventId: "event-1",
+    projectID: "project-1",
     otherPath: "[local-path]",
     "session-2": { state: "idle" },
   });
@@ -69,15 +71,82 @@ test("public projection aliases private IDs, redacts secrets and paths, and boun
   assert.doesNotMatch(comment, /ses_private|do-not-publish|\/home\/operator|@team|<script>/);
   assert.equal(projection.safeText("OpenCode rejected ses_private123"), "OpenCode rejected session-1");
   assert.equal(state.resolveAlias("session-1", "session"), "ses_private123");
+  assert.equal(state.resolveAlias("project-1", "project"), "d85910b40169bd2af241432892d1e99817ea8eaf");
 
   const bounded = new PublicProjection({ state, maxBytes: 50 }).project({ value: "x".repeat(200) });
   assert.deepEqual(bounded, { retained_locally: true, truncated: true, reason: "Projected result exceeds the GitHub publication limit" });
+});
+
+test("public projection omits non-public OpenCode message parts and provider metadata", (context) => {
+  const { state, projection } = fixture(context);
+  const result = projection.project({
+    projectID: "d85910b40169bd2af241432892d1e99817ea8eaf",
+    metadata: { openai: { itemId: "provider-item", reasoningEncryptedContent: "opaque-ciphertext" } },
+    reasoning: "private summary",
+    messages: [{
+      info: {
+        id: "msg_private123",
+        sessionID: "ses_private123",
+        providerMetadata: { provider: "private-provider-state" },
+      },
+      parts: [
+        {
+          id: "prt_reasoning123",
+          messageID: "msg_private123",
+          sessionID: "ses_private123",
+          type: "reasoning",
+          text: "private chain of thought",
+          metadata: { reasoningEncryptedContent: "encrypted-private-chain" },
+        },
+        {
+          id: "prt_step123",
+          messageID: "msg_private123",
+          sessionID: "ses_private123",
+          type: "step-start",
+          snapshot: "opaque-snapshot",
+        },
+        {
+          id: "prt_tool123",
+          messageID: "msg_private123",
+          sessionID: "ses_private123",
+          type: "tool",
+          output: "private tool detail",
+        },
+        {
+          id: "prt_text123",
+          messageID: "msg_private123",
+          sessionID: "ses_private123",
+          type: "text",
+          text: "Bridge smoke test received successfully.",
+          metadata: { providerItem: "private-provider-state" },
+        },
+      ],
+    }],
+  }, "TASK-1");
+
+  assert.deepEqual(result, {
+    projectID: "project-1",
+    messages: [{
+      info: { id: "message-1", sessionID: "session-1" },
+      parts: [{
+        id: "part-1",
+        messageID: "message-1",
+        sessionID: "session-1",
+        type: "text",
+        text: "Bridge smoke test received successfully.",
+      }],
+    }],
+  });
+  const serialized = JSON.stringify(result);
+  assert.doesNotMatch(serialized, /private|reasoning|encrypted|provider-item|opaque|d85910/);
+  assert.equal(state.resolveAlias("project-1", "project"), "d85910b40169bd2af241432892d1e99817ea8eaf");
 });
 
 test("operation policy is fail-closed and resolves only explicit local references", (context) => {
   const { state } = fixture(context);
   const alias = state.ensureAlias("session", "ses_private123", "TASK-1");
   const otherAlias = state.ensureAlias("session", "ses_private456", "TASK-2");
+  const projectAlias = state.ensureAlias("project", "private-project", "TASK-1");
   assert.equal(otherAlias, "session-2");
   const denied = new OperationPolicy({ manifest, state });
   assert.throws(() => denied.prepare("session.share", { path: { sessionID: { alias } } }), /blocked/);
@@ -87,7 +156,9 @@ test("operation policy is fail-closed and resolves only explicit local reference
   assert.throws(() => denied.prepare("file.read", { query: { directory: "..", path: "README.md" } }), /directory routing is controlled/);
   assert.throws(() => denied.prepare("v2.fs.read", { query: { location: { directory: ".." } }, wildcard: "README.md" }), /location routing is controlled/);
   assert.throws(() => denied.prepare("session.get", { path: { sessionID: { alias: otherAlias } } }, "TASK-1"), /not available to task TASK-1/);
+  assert.throws(() => denied.prepare("project.directories", { path: { projectID: { alias: projectAlias } } }, "TASK-2"), /not available to task TASK-2/);
   assert.equal(denied.prepare("session.get", { path: { sessionID: { alias } } }, "TASK-1").args.path?.sessionID, "ses_private123");
+  assert.equal(denied.prepare("project.directories", { path: { projectID: { alias: projectAlias } } }, "TASK-1").args.path?.projectID, "private-project");
 
   const allowed = new OperationPolicy({
     manifest,
