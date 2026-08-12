@@ -6,7 +6,7 @@
 
 ## Status
 
-Independent-review correction in progress: the bridge remains stopped, affected bot result comments were deleted, and the projection correction now also binds semantic project aliases to task ownership while aligning architecture wording with the implemented text-part filter.
+Ready for independent re-review: the bridge remains stopped, affected bot result comments were deleted, and the pushed projection correction now also binds semantic project aliases to task ownership while aligning architecture wording with the implemented text-part filter.
 
 ## Task-start developer SHA
 
@@ -26,7 +26,7 @@ Prevent GitHub projection of OpenCode reasoning content, opaque project identifi
 
 ## Current position
 
-Private App registration, selected-repository installation, labels, pinned OpenCode `1.18.16`, bridge bootstrap, and command transport succeeded. A live `status` result exposed reasoning parts, encrypted provider metadata, and an unaliased project identifier. The two unsafe terminal result comments were deleted and the bridge was stopped. Corrective projection publishes only recognized text message parts, omits non-public metadata/reasoning fields, and aliases project IDs. Independent review of handoff `72ac319c99293c9085e0862a8d390b83e7efb3b7` found that project aliases were not yet task-bound and that architecture wording overstated text parts as final text. Both findings are corrected locally and pass the full pinned-runtime suite before push.
+Private App registration, selected-repository installation, labels, pinned OpenCode `1.18.16`, bridge bootstrap, and command transport succeeded. A live `status` result exposed reasoning parts, encrypted provider metadata, and an unaliased project identifier. The two unsafe terminal result comments were deleted and the bridge was stopped. Corrective projection publishes only recognized text message parts, omits non-public metadata/reasoning fields, and aliases project IDs. Independent review of handoff `72ac319c99293c9085e0862a8d390b83e7efb3b7` found that project aliases were not yet task-bound and that architecture wording overstated text parts as final text. Both findings are corrected and pushed at `bc23b9ae0b040a0d6f1d2ef195303b19b5666fe1` after the full pinned-runtime suite passed. This update is the dedicated task-progress-only handoff boundary.
 
 ## Observed
 
@@ -65,6 +65,7 @@ Live setup is paused and converted into a bounded corrective developer task. Str
 - Corrective implementation commit `a1a1193a1425fe168b5390bb6fbc99e602733b65` pushed successfully through the tracked synchronization hook; local and `origin/developer` were synchronized before this handoff snapshot.
 - After the independent-review correction, exact Node `22.13.0` `npm test` passes 43/43 and `./scripts/validate-repository.sh` passes all repository checks, 43/43 bridge tests, and 8/8 disposable-Git tests.
 - Post-correction `git diff --check` reports no errors.
+- Review correction commit `bc23b9ae0b040a0d6f1d2ef195303b19b5666fe1` pushed successfully through the tracked synchronization hook; local and `origin/developer` were synchronized before this handoff snapshot.
 
 ## Blockers / required decisions
 
@@ -72,12 +73,12 @@ No implementation blocker. The corrected remote head requires independent re-rev
 
 ## Remaining work
 
-- Push a correction handoff and independently re-review the exact remote range before substantive approval and promotion.
+- Independently re-review the exact remote correction range before substantive approval and promotion.
 - Restart the bridge and repeat a sanitized live round trip after the corrected SHA is active.
 
 ## Next action
 
-Push the project-alias ownership correction and a dedicated task-only handoff, then re-run independent review on PR `#2` at the resulting exact head.
+Independently review `72ac319c99293c9085e0862a8d390b83e7efb3b7..` through the handoff SHA reported in the five-field response, then re-review the complete PR `#2` head before substantive approval.
 
 ## Relevant durable records
 
