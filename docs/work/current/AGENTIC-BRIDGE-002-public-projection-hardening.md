@@ -6,7 +6,7 @@
 
 ## Status
 
-Implementation validated: live GitHub App setup exposed unsafe public projection; the bridge remains stopped, affected bot result comments were deleted, and corrective projection/tests/records pass the complete repository suite.
+Ready for independent review: live GitHub App setup exposed unsafe public projection; the bridge remains stopped, affected bot result comments were deleted, and corrective projection/tests/records are pushed and pass the complete repository suite.
 
 ## Task-start developer SHA
 
@@ -26,7 +26,7 @@ Prevent GitHub projection of OpenCode reasoning content, opaque project identifi
 
 ## Current position
 
-Private App registration, selected-repository installation, labels, pinned OpenCode `1.18.16`, bridge bootstrap, and command transport succeeded. A live `status` result exposed reasoning parts, encrypted provider metadata, and an unaliased project identifier. The two unsafe terminal result comments were deleted and the bridge was stopped. Corrective projection now publishes only recognized text message parts, omits non-public metadata/reasoning fields, aliases project IDs, and passes adversarial plus full repository validation.
+Private App registration, selected-repository installation, labels, pinned OpenCode `1.18.16`, bridge bootstrap, and command transport succeeded. A live `status` result exposed reasoning parts, encrypted provider metadata, and an unaliased project identifier. The two unsafe terminal result comments were deleted and the bridge was stopped. Corrective projection now publishes only recognized text message parts, omits non-public metadata/reasoning fields, aliases project IDs, and is pushed at `a1a1193a1425fe168b5390bb6fbc99e602733b65` after adversarial plus full repository validation. This update is the dedicated task-progress-only handoff boundary.
 
 ## Observed
 
@@ -60,6 +60,7 @@ Live setup is paused and converted into a bounded corrective developer task. Str
 - Exact Node `22.13.0` `./scripts/validate-repository.sh` passes all repository checks, 43/43 bridge tests, and 8/8 disposable-Git tests.
 - `git diff --check` reports no errors.
 - Direct replay of stored live command `442550d1-8613-46fa-b6c7-6baecc51ba94` through the corrected projector retained final text and omitted every asserted non-public field/value.
+- Corrective implementation commit `a1a1193a1425fe168b5390bb6fbc99e602733b65` pushed successfully through the tracked synchronization hook; local and `origin/developer` were synchronized before this handoff snapshot.
 
 ## Blockers / required decisions
 
@@ -67,13 +68,12 @@ No implementation blocker. Corrective work requires independent review and exact
 
 ## Remaining work
 
-- Commit and push the validated implementation and durable records.
-- Create and push the dedicated task-progress-only handoff, then independently review before promotion.
+- Independently review the exact remote range before substantive approval and promotion.
 - Restart the bridge and repeat a sanitized live round trip after the corrected SHA is active.
 
 ## Next action
 
-Commit and push the validated implementation/records, then prepare the dedicated handoff snapshot.
+The web orchestrator should independently review `cbb63e8df10c3fcd2e2b6bafe77e9d0c6352df1a..` through the handoff SHA reported in the five-field response, with emphasis on fail-closed projection and live-response replay, before substantive approval.
 
 ## Relevant durable records
 
