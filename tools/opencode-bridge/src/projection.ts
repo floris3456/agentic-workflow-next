@@ -25,6 +25,19 @@ const embeddedPrivateIdPatterns: Array<[RegExp, string]> = [
   [/(^|[^A-Za-z0-9_-])(evt[_-][A-Za-z0-9_-]+)/g, "event"],
 ];
 const sensitiveKey = /(authorization|cookie|credential|jwt|password|private.?key|secret|token|api.?key|^key$)/i;
+const nonPublicKeys = new Set([
+  "metadata",
+  "providermetadata",
+  "reasoning",
+  "reasoningcontent",
+  "reasoningencryptedcontent",
+  "encryptedcontent",
+  "thinking",
+  "chainofthought",
+]);
+const semanticPrivateIdKinds = new Map([
+  ["projectid", "project"],
+]);
 const secretText = [
   /-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?-----END [A-Z ]*PRIVATE KEY-----/g,
   /\bgh(?:p|o|u|s|r)_[A-Za-z0-9_]{20,}\b/g,
@@ -39,6 +52,17 @@ const secretText = [
 
 function privateIdKind(value: string): string | undefined {
   return privateIdPatterns.find(([pattern]) => pattern.test(value))?.[1];
+}
+
+function normalizedKey(value: string): string {
+  return value.replace(/[^A-Za-z0-9]/g, "").toLowerCase();
+}
+
+function nonPublicMessagePart(value: Record<string, JsonValue>): boolean {
+  const type = typeof value.type === "string" ? value.type.toLowerCase() : undefined;
+  if (type === "reasoning" || type === "thinking" || type === "analysis") return true;
+  const messagePart = Object.hasOwn(value, "messageID") || Object.hasOwn(value, "messageId") || Object.hasOwn(value, "message_id");
+  return messagePart && type !== undefined && type !== "text";
 }
 
 function redactText(value: string, roots: readonly string[]): string {
@@ -87,7 +111,7 @@ export class PublicProjection {
     this.maxDepth = options.maxDepth ?? 8;
   }
 
-  private sanitize(value: JsonValue, taskId: string | undefined, depth: number): JsonValue {
+  private sanitize(value: JsonValue, taskId: string | undefined, depth: number): JsonValue | undefined {
     if (depth > this.maxDepth) return "[truncated-depth]";
     if (typeof value === "string") {
       const text = redactText(this.aliasPrivateIds(value, taskId), this.roots);
@@ -95,16 +119,32 @@ export class PublicProjection {
     }
     if (value === null || typeof value !== "object") return value;
     if (Array.isArray(value)) {
-      const projected = value.slice(0, this.maxCollectionEntries).map((entry) => this.sanitize(entry, taskId, depth + 1));
-      if (value.length > projected.length) projected.push({ truncated_items: value.length - projected.length });
+      const projected = value.slice(0, this.maxCollectionEntries)
+        .map((entry) => this.sanitize(entry, taskId, depth + 1))
+        .filter((entry): entry is JsonValue => entry !== undefined);
+      const truncated = value.length - Math.min(value.length, this.maxCollectionEntries);
+      if (truncated > 0) projected.push({ truncated_items: truncated });
       return projected;
     }
+    if (nonPublicMessagePart(value)) return undefined;
     const entries = Object.entries(value);
     const projected: Record<string, JsonValue> = {};
     for (const [key, entry] of entries.slice(0, this.maxCollectionEntries)) {
+      const normalized = normalizedKey(key);
+      if (nonPublicKeys.has(normalized)) continue;
       const kind = privateIdKind(key);
       const publicKey = kind ? this.state.ensureAlias(kind, key, taskId) : redactText(this.aliasPrivateIds(key, taskId), this.roots).slice(0, 200);
-      projected[publicKey] = sensitiveKey.test(key) ? "[redacted]" : this.sanitize(entry, taskId, depth + 1);
+      if (sensitiveKey.test(key)) {
+        projected[publicKey] = "[redacted]";
+        continue;
+      }
+      const semanticKind = semanticPrivateIdKinds.get(normalized);
+      if (semanticKind && typeof entry === "string" && entry.length > 0) {
+        projected[publicKey] = this.state.ensureAlias(semanticKind, entry, taskId);
+        continue;
+      }
+      const child = this.sanitize(entry, taskId, depth + 1);
+      if (child !== undefined) projected[publicKey] = child;
     }
     if (entries.length > this.maxCollectionEntries) projected.truncated_fields = entries.length - this.maxCollectionEntries;
     return projected;
@@ -119,7 +159,7 @@ export class PublicProjection {
   }
 
   project(value: JsonValue | undefined, taskId?: string): JsonValue {
-    const projected = this.sanitize(value ?? null, taskId, 0);
+    const projected = this.sanitize(value ?? null, taskId, 0) ?? { retained_locally: true, omitted: true, reason: "Result is not public projection content" };
     if (Buffer.byteLength(JSON.stringify(projected), "utf8") <= this.maxBytes) return projected;
     return { retained_locally: true, truncated: true, reason: "Projected result exceeds the GitHub publication limit" };
   }

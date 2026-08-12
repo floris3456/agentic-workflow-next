@@ -6,7 +6,7 @@
 
 ## Status
 
-Active: live GitHub App setup exposed unsafe public projection; the bridge is stopped and affected bot result comments were deleted before corrective implementation.
+Implementation validated: live GitHub App setup exposed unsafe public projection; the bridge remains stopped, affected bot result comments were deleted, and corrective projection/tests/records pass the complete repository suite.
 
 ## Task-start developer SHA
 
@@ -26,7 +26,7 @@ Prevent GitHub projection of OpenCode reasoning content, opaque project identifi
 
 ## Current position
 
-Private App registration, selected-repository installation, labels, pinned OpenCode `1.18.16`, bridge bootstrap, and command transport succeeded. A live `status` result exposed reasoning parts, encrypted provider metadata, and an unaliased project identifier. The two unsafe terminal result comments were deleted, the bridge was stopped, the repository stayed clean/synchronized, and corrective implementation is starting from the promoted baseline.
+Private App registration, selected-repository installation, labels, pinned OpenCode `1.18.16`, bridge bootstrap, and command transport succeeded. A live `status` result exposed reasoning parts, encrypted provider metadata, and an unaliased project identifier. The two unsafe terminal result comments were deleted and the bridge was stopped. Corrective projection now publishes only recognized text message parts, omits non-public metadata/reasoning fields, aliases project IDs, and passes adversarial plus full repository validation.
 
 ## Observed
 
@@ -35,6 +35,8 @@ Private App registration, selected-repository installation, labels, pinned OpenC
 - Live `start` command `f55f6efe-85d8-4393-9bef-b2c5f385f11d` was accepted and created a Luna session; the session produced exactly `Bridge smoke test received successfully.` without Git changes.
 - Live read-only `status` command `442550d1-8613-46fa-b6c7-6baecc51ba94` published internal reasoning text/provider metadata and a raw project ID because `PublicProjection` currently sanitizes fields generically rather than suppressing non-public OpenCode content classes.
 - Bridge process `1375725` was terminated cleanly before correction; no pending outbox or Git changes remained.
+- `PublicProjection` now omits reasoning/thinking/analysis parts, every non-text recognized message part, provider metadata, and reasoning/encrypted-content fields; semantic `projectID` values receive durable `project-*` aliases.
+- The exact raw live status payload reprojected to 1,110 bytes, retained `Bridge smoke test received successfully.`, and contained none of the observed reasoning/metadata/encrypted/snapshot/provider-item/raw-project-ID classes.
 
 ## Interpretation
 
@@ -47,29 +49,31 @@ Field-level token/path/ID redaction is insufficient for heterogeneous OpenCode r
 
 ## Changed approach
 
-Live setup is paused and converted into a bounded corrective developer task. The bridge will not restart until adversarial tests and full repository validation prove a structurally safe projection.
+Live setup is paused and converted into a bounded corrective developer task. Structural policy is fail closed for message-part classes: only text parts are published, while unknown/non-text parts remain local. The bridge will not restart until this validated change is pushed and reviewed.
 
 ## Checks
 
 - Bridge bootstrap passed live compatibility, GitHub App access, labels, and state initialization.
 - Git remained clean at `developer=origin/developer=origin/main=cbb63e8df10c3fcd2e2b6bafe77e9d0c6352df1a` throughout the smoke test.
 - Unsafe result comments were deleted and subsequent issue inspection confirmed only commands, accepted ACKs, and the safe idle event remain.
+- Exact Node `22.13.0` nested bridge suite passes 43/43, including the captured live-response projection case.
+- Exact Node `22.13.0` `./scripts/validate-repository.sh` passes all repository checks, 43/43 bridge tests, and 8/8 disposable-Git tests.
+- `git diff --check` reports no errors.
+- Direct replay of stored live command `442550d1-8613-46fa-b6c7-6baecc51ba94` through the corrected projector retained final text and omitted every asserted non-public field/value.
 
 ## Blockers / required decisions
 
-No implementation blocker. Corrective work requires later independent review and exact human approval before promotion.
+No implementation blocker. Corrective work requires independent review and exact human approval before promotion. Live bridge restart remains intentionally blocked until the corrected SHA is promoted, because the service must run from a synchronized `developer` checkout.
 
 ## Remaining work
 
-- Implement class-aware public projection suppression/aliasing.
-- Add adversarial tests using the live response shapes.
-- Update component AS-BUILT and operator deviation record.
-- Run full validation, push implementation and handoff, then independently review before promotion.
+- Commit and push the validated implementation and durable records.
+- Create and push the dedicated task-progress-only handoff, then independently review before promotion.
 - Restart the bridge and repeat a sanitized live round trip after the corrected SHA is active.
 
 ## Next action
 
-Add fail-closed structural projection rules and tests for reasoning parts, provider metadata, encrypted content, and project IDs.
+Commit and push the validated implementation/records, then prepare the dedicated handoff snapshot.
 
 ## Relevant durable records
 
