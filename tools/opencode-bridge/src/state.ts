@@ -13,7 +13,7 @@ import type {
 import { asJson, ensureParent, now, stableJson } from "./util.js";
 
 type Row = Record<string, unknown>;
-const taskBoundAliasKinds = new Set(["session", "pty", "permission", "question", "message", "part", "event"]);
+const taskBoundAliasKinds = new Set(["session", "pty", "permission", "question", "message", "part", "event", "project"]);
 
 function parseJson(value: unknown): JsonValue {
   return asJson(JSON.parse(String(value)));

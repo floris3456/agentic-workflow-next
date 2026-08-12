@@ -146,6 +146,7 @@ test("operation policy is fail-closed and resolves only explicit local reference
   const { state } = fixture(context);
   const alias = state.ensureAlias("session", "ses_private123", "TASK-1");
   const otherAlias = state.ensureAlias("session", "ses_private456", "TASK-2");
+  const projectAlias = state.ensureAlias("project", "private-project", "TASK-1");
   assert.equal(otherAlias, "session-2");
   const denied = new OperationPolicy({ manifest, state });
   assert.throws(() => denied.prepare("session.share", { path: { sessionID: { alias } } }), /blocked/);
@@ -155,7 +156,9 @@ test("operation policy is fail-closed and resolves only explicit local reference
   assert.throws(() => denied.prepare("file.read", { query: { directory: "..", path: "README.md" } }), /directory routing is controlled/);
   assert.throws(() => denied.prepare("v2.fs.read", { query: { location: { directory: ".." } }, wildcard: "README.md" }), /location routing is controlled/);
   assert.throws(() => denied.prepare("session.get", { path: { sessionID: { alias: otherAlias } } }, "TASK-1"), /not available to task TASK-1/);
+  assert.throws(() => denied.prepare("project.directories", { path: { projectID: { alias: projectAlias } } }, "TASK-2"), /not available to task TASK-2/);
   assert.equal(denied.prepare("session.get", { path: { sessionID: { alias } } }, "TASK-1").args.path?.sessionID, "ses_private123");
+  assert.equal(denied.prepare("project.directories", { path: { projectID: { alias: projectAlias } } }, "TASK-1").args.path?.projectID, "private-project");
 
   const allowed = new OperationPolicy({
     manifest,
