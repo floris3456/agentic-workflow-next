@@ -4,7 +4,7 @@
 BRIDGE-FULL-SMOKE-20260813T210616Z-AA63A3
 
 ## Status
-in progress
+completed
 
 ## Task-start developer SHA
 61234e0f24e9a1d4640798c60a677081dfb7aa64
@@ -19,7 +19,7 @@ Perform a harmless bridge smoke task on developer only. Follow AGENTS.md and all
 Create the public-safe bridge smoke artifact and maintain its task-progress record on `developer` only.
 
 ## Current position
-The required phrase question was answered with `cobalt-river`. The one permitted sentinel read was attempted at the exact repository-relative path and returned file-not-found; continuation is permitted by the brief. The smoke artifact was created, both exact files were inspected, and `git diff --check` passed.
+The required phrase question was answered with `cobalt-river`. The one permitted sentinel read was attempted at the exact repository-relative path and returned file-not-found; continuation is permitted by the brief. The smoke artifact and task record were created, both exact files were inspected, `git diff --check` passed, and the implementation commit was pushed to `origin/developer`. This record is ready for the dedicated handoff snapshot.
 
 ## Observed
 - Current branch is `developer`.
@@ -28,7 +28,8 @@ The required phrase question was answered with `cobalt-river`. The one permitted
 - The structured question answer is `cobalt-river`.
 - The permitted sentinel read returned `File not found`.
 - The artifact contains the required heading, task ID, phrase, random text, and projection probe source.
-- The task-progress record and smoke artifact are the only untracked files.
+- The implementation commit `292479688d607e5f9d8f10cd0874843e2b4e58e3` was pushed to `origin/developer`.
+- No files outside the requested task record and smoke artifact were changed.
 
 ## Interpretation
 The expected absent sentinel does not block this smoke task.
@@ -41,16 +42,16 @@ The expected absent sentinel does not block this smoke task.
 None.
 
 ## Checks
-Initial branch/synchronization and tracked-hook checks passed. Exact reads confirmed the task-progress record and artifact contents. `git diff --check` passed.
+Initial branch/synchronization and tracked-hook checks passed. Exact reads confirmed the task-progress record and artifact contents. `git diff --check` passed before the implementation commit and again after the final record update. The implementation commit was pushed successfully.
 
 ## Blockers / required decisions
 None.
 
 ## Remaining work
-Commit and push the task record plus smoke artifact, then update and push the dedicated handoff snapshot.
+None after the dedicated handoff snapshot is pushed.
 
 ## Next action
-Commit and push the two requested files with the task ID in the commit message.
+Create and push the dedicated handoff snapshot, then return the six-field handoff response.
 
 ## Relevant durable records
 - `docs/work/bridge-smoke-tests/BRIDGE-FULL-SMOKE-20260813T210616Z-AA63A3.md`
