@@ -22,7 +22,6 @@ export interface RecoveryCoordinatorOptions {
   client: OpenCodeClient;
   state: BridgeState;
   onPersistedEvent?: (event: PersistedOpenCodeEvent) => void | Promise<void>;
-  onReconciled?: (snapshot: JsonValue) => void | Promise<void>;
   onError?: (error: unknown) => void | Promise<void>;
 }
 
@@ -46,6 +45,19 @@ function sessionFromPayload(record: Record<string, unknown>): string | undefined
   return undefined;
 }
 
+function interactionEventId(
+  eventType: string,
+  payload: Record<string, unknown>,
+  sessionId: string | undefined,
+  fallbackId: string,
+): string {
+  if (!sessionId || !/^(?:permission|question)\./i.test(eventType)) return fallbackId;
+  const body = nestedRecord(payload, "data") ?? nestedRecord(payload, "properties") ?? payload;
+  const interactionId = stringField(body, "id");
+  if (!interactionId) return fallbackId;
+  return `interaction-${sha256(stableJson({ eventType, interactionId, sessionId }))}`;
+}
+
 function requireIdentity(record: Record<string, unknown>, fallbackId?: string): { eventId: string; eventType: string } {
   const eventId = stringField(record, "id") ?? fallbackId;
   const eventType = stringField(record, "type");
@@ -63,7 +75,8 @@ function normalizeLegacy(value: unknown, streamId?: string): PersistedOpenCodeEv
   const identity = requireIdentity(record, streamId);
   const sessionId = sessionFromPayload(record);
   return {
-    ...identity,
+    eventId: interactionEventId(identity.eventType, record, sessionId, identity.eventId),
+    eventType: identity.eventType,
     source: "legacy-live",
     payload: asJson(record),
     ...(sessionId ? { sessionId } : {}),
@@ -113,7 +126,8 @@ function normalizeSession(value: unknown, session: RecoverableSession): Persiste
   const sequence = requireSequence(durable.seq, "Durable session event");
   if (aggregateId !== session.sessionId) throw new Error("Durable session event aggregate does not match the mapped session");
   return {
-    ...identity,
+    eventId: interactionEventId(identity.eventType, record, session.sessionId, identity.eventId),
+    eventType: identity.eventType,
     source: "session-v2",
     payload: asJson(record),
     taskId: session.taskId,
@@ -157,18 +171,16 @@ export class RecoveryCoordinator {
   private readonly client: OpenCodeClient;
   private readonly state: BridgeState;
   private readonly onPersistedEvent?: RecoveryCoordinatorOptions["onPersistedEvent"];
-  private readonly onReconciled?: RecoveryCoordinatorOptions["onReconciled"];
   private readonly onError?: RecoveryCoordinatorOptions["onError"];
 
   constructor(options: RecoveryCoordinatorOptions) {
     this.client = options.client;
     this.state = options.state;
     this.onPersistedEvent = options.onPersistedEvent;
-    this.onReconciled = options.onReconciled;
     this.onError = options.onError;
   }
 
-  private async persist(event: PersistedOpenCodeEvent): Promise<boolean> {
+  private async persist(event: PersistedOpenCodeEvent, notifyExisting = false): Promise<boolean> {
     const inserted = this.state.recordEvent({
       eventKey: `opencode:${event.eventId}`,
       source: event.source,
@@ -181,7 +193,7 @@ export class RecoveryCoordinator {
       ...(event.aggregateId ? { aggregateId: event.aggregateId } : {}),
       ...(event.sequence === undefined ? {} : { durableSeq: event.sequence }),
     }, terminalResponseDelivery(this.state, event));
-    if (inserted) await this.onPersistedEvent?.(event);
+    if (inserted || notifyExisting) await this.onPersistedEvent?.(event);
     return inserted;
   }
 
@@ -250,36 +262,44 @@ export class RecoveryCoordinator {
     });
   }
 
-  async reconcileCanonical(): Promise<JsonValue> {
-    const [sessions, status, permissions, questions] = await Promise.all([
-      this.client.request("session.list"),
-      this.client.request("session.status"),
+  async recoverCanonicalInteractions(): Promise<number> {
+    const [permissions, questions] = await Promise.all([
       this.client.request("permission.list"),
       this.client.request("question.list"),
     ]);
-    const messages: Record<string, JsonValue> = {};
-    for (const session of this.state.listTaskSessions()) {
-      try {
-        messages[session.taskId] = (await this.client.request("session.messages", {
-          path: { sessionID: session.sessionId },
-          query: { limit: 100 },
-        })) ?? null;
-      } catch (error) {
-        if (!(error instanceof OpenCodeHttpError) || error.status !== 404) throw error;
-        messages[session.taskId] = { missing: true };
+    const groups = [
+      { value: permissions, eventType: "permission.asked" },
+      { value: questions, eventType: "question.asked" },
+    ] as const;
+    let inserted = 0;
+    for (const group of groups) {
+      if (!Array.isArray(group.value)) throw new TypeError(`OpenCode ${group.eventType} recovery response is not an array`);
+      for (const value of group.value) {
+        const interaction = asRecord(value, `OpenCode ${group.eventType} recovery item`);
+        const interactionId = stringField(interaction, "id");
+        const sessionId = stringField(interaction, "sessionID");
+        if (!interactionId || !sessionId) throw new TypeError(`OpenCode ${group.eventType} recovery item is missing id or sessionID`);
+        const binding = this.state.sessionBindingForInternal(sessionId);
+        if (!binding) continue;
+        const eventId = interactionEventId(group.eventType, interaction, sessionId, interactionId);
+        if (await this.persist({
+          eventId,
+          source: "canonical-recovery",
+          eventType: group.eventType,
+          taskId: binding.taskId,
+          sessionId,
+          sessionKind: binding.sessionKind,
+          ...(binding.requestId ? { requestId: binding.requestId } : {}),
+          payload: {
+            id: eventId,
+            type: group.eventType,
+            properties: asJson(interaction),
+            recovery: { method: `${group.eventType === "permission.asked" ? "permission" : "question"}.list` },
+          },
+        }, true)) inserted++;
       }
     }
-    const snapshot: JsonValue = {
-      capturedAt: Date.now(),
-      sessions: sessions ?? null,
-      status: status ?? null,
-      permissions: permissions ?? null,
-      questions: questions ?? null,
-      taskMessages: messages,
-    };
-    this.state.setReconciliation("canonical", snapshot);
-    await this.onReconciled?.(snapshot);
-    return snapshot;
+    return inserted;
   }
 
   async recoverOnce(): Promise<void> {
@@ -291,7 +311,7 @@ export class RecoveryCoordinator {
         if (!(error instanceof OpenCodeHttpError) || error.status !== 404) throw error;
       }
     }
-    await this.reconcileCanonical();
+    await this.recoverCanonicalInteractions();
   }
 
   private async retry(attempt: number, signal: AbortSignal, random: () => number): Promise<void> {

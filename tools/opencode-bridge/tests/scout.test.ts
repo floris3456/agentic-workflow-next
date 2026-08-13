@@ -153,6 +153,34 @@ test("an interrupted Scout start becomes indeterminate and is never relaunched",
   assert.match(state.getRequest(start.requestId)?.error ?? "", /no side effect was repeated/);
 });
 
+test("interrupted local status reads are recomputed under the same UUID without launching a Scout", async (context) => {
+  const { state, projection } = fixture(context);
+  const reads = [
+    request("11111111-2222-4333-8444-555555555551", "TASK-READ", "command.status", {
+      command_id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    }),
+    request("11111111-2222-4333-8444-555555555552", "TASK-READ", "task.status", {}),
+    request("11111111-2222-4333-8444-555555555553", "TASK-READ", "scout.status", {
+      scout_request_id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+    }),
+  ].map((envelope) => state.acceptRequest(envelope, 12).request);
+  for (const read of reads) state.beginRequest(read.requestId);
+
+  let launches = 0;
+  const executor = new RequestExecutor({
+    state,
+    projection,
+    scout: { start: async () => { launches++; return { unexpected: true }; } },
+  });
+  executor.requeueCompletedResults();
+  assert.deepEqual(reads.map((read) => state.getRequest(read.requestId)?.state), ["accepted", "accepted", "accepted"]);
+
+  await executor.executeAll(state.listRequests(["accepted"]));
+  assert.deepEqual(reads.map((read) => state.getRequest(read.requestId)?.state), ["succeeded", "succeeded", "succeeded"]);
+  assert.equal(launches, 0);
+  assert.equal(state.listCommands().length, 0);
+});
+
 test("independent Scout starts execute concurrently while one mutating command is nonterminal", async (context) => {
   const { state, projection } = fixture(context);
   const mutation: CommandEnvelope = {

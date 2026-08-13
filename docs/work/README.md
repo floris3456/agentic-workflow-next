@@ -9,7 +9,9 @@
 3. The original delegated brief is preserved verbatim.
 4. Task-progress, AS-BUILT, and applicable deviations are maintained during work.
 5. Every commit is pushed immediately.
-6. Before returning control, the developer creates and pushes a dedicated handoff snapshot commit.
+6. Before returning control, the developer creates and pushes a dedicated
+   handoff snapshot commit. That successful push ends the working cycle; the
+   developer immediately returns the six fields without another edit or commit.
 7. The web orchestrator independently reviews the exact remote range.
 8. After substantive approval, the implementing developer reconciles durable records and moves the exact approved task-progress blob unchanged to the same basename under `docs/work/archive/` in the finalization commit.
 9. The web orchestrator reviews finalization.

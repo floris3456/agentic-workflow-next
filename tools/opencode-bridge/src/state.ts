@@ -372,9 +372,10 @@ export class BridgeState {
       }
       const sameSequence = this.db.prepare("SELECT * FROM commands WHERE task_id=? AND sequence=?").get(envelope.task_id, envelope.sequence) as Row | undefined;
       if (sameSequence) return { disposition: "conflict", command: commandFromRow(sameSequence) };
-      const latest = this.db.prepare("SELECT last_sequence FROM task_sequences WHERE task_id=?").get(envelope.task_id) as Row | undefined;
+      const latest = this.db.prepare("SELECT MAX(sequence) AS last_sequence FROM commands WHERE task_id=?")
+        .get(envelope.task_id) as Row;
       const timestamp = now();
-      const expected = latest === undefined ? 1 : Number(latest.last_sequence) + 1;
+      const expected = latest.last_sequence === null ? 1 : Number(latest.last_sequence) + 1;
       const nonterminal = this.db.prepare(
         "SELECT command_id, state FROM commands WHERE task_id=? AND state IN ('accepted','applying') ORDER BY created_at LIMIT 1",
       ).get(envelope.task_id) as Row | undefined;
@@ -400,10 +401,6 @@ export class BridgeState {
         INSERT INTO commands(command_id, task_id, sequence, issue_number, kind, envelope_json, state, error, created_at, updated_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).run(envelope.command_id, envelope.task_id, envelope.sequence, issueNumber, envelope.kind, serialized, "accepted", null, timestamp, timestamp);
-      this.db.prepare(`
-        INSERT INTO task_sequences(task_id, last_sequence, updated_at) VALUES (?, ?, ?)
-        ON CONFLICT(task_id) DO UPDATE SET last_sequence=excluded.last_sequence, updated_at=excluded.updated_at
-      `).run(envelope.task_id, envelope.sequence, timestamp);
       const command = this.getCommand(envelope.command_id)!;
       return { disposition: "new", command };
     });
@@ -628,6 +625,19 @@ export class BridgeState {
     const request = this.getRequest(requestId);
     if (!request) throw new Error(`Unknown bridge request ${requestId}`);
     if (result.changes === 0) throw new Error(`Bridge request ${requestId} cannot begin from ${request.state}`);
+    return this.getRequest(requestId)!;
+  }
+
+  requeueApplyingStatusRequest(requestId: string): StoredRequest {
+    const request = this.getRequest(requestId);
+    if (!request) throw new Error(`Unknown bridge request ${requestId}`);
+    if (!new Set(["command.status", "task.status", "scout.status"]).has(request.kind)) {
+      throw new Error(`Bridge request ${requestId} is not a repeatable status read`);
+    }
+    const result = this.db.prepare(
+      "UPDATE requests SET state='accepted', raw_result_json=NULL, public_result_json=NULL, error=NULL, updated_at=? WHERE request_id=? AND state='applying'",
+    ).run(now(), requestId);
+    if (result.changes === 0) throw new Error(`Bridge request ${requestId} cannot requeue from ${request.state}`);
     return this.getRequest(requestId)!;
   }
 

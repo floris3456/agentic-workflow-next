@@ -190,24 +190,22 @@ export class OpenCodeClient {
     return { bytes, hash: createHash("sha256").update(bytes).digest("hex") };
   }
 
-  async compatibility(candidateManifest: Manifest): Promise<CompatibilityResult> {
+  async compatibility(): Promise<CompatibilityResult> {
     const [health, contract] = await Promise.all([this.health(), this.contract()]);
-    const inventory = this.manifest.compare(candidateManifest);
     const expectedVersion = this.manifest.document.source.opencodeVersion;
     const expectedHash = this.manifest.document.source.openapiSha256;
     return {
       compatible:
         health.healthy &&
         health.version === expectedVersion &&
-        contract.hash === expectedHash &&
-        inventory.added.length === 0 &&
-        inventory.removed.length === 0 &&
-        inventory.changed.length === 0,
+        contract.hash === expectedHash,
       runningVersion: health.version,
       expectedVersion,
       actualHash: contract.hash,
       expectedHash,
-      ...inventory,
+      added: [],
+      removed: [],
+      changed: [],
     };
   }
 }

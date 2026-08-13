@@ -249,7 +249,7 @@ export class ScoutRuntime {
     const refSha = text(request.envelope.arguments, "ref");
     const workspace = await this.workspaces.prepare(refSha);
     const client = this.clientFor(workspace);
-    const compatibility = await client.compatibility(client.manifest);
+    const compatibility = await client.compatibility();
     if (!compatibility.compatible) throw new Error("OpenCode compatibility drift blocks Scout start");
     const [agentInventory, availableTools] = await Promise.all([
       client.request("app.agents"),

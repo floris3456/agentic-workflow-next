@@ -182,8 +182,12 @@ export class RequestExecutor {
 
   requeueCompletedResults(): void {
     for (const interrupted of this.state.listRequests(["applying"])) {
-      const message = "Bridge restarted while this request was applying; its outcome is indeterminate and no side effect was repeated";
-      this.state.finishRequest(interrupted.requestId, "indeterminate", undefined, { error: message }, message);
+      if (interrupted.kind === "scout.start") {
+        const message = "Bridge restarted while this request was applying; its outcome is indeterminate and no side effect was repeated";
+        this.state.finishRequest(interrupted.requestId, "indeterminate", undefined, { error: message }, message);
+      } else {
+        this.state.requeueApplyingStatusRequest(interrupted.requestId);
+      }
     }
     for (const request of this.state.listRequests(["succeeded", "failed", "indeterminate"])) this.publish(request);
   }

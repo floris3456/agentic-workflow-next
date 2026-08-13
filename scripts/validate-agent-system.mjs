@@ -141,7 +141,11 @@ for (const file of [".opencode/agents/small-developer.md", ".opencode/agents/lar
     "exact pushed 40-character commit SHA for completed work; otherwise it is `none`",
     "failed push is `blocked` with `none`",
   ]) assert(compact.includes(term), `${file} is missing developer response rule: ${term}`);
+  assert(compact.includes("successful snapshot push ends the current working cycle") && compact.includes("do not edit, run another tool"),
+    `${file} must make the pushed handoff snapshot terminal for its working cycle`);
 }
+assert(handoffSkill.includes("immediately return the limited response") && handoffSkill.includes("only at the start of a later working cycle"),
+  "git-sync-and-handoff must not create a same-cycle post-handoff commit");
 
 const finalizationPolicyFiles = [
   "README.md",

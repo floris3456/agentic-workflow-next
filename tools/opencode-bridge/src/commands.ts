@@ -199,7 +199,7 @@ export class CommandExecutor {
   }
 
   private async requireCompatibility(): Promise<void> {
-    const result = await this.client.compatibility(this.client.manifest);
+    const result = await this.client.compatibility();
     this.state.recordCompatibility(this.instanceId, result);
     if (!result.compatible) throw new Error("Consequential OpenCode command blocked by compatibility drift");
   }

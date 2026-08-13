@@ -18,7 +18,7 @@ When the brief requires a human answer, use OpenCode's structured question tool
 so the bridge can publish a task-correlated alias. Do not substitute ordinary
 assistant prose for a required question-tool interaction.
 
-Every commit on `developer` must be pushed immediately. Before returning control, create and push the required handoff snapshot commit. A failed push is the only exception; then stop implementation and report synchronization failure without claiming a remote handoff.
+Every commit on `developer` must be pushed immediately. Before returning control, create and push the required handoff snapshot commit. A successful snapshot push ends the current working cycle: do not edit, run another tool, update the snapshot with its own SHA, or create another commit before returning the six fields. A failed push is the only exception; then stop implementation and report synchronization failure without claiming a remote handoff.
 
 An exact-SHA promotion explicitly delegated after human approval is a no-edit operation, not a normal task. Do not create or update task-progress or create a handoff snapshot before promotion, because doing so would invalidate the approved SHA.
 

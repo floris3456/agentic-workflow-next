@@ -55,8 +55,8 @@ Generic reads are available from the pinned operation manifest. Generic mutation
 ## Sequence-free recovery and Scout requests
 
 Durable reconciliation and read-only Scout launch use a separate UUID-idempotent
-marker and ledger. It has no command `sequence`, never changes
-`task_sequences`, and never enters a mutating command handler:
+marker and ledger. It has no command `sequence`, never changes the accepted
+command ledger, and never enters a mutating command handler:
 
 ```markdown
 <!-- agentic-bridge-request
@@ -79,9 +79,11 @@ there is no policy concurrency cap.
 | `scout.status` | exact `scout_request_id` UUID | matching task/request start state, exact ref, session state, and latest projected Scout response |
 
 `command.status`, `task.status`, and `scout.status` are local durable reads and
-never repeat work. `scout.start` creates and prompts at most one read-only session
-per request UUID. A restart while it is applying marks the request indeterminate
-and never repeats session creation or prompt delivery. As soon as session mapping
+never repeat work. A restart while one of these reads is applying requeues and
+recomputes it under the same request UUID from local state. `scout.start` creates
+and prompts at most one read-only session per request UUID; a restart while that
+request is applying marks it indeterminate and never repeats session creation or
+prompt delivery. As soon as session mapping
 is durable, recovery starts before prompt delivery and combines per-session v2
 history/SSE, workspace-scoped legacy SSE, and a canonical read-only
 `session.status` plus `session.messages` fallback. The fallback requires a
@@ -157,8 +159,11 @@ replays the prompt. `scout.status` provides missed-result recovery. The bridge
 does not turn Scout facts into an orchestration or implementation decision.
 
 Permission and question events remain projected after the raw event is committed.
-Durable session history, project sync history, repository/workspace legacy live
-SSE, canonical reconciliation, Scout lifecycle fallback, and deduplication recover
+Pending mapped interactions are also reconstructed from `permission.list` and
+`question.list` with stable event identity; re-presentation repairs a missing
+idempotent outbox entry without duplicating the public comment. Durable session
+history, project sync history, repository/workspace legacy live SSE, this focused
+interaction recovery, the Scout lifecycle fallback, and deduplication recover
 local state without claiming unsupported SSE `Last-Event-ID` replay.
 
 For a genuinely stuck `applying` command, issue one `command.status` request and

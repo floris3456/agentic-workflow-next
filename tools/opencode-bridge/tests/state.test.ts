@@ -77,6 +77,31 @@ test("command ledger requires sequence one, contiguous progress, and one nonterm
   assert.equal(state.acceptCommand(envelope("77777777-7777-4777-8777-777777777773", 3), 10).disposition, "new");
 });
 
+test("command ledger reconstructs the next sequence after reopen without trusting the legacy counter table", (context) => {
+  const root = mkdtempSync(join(tmpdir(), "opencode-bridge-sequence-reopen-"));
+  const path = join(root, "private", "bridge.sqlite");
+  context.after(() => rmSync(root, { recursive: true, force: true }));
+
+  const initial = new BridgeState(path);
+  const first = envelope("81818181-8181-4181-8181-818181818181", 1);
+  assert.equal(initial.acceptCommand(first, 10).disposition, "new");
+  initial.beginCommand(first.command_id);
+  initial.finishCommand(first.command_id, "succeeded", null, { status: "ok" });
+  initial.close();
+
+  const legacy = new DatabaseSync(path);
+  legacy.prepare("INSERT OR REPLACE INTO task_sequences(task_id, last_sequence, updated_at) VALUES (?, ?, ?)")
+    .run("TASK-1", 99, 0);
+  legacy.close();
+
+  const reopened = new BridgeState(path);
+  context.after(() => reopened.close());
+  assert.equal(
+    reopened.acceptCommand(envelope("82828282-8282-4282-8282-828282828282", 2), 10).disposition,
+    "new",
+  );
+});
+
 test("mandatory Git guards reject durably before consuming sequence", (context) => {
   const { state } = stateForTest(context);
   const nested = envelope("18181818-1818-4181-8181-181818181818", 1, {

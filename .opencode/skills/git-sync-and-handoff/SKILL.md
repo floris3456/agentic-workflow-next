@@ -43,10 +43,15 @@ Before a normal response:
 4. create a dedicated commit whose only intended purpose is the current task-progress handoff boundary;
 5. push successfully;
 6. report the resulting current handoff SHA in `Handoff developer SHA`;
-7. at the start of the next working cycle, record that SHA as `Last handoff commit`; and
-8. return the limited response.
+7. immediately return the limited response without another edit, tool call, or
+   commit; and
+8. only at the start of a later working cycle, record that prior SHA as `Last
+   handoff commit`.
 
-A handoff snapshot is a boundary marker. The web reviewer inspects the entire range since the task start or previous reviewed SHA.
+A handoff snapshot is a terminal boundary for its working cycle. It identifies
+itself through the response and must not be amended merely to record its own
+SHA. The web reviewer inspects the entire range since the task start or previous
+reviewed SHA.
 
 ## Six-field response
 

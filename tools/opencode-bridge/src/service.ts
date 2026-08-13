@@ -323,7 +323,7 @@ export class BridgeService {
     const heartbeat = setInterval(() => this.state.setMeta("service.heartbeat_at", String(Date.now())), 5_000);
     try {
       try {
-        const compatibility = await this.client.compatibility(this.client.manifest);
+        const compatibility = await this.client.compatibility();
         this.state.recordCompatibility(this.config.instanceId, compatibility);
       } catch (error) {
         this.state.setMeta("service.last_error", this.projection.safeText(errorMessage(error)));
@@ -367,7 +367,7 @@ export async function checkBridge(config: BridgeConfig, mutate: boolean): Promis
   await verifyRepositoryIdentity(config);
   const manifest = Manifest.load(config.manifestFile);
   const client = opencode(config, manifest);
-  const compatibility = await client.compatibility(manifest);
+  const compatibility = await client.compatibility();
   await client.request("project.current");
 
   const stateStub = {} as BridgeState;

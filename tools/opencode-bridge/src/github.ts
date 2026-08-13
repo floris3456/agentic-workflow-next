@@ -285,6 +285,7 @@ export interface PollResult {
   sourceCount: number;
   commands: StoredCommand[];
   requests: StoredRequest[];
+  mutationBlocked: boolean;
   rejected: number;
   unauthorized: number;
 }
@@ -336,7 +337,17 @@ export class GitHubCommandPoller {
       const task = this.state.taskForIssue(issue.number);
       return task !== undefined && this.state.hasMutatingTask(task);
     }).map((issue) => issue.number));
-    if (openMutatingIssues.size > 1) throw new Error("Multiple mutating bridge control issues are open; close all but the active mutating task issue");
+    const mutationBlocked = openMutatingIssues.size > 1;
+    if (mutationBlocked) {
+      const scope = [...openMutatingIssues].sort((left, right) => left - right).join(",");
+      for (const issueNumber of openMutatingIssues) {
+        this.enqueueComment(
+          issueNumber,
+          `repository-mutation-ambiguity:${scope}:${issueNumber}`,
+          "Bridge mutation dispatch is frozen because multiple open mapped mutating control issues exist. Sequence-free recovery requests and read-only Scouts remain available; reconcile the issues before another mutation.",
+        );
+      }
+    }
     const commands: StoredCommand[] = [];
     const requests: StoredRequest[] = [];
     let sourceCount = 0;
@@ -376,6 +387,11 @@ export class GitHubCommandPoller {
             this.rejectCommand(issue.number, item.markerHash, envelope, "The first mutating-task command must be start");
             continue;
           }
+          if (mutationBlocked && !this.state.getCommand(envelope.command_id) && !this.state.commandRejection(envelope.command_id)) {
+            rejected++;
+            this.rejectCommand(issue.number, item.markerHash, envelope, "Repository mutation dispatch is frozen while multiple mapped mutating control issues are open");
+            continue;
+          }
           if (envelope.kind === "start" && !this.state.hasMutatingTask(envelope.task_id)
             && [...openMutatingIssues].some((number) => number !== issue.number)) {
             rejected++;
@@ -390,9 +406,6 @@ export class GitHubCommandPoller {
             commands.push(accepted.command!);
             if (envelope.kind === "start") openMutatingIssues.add(issue.number);
             this.enqueueComment(issue.number, `command-ack:${envelope.command_id}`, commandStatusComment(accepted.command!));
-          } else if (accepted.disposition === "stale") {
-            rejected++;
-            this.enqueueComment(issue.number, `stale-command:${envelope.command_id}`, commandStatusComment(accepted.command!, "sequence is stale"));
           } else if (accepted.disposition === "conflict") {
             rejected++;
             this.enqueueComment(issue.number, `conflict-command:${envelope.command_id}`, invalidCommandComment(item.markerHash, "Command UUID or task sequence conflicts with an existing command"));
@@ -455,7 +468,7 @@ export class GitHubCommandPoller {
         }
       }
     }
-    return { issueCount: issues.length, sourceCount, commands, requests, rejected, unauthorized };
+    return { issueCount: issues.length, sourceCount, commands, requests, mutationBlocked, rejected, unauthorized };
   }
 }
 
@@ -583,15 +596,15 @@ export class GitHubControlLoop {
     let hasOpenControlIssues = false;
     while (!signal.aborted) {
       try {
-        const recovered = this.state.listCommands(["accepted"]);
-        if (recovered.length > 0) await applyCommands(recovered);
-        const recoveredRequests = this.state.listRequests(["accepted"]);
-        if (recoveredRequests.length > 0) await applyRequests(recoveredRequests);
         await this.outbox.flush();
         const result = await this.poller.pollOnce();
         hasOpenControlIssues = result.issueCount > 0;
-        if (result.commands.length > 0) await applyCommands(result.commands);
-        if (result.requests.length > 0) await applyRequests(result.requests);
+        const acceptedRequests = this.state.listRequests(["accepted"]);
+        if (acceptedRequests.length > 0) await applyRequests(acceptedRequests);
+        if (!result.mutationBlocked) {
+          const acceptedCommands = this.state.listCommands(["accepted"]);
+          if (acceptedCommands.length > 0) await applyCommands(acceptedCommands);
+        }
         await this.outbox.flush();
         failures = 0;
         const active = hasOpenControlIssues || this.state.listCommands(["accepted", "applying"]).length > 0;

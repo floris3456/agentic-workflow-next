@@ -150,13 +150,32 @@ test("compatibility fails closed on contract hash drift", async () => {
     return new Response("not found", { status: 404 });
   }));
 
-  const result = await api.compatibility(manifest);
+  const result = await api.compatibility();
   assert.equal(result.compatible, false);
   assert.equal(result.runningVersion, "1.18.16");
   assert.equal(result.actualHash, createHash("sha256").update(contractBytes).digest("hex"));
   assert.deepEqual(result.added, []);
   assert.deepEqual(result.removed, []);
   assert.deepEqual(result.changed, []);
+});
+
+test("compatibility fails closed on runtime version drift without a manifest self-comparison", async () => {
+  const api = client(asFetch(() => { throw new Error("unexpected fetch"); }));
+  api.health = async () => ({ healthy: true, version: "1.18.15" });
+  api.contract = async () => ({
+    bytes: new Uint8Array(),
+    hash: manifest.document.source.openapiSha256,
+  });
+
+  const result = await api.compatibility();
+  assert.equal(result.compatible, false);
+  assert.equal(result.runningVersion, "1.18.15");
+  assert.equal(result.actualHash, result.expectedHash);
+  assert.deepEqual({ added: result.added, removed: result.removed, changed: result.changed }, {
+    added: [],
+    removed: [],
+    changed: [],
+  });
 });
 
 test("client accepts only credential-free loopback HTTP URLs", () => {

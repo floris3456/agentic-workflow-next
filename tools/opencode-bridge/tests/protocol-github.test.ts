@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test, { type TestContext } from "node:test";
 import { GitHubAppAuth, type InstallationTokenProvider } from "../src/github-auth.js";
-import { GitHubClient, GitHubCommandPoller, GitHubOutbox } from "../src/github.js";
+import { GitHubClient, GitHubCommandPoller, GitHubControlLoop, GitHubOutbox } from "../src/github.js";
 import {
   commandStatusComment,
   invalidCommandComment,
@@ -477,6 +477,108 @@ test("poller admits multiple Scout-only issues alongside one mutating task issue
   assert.equal(second.commands.length, 0);
   assert.equal(second.requests.length, 0);
   assert.equal(second.rejected, 0);
+});
+
+test("repository mutation ambiguity freezes commands but preserves task-bound recovery requests", async (context) => {
+  const state = stateForTest(context);
+  const first = envelope("dddddddd-dddd-4ddd-8ddd-ddddddddddd1", 1, "start", "TASK-ONE");
+  const second = envelope("eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1", 1, "start", "TASK-TWO");
+  state.bindIssueTask(10, "TASK-ONE");
+  state.bindIssueTask(20, "TASK-TWO");
+  assert.equal(state.acceptCommand(first, 10).disposition, "new");
+  assert.equal(state.acceptCommand(second, 20).disposition, "new");
+  state.beginCommand(first.command_id);
+  state.finishCommand(first.command_id, "succeeded", null, { status: "ok" });
+  state.beginCommand(second.command_id);
+  state.finishCommand(second.command_id, "failed", undefined, { error: "historical" });
+
+  const blockedCommand = envelope("ffffffff-ffff-4fff-8fff-fffffffffff2", 2, "status", "TASK-ONE");
+  const recoveryRequest: RequestEnvelope = {
+    protocol: "agentic-bridge/1",
+    request_id: "99999999-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    task_id: "TASK-ONE",
+    kind: "task.status",
+    arguments: {},
+  };
+  const github = new GitHubClient({
+    owner: "acme",
+    repository: "demo",
+    tokens: new FakeTokens(),
+    state,
+    apiBaseUrl: "https://api.github.test",
+    fetch: asFetch((request) => {
+      const path = new URL(request.url).pathname;
+      if (path === "/repos/acme/demo/issues") {
+        return Response.json([
+          { number: 10, body: "Task one", ...actor("alice", "OWNER") },
+          { number: 20, body: "Task two", ...actor("alice", "OWNER") },
+        ]);
+      }
+      if (path === "/repos/acme/demo/issues/10/comments") {
+        return Response.json([
+          { id: 1, body: requestMarker(recoveryRequest), ...actor("alice", "COLLABORATOR") },
+          { id: 2, body: commandMarker(blockedCommand), ...actor("alice", "COLLABORATOR") },
+        ]);
+      }
+      if (path === "/repos/acme/demo/issues/20/comments") return Response.json([]);
+      return new Response("not found", { status: 404 });
+    }),
+  });
+  const poller = new GitHubCommandPoller({ github, state, allowedAuthors: ["alice"] });
+  const result = await poller.pollOnce();
+
+  assert.equal(result.mutationBlocked, true);
+  assert.deepEqual(result.commands, []);
+  assert.deepEqual(result.requests.map((request) => request.requestId), [recoveryRequest.request_id]);
+  assert.match(state.commandRejection(blockedCommand.command_id)?.reason ?? "", /dispatch is frozen/);
+  const bodies = state.pendingOutbox(Date.now() + 1_000).map((item) => JSON.stringify(item.payload));
+  assert.equal(bodies.filter((body) => body.includes("multiple open mapped mutating")).length, 2);
+});
+
+test("control loop does not replay an accepted command while repository mutation state is ambiguous", async (context) => {
+  const state = stateForTest(context);
+  const pendingCommand = envelope("12121212-3434-4567-8567-121212121212", 1, "start", "TASK-PENDING");
+  assert.equal(state.acceptCommand(pendingCommand, 30).disposition, "new");
+  const pendingRead: RequestEnvelope = {
+    protocol: "agentic-bridge/1",
+    request_id: "34343434-5656-4789-8789-343434343434",
+    task_id: "TASK-PENDING",
+    kind: "task.status",
+    arguments: {},
+  };
+  state.acceptRequest(pendingRead, 30);
+
+  const abort = new AbortController();
+  const commands: string[] = [];
+  const requests: string[] = [];
+  const loop = new GitHubControlLoop({
+    poller: {
+      pollOnce: async () => ({
+        issueCount: 2,
+        sourceCount: 0,
+        commands: [],
+        requests: [],
+        mutationBlocked: true,
+        rejected: 0,
+        unauthorized: 0,
+      }),
+    } as unknown as GitHubCommandPoller,
+    outbox: { flush: async () => ({ delivered: 0, retried: 0 }) } as unknown as GitHubOutbox,
+    state,
+    activeIntervalMs: 1,
+    idleIntervalMs: 1,
+  });
+  await loop.run(
+    abort.signal,
+    (entries) => { commands.push(...entries.map((entry) => entry.commandId)); },
+    (entries) => {
+      requests.push(...entries.map((entry) => entry.requestId));
+      abort.abort();
+    },
+  );
+  assert.deepEqual(requests, [pendingRead.request_id]);
+  assert.deepEqual(commands, []);
+  assert.equal(state.getCommand(pendingCommand.command_id)?.state, "accepted");
 });
 
 test("outbox detects prior comments, appends dedupe markers, delivers labels, and honors retry-after", async (context) => {

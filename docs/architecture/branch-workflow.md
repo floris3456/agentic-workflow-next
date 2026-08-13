@@ -18,7 +18,10 @@ Recovery validates the marker and restores a discarded local branch only by fast
 
 ## Review ranges
 
-The final handoff snapshot commit may change only task-progress, so it is not the review unit.
+The final handoff snapshot commit may change only task-progress, so it is not the
+review unit. Its successful push is the terminal boundary of that developer
+working cycle; its SHA is reported in the response and is not written back by a
+follow-up commit in the same cycle.
 
 - First review: task-start `developer` SHA through current handoff SHA.
 - Later review: last reviewed SHA through current handoff SHA.

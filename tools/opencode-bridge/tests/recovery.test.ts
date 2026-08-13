@@ -45,7 +45,7 @@ function durable(id: string, sessionId: string, sequence: number, type = "sessio
   };
 }
 
-test("recovery combines sync/session history, deduplicates IDs, advances cursors, and reconciles canonical state", async (context) => {
+test("recovery combines sync/session history, deduplicates IDs, and advances cursors", async (context) => {
   const state = stateForTest(context);
   state.mapTaskSession("TASK-1", "ses_private", 17, "luna");
   state.recordEvent({
@@ -55,7 +55,6 @@ test("recovery combines sync/session history, deduplicates IDs, advances cursors
     payload: { id: "evt_duplicate", type: "session.next.step.started" },
   });
   const persisted: string[] = [];
-  let reconciliationCount = 0;
   let recoveryPass = 0;
   const api = client(asFetch(async (request) => {
     const url = new URL(request.url);
@@ -79,9 +78,6 @@ test("recovery combines sync/session history, deduplicates IDs, advances cursors
       assert.equal(url.searchParams.get("after"), "2");
       return Response.json({ data: [], hasMore: false });
     }
-    if (url.pathname === "/session/status") return Response.json({ ses_private: { type: "idle" } });
-    if (url.pathname === "/session/ses_private/message") return Response.json([{ info: { id: "msg_private" }, parts: [] }]);
-    if (url.pathname === "/session") return Response.json([{ id: "ses_private", title: "Task" }]);
     if (url.pathname === "/permission" || url.pathname === "/question") return Response.json([]);
     return new Response("not found", { status: 404 });
   }));
@@ -91,9 +87,6 @@ test("recovery combines sync/session history, deduplicates IDs, advances cursors
     onPersistedEvent: (event) => {
       persisted.push(event.eventId);
     },
-    onReconciled: () => {
-      reconciliationCount++;
-    },
   });
 
   await recovery.recoverOnce();
@@ -101,14 +94,10 @@ test("recovery combines sync/session history, deduplicates IDs, advances cursors
   assert.deepEqual(state.durableCursors("sync-history"), { "workspace-private": 0, ses_private: 1 });
   assert.deepEqual(state.durableCursors("session-v2"), { ses_private: 2 });
   assert.deepEqual(state.listEvents("TASK-1").map((event) => event.eventType), ["session.next.step.started", "session.next.step.started"]);
-  const snapshot = state.reconciliation("canonical")?.value;
-  assert.ok(snapshot && !Array.isArray(snapshot) && typeof snapshot === "object");
-  assert.deepEqual(snapshot.taskMessages, { "TASK-1": [{ info: { id: "msg_private" }, parts: [] }] });
 
   recoveryPass = 1;
   await recovery.recoverOnce();
   assert.deepEqual(persisted, ["evt_sync", "evt_session_2"]);
-  assert.equal(reconciliationCount, 2);
 });
 
 test("session history pagination advances exclusively and fails when a page makes no progress", async (context) => {
@@ -197,31 +186,92 @@ test("startup repair queues a terminal event persisted by an older bridge withou
   assert.equal(state.durableCursor("session-v2", "ses_legacy"), 4);
 });
 
-test("canonical reconciliation records a missing mapped session without hiding other state", async (context) => {
+test("canonical recovery republishes pending mapped interactions idempotently without materializing a snapshot", async (context) => {
   const state = stateForTest(context);
-  state.mapTaskSession("TASK-1", "ses_missing", 17, "luna");
+  state.mapTaskSession("TASK-1", "ses_pending", 17, "luna");
+  const published: Array<{ eventId: string; eventType: string; taskId?: string }> = [];
+  const paths: string[] = [];
+  const api = client(asFetch((request) => {
+    const path = new URL(request.url).pathname;
+    paths.push(path);
+    if (path === "/sync/history") return Response.json([]);
+    if (path === "/api/session/ses_pending/history") return new Response("missing", { status: 404 });
+    if (path === "/permission") {
+      return Response.json([
+        { id: "per_pending", sessionID: "ses_pending", permission: "external_directory", patterns: ["/outside"], metadata: {}, always: [] },
+        { id: "per_unmapped", sessionID: "ses_unmapped", permission: "read", patterns: ["*"], metadata: {}, always: [] },
+      ]);
+    }
+    if (path === "/question") {
+      return Response.json([{ id: "que_pending", sessionID: "ses_pending", questions: [{ question: "Continue?", header: "Continue", options: [] }] }]);
+    }
+    return new Response("not found", { status: 404 });
+  }));
+  const recovery = new RecoveryCoordinator({
+    client: api,
+    state,
+    onPersistedEvent: (event) => {
+      published.push({
+        eventId: event.eventId,
+        eventType: event.eventType,
+        ...(event.taskId ? { taskId: event.taskId } : {}),
+      });
+    },
+  });
+  await recovery.recoverOnce();
+  const firstIds = published.map((event) => event.eventId);
+  assert.equal(firstIds.every((id) => id.startsWith("interaction-")), true);
+  assert.deepEqual(published.map((event) => [event.eventType, event.taskId]), [
+    ["permission.asked", "TASK-1"],
+    ["question.asked", "TASK-1"],
+  ]);
+  assert.deepEqual(state.listEvents("TASK-1").map((event) => event.eventType), ["permission.asked", "question.asked"]);
+  assert.equal(state.reconciliation("canonical"), undefined);
+  assert.equal(paths.includes("/session"), false);
+  assert.equal(paths.includes("/session/status"), false);
+  assert.equal(paths.some((path) => path.endsWith("/message")), false);
+
+  await recovery.recoverOnce();
+  assert.deepEqual(published.slice(2).map((event) => event.eventId), firstIds);
+  assert.equal(state.listEvents("TASK-1").length, 2);
+});
+
+test("legacy and canonical lanes share one interaction identity", async (context) => {
+  const state = stateForTest(context);
+  state.mapTaskSession("TASK-INTERACTION", "ses_interaction", 18, "luna");
+  const abort = new AbortController();
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      controller.enqueue(encoder.encode('data: {"id":"evt_permission","type":"permission.asked","properties":{"id":"per_shared","sessionID":"ses_interaction","permission":"external_directory","patterns":["/outside"],"metadata":{},"always":[]}}\n\n'));
+      controller.close();
+    },
+  });
+  let publications = 0;
+  let pending = true;
   const api = client(asFetch((request) => {
     const path = new URL(request.url).pathname;
     if (path === "/sync/history") return Response.json([]);
-    if (path === "/api/session/ses_missing/history") return new Response("missing", { status: 404 });
-    if (path === "/session/ses_missing/message") return new Response("missing", { status: 404 });
-    if (path === "/session") return Response.json([]);
-    if (path === "/session/status") return Response.json({});
-    if (path === "/permission" || path === "/question") return Response.json([]);
+    if (path === "/api/session/ses_interaction/history") return Response.json({ data: [], hasMore: false });
+    if (path === "/permission") return Response.json(pending ? [{ id: "per_shared", sessionID: "ses_interaction", permission: "external_directory", patterns: ["/outside"], metadata: {}, always: [] }] : []);
+    if (path === "/question") return Response.json([]);
+    if (path === "/event") return new Response(stream, { headers: { "content-type": "text/event-stream" } });
     return new Response("not found", { status: 404 });
   }));
-  const recovery = new RecoveryCoordinator({ client: api, state });
-  await recovery.recoverOnce();
-  const snapshot = state.reconciliation("canonical")?.value;
-  const snapshotRecord = asRecord(snapshot, "canonical snapshot");
-  assert.deepEqual(snapshot, {
-    capturedAt: snapshotRecord.capturedAt,
-    sessions: [],
-    status: {},
-    permissions: [],
-    questions: [],
-    taskMessages: { "TASK-1": { missing: true } },
+  const recovery = new RecoveryCoordinator({
+    client: api,
+    state,
+    onPersistedEvent: () => {
+      publications++;
+    },
+    onError: () => abort.abort(),
   });
+  await recovery.recoverOnce();
+  assert.equal(publications, 1);
+  pending = false;
+  await recovery.run(abort.signal, () => 0);
+  assert.equal(state.listEvents("TASK-INTERACTION").length, 1);
+  assert.equal(publications, 1);
 });
 
 test("project SSE is persisted before notification and maps private sessions locally", async (context) => {

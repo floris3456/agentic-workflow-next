@@ -49,7 +49,20 @@ triggered Sources instead of loading them on every turn.
 
 GitHub mutating commands use durable UUID/sequence semantics rather than direct-MCP delivery assumptions: sequence starts at exactly `1`, stays contiguous, and cannot advance while a prior command is accepted or applying. A separate UUID-idempotent, sequence-free request lane exposes `command.status` and `task.status` from durable local state without repeating work. The bridge stores private OpenCode mappings and raw recovery data locally, while only a bounded redacted projection enters public issues. Task-bound aliases, including workspaces, are stored per task. Capability parity comes from the pinned OpenCode operation manifest; consequential generic web operations remain locally allowlisted.
 
+The accepted command ledger is the one active sequence authority; its maximum
+task sequence is derived within transactional admission instead of materialized
+in a second counter. Repository ambiguity freezes command dispatch but leaves
+task-bound recovery reads and read-only Scouts available to resolve it. Restart
+recomputes interrupted local status requests under the same UUID, while command
+mutations and `scout.start` retain their fail-closed no-replay behavior.
+
 When a mapped developer session idles or errors, the bridge atomically persists the event/cursor/session-state/delivery boundary, transports the structurally latest assistant message through the existing public-safety projection to the bound issue, and retains it for `task.status` recovery. The bridge does not interpret or semantically validate that response. The web orchestrator correlates it to the task, checks its explicit developer status/handoff information, and uses exact remote GitHub evidence to decide whether review can begin.
+
+Canonical reconciliation is focused on recoverable evidence: pending permission
+and question lists restore mapped interaction events, and the Scout-only
+status/message fallback restores terminal Scout lifecycle. The bridge does not
+materialize an unused whole-project reconciliation snapshot or infer workflow
+meaning from either path.
 
 Scout starts extend the sequence-free request lane rather than the mutating task
 lifecycle. Each request carries a focused question, exact remote developer SHA,
@@ -66,7 +79,7 @@ synthesis stays in the web orchestrator.
 
 ## Synchronization and handoff
 
-Every developer commit is pushed immediately. A failed push stops implementation and blocks further commits. Before normal return of control, the developer pushes a dedicated task-progress snapshot commit and responds with the six-field contract: explicit status (`completed`, `blocked`, `failed`, or `needs decision`), exact pushed handoff SHA or `none`, changed areas, checks, blockers/decisions, and task record. The web orchestrator reviews the whole range, not only the snapshot.
+Every developer commit is pushed immediately. A failed push stops implementation and blocks further commits. Before normal return of control, the developer pushes a dedicated task-progress snapshot commit and responds with the six-field contract: explicit status (`completed`, `blocked`, `failed`, or `needs decision`), exact pushed handoff SHA or `none`, changed areas, checks, blockers/decisions, and task record. The successful snapshot push ends that working cycle; its SHA is reported rather than written back through another same-cycle commit. The web orchestrator reviews the whole range, not only the snapshot.
 
 ## Acceptance
 

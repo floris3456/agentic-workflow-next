@@ -86,7 +86,7 @@ export interface StoredCommand {
 }
 
 export interface AcceptedCommand {
-  disposition: "new" | "duplicate" | "stale" | "conflict" | "rejected";
+  disposition: "new" | "duplicate" | "conflict" | "rejected";
   command?: StoredCommand;
   reason?: string;
 }

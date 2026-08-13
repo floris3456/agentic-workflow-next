@@ -83,6 +83,11 @@ When returning control:
 7. return only the six-field response with explicit status and exact pushed
    handoff developer SHA or `none`.
 
+Before the snapshot, make `Status`, `Remaining work`, and `Next action` truthful
+for the boundary being handed off. The successful snapshot push is the last tool
+action in that working cycle. Do not reopen the record to insert the snapshot's
+own SHA or begin another cycle before returning the six fields.
+
 ## Finalization
 
 Only after the web orchestrator approves substantive implementation:
