@@ -1,12 +1,12 @@
 {
   "schema_version": 1,
   "canonical_repository": "https://github.com/floris3456/agentic-workflow-template.git",
-  "recorded_at": "2026-08-13T23:29:30Z",
+  "recorded_at": "2026-08-13T23:53:28Z",
   "sources": {
     "main": "6127611113dfdb66f93a0cfd2d355359aa370833",
-    "developer": "ccfa12dc2783c7e8fc336abc503e083b69112a71",
-    "web-orchestration": "04e111dd874c2f431805b52b3eb24c6b04de95b8"
+    "developer": "be315eec10030b3d4499a05b823739a2631cb897",
+    "web-orchestration": "9f83a8eebc401c820acc8b7a2b0cc0733319950b"
   },
-  "last_reconciled_task": null,
-  "last_change_package": null
+  "last_reconciled_task": "TEMPLATE-SMOKE-RESPONSE-001",
+  "last_change_package": "changes/TEMPLATE-SMOKE-RESPONSE-001/manifest.json"
 }

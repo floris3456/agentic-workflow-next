@@ -1,0 +1,463 @@
+diff --git a/web-orchestration-only/chatgpt-project/README.md b/web-orchestration-only/chatgpt-project/README.md
+index 529b324130db9a8d916def32105769b13fc4bd31..8e8eda355663f8639c27bfb9bc7fbfedcbdb8c85 100644
+--- a/web-orchestration-only/chatgpt-project/README.md
++++ b/web-orchestration-only/chatgpt-project/README.md
+@@ -45,8 +45,9 @@ The implementation branches must not depend on this branch for code or implement
+    than retaining stale or duplicate instructions.
+ 4. Remove the former direct OpenCode connector/tool from the Project and re-verify the capabilities above.
+ 5. Merge active legacy routing facts into each task context's `## Routing`
+-   section, then retire the separate routing record. Backfill new bridge fields
+-   with `none` where authority, issue, UUID, sequence, lifecycle, or SHA is
+-   unestablished. Put `legacy` or `unknown` only in a non-authoritative migration
+-   note; never use either as human approval.
++   section, then retire the separate routing record. Backfill the canonical
++   bridge issue, related-issue dispositions, and highest accepted sequence from
++   exact trusted issue history; use `none` where authority, issue, UUID,
++   lifecycle, or SHA is unestablished. Put `legacy` or `unknown` only in a
++   non-authoritative migration note; never use either as human approval.
+ 6. Resume only after remote state and old work are reconciled. A task with no existing bridge-bound issue requires a new issue whose first valid command is `start`; never infer a bridge continuation from former transport state.
+diff --git a/web-orchestration-only/chatgpt-project/developer-instructions.md b/web-orchestration-only/chatgpt-project/developer-instructions.md
+index 3c9bddf3acb5cf1315c24d4abd910236381769b7..e7264f58ace1b33630361d4ae613482f8c29c1b0 100644
+--- a/web-orchestration-only/chatgpt-project/developer-instructions.md
++++ b/web-orchestration-only/chatgpt-project/developer-instructions.md
+@@ -73,7 +73,9 @@ invalidates it.
+ | Public GitHub lookup, analysis, visible review, or bounded future task preparation | `skill-mcp-off-workflow.md` |
+ | Likely implementation areas are unknown and public-web orientation is needed | `skill-mcp-off-scouting.md` |
+ 
+-At the start of every MCP-ON turn, discover any open control issue before creating
+-one. Treat it as continuity to reconcile, not proof of active work; load recovery
+-when its task or disposition is unknown. Never start a second repository-mutating
+-task while a prior mutating issue remains unresolved.
++At the start of every MCP-ON turn, map all open control issues by authenticated
++task ID before creating one. One task ID has one canonical issue: reuse it and
++never create a replacement. Treat open issues as continuity to reconcile, not
++proof of active work; if duplicates exist, post nothing on the later issue and
++load recovery to identify the durable binding. Never start a second
++repository-mutating task while a prior mutating issue remains unresolved.
+diff --git a/web-orchestration-only/chatgpt-project/skill-mcp-on-recovery.md b/web-orchestration-only/chatgpt-project/skill-mcp-on-recovery.md
+index 6feaa7d6c657d28fdc1341e59d1517aeab01bb89..37f055eab1b2e67683a58932e30f5e410b514f17 100644
+--- a/web-orchestration-only/chatgpt-project/skill-mcp-on-recovery.md
++++ b/web-orchestration-only/chatgpt-project/skill-mcp-on-recovery.md
+@@ -9,11 +9,22 @@ is inconsistent.
+ 
+ ## Existing issue discovery
+ 
+-Before creating a mutating issue, list open control-label issues. An open control
+-issue is a reconciliation target, not proof of active work and not an automatic
+-blocker. Authenticate its task binding from authorized command/request sources
+-and exact bridge-bot markers; reconstruct missing task context from that public
+-record.
++Before creating any control issue, list all open control-label issues and group
++them by exact task ID from authorized command/request sources; also match the
++intended task ID in titles and bodies so an unbound new issue is not overlooked.
++An open control issue is a reconciliation target, not proof of active work and
++not an automatic blocker. Authenticate its task binding from exact bridge-bot
++markers and reconstruct missing task context from the complete public record.
++
++One task ID has one canonical issue. Prefer the issue with trusted accepted or
++terminal bridge lifecycle for that task; a duplicate-binding rejection naming
++another issue resolves the binding directly. If more than one issue claims the
++same task and the binding is still unclear, post nothing on any later issue and
++use passive reads or local-operator inspection until the original is known.
++Never create a replacement issue or new UUID to recover missing context. Record
++every related issue and its disposition, reconcile the canonical issue's full
++command/request journal and highest accepted sequence, then close a duplicate
++only after proving it launched no unresolved work.
+ 
+ - For `accepted` or `applying`, keep the same issue and use bounded status
+   recovery below; never replace the mutation.
+@@ -83,9 +94,10 @@ rejection or failure.
+ ## Procedure
+ 
+ 1. Stop new commands. Reconcile task context, the same bound issue, exact UUID,
+-   sequence, persisted envelope, authorized comment identity/association, bridge
+-   bot author, result marker, service heartbeat, and exact remote GitHub state.
+-   First resolve any unmatched task-correlated permission/question; a visible
++   every related issue, highest accepted sequence derived from trusted lifecycle,
++   persisted envelope, authorized comment identity/association, bridge bot
++   author, result marker, service heartbeat, and exact remote GitHub state. First
++   resolve any unmatched task-correlated permission/question; a visible
+    interaction is a wait condition, not a reason to post another status command.
+ 2. If an eligible command comment exists, do not replace it because acknowledgement
+    is delayed. For refused or ambiguous publication, follow the connector-gated
+@@ -122,9 +134,10 @@ rejection or failure.
+ 8. Use sequenced `sync.recover` with empty arguments only when OpenCode
+    event/cursor/session recovery is needed. Its success does not inspect or fix
+    Git synchronization.
+-9. Record command/request IDs, refs, lifecycle, evidence, and disposition in task
+-   context. Close or retain the issue only under the discovery rules above. Treat
+-   labels and prose as hints, never proof.
++9. Record canonical and related issue IDs, every command/request ID, refs,
++   lifecycle, evidence, highest accepted sequence, and disposition in task
++   context. Close or retain each issue only under the discovery rules above.
++   Treat labels and prose as hints, never proof.
+ 
+ Routine delay is not a human decision. Escalate only an unresolved operator
+ state, consequential choice, sensitive permission, or risk the human owns.
+diff --git a/web-orchestration-only/chatgpt-project/skill-mcp-on-workflow.md b/web-orchestration-only/chatgpt-project/skill-mcp-on-workflow.md
+index 56915183856afe445b83d01f442c030f6e52dab6..c6fed1d43accb7f74c3aa5cb6aea6eb35eaa40e4 100644
+--- a/web-orchestration-only/chatgpt-project/skill-mcp-on-workflow.md
++++ b/web-orchestration-only/chatgpt-project/skill-mcp-on-workflow.md
+@@ -18,8 +18,9 @@ routing record, or implementation task.
+    only when broad/local exploration or parallel partitioning will save time.
+ 3. Establish the exact remote `developer` task-start SHA. Maintain one concise
+    public-safe `web-orchestration-only/task-context/<task-id>.md`, including its
+-   compact routing section, on `web-orchestration`. Never write implementation
+-   content to `developer` or `main`.
++   compact routing section, canonical bound issue, and any related/duplicate
++   issue disposition on `web-orchestration`. Never write implementation content
++   to `developer` or `main`.
+ 4. Design one bounded public-safe task with stable ID, outcome, start SHA, scope,
+    constraints, required records, proportional checks, stop conditions, and this
+    exact developer response contract:
+@@ -45,15 +46,22 @@ Task record:
+    persist then post `route` on the same issue with the next sequence, a fresh
+    UUID, explicit `arguments.agent`, and optional public-safe message; route
+    command success still does not prove implementation success.
+-6. Before creating a mutating issue, list open `<bridge-control-label>` issues.
+-   Established Scout-only issues may coexist. If any issue is mutating or
+-   unclassified, do not create another: load recovery, authenticate its binding,
+-   and resume, review, or safely retire it. Otherwise create one public-safe issue
+-   without the label, persist its URL and exact pending envelope in task context,
+-   confirm that write remotely, apply the label, then post from the configured
+-   authorized GitHub identity. The first command is sequence `1`, `start`, with a
+-   fresh UUID, explicit `luna` or `sol`, and the exact start-SHA guard. This is a
+-   closed shape: `expected` is a top-level peer of `arguments`, never its child:
++6. Before creating any control issue, list all open `<bridge-control-label>`
++   issues and group authorized markers by exact task ID. Search issue titles and
++   bodies for the intended task ID too, because a newly created issue may not yet
++   be bound. If that task ID already has an issue, reuse it; never create a
++   replacement for resume, recovery, or a guard probe. If duplicates already
++   exist, post no marker on the later issue and load recovery to establish the
++   durable binding and reconcile every related issue. Established Scout-only
++   issues for other task IDs may coexist. If any other issue is mutating or
++   unclassified, do not create another mutating task: load recovery and resume,
++   review, or safely retire it. Only after proving the new task ID absent, create
++   one public-safe issue without the label, persist its URL and exact pending
++   envelope in task context, confirm that write remotely, apply the label, then
++   post from the configured authorized GitHub identity. The first command is
++   sequence `1`, `start`, with a fresh UUID, explicit `luna` or `sol`, and the
++   exact start-SHA guard. This is a closed shape: `expected` is a top-level peer
++   of `arguments`, never its child:
+ 
+ ```markdown
+ <!-- agentic-bridge-command
+@@ -63,14 +71,17 @@ Task record:
+ 
+ 7. Keep all later commands on the bound issue with contiguous sequence, a fresh
+    UUID, and an exact envelope persisted before posting. Journal command/result
+-   URLs and lifecycle. `accepted` means ledger admission; public `applying` means
+-   wait and never reissue; `succeeded` means only that the handler returned. For
+-   `start`, `route`, `steer`, or `finalize`, success proves prompt handling, not
+-   task completion.
++   URLs and lifecycle. Recompute the highest accepted sequence from all trusted
++   task-correlated lifecycle comments before choosing the next sequence; never
++   rely on a remembered checkpoint number. `accepted` means ledger admission;
++   public `applying` means wait and never reissue; `succeeded` means only that
++   the handler returned. For `start`, `route`, `steer`, or `finalize`, success
++   proves prompt handling, not task completion.
+ 8. Use the durable issue mailbox rather than busy polling. On mapped session idle
+    or error, read the latest projected developer response. The bridge does not
+-   interpret it. On every new turn, reconcile the bound issue first because
+-   autonomous Project wake-up is not assumed.
++   interpret it. On every new turn, first repeat the repository-wide open-issue
++   task-ID map, then reconcile the canonical bound issue and any recorded related
++   issue because autonomous Project wake-up and in-chat memory are not assumed.
+ 9. Interpret the six fields yourself. A `completed` response is reviewable only
+    when its exact SHA exists on remote `developer`, the task record is present
+    when applicable, and the response is internally usable. `blocked`, `failed`,
+@@ -112,10 +123,11 @@ Task record:
+ ## Continuity
+ 
+ Task context records exact start/last-reviewed/handoff/finalization/approval and
+-post-promotion SHAs; issue state; pending command; command journal; delegations;
+-Scout request journal; findings; steering; decisions; and next action. Persist an
+-envelope before posting it. If narrow state persistence fails, do not send the
+-command.
++post-promotion SHAs; the canonical bound issue and related issue dispositions;
++highest accepted sequence derived from trusted lifecycle; pending command;
++command journal; delegations; Scout request journal; findings; steering;
++decisions; and next action. Persist an envelope before posting it. If narrow
++state persistence fails, do not send the command.
+ 
+ Only status comments authored by `<bridge-bot-login>` with the exact task,
+ command/request, sequence where applicable, and lifecycle marker are trusted as
+diff --git a/web-orchestration-only/task-context/README.md b/web-orchestration-only/task-context/README.md
+index 5d8d381c0e7d41ef1dd02fcdf14c962b804d1bd4..e07c5b3e17281aabbe7d4ec419b9eebe6288c694 100644
+--- a/web-orchestration-only/task-context/README.md
++++ b/web-orchestration-only/task-context/README.md
+@@ -2,7 +2,7 @@
+ 
+ Create one file per active or completed orchestration task using `TEMPLATE.md`.
+ 
+-The task ID must match the delegated developer task and bridge envelope. Keep the file concise. Before posting any command, persist its exact one-line public-safe JSON envelope as `prepared`; after exact readback, add the command-comment ref and mark it `posted`. Journal every resolved command with command/result refs and lifecycle state. Clear ordinary terminal pending state only after journaling; retain the exact envelope as `pre-ledger-rejected` or `terminal-unresolved` until corrected/reconciled, and use `cancelled` for a definitely unpublished command. Record the control-issue state, latest command UUID/sequence/kind/lifecycle, distinct finalization and human-approval SHAs, and verified promotion refs. Update after consequential delegation, review, steering, synchronization recovery, mode-transition reconciliation, and before human acceptance.
++The task ID must match the delegated developer task and bridge envelope. Keep the file concise. Before posting any command, persist its exact one-line public-safe JSON envelope as `prepared`; after exact readback, add the command-comment ref and mark it `posted`. Journal every resolved command with command/result refs and lifecycle state. Clear ordinary terminal pending state only after journaling; retain the exact envelope as `pre-ledger-rejected` or `terminal-unresolved` until corrected/reconciled, and use `cancelled` for a definitely unpublished command. Record the canonical bound issue, every related/duplicate issue and disposition, control-issue state, latest command UUID/kind/lifecycle, highest accepted sequence derived from trusted task-correlated lifecycle comments, distinct finalization and human-approval SHAs, and verified promotion refs. Update after consequential delegation, review, steering, synchronization recovery, mode-transition reconciliation, and before human acceptance. One task ID never receives a replacement issue; resume by reconstructing and reusing its canonical issue.
+ 
+ The same file owns Luna/Sol selection, substantive-attempt classification, route
+ changes, result, and retrospective. Do not create a separate routing record for
+diff --git a/web-orchestration-only/task-context/TEMPLATE-SMOKE-RESPONSE-001.md b/web-orchestration-only/task-context/TEMPLATE-SMOKE-RESPONSE-001.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..d96957c59b868759d54bd9fc60e98fde30fe073e
+--- /dev/null
++++ b/web-orchestration-only/task-context/TEMPLATE-SMOKE-RESPONSE-001.md
+@@ -0,0 +1,84 @@
++# Task context: TEMPLATE-SMOKE-RESPONSE-001
++
++- Continuity schema: agentic-bridge/1
++- Task ID: TEMPLATE-SMOKE-RESPONSE-001
++- Human goal: Prevent a resumed web orchestration run from duplicating a task's control issue, and contain any duplicate safely in the bridge.
++- Current orchestration objective: Completed concise one-task/one-issue discovery and recovery rules that complement the developer-side bridge repair.
++- Task-start developer SHA: ccfa12dc2783c7e8fc336abc503e083b69112a71
++- Last reviewed developer SHA: ee75d0bda6de1d17f120f8d6a8169906b2830e2b
++- Current handoff developer SHA: be315eec10030b3d4499a05b823739a2631cb897
++- Substantive implementation approval SHA: none
++- Finalization handoff developer SHA: none
++- Human-approved promotion SHA: none
++- Human approval date/reference: none
++- Verified post-promotion main SHA: none
++- Verified post-promotion developer SHA: none
++- Relevant repository refs: main 6127611113dfdb66f93a0cfd2d355359aa370833; developer handoff be315eec10030b3d4499a05b823739a2631cb897; web-orchestration implementation candidate 52ddf36e9bb08006db3a1fc35128f2ee3bdefc13; web task start 04e111dd874c2f431805b52b3eb24c6b04de95b8
++- Last orchestration mode: MCP-ON
++- Bridge control issue: none; source-maintenance task
++- Related control issues: disposable issues 14, 15, and 16 closed; issue 15 was the canonical guard and issue 16 was the rejected duplicate
++- Bridge control issue state: none
++- Highest accepted bridge sequence: none
++- Last bridge command: none
++
++## Routing
++
++- Selected developer: none
++- Luna substantive-attempt count: 0
++- Selection route: none
++- Reason: direct source maintenance after exact local and remote diagnosis
++- Attempt classifications: none
++- Route changes: none
++- Result: bridge containment and web prevention implemented, pushed, and integrated validation passed
++- Retrospective: durable task-ID-to-issue identity must be reconstructed before phase state or remembered issue numbers are trusted
++
++## Pending bridge command
++
++- State: none
++- Prepared at: none
++- Command-comment ref: none
++- Result-comment ref: none
++- Exact one-line JSON envelope: none
++
++## Bridge command journal
++
++- none
++
++## Scout request journal
++
++- none
++
++## Delegations issued
++
++- none
++
++## Review findings
++
++- Disposable smoke issues 14 and 15 represented the main and original guard tasks; issue 16 repeated the exact guard task ID after its original guard evidence was already terminal.
++- The saved checkpoint omitted issue 15, treated issue 16 as authoritative, and reported stale sequence state.
++- Developer range ccfa12dc2783c7e8fc336abc503e083b69112a71..be315eec10030b3d4499a05b823739a2631cb897 contains the bridge-side containment, regression, cross-branch validator, and completed task snapshot.
++- The permanent router now keeps only the one-task/one-canonical-issue invariant visible; detailed grouping, binding, duplicate cleanup, and sequence reconstruction remain in the MCP-ON workflow/recovery Sources.
++- Standalone Project validation passed, and 18 package tests passed with one focused negative case for duplicate-task containment.
++- Exact Node 22.13.0 full repository validation passed at developer implementation candidate `2a4a6ce7c3e1587fc80bb8553fd85d6c67d1b147` against Project candidate `52ddf36e9bb08006db3a1fc35128f2ee3bdefc13`: bridge 72/72, branch initializer 8/8, Project 18/18, and all cross-branch checks. Developer handoff `be315eec10030b3d4499a05b823739a2631cb897` adds only the completed task snapshot.
++
++## Steering issued
++
++- none
++
++## Unresolved questions
++
++- none
++
++## Human decisions required
++
++- none
++
++## Migration notes
++
++- The disposable smoke was cancelled rather than accepted; all three control issues are closed and no bridge queue remains pending.
++
++## Current next action
++
++Human/orchestrator review of the exact source ranges, then install the updated
++Project instructions/Sources and use the v4.2 standalone smoke for a fresh live
++observation. No implementation work remains in this context.
+diff --git a/web-orchestration-only/task-context/TEMPLATE.md b/web-orchestration-only/task-context/TEMPLATE.md
+index c8602fcae4e2a93812551e0a7a2d781f161325cc..6590c873d955bd8e765373a10f28fddfe773e956 100644
+--- a/web-orchestration-only/task-context/TEMPLATE.md
++++ b/web-orchestration-only/task-context/TEMPLATE.md
+@@ -15,9 +15,10 @@
+ - Verified post-promotion developer SHA: <sha or none>
+ - Relevant repository refs: <refs>
+ - Last orchestration mode: MCP-ON | MCP-OFF
+-- Bridge control issue: <url/number or none>
++- Bridge control issue: <canonical bound url/number or none>
++- Related control issues: <url/number and disposition, or none>
+ - Bridge control issue state: open | closed | none
+-- Last bridge sequence: <positive integer or none>
++- Highest accepted bridge sequence: <positive integer or none>
+ - Last bridge command: <uuid, kind, and lifecycle state or none>
+ 
+ ## Routing
+diff --git a/web-orchestration-only/task-context/WEB-ORCHESTRATOR-REDESIGN-001.md b/web-orchestration-only/task-context/WEB-ORCHESTRATOR-REDESIGN-001.md
+index 5353d8f97afe120c87977eeed765766a45e8b757..15622ac2b54fcfd4bb4a5c94e18becc1ff9268ac 100644
+--- a/web-orchestration-only/task-context/WEB-ORCHESTRATOR-REDESIGN-001.md
++++ b/web-orchestration-only/task-context/WEB-ORCHESTRATOR-REDESIGN-001.md
+@@ -18,8 +18,9 @@
+ - Relevant repository refs: `developer` post-smoke implementation/documentation `6ff397fdb8aedf196401fff6cbe0497c47befa6c`; `main` unchanged at `6127611113dfdb66f93a0cfd2d355359aa370833`; `web-orchestration` package simplification `48ca0f2f5f2c39574a9fabd66c470ec2832be700` (this completed metadata snapshot follows it and its exact SHA is recorded at handoff)
+ - Last orchestration mode: not established; this is design capture, not a bridge operation
+ - Bridge control issue: none
++- Related control issues: none
+ - Bridge control issue state: none
+-- Last bridge sequence: none
++- Highest accepted bridge sequence: none
+ - Last bridge command: none
+ 
+ ## Routing
+@@ -283,12 +284,23 @@ The orchestrator asks for the exact command's durable status and the task's curr
+ 
+ ### Fresh-turn continuity
+ 
+-A fresh MCP-ON turn discovers an open control issue before creating another. It
+-authenticates and reconstructs the task from public continuity, resumes active
+-work, reviews a delivered response, or records and closes a verifiably terminal
+-or superseded task. The mere presence of an open issue or completion label does
+-not block forever or prove completion; only ambiguity remaining after bounded
+-read-only reconciliation blocks a new mutation.
++A fresh MCP-ON turn groups every open control issue by authenticated task ID
++before creating another. It reuses the canonical issue, reconstructs the full
++task journal, resumes active work, reviews a delivered response, or records and
++closes a verifiably terminal or superseded task. The mere presence of an open
++issue or completion label does not block forever or prove completion; only
++ambiguity remaining after bounded read-only reconciliation blocks a new
++mutation.
++
++### Duplicate-task issue recovery
++
++If two issues claim one task ID, the orchestrator posts nothing on the later
++issue. Trusted lifecycle or an explicit duplicate-binding rejection identifies
++the canonical bound issue. The orchestrator reconstructs the highest accepted
++sequence and every launched-agent disposition across the related issues, then
++closes only a duplicate proven to have launched no unresolved work. The bridge
++rejects each duplicate marker locally without changing the binding or starving
++already accepted work.
+ 
+ ### Connector-gated recovery
+ 
+@@ -360,11 +372,12 @@ Routine scouting, delegation, review, and correction proceed without repeated hu
+   task-ID-named regular Markdown context records with matching identity and a
+   concrete `none`/Luna/Sol route; a second routing file and its duplicated refs
+   are no longer created.
+-- Every MCP-ON turn discovers open control issues before creating one. The short
+-  permanent rule routes unknown state to recovery, where authenticated public
+-  continuity distinguishes an active task, a response awaiting review, a safely
+-  retired terminal task, and genuinely unresolved ambiguity. Issue closure is a
+-  web-orchestrator decision; no bridge label gains semantic authority.
++- Every MCP-ON turn groups all open control issues by authenticated task ID
++  before creating one. One task ID has one canonical issue; recovery records
++  related duplicates, identifies the durable binding from trusted lifecycle,
++  reconstructs the highest accepted sequence, and posts nothing on later
++  duplicates. Issue closure is a web-orchestrator decision; no bridge label gains
++  semantic authority.
+ - A connector refusal before GitHub is not a bridge disposition. Recovery reads
+   back the exact UUID, permits at most three total unchanged-envelope publication
+   attempts, cancels a redundant unpublished status request when equivalent
+@@ -527,6 +540,20 @@ Routine scouting, delegation, review, and correction proceed without repeated hu
+   `c241c8da8ffba1e50e2fafa4807621ae9d92babd`: bridge 65/65, branch initializer
+   8/8, Project 15/15, static structure/agent/research checks, and cross-branch
+   command/request/handoff/Scout/lifecycle compatibility all pass.
++- Credentialed smoke issues #14/#15/#16 exposed a resume-identity defect: issue
++  #15 already contained terminal evidence for the guard task, but the web chat
++  created issue #16 with the same task ID, omitted #15 from its checkpoint, and
++  reported a stale sequence. The Project now maps all open issues by exact task
++  ID, reuses one canonical issue, posts nothing on a later duplicate, rebuilds
++  the full journal and highest accepted sequence, and records related-issue
++  dispositions. The bridge independently rejects duplicate-binding markers per
++  issue without aborting its poll cycle or starving accepted work. Exact Node
++  22.13.0 integrated validation passes at developer implementation candidate
++  `2a4a6ce7c3e1587fc80bb8553fd85d6c67d1b147` against this correction's
++  Project candidate `52ddf36e9bb08006db3a1fc35128f2ee3bdefc13`: bridge
++  72/72, branch initializer 8/8, Project 18/18, and all cross-branch checks.
++  Developer handoff `be315eec10030b3d4499a05b823739a2631cb897`
++  adds only the completed task-progress snapshot.
+ 
+ ## Steering issued
+ 
+diff --git a/web-orchestration-only/validate-package.mjs b/web-orchestration-only/validate-package.mjs
+index bc529b78ed9f757d7fbb9dbe133765d94363d26e..51f5484cdcbf59edfdadd31d9b625f1f55643154 100755
+--- a/web-orchestration-only/validate-package.mjs
++++ b/web-orchestration-only/validate-package.mjs
+@@ -89,6 +89,8 @@ function taskContextInventory() {
+       if (!text.includes(`- Task ID: ${taskId}\n`)) fail(`${label} has the wrong task identity`);
+       if (!text.includes("## Routing\n")) fail(`${label} lacks integrated routing continuity`);
+       if (!/^- Selected developer: (?:none|Luna|Sol)$/m.test(text)) fail(`${label} lacks one concrete none/Luna/Sol route`);
++      if (!text.includes("- Related control issues:")) fail(`${label} lacks related-issue continuity`);
++      if (!text.includes("- Highest accepted bridge sequence:")) fail(`${label} lacks derived sequence continuity`);
+     }
+   } catch (error) {
+     fail(`Cannot inventory task-context: ${error.message}`);
+@@ -130,6 +132,7 @@ for (const term of [
+   "read-only Scouts",
+   "Distinguish `UNKNOWN` from inference",
+   "invalidates it",
++  "One task ID has one canonical issue",
+ ]) if (!instructions.includes(term)) fail(`Permanent instructions are missing a canonical boundary: ${term}`);
+ if (!/Promotion requires explicit\s+human approval of one exact reviewed `developer` SHA/.test(instructions)) {
+   fail("Permanent instructions are missing the human exact-SHA approval boundary");
+@@ -268,6 +271,8 @@ for (const term of [
+   "Task-start developer SHA:",
+   "Current handoff developer SHA:",
+   "Human-approved promotion SHA:",
++  "Related control issues:",
++  "Highest accepted bridge sequence:",
+   "## Routing",
+   "Selected developer: none | Luna | Sol",
+   "Attempt classifications:",
+@@ -278,6 +283,11 @@ for (const term of [
+   "## Scout request journal",
+ ]) if (!template.includes(term)) fail(`task-context/TEMPLATE.md is missing continuity field: ${term}`);
+ 
++const recovery = texts.get("chatgpt-project/skill-mcp-on-recovery.md") ?? "";
++if (!/One task ID has one canonical issue[\s\S]{0,500}post nothing on any later issue/i.test(recovery)) {
++  fail("MCP-ON recovery is missing canonical duplicate-task issue containment");
++}
++
+ const unsafePatterns = [
+   [/\bopencode[\s._`*-]*mcp\b/i, "stale direct OpenCode transport"],
+   [/\b(?:bridge|opencode)\s+(?:reports?|output)\s+(?:is|are|becomes?)\s+authoritative\b/i, "bridge output as authority"],
+diff --git a/web-orchestration-only/validate-package.test.mjs b/web-orchestration-only/validate-package.test.mjs
+index 9231d7d0c390d6b7a8362c16a8b0e873562875c7..79eb388a4e7b6cea99e30e368e2b7a4e09b8cfd7 100644
+--- a/web-orchestration-only/validate-package.test.mjs
++++ b/web-orchestration-only/validate-package.test.mjs
+@@ -71,6 +71,8 @@ test("one task context carries routing continuity for a normal delegation", (con
+     "# Task context: TASK-001",
+     "",
+     "- Task ID: TASK-001",
++    "- Related control issues: none",
++    "- Highest accepted bridge sequence: none",
+     "",
+     "## Routing",
+     "",
+@@ -187,6 +189,19 @@ test("validator rejects unconditional blocking of every discovered control issue
+   assert.match(result.stderr, /unconditional open-issue blocking/);
+ });
+ 
++test("validator rejects loss of duplicate-task issue containment", (context) => {
++  const root = fixture(context);
++  replace(
++    root,
++    "chatgpt-project/skill-mcp-on-recovery.md",
++    "One task ID has one canonical issue",
++    "A task may use several replacement issues",
++  );
++  const result = run(root);
++  assert.notEqual(result.status, 0);
++  assert.match(result.stderr, /canonical duplicate-task issue containment/);
++});
++
+ test("validator requires pending interactions to precede status commands", (context) => {
+   const root = fixture(context);
+   replace(

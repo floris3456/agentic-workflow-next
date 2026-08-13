@@ -1,0 +1,342 @@
+diff --git a/contracts/opencode-bridge/protocol.md b/contracts/opencode-bridge/protocol.md
+index 030bcb6f6e1fcf6b386b0bb87f2436e0d245da8b..004fe0420b8adbd4378c17cfdcb5e6e934ec2b98 100644
+--- a/contracts/opencode-bridge/protocol.md
++++ b/contracts/opencode-bridge/protocol.md
+@@ -12,7 +12,7 @@ Commands are JSON inside a hidden Markdown marker:
+ -->
+ ```
+ 
+-The bridge accepts markers only from an exact configured GitHub login whose current repository association is `OWNER`, `MEMBER`, or `COLLABORATOR`. It scans both the issue body and every comment by design for compatibility and recovery. The generalized Project package deliberately publishes every command, including the initial `start`, as a fresh comment and keeps the editable issue body command-free. Repeated scans are safe because command UUID and task-sequence uniqueness provide durable idempotency. Only one mapped mutating control issue may remain open per repository. The first valid issue command must be `start`; that permanently binds the issue and task locally. Its sequence is exactly `1`, every later command is exactly the prior accepted sequence plus one, and a task cannot admit another command while one is `accepted` or `applying`. Every authenticated, parse-valid command rejected before the command ledger is recorded by UUID without consuming sequence, including unbound/mismatched-task commands, a non-`start` first mutation, the one-open-mutating-issue gate, sequence/nonterminal failures, and mandatory-guard failures. A later scan returns that same rejection; a corrected command uses a fresh UUID and the still-expected sequence.
++The bridge accepts markers only from an exact configured GitHub login whose current repository association is `OWNER`, `MEMBER`, or `COLLABORATOR`. It scans both the issue body and every comment by design for compatibility and recovery. The generalized Project package deliberately publishes every command, including the initial `start`, as a fresh comment and keeps the editable issue body command-free. Repeated scans are safe because command UUID and task-sequence uniqueness provide durable idempotency. One task ID binds to exactly one issue, and only one mapped mutating control issue may remain open per repository. A marker on a second issue that repeats an already-bound task ID is rejected locally; it cannot replace the binding or abort polling of other issues. The first valid issue command must be `start`; that permanently binds the issue and task locally. Its sequence is exactly `1`, every later command is exactly the prior accepted sequence plus one, and a task cannot admit another command while one is `accepted` or `applying`. Every authenticated, parse-valid command rejected before the command ledger is recorded by UUID without consuming sequence, including duplicate issue/task binding, unbound/mismatched-task commands, a non-`start` first mutation, the one-open-mutating-issue gate, sequence/nonterminal failures, and mandatory-guard failures. A later scan returns that same rejection; a corrected command uses a fresh UUID and the still-expected sequence.
+ 
+ The bridge queues and attempts to publish `applying` before entering the command handler. While a command is `applying`, wait: it is pre-indeterminate and must not be reissued. If the bridge restarts before recording a terminal state, recovery changes it to `indeterminate` and never automatically reissues it.
+ 
+@@ -69,7 +69,9 @@ establish a task/issue binding when no mutating task exists there; this does not
+ make that issue a mutating-task issue. Multiple Scout-only issues may be open,
+ and any useful number of independent Scout starts may execute concurrently with
+ one mutating developer task. Runtime resource preparation may queue briefly but
+-there is no policy concurrency cap.
++there is no policy concurrency cap. A second issue cannot establish the same
++task ID; its requests receive bounded rejection output while the original
++binding and unrelated poll work continue.
+ 
+ | Kind | Arguments | Durable result |
+ | --- | --- | --- |
+diff --git a/docs/architecture/AS-BUILT.md b/docs/architecture/AS-BUILT.md
+index ef2aa3c00727524cce8c924e5c7226d2a07400cf..84c6d89cb5471684679236ef8f606d36f4608254 100644
+--- a/docs/architecture/AS-BUILT.md
++++ b/docs/architecture/AS-BUILT.md
+@@ -29,7 +29,7 @@ This repository is a reusable workflow template rather than a product implementa
+ - `scripts/initialize-template-branches.sh` repairs only provably fresh unrelated generated `main`/`developer` roots with matching metadata/tree shape, records a local old-root backup, and uses a hook-validated tree-preserving `force-with-lease`; valid ancestry no-ops and established ambiguity is refused.
+ - Tracked hooks enforce checks against direct `main` changes, branch deletion, non-fast-forward pushes, and continued work after failed synchronization within a configured local checkout. They are advisory client-side defense in depth rather than a server-side boundary; operators should also restrict `main` through a GitHub ruleset.
+ - Recovery and promotion scripts fail closed on ambiguous synchronization or authorization evidence.
+-- Validators check deterministic structure, links, configuration, executable bits, clean research shape, and residual source-project terminology; they do not establish semantic correctness or human acceptance. `scripts/validate-web-orchestrator-integration.mjs <web-orchestration-only-directory>` additionally checks one exact independent Project checkout against developer-owned schemas, runtime agents, response template, transport boundary, and lifecycle semantics. Supplying `WOR_WEB_ORCHESTRATION_ROOT` adds that check to full repository validation without making the implementation runtime depend on the independent branch.
++- Validators check deterministic structure, links, configuration, executable bits, clean research shape, and residual source-project terminology; they do not establish semantic correctness or human acceptance. `scripts/validate-web-orchestrator-integration.mjs <web-orchestration-only-directory>` additionally checks one exact independent Project checkout against developer-owned schemas, runtime agents, response template, transport boundary, lifecycle semantics, and the shared one-task/one-canonical-issue containment contract. Supplying `WOR_WEB_ORCHESTRATION_ROOT` adds that check to full repository validation without making the implementation runtime depend on the independent branch.
+ - Finalization reconciles durable records, verifies task-progress against the substantive-approval blob, refuses archive collisions, and moves the unchanged file to the same basename under `docs/work/archive/`. Archived task files are immutable, non-authoritative benchmark history excluded from active-task discovery, scouting, current-policy residue scans, and generic link-health checks.
+ 
+ ## Durable records
+diff --git a/docs/architecture/opencode-bridge.md b/docs/architecture/opencode-bridge.md
+index 6476e101a75a66d121084e2e7fad6070afda029e..b590c3bec300028bbf7ac97d9b2c4563f6054152 100644
+--- a/docs/architecture/opencode-bridge.md
++++ b/docs/architecture/opencode-bridge.md
+@@ -28,7 +28,7 @@ Live version or exact raw OpenAPI-hash drift blocks consequential OpenCode opera
+ 
+ ## Control and durability
+ 
+-The hidden `agentic-bridge/1` command envelope carries a UUID, task ID, monotonic sequence, kind, arguments, and optional expected Git state. The first issue command must be `start` at sequence `1`; later accepted sequences are exactly contiguous, derived from the accepted command ledger inside the admission transaction. SQLite records accepted/applying/terminal states before and after side effects, and a task cannot admit another command while one is accepted or applying. Every authenticated parse-valid rejection is durable by UUID without consuming sequence, including issue/task/first-command gates, the one-open-mutating-issue gate, sequence/nonterminal checks, and a `start` or `promotion.apply` whose required Git guard is missing, misplaced under `arguments`, or does not name `developer`. A stale rejected marker can never become executable on a later scan. Duplicate UUIDs do not reapply. The bridge queues and attempts public `applying` publication before the handler starts. A restart while applying marks the command indeterminate and never guesses or retries the side effect. If more than one persisted mutating issue is open, command dispatch freezes—including a restart-recovered accepted command—while sequence-free recovery reads and Scouts continue.
++The hidden `agentic-bridge/1` command envelope carries a UUID, task ID, monotonic sequence, kind, arguments, and optional expected Git state. One task ID binds to one issue. A marker on a second issue that repeats an existing task binding receives a bounded rejection and cannot replace the binding, abort the poll cycle, or starve already accepted work. The first issue command must be `start` at sequence `1`; later accepted sequences are exactly contiguous, derived from the accepted command ledger inside the admission transaction. SQLite records accepted/applying/terminal states before and after side effects, and a task cannot admit another command while one is accepted or applying. Every authenticated parse-valid rejection is durable by UUID without consuming sequence, including issue/task/first-command gates, the one-open-mutating-issue gate, sequence/nonterminal checks, and a `start` or `promotion.apply` whose required Git guard is missing, misplaced under `arguments`, or does not name `developer`. A stale rejected marker can never become executable on a later scan. Duplicate UUIDs do not reapply. The bridge queues and attempts public `applying` publication before the handler starts. A restart while applying marks the command indeterminate and never guesses or retries the side effect. If more than one persisted mutating issue is open, command dispatch freezes—including a restart-recovered accepted command—while sequence-free recovery reads and Scouts continue.
+ 
+ Sequence-free `agentic-bridge-request` envelopes provide task-bound durable recovery views and lightweight Scout launch. `command.status` reads exact command or pre-ledger-rejection state, known projected result, timing, applying age, and service heartbeat. `task.status` reads mapped developer-session state and latest projected response. `scout.status` reads one matching task/request/ref/session/result. These local reads never repeat work and, if interrupted in `applying`, are recomputed under the same UUID after restart. `scout.start` is different: it is UUID-idempotent and creates at most one request-correlated read-only session, but restart while applying makes it indeterminate without repeating creation or prompt delivery. Recovery monitoring starts from the durable Scout mapping before prompt delivery. It combines v2 session recovery, exact-workspace legacy events, and a canonical status/message fallback that requires terminal assistant lifecycle metadata without inspecting response text. An ambiguously acknowledged prompt or empty v2 history can therefore surface a result without replay or another service restart. None consumes command sequence or calls a mutating command handler. A genuinely stuck applying mutation receives one bounded reconciliation; uncertain mutation is never retried, and operator restart converts it to indeterminate before evidence-based recovery.
+ 
+diff --git a/docs/work/current/TEMPLATE-SMOKE-RESPONSE-001-duplicate-task-isolation.md b/docs/work/current/TEMPLATE-SMOKE-RESPONSE-001-duplicate-task-isolation.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..0331afffeadaed96a8e011547cbe9bfb188226c6
+--- /dev/null
++++ b/docs/work/current/TEMPLATE-SMOKE-RESPONSE-001-duplicate-task-isolation.md
+@@ -0,0 +1,108 @@
++# Task progress
++
++## Task ID
++
++TEMPLATE-SMOKE-RESPONSE-001
++
++## Status
++
++Completed
++
++## Task-start developer SHA
++
++ccfa12dc2783c7e8fc336abc503e083b69112a71
++
++## Review-base developer SHA
++
++ccfa12dc2783c7e8fc336abc503e083b69112a71
++
++## Original task brief
++
++Repair the reusable bridge so a second open control issue that repeats an
++already-bound task ID is rejected per marker without aborting the poll cycle or
++starving durable accepted work. Preserve one-task/one-issue binding, no-replay,
++sequence, task isolation, and public projection. Add deterministic regression
++coverage and update AS-BUILT/architecture facts. The source fix must support the
++matching web-orchestration prevention rules maintained independently.
++
++## Current objective
++
++Contain duplicate task issues at the authenticated marker boundary and prove
++that one bad issue cannot prevent already accepted commands or requests from
++running.
++
++## Current position
++
++The bridge containment, deterministic regression, contracts, implementation
++records, and cross-branch validator are pushed. The independent Project
++correction is pushed. Exact-minimum integrated validation and the live service
++check pass; this source task is ready for orchestrator/human review.
++
++## Observed
++
++- A second issue reused a task ID already durably bound to an earlier issue.
++- `BridgeState.bindIssueTask` correctly rejected the conflicting binding by
++  throwing, but the poller did not convert that expected conflict into a
++  per-marker rejection.
++- The uncaught conflict aborted each poll cycle after acknowledgements could be
++  queued, so durable accepted work remained unapplied.
++- A runtime-equivalent prototype rejected the duplicate markers, let the poll
++  complete, and drained the previously accepted command and request.
++
++## Interpretation
++
++The one-task/one-issue constraint is correct. Its expected violation must be a
++localized admission rejection rather than a control-loop exception.
++
++## Attempts
++
++- An initial direct GitHub cleanup helper used an invalid constructed URL and
++  produced no external effect. The corrected helper used explicit string
++  concatenation, posted one cancellation note, and closed the three disposable
++  issues successfully.
++
++## Changed approach
++
++None.
++
++## Checks
++
++- Prototype focused regression: passed.
++- Prototype bridge suite: 72 tests passed, 0 failed.
++- Live runtime prototype: duplicate issue received three terminal rejections;
++  pending commands, requests, response deliveries, and outbox all reached zero.
++- Developer source `npm test`: 72 passed, 0 failed.
++- `git diff --check`: passed.
++- Exact Node 22.13.0 Project package tests: 18 passed, 0 failed.
++- Exact Node 22.13.0 cross-branch validator: passed against
++  `web-orchestration` `52ddf36e9bb08006db3a1fc35128f2ee3bdefc13`.
++- Exact Node 22.13.0 full repository validation: bridge 72/72, branch
++  initializer 8/8, Project 18/18, structure/agent/research/cross-branch checks
++  passed; final result `Repository validation passed.`
++- Exact developer range `ccfa12dc2783c7e8fc336abc503e083b69112a71..2a4a6ce7c3e1587fc80bb8553fd85d6c67d1b147`:
++  `git diff --check` passed; 8 changed paths, 225 insertions, 7 deletions.
++- Running bridge: active, OpenCode `1.18.16` compatible, and command/request/
++  response-delivery/outbox pending counts all zero.
++
++## Blockers / required decisions
++
++None.
++
++## Remaining work
++
++None for this source task. Independent review, downstream package application,
++and any human-approved promotion remain outside developer implementation.
++
++## Next action
++
++Web/template-maintenance orchestrator reviews the exact developer and
++web-orchestration ranges and packages the approved content.
++
++## Relevant durable records
++
++- `docs/architecture/opencode-bridge.md`
++- `tools/opencode-bridge/AS-BUILT.md`
++
++## Last handoff commit
++
++None
+diff --git a/scripts/validate-web-orchestrator-integration.mjs b/scripts/validate-web-orchestrator-integration.mjs
+index d71890889e4552280c54e47c8b1e044edc0ffae9..1419875321514ecc2acb7c2eddfb19e9a7e1f3bd 100755
+--- a/scripts/validate-web-orchestrator-integration.mjs
++++ b/scripts/validate-web-orchestrator-integration.mjs
+@@ -180,6 +180,12 @@ const bridgeProtocol = read(
+   "developer protocol documentation",
+ );
+ 
++if (!/One task ID binds to exactly one issue/i.test(bridgeProtocol)
++  || !/One task ID has one canonical issue/i.test(recovery)
++  || !/post nothing on any later issue/i.test(recovery)) {
++  fail("Developer protocol and Project recovery disagree on duplicate task-issue containment");
++}
++
+ const handoffSource = read(
+   path.join(repositoryRoot, "tools/opencode-bridge/src/handoff.ts"),
+   "developer handoff transport",
+diff --git a/tools/opencode-bridge/AS-BUILT.md b/tools/opencode-bridge/AS-BUILT.md
+index 143eb2c6ae30a84ef60625b81ef3d7da1dbb8d2e..b8d42400551ffb7302c689ea6601e6bd81c20c43 100644
+--- a/tools/opencode-bridge/AS-BUILT.md
++++ b/tools/opencode-bridge/AS-BUILT.md
+@@ -22,7 +22,7 @@ SQLite uses Node's built-in `node:sqlite` and requires Node `22.13.0` or newer.
+ 
+ The foreground service authenticates as a GitHub App by signed JWT, requests a one-repository installation token downscoped to Issues write and Contents read, rejects broader/insufficient returned permissions, caches until near expiry, and refreshes once after `401`. REST uses version `2026-03-10`, HTTPS-only credential-free API URLs, serial pagination with origin/loop limits, persisted ETags, and primary/secondary rate-limit timing.
+ 
+-Polling reads open labeled issues and comments only from exact configured authors with `OWNER`, `MEMBER`, or `COLLABORATOR` association. One open mapped mutating control issue serializes repository work. If persisted state and GitHub expose more than one, the bridge publishes one bounded diagnostic, freezes both new and restart-recovered command dispatch, and continues authenticated sequence-free status requests and read-only Scouts so the ambiguity can be reconciled. The first command must be `start`; issue/task binding, UUID, sequence state, and every parse-valid pre-ledger rejection are durable. A stale marker rejected while another mutating issue is open therefore remains rejected after that issue closes; only a fresh UUID can be reconsidered. Polling is faster while a control issue is open and slower while idle. Sequence-free `command.status`, `task.status`, `scout.start`, and `scout.status` use their own UUID ledger and never change task sequence. Status reads require their task-bound issue; Scout start may establish a Scout-only issue. Multiple Scout-only issues and requests coexist with the one mutating task.
++Polling reads open labeled issues and comments only from exact configured authors with `OWNER`, `MEMBER`, or `COLLABORATOR` association. A task ID has one durable issue binding. Markers on a second issue that repeats an existing task ID receive bounded command/request rejections without changing the binding or aborting the poll cycle, so already accepted work and other issues continue. One open mapped mutating control issue serializes repository work. If persisted state and GitHub expose more than one, the bridge publishes one bounded diagnostic, freezes both new and restart-recovered command dispatch, and continues authenticated sequence-free status requests and read-only Scouts so the ambiguity can be reconciled. The first command must be `start`; issue/task binding, UUID, sequence state, and every parse-valid pre-ledger rejection are durable. A stale marker rejected while another mutating issue is open therefore remains rejected after that issue closes; only a fresh UUID can be reconsidered. Polling is faster while a control issue is open and slower while idle. Sequence-free `command.status`, `task.status`, `scout.start`, and `scout.status` use their own UUID ledger and never change task sequence. Status reads require their task-bound issue; Scout start may establish a Scout-only issue. Multiple Scout-only issues and requests coexist with the one mutating task.
+ 
+ Bridge comments and label changes use a paced durable outbox. Comments carry deterministic dedupe markers, but only a marker authored by the configured App bot suppresses a retry. Status publication removes stale bridge-owned labels and adds one current label without replacing unrelated labels. `applying` is queued and attempted before its handler starts, so the durable and public lifecycle agree. Outbox completion can be reconstructed from terminal commands after restart.
+ 
+@@ -68,9 +68,9 @@ The template initializer repairs only complete-history, synchronized clean one-c
+ 
+ ## Verification
+ 
+-The supported runtime is Node `22.13.0` or newer. Strict TypeScript build and `npm test` pass 71 deterministic tests at this task boundary; the final integrated suite is also exercised on exact-minimum Node `22.13.0`. Coverage includes all-operation preparation, exact live version/hash drift, offline manifest comparison, serialization, SSE, PTY, SQLite security/durability and schema migration, ledger-derived sequence recovery, exact sequence/nonterminal/mandatory-guard and poller-gate admission, stale-marker suppression, mutation-freeze/read-recovery under repository ambiguity, restart-recomputed local status reads, task-scoped aliases, applying publication, atomic terminal-event/delivery recovery, canonical pending-interaction recovery, latest-response delivery/retry, ambiguous Scout-prompt monitoring, empty-v2 canonical Scout completion, workspace event isolation, Scout model/effort/tool/permission enforcement, exact-ref worktree isolation, concurrent Scouts with a mutating task, cross-task/result isolation, App auth/token rotation/permissions, conditional polling, authorization/serialization, outbox spoof/rate-limit handling, projection/redaction, secret/alias policy, high-level workflow commands, promotion transport, and restart recovery. Node `22.13.0` emits its expected upstream `node:sqlite` experimental warning.
++The supported runtime is Node `22.13.0` or newer. Strict TypeScript build and `npm test` pass 72 deterministic tests at this task boundary; the final integrated suite is also exercised on exact-minimum Node `22.13.0`. Coverage includes all-operation preparation, exact live version/hash drift, offline manifest comparison, serialization, SSE, PTY, SQLite security/durability and schema migration, ledger-derived sequence recovery, exact sequence/nonterminal/mandatory-guard and poller-gate admission, duplicate-task issue isolation without accepted-work starvation, stale-marker suppression, mutation-freeze/read-recovery under repository ambiguity, restart-recomputed local status reads, task-scoped aliases, applying publication, atomic terminal-event/delivery recovery, canonical pending-interaction recovery, latest-response delivery/retry, ambiguous Scout-prompt monitoring, empty-v2 canonical Scout completion, workspace event isolation, Scout model/effort/tool/permission enforcement, exact-ref worktree isolation, concurrent Scouts with a mutating task, cross-task/result isolation, App auth/token rotation/permissions, conditional polling, authorization/serialization, outbox spoof/rate-limit handling, projection/redaction, secret/alias policy, high-level workflow commands, promotion transport, and restart recovery. Node `22.13.0` emits its expected upstream `node:sqlite` experimental warning.
+ 
+-Eight disposable-Git tests prove correct-ancestry no-op, fresh unrelated-root repair with identical developer tree and an old-root backup, and refusal of established/shallow, generated-fingerprint-mismatched, local-HEAD-mismatched, shared-ancestry, dirty, active-task, and synchronization-failed-marker states. Repository validation includes bridge structure/contracts, package tests, branch tests, mandatory agent-system/research checks, and active hooks. When `WOR_WEB_ORCHESTRATION_ROOT` names an independent checkout, it also runs the Project package validator and compares that exact checkout's command/request examples, six-field handoff, Scout model/effort boundary, non-semantic response transport, and observable lifecycle to developer-owned contracts. A real authenticated loopback OpenCode `1.18.16` run returned the exact version/hash, 188-operation manifest, `compatible: true`, and a successful project read.
++Eight disposable-Git tests prove correct-ancestry no-op, fresh unrelated-root repair with identical developer tree and an old-root backup, and refusal of established/shallow, generated-fingerprint-mismatched, local-HEAD-mismatched, shared-ancestry, dirty, active-task, and synchronization-failed-marker states. Repository validation includes bridge structure/contracts, package tests, branch tests, mandatory agent-system/research checks, and active hooks. When `WOR_WEB_ORCHESTRATION_ROOT` names an independent checkout, it also runs the Project package validator and compares that exact checkout's command/request examples, six-field handoff, Scout model/effort boundary, non-semantic response transport, observable lifecycle, and duplicate task-issue containment to developer-owned contracts. A real authenticated loopback OpenCode `1.18.16` run returned the exact version/hash, 188-operation manifest, `compatible: true`, and a successful project read.
+ 
+ Credentialed GitHub issue smokes now exercise authenticated parsing, lifecycle
+ publication, sequence enforcement, and durable status views. Issue #6 identified
+diff --git a/tools/opencode-bridge/src/github.ts b/tools/opencode-bridge/src/github.ts
+index 649b20ee2bcb4cbd60749a315c076302cac7e05b..567440ac072a4f1d547cde3c07193aa3fdec9d1a 100644
+--- a/tools/opencode-bridge/src/github.ts
++++ b/tools/opencode-bridge/src/github.ts
+@@ -372,6 +372,17 @@ export class GitHubCommandPoller {
+           }
+           const envelope = item.envelope;
+           const bound = this.state.taskForIssue(issue.number);
++          const issueForTask = this.state.issueForTask(envelope.task_id);
++          if (bound === undefined && issueForTask !== undefined && issueForTask !== issue.number) {
++            rejected++;
++            this.rejectCommand(
++              issue.number,
++              item.markerHash,
++              envelope,
++              `Task is already bound to issue ${issueForTask}`,
++            );
++            continue;
++          }
+           if (bound === undefined && envelope.kind !== "start") {
+             rejected++;
+             this.rejectCommand(issue.number, item.markerHash, envelope, "The first command for an issue must be start");
+@@ -428,6 +439,16 @@ export class GitHubCommandPoller {
+           const envelope = item.envelope;
+           let bound = this.state.taskForIssue(issue.number);
+           if (bound === undefined) {
++            const issueForTask = this.state.issueForTask(envelope.task_id);
++            if (issueForTask !== undefined && issueForTask !== issue.number) {
++              rejected++;
++              this.enqueueComment(
++                issue.number,
++                `request-task-binding-conflict:${envelope.request_id}`,
++                invalidRequestComment(item.markerHash, `Task is already bound to issue ${issueForTask}`),
++              );
++              continue;
++            }
+             if (envelope.kind !== "scout.start") {
+               rejected++;
+               this.enqueueComment(
+diff --git a/tools/opencode-bridge/tests/protocol-github.test.ts b/tools/opencode-bridge/tests/protocol-github.test.ts
+index 67939f71571b3d7e2d90c4c6c7bc5817fa6f6d88..13e74e749b8d63e5684549be95e787df9451905f 100644
+--- a/tools/opencode-bridge/tests/protocol-github.test.ts
++++ b/tools/opencode-bridge/tests/protocol-github.test.ts
+@@ -479,6 +479,92 @@ test("poller admits multiple Scout-only issues alongside one mutating task issue
+   assert.equal(second.rejected, 0);
+ });
+ 
++test("duplicate task issues are rejected without starving already accepted work", async (context) => {
++  const state = stateForTest(context);
++  state.bindIssueTask(15, "TASK-GUARD");
++
++  const pendingCommand = envelope("dddddddd-dddd-4ddd-8ddd-ddddddddddd1", 1, "start", "TASK-MAIN");
++  const pendingRequest: RequestEnvelope = {
++    protocol: "agentic-bridge/1",
++    request_id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1",
++    task_id: "TASK-MAIN",
++    kind: "task.status",
++    arguments: {},
++  };
++  assert.equal(state.acceptCommand(pendingCommand, 14).disposition, "new");
++  assert.equal(state.acceptRequest(pendingRequest, 14).disposition, "new");
++
++  const duplicateScout: RequestEnvelope = {
++    protocol: "agentic-bridge/1",
++    request_id: "ffffffff-ffff-4fff-8fff-fffffffffff1",
++    task_id: "TASK-GUARD",
++    kind: "scout.start",
++    arguments: {
++      question: "Find the root instruction file",
++      ref: "a".repeat(40),
++      scope: "repository root",
++      expected_evidence: "exact path",
++    },
++  };
++  const duplicateStart = envelope("12121212-3434-4567-8567-121212121212", 1, "start", "TASK-GUARD");
++  const duplicateStatus: RequestEnvelope = {
++    protocol: "agentic-bridge/1",
++    request_id: "34343434-5656-4789-8789-343434343434",
++    task_id: "TASK-GUARD",
++    kind: "scout.status",
++    arguments: { scout_request_id: duplicateScout.request_id },
++  };
++  const github = new GitHubClient({
++    owner: "acme",
++    repository: "demo",
++    tokens: new FakeTokens(),
++    state,
++    apiBaseUrl: "https://api.github.test",
++    fetch: asFetch((request) => {
++      const path = new URL(request.url).pathname;
++      if (path === "/repos/acme/demo/issues") {
++        return Response.json([{ number: 16, body: requestMarker(duplicateScout), ...actor("alice", "OWNER") }]);
++      }
++      if (path === "/repos/acme/demo/issues/16/comments") {
++        return Response.json([
++          { id: 1, body: commandMarker(duplicateStart), ...actor("alice", "COLLABORATOR") },
++          { id: 2, body: requestMarker(duplicateStatus), ...actor("alice", "COLLABORATOR") },
++        ]);
++      }
++      return new Response("not found", { status: 404 });
++    }),
++  });
++  const poller = new GitHubCommandPoller({ github, state, allowedAuthors: ["alice"] });
++  const abort = new AbortController();
++  const appliedCommands: string[] = [];
++  const appliedRequests: string[] = [];
++  const loop = new GitHubControlLoop({
++    poller,
++    outbox: { flush: async () => ({ delivered: 0, retried: 0 }) } as unknown as GitHubOutbox,
++    state,
++    activeIntervalMs: 1,
++    idleIntervalMs: 1,
++  });
++  await loop.run(
++    abort.signal,
++    (entries) => {
++      appliedCommands.push(...entries.map((entry) => entry.commandId));
++      abort.abort();
++    },
++    (entries) => { appliedRequests.push(...entries.map((entry) => entry.requestId)); },
++  );
++
++  assert.deepEqual(appliedRequests, [pendingRequest.request_id]);
++  assert.deepEqual(appliedCommands, [pendingCommand.command_id]);
++  assert.equal(state.issueForTask("TASK-GUARD"), 15);
++  assert.equal(state.taskForIssue(16), undefined);
++  assert.match(state.commandRejection(duplicateStart.command_id)?.reason ?? "", /already bound to issue 15/);
++  assert.equal(state.getRequest(duplicateScout.request_id), undefined);
++  assert.equal(state.getRequest(duplicateStatus.request_id), undefined);
++  const bodies = state.pendingOutbox(Date.now() + 1_000).map((item) => JSON.stringify(item.payload));
++  assert.equal(bodies.filter((body) => body.includes("already bound to issue 15")).length, 3);
++});
++
+ test("repository mutation ambiguity freezes commands but preserves task-bound recovery requests", async (context) => {
+   const state = stateForTest(context);
+   const first = envelope("dddddddd-dddd-4ddd-8ddd-ddddddddddd1", 1, "start", "TASK-ONE");

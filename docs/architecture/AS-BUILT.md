@@ -80,3 +80,10 @@ the ledger branch.
 - `tests/change-package.test.mjs`: exact package creation, ancestry rejection,
   branch/cleanliness enforcement, dry-run non-mutation, and explicit application.
 - `scripts/validate-template-development.sh`: both checks plus `git diff --check`.
+
+The first end-to-end maintenance exercise, `TEMPLATE-SMOKE-RESPONSE-001`, used
+the ledger before diagnosis, changed both independent source branches, and
+produced `changes/TEMPLATE-SMOKE-RESPONSE-001/` from exact pushed ranges. Both
+patches dry-run apply from their recorded bases, demonstrating that the ledger
+provides compaction continuity and a portable downstream update without copying
+or merging source histories.

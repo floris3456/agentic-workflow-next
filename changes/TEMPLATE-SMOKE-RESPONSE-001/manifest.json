@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "task_id": "TEMPLATE-SMOKE-RESPONSE-001",
+  "canonical_repository": "https://github.com/floris3456/agentic-workflow-template.git",
+  "created_at": "2026-08-13T23:52:43.803Z",
+  "ranges": {
+    "developer": {
+      "base": "ccfa12dc2783c7e8fc336abc503e083b69112a71",
+      "head": "be315eec10030b3d4499a05b823739a2631cb897",
+      "changed_paths": [
+        "contracts/opencode-bridge/protocol.md",
+        "docs/architecture/AS-BUILT.md",
+        "docs/architecture/opencode-bridge.md",
+        "docs/work/current/TEMPLATE-SMOKE-RESPONSE-001-duplicate-task-isolation.md",
+        "scripts/validate-web-orchestrator-integration.mjs",
+        "tools/opencode-bridge/AS-BUILT.md",
+        "tools/opencode-bridge/src/github.ts",
+        "tools/opencode-bridge/tests/protocol-github.test.ts"
+      ],
+      "patch": "developer.patch",
+      "patch_sha256": "04a7aeef128b796a40eac6c5fbf444695d4dc976c729e319319dd88abbdd7c87"
+    },
+    "web-orchestration": {
+      "base": "04e111dd874c2f431805b52b3eb24c6b04de95b8",
+      "head": "9f83a8eebc401c820acc8b7a2b0cc0733319950b",
+      "changed_paths": [
+        "web-orchestration-only/chatgpt-project/README.md",
+        "web-orchestration-only/chatgpt-project/developer-instructions.md",
+        "web-orchestration-only/chatgpt-project/skill-mcp-on-recovery.md",
+        "web-orchestration-only/chatgpt-project/skill-mcp-on-workflow.md",
+        "web-orchestration-only/task-context/README.md",
+        "web-orchestration-only/task-context/TEMPLATE-SMOKE-RESPONSE-001.md",
+        "web-orchestration-only/task-context/TEMPLATE.md",
+        "web-orchestration-only/task-context/WEB-ORCHESTRATOR-REDESIGN-001.md",
+        "web-orchestration-only/validate-package.mjs",
+        "web-orchestration-only/validate-package.test.mjs"
+      ],
+      "patch": "web-orchestration.patch",
+      "patch_sha256": "0ad3d5378675c645770cec055b6a2e91f6c018453d6a44bfd340d1f343dd8ed3"
+    }
+  }
+}
