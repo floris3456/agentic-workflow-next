@@ -2,20 +2,20 @@
 
 - Continuity schema: agentic-bridge/1
 - Task ID: WEB-ORCHESTRATOR-REDESIGN-001
-- Status: Sole final review completed; four verified blockers fixed locally with final validation/push in progress
+- Status: Complete; sole final-review blockers fixed, pushed, and independently revalidated
 - Design approval: Human confirmed the corrected design in chat on 2026-08-13
 - Human goal: Make the web orchestrator extremely fast and efficient while still completing the human's task, applying safety and thoroughness in proportion to the task, and preserving the genuinely different MCP-ON and MCP-OFF operating modes.
-- Current orchestration objective: Validate and push the four independently reproduced final-review fixes without promoting `main`.
+- Current orchestration objective: Implementation complete; preserve exact-SHA human review/promotion authority without modifying `main`.
 - Task-start developer SHA: `6127611113dfdb66f93a0cfd2d355359aa370833`
-- Last reviewed developer SHA: `b100942ecfc8049c5583276180043a99033bcc7b`
-- Current handoff developer SHA: `b100942ecfc8049c5583276180043a99033bcc7b`
+- Last reviewed developer SHA: `daf9b226a4dd87b4fc6741713fcd8a065e08bccf`
+- Current handoff developer SHA: `daf9b226a4dd87b4fc6741713fcd8a065e08bccf`
 - Substantive implementation approval SHA: none
 - Finalization handoff developer SHA: none
 - Human-approved promotion SHA: none
 - Human approval date/reference: none
 - Verified post-promotion main SHA: none
 - Verified post-promotion developer SHA: none
-- Relevant repository refs: `developer` candidate `b100942ecfc8049c5583276180043a99033bcc7b`; `main` unchanged at `6127611113dfdb66f93a0cfd2d355359aa370833`; `web-orchestration` integration reconciliation `141b2f49ceb483c68154f6b5e3685711d9bcd453` from design baseline `36adae35552c8e32ce8ee8f446aa586eec20b969` (metadata-only snapshots follow it)
+- Relevant repository refs: `developer` final candidate `daf9b226a4dd87b4fc6741713fcd8a065e08bccf`; `main` unchanged at `6127611113dfdb66f93a0cfd2d355359aa370833`; `web-orchestration` review-fix implementation `bbd636d6591d556e3ab15a374b3c31e8d319b93a` from design baseline `36adae35552c8e32ce8ee8f446aa586eec20b969` (this final metadata snapshot follows it)
 - Last orchestration mode: not established; this is design capture, not a bridge operation
 - Bridge control issue: none
 - Bridge control issue state: none
@@ -359,6 +359,23 @@ Routine scouting, delegation, review, and correction proceed without repeated hu
   reproduced all four; focused regression checks now pass for their fixes. No
   second reviewer will be run.
 
+### Sole reviewer finding dispositions
+
+1. Terminal event/cursor/delivery gap — confirmed and fixed on `developer` by
+   one atomic transaction plus idempotent startup repair for older persisted
+   events; simulated callback-stop and older-state tests pass.
+2. Ambiguous Scout prompt monitoring — confirmed and fixed on `developer` by
+   registering recovery immediately after durable session mapping and before
+   prompt delivery; the prompt is never replayed and the timeout regression
+   passes.
+3. Routing-record validator conflict — confirmed and fixed on
+   `web-orchestration`: static routing definitions remain mandatory while only
+   well-formed task routing Markdown is admitted; positive normal-delegation and
+   negative unexpected-entry tests pass.
+4. Handoff-field contradiction — confirmed and fixed on `developer`: the skill
+   assigns the commit to `Handoff developer SHA`, and agent-system validation
+   rejects the obsolete `Status` wording.
+
 ## Implementation validation
 
 - Developer bridge/Scout behavior has 59 deterministic tests covering exact
@@ -376,10 +393,13 @@ Routine scouting, delegation, review, and correction proceed without repeated hu
   `d89b22a439047558ffccbda32a04b14a376b170a` and developer candidate
   `b100942ecfc8049c5583276180043a99033bcc7b`.
 - Full repository validation plus cross-branch validation passed on exact Node
-  22.13.0 before final review: bridge 56/56 and branch initializer 8/8. The
-  Project suite passed 9/9 and its standalone validator passed on the same
-  runtime. Post-review focused host checks pass at bridge 59/59 and Project
-  11/11; final exact-runtime integration rerun is pending.
+  22.13.0 before final review: bridge 56/56 and branch initializer 8/8. After
+  all four fixes were pushed, exact Node 22.13.0 full integration passed at
+  developer `bbb35d0c2b52a63e68bfe0df85df820b98ed416c` and web
+  `bbd636d6591d556e3ab15a374b3c31e8d319b93a`: bridge 59/59, branch initializer
+  8/8, Project 11/11, standalone package validation, and cross-branch contract
+  validation. Developer `daf9b226a4dd87b4fc6741713fcd8a065e08bccf`
+  adds only the completed tracked task-progress snapshot.
 - No GitHub App private key/native ChatGPT account was available for a live issue
   round trip, and this migration forbids exercising its new Scout on itself.
   Deterministic doubles plus durable event/status recovery cover the complete
@@ -401,22 +421,25 @@ Routine scouting, delegation, review, and correction proceed without repeated hu
 ## Human decisions required
 
 - None before implementation; the corrected redesign is approved for implementation.
-- Later approve the exact implementation SHA before any promotion to `main`.
+- Later review and explicitly approve exact developer SHA
+  `daf9b226a4dd87b4fc6741713fcd8a065e08bccf` before any promotion to `main`.
 
 ## Migration notes
 
 - The approved design baseline is `web-orchestration` SHA
   `36adae35552c8e32ce8ee8f446aa586eec20b969`. Developer bridge/Scout runtime
-  and cross-branch integration Tasks 1, 2, and 4 are pushed through
-  `b100942ecfc8049c5583276180043a99033bcc7b`; the audited eight-Source Project
+  and cross-branch integration Tasks 1, 2, and 4 are pushed through final
+  developer candidate `daf9b226a4dd87b4fc6741713fcd8a065e08bccf`; the audited eight-Source Project
   package implementation is pushed at
   `b5504d37d5474e18ff36399f73abbfe08d20eb80` with its prior record snapshot at
   `d89b22a439047558ffccbda32a04b14a376b170a`; final integration reconciliation
-  is pushed at `141b2f49ceb483c68154f6b5e3685711d9bcd453` and this metadata-only
-  snapshot follows it.
+  was reconciled at `141b2f49ceb483c68154f6b5e3685711d9bcd453`, the final-review
+  validator fix is pushed at `bbd636d6591d556e3ab15a374b3c31e8d319b93a`,
+  and this metadata-only snapshot follows it.
 
 ## Current next action
 
-Run final exact-runtime cross-branch validation, push both corrected histories,
-and reconcile the reviewer disposition. Do not run another reviewer or promote
-to `main` without later exact-SHA approval.
+None for implementation. The human may now review exact developer SHA
+`daf9b226a4dd87b4fc6741713fcd8a065e08bccf` and, only afterward, explicitly
+approve that same SHA for guarded promotion. Do not run another reviewer or
+promote `main` without that approval.
