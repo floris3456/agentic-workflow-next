@@ -41,8 +41,9 @@ including beside one mutating developer task. Runtime worktree preparation may
 briefly queue for Git safety; impose no orchestration concurrency cap. Record
 only the exact request envelope, task, issue, exact ref, focus, and disposition in
 the task-context Scout journal before posting; do not create mutating developer
-records for a Scout. If comment publication is ambiguous, replay only the
-exact same UUID/envelope after readback, never a fresh Scout start.
+records for a Scout. If the connector refuses the write or publication is
+ambiguous, load `skill-mcp-on-recovery.md` and apply its readback/bounded retry
+rule to only the exact same UUID/envelope, never a fresh Scout start.
 
 ## Results and recovery
 

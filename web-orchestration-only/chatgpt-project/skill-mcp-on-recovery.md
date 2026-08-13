@@ -3,8 +3,9 @@
 ## Trigger
 
 Use when an open control issue needs discovery or adoption; a command/result is
-missing, delayed, stuck, rejected, failed, or indeterminate; or developer/remote
-synchronization is inconsistent.
+missing, delayed, stuck, rejected, failed, or indeterminate; a GitHub connector
+action is refused before remote confirmation; or developer/remote synchronization
+is inconsistent.
 
 ## Existing issue discovery
 
@@ -52,15 +53,34 @@ Mapped developer session state and latest projected response:
 -->
 ```
 
+## Connector-gated publication
+
+A ChatGPT/tool connector refusal is not a bridge disposition. Immediately read
+the issue and comments for the exact prepared UUID and marker. If present,
+reconcile that posted envelope normally. If absent, make at most three total
+connector attempts using the same UUID and byte-identical envelope, reading back
+after each attempt. This retries only idempotent publication; never invent a
+replacement UUID, alter the envelope to evade the gate, or repeat an accepted or
+ambiguous underlying mutation.
+
+Stop a redundant status request when equivalent trusted evidence arrives: an
+exact terminal command marker can supersede `command.status`, a correlated
+developer response can supersede `task.status`, and a correlated Scout response
+can supersede `scout.status`. Record the definitely unpublished request as
+cancelled and continue from that evidence. Before reporting `BLOCKED` or `RESUME
+REQUIRED`, refresh the issue comments and relevant remote refs once more. If the
+marker remains absent after the bounded attempts and no equivalent evidence can
+resolve an indispensable fact, report the connector capability gap, not a bridge
+rejection or failure.
+
 ## Procedure
 
 1. Stop new commands. Reconcile task context, the same bound issue, exact UUID,
    sequence, persisted envelope, authorized comment identity/association, bridge
    bot author, result marker, service heartbeat, and exact remote GitHub state.
 2. If an eligible command comment exists, do not replace it because acknowledgement
-   is delayed. If publication itself is ambiguous and the exact comment is not
-   visible, repost only the byte-identical persisted envelope with the same UUID;
-   this is ledger deduplication, not a fresh action. Never change content while
+   is delayed. For refused or ambiguous publication, follow the connector-gated
+   readback and bounded identical-envelope rule above. Never change content while
    reusing a UUID.
 3. Interpret lifecycle exactly: `accepted` means wait; `applying` means a side
    effect may be underway, so wait and never reissue; `succeeded` applies only

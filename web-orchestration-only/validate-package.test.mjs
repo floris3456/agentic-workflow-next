@@ -35,7 +35,7 @@ test("current eight-Source package passes", (context) => {
   const result = run(root);
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /8 exact Project Sources/);
-  assert.match(result.stdout, /8 acceptance scenarios/);
+  assert.match(result.stdout, /9 acceptance scenarios/);
 });
 
 test("documented installation rendering produces the exact Source inventory", (context) => {
@@ -157,6 +157,19 @@ test("validator rejects lost-result no-replay drift", (context) => {
   const result = run(root);
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /lost command result/);
+});
+
+test("validator rejects connector-gate recovery drift", (context) => {
+  const root = fixture(context);
+  replace(
+    root,
+    "chatgpt-project/skill-mcp-on-recovery.md",
+    "A ChatGPT/tool connector refusal is not a bridge disposition",
+    "A connector refusal is a bridge rejection",
+  );
+  const result = run(root);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /connector refusal is not a bridge disposition|connector-gated publication/);
 });
 
 test("validator rejects closed-envelope placement drift", (context) => {

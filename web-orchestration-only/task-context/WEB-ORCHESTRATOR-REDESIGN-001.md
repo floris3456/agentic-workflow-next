@@ -279,6 +279,16 @@ or superseded task. The mere presence of an open issue or completion label does
 not block forever or prove completion; only ambiguity remaining after bounded
 read-only reconciliation blocks a new mutation.
 
+### Connector-gated recovery
+
+If ChatGPT refuses a prepared GitHub comment before remote confirmation, the
+orchestrator does not call that a bridge rejection. It reads the issue for the
+exact UUID, makes at most three total attempts with the unchanged idempotent
+envelope when absent, and accepts later equivalent trusted terminal evidence as
+superseding a redundant status request. It refreshes issue comments and remote
+refs once more before reporting `BLOCKED` or `RESUME REQUIRED`; it never evades
+the connector gate or retries an accepted/ambiguous underlying mutation.
+
 ### Human decision
 
 Routine scouting, delegation, review, and correction proceed without repeated human prompts. The human is asked when intent or risk truly requires a decision and must approve the exact final SHA before promotion.
@@ -342,6 +352,18 @@ Routine scouting, delegation, review, and correction proceed without repeated hu
   continuity distinguishes an active task, a response awaiting review, a safely
   retired terminal task, and genuinely unresolved ambiguity. Issue closure is a
   web-orchestrator decision; no bridge label gains semantic authority.
+- A connector refusal before GitHub is not a bridge disposition. Recovery reads
+  back the exact UUID, permits at most three total unchanged-envelope publication
+  attempts, cancels a redundant unpublished status request when equivalent
+  trusted evidence arrives, and refreshes once before a blocked/resume report.
+- OpenCode `1.18.16` returns empty v2 history for legacy-created Scout sessions.
+  Scout recovery therefore combines exact-workspace legacy SSE with a canonical
+  status/message fallback that requires terminal lifecycle metadata, creates one
+  stable event, never interprets Scout text, and never replays the prompt.
+- Every authenticated parse-valid command rejected before ledger admission is
+  durable by UUID, including the one-open-mutating-issue gate. Closing the active
+  issue cannot make a previously rejected stale marker executable; a corrected
+  command requires a fresh UUID at the still-expected sequence.
 
 ### Source trigger and dependency audit
 
@@ -435,11 +457,26 @@ Routine scouting, delegation, review, and correction proceed without repeated hu
   multi-marker comment. UUID replay and same-source nonterminal serialization
   remain deterministically covered rather than being treated as mandatory live
   connector actions; this does not change their runtime contract.
+- Credentialed issues #8/#9 then exposed two runtime gaps and one test-procedure
+  gap. Legacy-created Scouts completed but v2 history remained empty; the bridge
+  now recovered five historical sessions on controlled boot through exact-workspace
+  and canonical lifecycle reads, with one user prompt per session. A guard start
+  rejected only by the open-task gate later became eligible after issue closure;
+  all parse-valid poller-gate rejections are now durable. Finally, a ChatGPT
+  connector refusal of `task.status` was incorrectly treated as terminal test
+  blockage even though no marker reached GitHub and equivalent developer evidence
+  arrived later; the bounded readback/retry/supersession procedure above corrects
+  that classification.
 - Current exact-minimum validation after that correction passes bridge 62/62,
   branch initializer 8/8, Project 14/14, standalone package validation, full
   repository validation, and cross-branch compatibility at exact Project
   correction `ea61410057655d1ef916d3b895d7c0fe5bfbd715` and developer handoff
   `0352d354acb6a0430d585eaf25649b4fd808f59e`.
+- The issue-#8/#9 correction passes the bridge's 65/65 deterministic tests and
+  controlled boot recovery at pushed developer
+  `d19fefae529ad411b6e32bd85e4165038903c980`. The Project validator now proves
+  nine acceptance scenarios, and its 15/15 positive/negative tests pass on exact
+  Node 22.13.0, including connector-gate recovery drift detection.
 
 ## Steering issued
 
@@ -456,8 +493,8 @@ Routine scouting, delegation, review, and correction proceed without repeated hu
 ## Human decisions required
 
 - None before implementation; the corrected redesign is approved for implementation.
-- Later review and explicitly approve exact developer SHA
-  `0352d354acb6a0430d585eaf25649b4fd808f59e` before any promotion to `main`.
+- Later review and explicitly approve the final exact pushed developer SHA from
+  this correction before any promotion to `main`; this task does not promote.
 
 ## Migration notes
 
@@ -477,7 +514,6 @@ Routine scouting, delegation, review, and correction proceed without repeated hu
 
 ## Current next action
 
-None for implementation. The human may now review exact developer SHA
-`0352d354acb6a0430d585eaf25649b4fd808f59e` and, only afterward, explicitly
-approve that same SHA for guarded promotion. Do not run another reviewer or
-promote `main` without that approval.
+Finish exact-runtime integrated validation, synchronize both corrected branch
+candidates, update this record with their exact heads, and provide the external
+read-only review prompt. Do not run another reviewer or promote `main`.

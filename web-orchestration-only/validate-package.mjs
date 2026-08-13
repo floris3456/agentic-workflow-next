@@ -289,6 +289,11 @@ requireTerms("skill-mcp-on-recovery.md", [
   "verifiably completed or",
   "Only unresolved ambiguity blocks",
   "`bridge-status:complete`",
+  "connector refusal is not a bridge disposition",
+  "at most three total",
+  "same UUID and byte-identical envelope",
+  "equivalent trusted evidence",
+  "Before reporting `BLOCKED` or `RESUME",
 ]);
 requireTerms("skill-mcp-on-finalization.md", [
   "`finalize`",
@@ -394,6 +399,7 @@ const scenarioChecks = [
   ["MCP-OFF analysis", "skill-mcp-off-workflow.md", ["public GitHub lookup", "Do not claim it was sent or started"]],
   ["lost command result", "skill-mcp-on-recovery.md", ["`command.status`", "`task.status`", "Never automatically retry"]],
   ["fresh-turn continuity", "skill-mcp-on-recovery.md", ["reconciliation target, not proof of active work", "resume the existing", "record the disposition and close"]],
+  ["connector-gated publication", "skill-mcp-on-recovery.md", ["connector refusal is not a bridge disposition", "at most three total", "equivalent trusted evidence", "Before reporting `BLOCKED` or `RESUME"]],
   ["human decision", "skill-shared-safety-and-authority.md", ["Routine in-scope inspection", "Promotion always requires explicit approval"]],
 ];
 for (const [scenario, file, terms] of scenarioChecks) {
