@@ -2,7 +2,7 @@
 
 - Continuity schema: agentic-bridge/1
 - Task ID: WEB-ORCHESTRATOR-REDESIGN-001
-- Status: Human-approved design; developer Tasks 1-2 pushed and Project package candidate validated
+- Status: Human-approved design; developer Tasks 1-2 and Project-package Task 3 pushed
 - Design approval: Human confirmed the corrected design in chat on 2026-08-13
 - Human goal: Make the web orchestrator extremely fast and efficient while still completing the human's task, applying safety and thoroughness in proportion to the task, and preserving the genuinely different MCP-ON and MCP-OFF operating modes.
 - Current orchestration objective: Finish cross-branch deterministic validation and publish synchronized branch candidates without promoting `main`.
@@ -15,7 +15,7 @@
 - Human approval date/reference: none
 - Verified post-promotion main SHA: none
 - Verified post-promotion developer SHA: none
-- Relevant repository refs: `developer` at `d2ddfd6aa5c34d1abe8d1f2127108c859f262045`; `main` unchanged at `6127611113dfdb66f93a0cfd2d355359aa370833`; `web-orchestration` design baseline at `36adae35552c8e32ce8ee8f446aa586eec20b969`
+- Relevant repository refs: `developer` at `d2ddfd6aa5c34d1abe8d1f2127108c859f262045`; `main` unchanged at `6127611113dfdb66f93a0cfd2d355359aa370833`; `web-orchestration` Project-package implementation commit `b5504d37d5474e18ff36399f73abbfe08d20eb80` from design baseline `36adae35552c8e32ce8ee8f446aa586eec20b969`
 - Last orchestration mode: not established; this is design capture, not a bridge operation
 - Bridge control issue: none
 - Bridge control issue state: none
@@ -363,11 +363,11 @@ Routine scouting, delegation, review, and correction proceed without repeated hu
   `36adae35552c8e32ce8ee8f446aa586eec20b969`. Developer bridge/Scout runtime
   Tasks 1-2 are pushed through
   `d2ddfd6aa5c34d1abe8d1f2127108c859f262045`; the audited eight-Source Project
-  package is implemented and deterministically validated in the current
-  `web-orchestration` candidate. Exact candidate SHAs are recorded after push.
+  package is implemented, deterministically validated, and pushed at
+  `b5504d37d5474e18ff36399f73abbfe08d20eb80`.
 
 ## Current next action
 
-Commit and push the audited Project package, then complete cross-branch
-deterministic validation and the single final read-only review. Do not promote
-to `main` without later exact-SHA approval.
+Complete cross-branch deterministic scenarios, durable-record reconciliation,
+full validation, and the single final read-only review. Do not promote to `main`
+without later exact-SHA approval.
