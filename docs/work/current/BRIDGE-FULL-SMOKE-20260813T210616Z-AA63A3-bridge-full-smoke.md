@@ -58,4 +58,6 @@ Create and push the dedicated handoff snapshot, then return the six-field handof
 - `docs/work/current/BRIDGE-FULL-SMOKE-20260813T210616Z-AA63A3-bridge-full-smoke.md`
 
 ## Last handoff commit
-None
+eb6919fbe3524ac4902768338e9c0ba0c273b249
+
+Steer token: basalt-kite
