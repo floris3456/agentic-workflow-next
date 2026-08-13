@@ -71,7 +71,7 @@ test deviation. The initial task-progress record was pushed at
 `765794fff6050286423af8951c2e623244e3fd77`. The permitted smoke artifact and
 updated task-progress facts were pushed at
 `b58d3abddb31cb8cee9850ede96b6c5abef52491`. The dedicated
-task-progress-only handoff snapshot is now being prepared.
+task-progress-only handoff snapshot was pushed; no further task work remains.
 
 ## Observed
 
@@ -129,11 +129,11 @@ None.
 
 ## Remaining work
 
-None after the dedicated task-progress-only handoff snapshot is pushed.
+None.
 
 ## Next action
 
-Create and push the dedicated task-progress-only handoff snapshot.
+None.
 
 ## Relevant durable records
 
@@ -145,4 +145,4 @@ Create and push the dedicated task-progress-only handoff snapshot.
 
 ## Last handoff commit
 
-`None`
+`1dc6ce740dd670c9fcc7b72c2035e9eba63caa2d`
