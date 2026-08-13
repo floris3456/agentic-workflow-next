@@ -7,15 +7,15 @@
 - Human goal: Make the web orchestrator extremely fast and efficient while still completing the human's task, applying safety and thoroughness in proportion to the task, and preserving the genuinely different MCP-ON and MCP-OFF operating modes.
 - Current orchestration objective: Finish cross-branch deterministic validation and publish synchronized branch candidates without promoting `main`.
 - Task-start developer SHA: `6127611113dfdb66f93a0cfd2d355359aa370833`
-- Last reviewed developer SHA: `2fb851149d9e2e1f65919a21a63603f049d7456c`
-- Current handoff developer SHA: `2fb851149d9e2e1f65919a21a63603f049d7456c`
+- Last reviewed developer SHA: `b100942ecfc8049c5583276180043a99033bcc7b`
+- Current handoff developer SHA: `b100942ecfc8049c5583276180043a99033bcc7b`
 - Substantive implementation approval SHA: none
 - Finalization handoff developer SHA: none
 - Human-approved promotion SHA: none
 - Human approval date/reference: none
 - Verified post-promotion main SHA: none
 - Verified post-promotion developer SHA: none
-- Relevant repository refs: `developer` candidate `2fb851149d9e2e1f65919a21a63603f049d7456c`; `main` unchanged at `6127611113dfdb66f93a0cfd2d355359aa370833`; `web-orchestration` integration reconciliation `141b2f49ceb483c68154f6b5e3685711d9bcd453` from design baseline `36adae35552c8e32ce8ee8f446aa586eec20b969` (this metadata-only snapshot follows it)
+- Relevant repository refs: `developer` candidate `b100942ecfc8049c5583276180043a99033bcc7b`; `main` unchanged at `6127611113dfdb66f93a0cfd2d355359aa370833`; `web-orchestration` integration reconciliation `141b2f49ceb483c68154f6b5e3685711d9bcd453` from design baseline `36adae35552c8e32ce8ee8f446aa586eec20b969` (metadata-only snapshots follow it)
 - Last orchestration mode: not established; this is design capture, not a bridge operation
 - Bridge control issue: none
 - Bridge control issue state: none
@@ -355,7 +355,7 @@ Routine scouting, delegation, review, and correction proceed without repeated hu
   response, developer/Scout agents, non-semantic response transport, and public
   lifecycle. It passes against Project-package handoff
   `d89b22a439047558ffccbda32a04b14a376b170a` and developer candidate
-  `2fb851149d9e2e1f65919a21a63603f049d7456c`.
+  `b100942ecfc8049c5583276180043a99033bcc7b`.
 - Full repository validation plus cross-branch validation passed on exact Node
   22.13.0: bridge 56/56 and branch initializer 8/8. The Project suite passed
   9/9 and its standalone validator passed on the same runtime.
@@ -387,7 +387,7 @@ Routine scouting, delegation, review, and correction proceed without repeated hu
 - The approved design baseline is `web-orchestration` SHA
   `36adae35552c8e32ce8ee8f446aa586eec20b969`. Developer bridge/Scout runtime
   and cross-branch integration Tasks 1, 2, and 4 are pushed through
-  `2fb851149d9e2e1f65919a21a63603f049d7456c`; the audited eight-Source Project
+  `b100942ecfc8049c5583276180043a99033bcc7b`; the audited eight-Source Project
   package implementation is pushed at
   `b5504d37d5474e18ff36399f73abbfe08d20eb80` with its prior record snapshot at
   `d89b22a439047558ffccbda32a04b14a376b170a`; final integration reconciliation
