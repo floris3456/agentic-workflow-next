@@ -108,7 +108,7 @@ test("deterministic workflow covers routing, interaction, recovery, finalization
   await apply(7, "events.page", { after: 0, limit: 10 });
   await apply(8, "sync.recover", {});
   assert.equal(recoveries, 1);
-  await apply(9, "finalize", { message: "Create the required pushed handoff snapshot and return the canonical five fields" });
+  await apply(9, "finalize", { message: "Create the required pushed handoff snapshot and return the canonical six fields" });
   await apply(10, "abort", {});
   await apply(11, "promotion.apply", { approved_sha: sha }, true);
   assert.deepEqual(promotions, [sha]);

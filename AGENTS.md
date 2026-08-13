@@ -6,7 +6,7 @@ Implement only the bounded public-safe task delegated by the web orchestrator. R
 
 - Work on `developer` unless carrying out an exact-SHA promotion operation. Promotion is not an implementation task: it creates no task record, edits, or handoff snapshot.
 - Every commit is pushed immediately. A failed push stops implementation; synchronization recovery is the only allowed repository-changing work until fixed.
-- Before returning control, create and push the required handoff snapshot commit. Use only the five-field response contract in `docs/work/README.md`.
+- Before returning control, create and push the required handoff snapshot commit. Use only the six-field response contract in `docs/work/README.md`, with explicit status and exact pushed handoff SHA or `none`.
 - Anything persisted to Git must be safe for public disclosure.
 - Preserved externally produced research evidence may be read when needed but never modified.
 - Do not read or modify the independent `web-orchestration` branch from a local implementation task.

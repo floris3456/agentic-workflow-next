@@ -26,7 +26,7 @@ When it occurs:
 1. stop implementation;
 2. do not create another implementation commit;
 3. retain the local commit and failure marker;
-4. return the five-field synchronization-failure response; and
+4. return the six-field synchronization-failure response; and
 5. wait for directed recovery.
 
 Never claim an unconfirmed local commit is remote work.
@@ -48,19 +48,22 @@ Before a normal response:
 
 A handoff snapshot is a boundary marker. The web reviewer inspects the entire range since the task start or previous reviewed SHA.
 
-## Five-field response
+## Six-field response
 
 Return only:
 
 ```text
 Status:
+Handoff developer SHA:
 Files changed:
 Checks + perceived results:
 Blockers/decisions:
 Task record:
 ```
 
-- `Status`: completion/blocker state, branch, exact commit, push state.
+- `Status`: exactly `completed`, `blocked`, `failed`, or `needs decision`.
+- `Handoff developer SHA`: the exact pushed 40-character handoff commit for
+  `completed`, otherwise `none`. A failed push is `blocked` with `none`.
 - `Files changed`: paths changed across the full current handoff/review range, not only the snapshot commit.
 - `Checks + perceived results`: checks run and direct observed results.
 - `Blockers/decisions`: observable condition, stopping point, and information/decision required; no unsupported diagnosis.
@@ -71,10 +74,11 @@ The response and task record are navigation, not proof.
 ## Push-failure response
 
 ```text
-Status: Synchronization failed; developer; local commit <sha>; not confirmed on origin/developer.
+Status: blocked
+Handoff developer SHA: none
 Files changed: <paths in the intended range>
 Checks + perceived results: git push -> <brief observed failure>
-Blockers/decisions: Remote synchronization must be restored before implementation continues.
+Blockers/decisions: Synchronization failed on developer; local commit <sha> is not confirmed on origin/developer. Remote synchronization must be restored before implementation continues.
 Task record: <path>; remote copy may be stale.
 ```
 
@@ -83,10 +87,15 @@ Task record: <path>; remote copy may be stale.
 After the finalization commit moves the exact approved task record to its same-name archive path:
 
 ```text
+Status: completed
+Handoff developer SHA: <exact pushed finalization SHA>
+Files changed: docs/work/current/<task>.md -> docs/work/archive/<task>.md
+Checks + perceived results: <exact finalization checks and observed results>
+Blockers/decisions: none
 Task record: docs/work/archive/<task>.md; archived unchanged from docs/work/current/<task>.md at substantive-approval SHA <sha> by this finalization commit after reconciliation.
 ```
 
-The finalization commit itself is pushed before response; no extra task snapshot follows archival. The archived task-progress blob is immutable and non-authoritative.
+The finalization commit itself is pushed before response; no extra task snapshot follows archival. The archived task-progress blob is immutable and non-authoritative. The response still includes `Handoff developer SHA:` before `Files changed:`.
 
 ## Promotion
 
@@ -98,4 +107,4 @@ Only after the human approves an exact reviewed `developer` SHA, the small/Luna 
 
 Promotion introduces no content changes. A conflict aborts. Never bypass hooks manually.
 
-Promotion is a mechanical no-edit operation, not a normal implementation task. Do not create a task record, update an existing task record, or make a handoff snapshot before running it. Before pushing `main`, the script records a pending tuple of the exact merge, approved developer SHA, and previous main SHA. If `main` is pushed but `developer` synchronization fails, make no commits and rerun the same command with the same approved SHA; the script requires that tuple and verifies both parents before resuming. A look-alike merge without matching pending evidence fails closed. The promotion response uses the five fields with `Files changed: None` and `Task record: Not applicable; promotion operation.`
+Promotion is a mechanical no-edit operation, not a normal implementation task. Do not create a task record, update an existing task record, or make a handoff snapshot before running it. Before pushing `main`, the script records a pending tuple of the exact merge, approved developer SHA, and previous main SHA. If `main` is pushed but `developer` synchronization fails, make no commits and rerun the same command with the same approved SHA; the script requires that tuple and verifies both parents before resuming. A look-alike merge without matching evidence fails closed. The promotion response uses the six fields, reports the exact pushed post-promotion developer SHA, uses `Files changed: None`, and uses `Task record: Not applicable; promotion operation.`

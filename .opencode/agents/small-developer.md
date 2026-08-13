@@ -17,9 +17,14 @@ Every commit on `developer` must be pushed immediately. Before returning control
 
 An exact-SHA promotion explicitly delegated after human approval is a no-edit operation, not a normal task. Do not create or update task-progress or create a handoff snapshot before promotion, because doing so would invalidate the approved SHA.
 
-Return only:
+Return only the six fields below. `Status` must be exactly `completed`,
+`blocked`, `failed`, or `needs decision`. Report `completed` only after every
+required handoff commit is pushed. `Handoff developer SHA` is that exact pushed
+40-character commit SHA for completed work; otherwise it is `none`. A failed
+push is `blocked` with `none`.
 
 Status:
+Handoff developer SHA:
 Files changed:
 Checks + perceived results:
 Blockers/decisions:

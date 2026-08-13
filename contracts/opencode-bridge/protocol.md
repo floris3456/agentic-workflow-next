@@ -46,11 +46,11 @@ is not used by the redesigned Project package.
 
 Generic reads are available from the pinned operation manifest. Generic mutations require an exact local `allowed_mutations` entry. `blocked-web` operations remain unavailable. `local-secret` operations require an exact `allowed_local_secret_operations` entry. Generic requests contain only well-shaped `path`, `query`, `wildcard`, and `body` transport fields. Caller-supplied `directory`, `workspace`, or `location` query routing is rejected so every request stays pinned to the configured local project. Explicit `{"alias":"session-1"}` values resolve task-owned private IDs locally; task-bound aliases cannot be used by another task. Explicit `{"secret_ref":"provider-token"}` values resolve mode-restricted local files only for local-secret operations. Raw OpenCode IDs, absolute local paths, and literal secret-like values are rejected from generic GitHub requests.
 
-## Sequence-free recovery requests
+## Sequence-free recovery and Scout requests
 
-Read reconciliation uses a separate UUID-idempotent marker and ledger. It has no
-`sequence`, never changes `task_sequences`, never begins a command handler, and
-cannot repeat an underlying mutation:
+Durable reconciliation and read-only Scout launch use a separate UUID-idempotent
+marker and ledger. It has no command `sequence`, never changes
+`task_sequences`, and never enters a mutating command handler:
 
 ```markdown
 <!-- agentic-bridge-request
@@ -58,15 +58,38 @@ cannot repeat an underlying mutation:
 -->
 ```
 
-Post a request only on its existing task-bound issue.
+Post status requests only on their existing task-bound issue. `scout.start` may
+establish a task/issue binding when no mutating task exists there; this does not
+make that issue a mutating-task issue. Multiple Scout-only issues may be open,
+and any useful number of independent Scout starts may execute concurrently with
+one mutating developer task. Runtime resource preparation may queue briefly but
+there is no policy concurrency cap.
 
 | Kind | Arguments | Durable result |
 | --- | --- | --- |
 | `command.status` | exact `command_id` UUID | matching task's exact ledger or pre-ledger-rejection state, known projected result/error, timestamps, applying age, and service heartbeat |
 | `task.status` | none | mapped session alias/agent/state and latest projected developer response plus event/update timestamps |
+| `scout.start` | focused `question`, exact lowercase 40-character `ref`, bounded `scope`, and `expected_evidence` | one request-correlated `repository-scout` session in a clean detached worktree at the fetched `origin/developer` commit |
+| `scout.status` | exact `scout_request_id` UUID | matching task/request start state, exact ref, session state, and latest projected Scout response |
 
-The result is navigation and recovery evidence. It does not prove implementation
-completion, correctness, synchronization, review, or acceptance.
+`command.status`, `task.status`, and `scout.status` are local durable reads and
+never repeat work. `scout.start` creates and prompts at most one read-only session
+per request UUID. A restart while it is applying marks the request indeterminate
+and never repeats session creation or prompt delivery. All results are navigation
+and recovery evidence; they do not prove implementation completion, correctness,
+synchronization, review, or acceptance.
+
+The Scout runtime fetches `developer`, requires the exact requested commit to be
+in `origin/developer` history, creates or reuses a clean detached worktree outside
+the tracked tree, and binds the OpenCode client to that directory. Before session
+creation it verifies the resolved `repository-scout` contract: Luna, high
+reasoning effort, primary mode, only repository read/search tools enabled, and
+mutation, shell, delegation, skills, web, interaction, and external-directory
+permissions denied. The wildcard deny covers dynamic MCP tools that are absent
+from `tool.ids`; the three fixed MCP resource tool flags are also set false on
+the prompt because OpenCode maps them to the allowed native-read permission. The
+Scout prompt requires facts, exact paths/symbols/lines, and explicit unknowns and
+forbids orchestration synthesis.
 
 ## Machine markers
 
@@ -88,7 +111,7 @@ A rejected marker that could not be bound to a parsed command uses:
 -->
 ```
 
-A parsed read request uses an `agentic-bridge-request-status` marker containing
+A parsed sequence-free request uses an `agentic-bridge-request-status` marker containing
 exactly `protocol`, `request_id`, `task_id`, `kind`, and `state`. A request
 that cannot be parsed or task-bound uses the same marker with exactly
 `protocol`, `marker_hash`, and `state: rejected`.
@@ -109,6 +132,12 @@ issue. Retrieval/publication failures remain pending and retry idempotently. The
 bridge does not parse, validate, approve, reject, or otherwise interpret handoff
 fields. `task.status` returns the same latest projected value for missed-result
 recovery.
+
+After a mapped Scout session idles or errors, the same committed-event and
+public-projection path selects its latest assistant response, stores it under the
+exact task and Scout request, and queues it to the bound issue with the requested
+ref. `scout.status` provides missed-result recovery. The bridge does not turn
+Scout facts into an orchestration or implementation decision.
 
 Permission and question events remain projected after the raw event is committed.
 Durable session history, project sync history, legacy live SSE, canonical

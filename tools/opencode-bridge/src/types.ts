@@ -64,7 +64,7 @@ export interface RequestEnvelope {
   protocol: "agentic-bridge/1";
   request_id: string;
   task_id: string;
-  kind: "command.status" | "task.status";
+  kind: "command.status" | "task.status" | "scout.start" | "scout.status";
   arguments: Record<string, JsonValue>;
 }
 
@@ -140,12 +140,35 @@ export interface TaskSession {
   updatedAt: number;
 }
 
+export interface ScoutSession {
+  requestId: string;
+  taskId: string;
+  sessionId: string;
+  issueNumber: number;
+  refSha: string;
+  workspacePath: string;
+  sessionState: string;
+  latestResponse?: JsonValue;
+  latestEventId?: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface SessionBinding {
+  taskId: string;
+  sessionId: string;
+  sessionKind: "developer" | "scout";
+  requestId?: string;
+}
+
 export interface ResponseDelivery {
   eventId: string;
   taskId: string;
   sessionId: string;
   issueNumber: number;
   eventType: string;
+  deliveryKind: "developer" | "scout";
+  requestId?: string;
   attempts: number;
   createdAt: number;
   updatedAt: number;

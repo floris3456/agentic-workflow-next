@@ -32,7 +32,7 @@ const allowedKinds = new Set([
   "promotion.apply",
   "opencode.request",
 ]);
-const allowedRequestKinds = new Set(["command.status", "task.status"]);
+const allowedRequestKinds = new Set(["command.status", "task.status", "scout.start", "scout.status"]);
 
 export type ScannedCommand =
   | { valid: true; envelope: CommandEnvelope; markerHash: string }
@@ -99,12 +99,37 @@ export function parseRequestEnvelope(value: unknown): RequestEnvelope {
   if (typeof input.request_id !== "string" || !uuid.test(input.request_id)) throw new TypeError("Request ID must be a UUID");
   if (typeof input.task_id !== "string" || !taskId.test(input.task_id)) throw new TypeError("Task ID is invalid");
   if (typeof input.kind !== "string" || !allowedRequestKinds.has(input.kind)) throw new TypeError("Bridge request kind is unsupported");
+  const argumentsRecord = asRecord(input.arguments, "bridge request arguments");
+  if (input.kind === "command.status") {
+    rejectUnknownKeys(argumentsRecord, new Set(["command_id"]), "command.status arguments");
+    if (typeof argumentsRecord.command_id !== "string" || !uuid.test(argumentsRecord.command_id)) {
+      throw new TypeError("command.status command_id must be a UUID");
+    }
+  } else if (input.kind === "task.status") {
+    rejectUnknownKeys(argumentsRecord, new Set(), "task.status arguments");
+  } else if (input.kind === "scout.start") {
+    rejectUnknownKeys(argumentsRecord, new Set(["question", "ref", "scope", "expected_evidence"]), "scout.start arguments");
+    for (const [name, maximum] of [["question", 4_000], ["scope", 2_000], ["expected_evidence", 2_000]] as const) {
+      const text = argumentsRecord[name];
+      if (typeof text !== "string" || text.trim().length === 0 || text.length > maximum) {
+        throw new TypeError(`scout.start ${name} must be a non-empty string of at most ${maximum} characters`);
+      }
+    }
+    if (typeof argumentsRecord.ref !== "string" || !/^[0-9a-f]{40}$/.test(argumentsRecord.ref)) {
+      throw new TypeError("scout.start ref must be an exact 40-character lowercase commit SHA");
+    }
+  } else {
+    rejectUnknownKeys(argumentsRecord, new Set(["scout_request_id"]), "scout.status arguments");
+    if (typeof argumentsRecord.scout_request_id !== "string" || !uuid.test(argumentsRecord.scout_request_id)) {
+      throw new TypeError("scout.status scout_request_id must be a UUID");
+    }
+  }
   return {
     protocol: "agentic-bridge/1",
     request_id: input.request_id,
     task_id: input.task_id,
     kind: input.kind as RequestEnvelope["kind"],
-    arguments: asJson(asRecord(input.arguments, "bridge request arguments")) as Record<string, JsonValue>,
+    arguments: asJson(argumentsRecord) as Record<string, JsonValue>,
   };
 }
 

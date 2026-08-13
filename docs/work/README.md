@@ -25,13 +25,20 @@
 
 ```text
 Status:
+Handoff developer SHA:
 Files changed:
 Checks + perceived results:
 Blockers/decisions:
 Task record:
 ```
 
-No narrative summary, full files, reproduced diff, long rationale, or correctness claim. `Files changed` covers the entire current review range. The response is navigation, not proof.
+`Status` is exactly `completed`, `blocked`, `failed`, or `needs decision`.
+`completed` is valid only after the handoff commit is pushed, and `Handoff
+developer SHA` is that exact 40-character remote commit. All other statuses use
+`none`; in particular, a failed push is `blocked` with `none`. No narrative
+summary, full files, reproduced diff, long rationale, or correctness claim.
+`Files changed` covers the entire current review range. The response is
+navigation, not proof.
 
 ## Review bases
 

@@ -58,6 +58,26 @@ For a genuinely stuck `applying` command, wait only for the operation's bounded 
 
 On mapped developer session idle or error, the bridge durably retrieves the latest assistant response, applies the normal public-safety projection, and queues it to the task issue. Retrieval failures retry without re-running the developer task. The bridge transports this response but does not validate its workflow meaning.
 
+## Read-only Scouts
+
+`scout.start` uses the sequence-free request marker and requires a focused
+question, exact lowercase 40-character developer SHA, bounded scope, and expected
+evidence. The bridge fetches `developer`, verifies the commit in
+`origin/developer`, creates/reuses a clean detached worktree under the private
+state parent, verifies the live `repository-scout` Luna/high read-only contract,
+then creates one request-correlated session. `scout.status` recovers that exact
+request's state and latest projected result.
+
+Scout worktree preparation may queue around Git's worktree lock, but independent
+sessions execute concurrently with no bridge policy cap and may coexist with one
+mutating developer task. A restart never repeats an applying Scout start. Scout
+idle/error responses use the normal durable event stream, public projection, and
+task/request/ref correlation. The Scout cannot edit, run Bash or Git, delegate,
+load skills, use web or MCP tools, answer interactions, or access external
+directories; the bridge fails closed if the live agent contract exposes a
+forbidden tool or permission, and the prompt request explicitly disables the
+three fixed MCP resource tool names that OpenCode maps to native read.
+
 ## Policy
 
 High-level workflow commands have bounded handlers. Generic manifest reads are enabled. Generic mutations, local-secret operations, PTY execution, and mechanical promotion are independently default-denied in local config. Enabling promotion does not grant acceptance authority: the command must carry one exact approved SHA, the web orchestrator may emit it only after explicit human approval, and the existing promotion script re-verifies synchronized remote state and a content-identical merge.

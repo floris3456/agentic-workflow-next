@@ -5,12 +5,18 @@ import { CommandExecutor, type GitState } from "./commands.js";
 import type { BridgeConfig } from "./config.js";
 import { GitHubAppAuth } from "./github-auth.js";
 import { GitHubClient, GitHubCommandPoller, GitHubControlLoop, GitHubOutbox } from "./github.js";
-import { DeveloperResponseTransport, queueDeveloperResponseEvent } from "./handoff.js";
+import {
+  DeveloperResponseTransport,
+  queueDeveloperResponseEvent,
+  queueScoutResponseEvent,
+  ScoutResponseTransport,
+} from "./handoff.js";
 import { Manifest } from "./manifest.js";
 import { OpenCodeClient } from "./opencode.js";
 import { OperationPolicy, PublicProjection } from "./projection.js";
 import { RecoveryCoordinator, type PersistedOpenCodeEvent } from "./recovery.js";
 import { RequestExecutor } from "./requests.js";
+import { ScoutRuntime, ScoutWorkspaceManager } from "./scout.js";
 import { BridgeState } from "./state.js";
 import type { JsonValue, TaskSession } from "./types.js";
 import { ensurePrivateDirectory, errorMessage, sleep } from "./util.js";
@@ -143,12 +149,12 @@ function github(config: BridgeConfig, state: BridgeState): GitHubClient {
   });
 }
 
-function opencode(config: BridgeConfig, manifest: Manifest): OpenCodeClient {
+function opencode(config: BridgeConfig, manifest: Manifest, directory = config.repositoryRoot): OpenCodeClient {
   return new OpenCodeClient({
     baseUrl: config.opencode.baseUrl,
     username: config.opencode.username,
     password: config.opencode.password,
-    directory: config.repositoryRoot,
+    directory,
     manifest,
   });
 }
@@ -172,6 +178,8 @@ export class BridgeService {
   private readonly executor: CommandExecutor;
   private readonly requests: RequestExecutor;
   private readonly responses: DeveloperResponseTransport;
+  private readonly scoutResponses: ScoutResponseTransport;
+  private readonly scoutWorkspaces: ScoutWorkspaceManager;
   private readonly outbox: GitHubOutbox;
   private readonly control: GitHubControlLoop;
   private readonly sessionRuns = new Map<string, Promise<void>>();
@@ -183,6 +191,8 @@ export class BridgeService {
     this.state = new BridgeState(config.stateFile);
     const manifest = Manifest.load(config.manifestFile);
     this.client = opencode(config, manifest);
+    const scoutClientFor = (workspace: string) => opencode(config, manifest, workspace);
+    this.scoutWorkspaces = new ScoutWorkspaceManager(config.repositoryRoot, config.stateFile);
     this.projection = new PublicProjection({ state: this.state, privateRoots: config.privateRoots });
     const githubClient = github(config, this.state);
     const poller = new GitHubCommandPoller({
@@ -200,6 +210,12 @@ export class BridgeService {
     });
     this.responses = new DeveloperResponseTransport({
       client: this.client,
+      state: this.state,
+      projection: this.projection,
+      onError: (message) => this.state.setMeta("service.last_error", message),
+    });
+    this.scoutResponses = new ScoutResponseTransport({
+      clientFor: scoutClientFor,
       state: this.state,
       projection: this.projection,
       onError: (message) => this.state.setMeta("service.last_error", message),
@@ -230,7 +246,13 @@ export class BridgeService {
         }
       },
     });
-    this.requests = new RequestExecutor({ state: this.state, projection: this.projection });
+    const scout = new ScoutRuntime({
+      state: this.state,
+      workspaces: this.scoutWorkspaces,
+      clientFor: scoutClientFor,
+      onSessionStarted: (requestId) => this.startScoutRecovery(requestId),
+    });
+    this.requests = new RequestExecutor({ state: this.state, projection: this.projection, scout });
     this.control = new GitHubControlLoop({
       poller,
       outbox: this.outbox,
@@ -246,7 +268,8 @@ export class BridgeService {
     const issue = this.state.issueForTask(event.taskId);
     if (issue === undefined) return;
     if (terminalSessionEvent(event) && event.sessionId) {
-      await this.responses.deliver(queueDeveloperResponseEvent(this.state, event));
+      if (event.requestId) await this.scoutResponses.deliver(queueScoutResponseEvent(this.state, event));
+      else await this.responses.deliver(queueDeveloperResponseEvent(this.state, event));
       return;
     }
     const projected = this.projection.project({ type: event.eventType, event: event.payload }, event.taskId);
@@ -257,7 +280,10 @@ export class BridgeService {
 
   private async runResponseDeliveries(): Promise<void> {
     while (!this.signal.aborted) {
-      for (const delivery of this.state.pendingResponseDeliveries()) await this.responses.deliver(delivery);
+      for (const delivery of this.state.pendingResponseDeliveries()) {
+        if (delivery.deliveryKind === "scout") await this.scoutResponses.deliver(delivery);
+        else await this.responses.deliver(delivery);
+      }
       try {
         await sleep(this.config.github.activeIntervalMs, this.signal);
       } catch (error) {
@@ -267,11 +293,27 @@ export class BridgeService {
   }
 
   private startSessionRecovery(taskId: string): void {
-    if (this.sessionRuns.has(taskId) || this.signal.aborted) return;
+    const key = `developer:${taskId}`;
+    if (this.sessionRuns.has(key) || this.signal.aborted) return;
     const session = this.state.getTaskSession(taskId);
     if (!session) return;
-    const run = this.recovery.runSession(session, this.signal).finally(() => this.sessionRuns.delete(taskId));
-    this.sessionRuns.set(taskId, run);
+    const run = this.recovery.runSession(session, this.signal).finally(() => this.sessionRuns.delete(key));
+    this.sessionRuns.set(key, run);
+  }
+
+  private startScoutRecovery(requestId: string): void {
+    const key = `scout:${requestId}`;
+    if (this.sessionRuns.has(key) || this.signal.aborted) return;
+    const session = this.state.getScoutSession(requestId);
+    if (!session) return;
+    const recovery = new RecoveryCoordinator({
+      client: opencode(this.config, this.client.manifest, session.workspacePath),
+      state: this.state,
+      onPersistedEvent: (event) => this.publishEvent(event),
+      onError: (error) => this.state.setMeta("service.last_error", this.projection.safeText(errorMessage(error))),
+    });
+    const run = recovery.runSession(session, this.signal).finally(() => this.sessionRuns.delete(key));
+    this.sessionRuns.set(key, run);
   }
 
   async run(): Promise<void> {
@@ -290,6 +332,7 @@ export class BridgeService {
       this.requests.requeueCompletedResults();
       this.executor.ptys.restore();
       for (const session of this.state.listTaskSessions()) this.startSessionRecovery(session.taskId);
+      for (const session of this.state.listScoutSessions()) this.startScoutRecovery(session.requestId);
       await Promise.all([
         this.recovery.run(this.signal),
         this.control.run(
@@ -385,6 +428,7 @@ export function bridgeStatus(config: BridgeConfig): JsonValue {
       pending_commands: state.listCommands(["accepted", "applying"]).length,
       pending_requests: state.listRequests(["accepted", "applying"]).length,
       pending_response_deliveries: state.pendingResponseDeliveries(100).length,
+      scout_sessions: state.listScoutSessions().length,
       pending_outbox: state.pendingOutbox(Date.now() + 365 * 24 * 60 * 60 * 1_000, 10_000).length,
     };
   } finally {

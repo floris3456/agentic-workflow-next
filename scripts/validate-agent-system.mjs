@@ -58,6 +58,7 @@ try {
 for (const [file, model, effort] of [
   [".opencode/agents/small-developer.md", "openai/gpt-5.6-luna", "max"],
   [".opencode/agents/large-developer.md", "openai/gpt-5.6-sol", "high"],
+  [".opencode/agents/repository-scout.md", "openai/gpt-5.6-luna", "high"],
 ]) {
   assert(exists(file), `Missing approved developer definition: ${file}`);
   if (!exists(file)) continue;
@@ -68,6 +69,19 @@ for (const [file, model, effort] of [
   assert(fm?.reasoningEffort === effort, `${file} reasoningEffort must be ${effort}`);
   assert(/\n\s*task:\s*deny\s*\n/.test(text), `${file} must deny task launches`);
 }
+
+const scout = read(".opencode/agents/repository-scout.md");
+for (const tool of ["bash", "edit", "task", "skill", "webfetch", "websearch", "question", "todowrite", "external_directory"]) {
+  assert(new RegExp(`\\n\\s*${tool}:\\s*deny\\s*\\n`).test(scout), `repository-scout must enforce ${tool}: deny`);
+}
+for (const tool of ["read", "glob", "grep", "lsp"]) {
+  assert(new RegExp(`\\n\\s*${tool}:\\s*(?:true|allow)\\s*\\n`).test(scout), `repository-scout must expose read-only ${tool}`);
+}
+assert(/\ntools:\n\s+"\*": false\n/.test(scout), "repository-scout must disable undeclared tools");
+assert(scout.includes("exact paths, symbols, and line references") && scout.includes("explicit unknowns"),
+  "repository-scout prompt must require focused factual evidence and unknowns");
+assert(scout.includes("Do not synthesize an") && scout.includes("orchestration decision"),
+  "repository-scout prompt must retain synthesis in the web orchestrator");
 
 const skills = new Set(listSkillNames());
 for (const requiredSkill of [
@@ -94,13 +108,14 @@ for (const match of triggerSection.matchAll(/`([a-z0-9]+(?:-[a-z0-9]+)*)`/g)) {
 
 const expectedResponse = [
   "Status:",
+  "Handoff developer SHA:",
   "Files changed:",
   "Checks + perceived results:",
   "Blockers/decisions:",
   "Task record:",
 ].join("\n") + "\n";
 assert(read("docs/work/templates/developer-response-template.md") === expectedResponse,
-  "Developer response template must contain exactly the five canonical fields");
+  "Developer response template must contain exactly the six canonical fields");
 for (const file of [
   ".opencode/agents/small-developer.md",
   ".opencode/agents/large-developer.md",

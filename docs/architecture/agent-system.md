@@ -10,7 +10,8 @@ The system separates human acceptance, web orchestration, remote evidence, and l
 2. Remote Git is authoritative repository evidence.
 3. The web orchestrator independently reasons about and reviews that evidence.
 4. Developer responses and task-progress are navigation and developer reasoning, not proof.
-5. The optional symbol scout is scouting context only.
+5. OpenCode Scout and optional symbol-scout reports are context only; synthesis
+   remains with the web orchestrator.
 
 ## Web orchestrator
 
@@ -19,7 +20,8 @@ The web orchestrator is the primary reasoning, task-design, routing, steering, a
 In MCP-ON mode it uses:
 
 - an authenticated native GitHub integration for exact remote evidence, writes limited to `task-context/**` and `agent-routing/**`, and public-safe bridge-control issue actions;
-- an optional symbol-scouting integration for code context; and
+- direct GitHub inspection for exact evidence, with targeted concurrent OpenCode
+  Scouts when broader local exploration saves time; and
 - the outbound local GitHub App bridge to reach OpenCode indirectly for implementation delegation, steering, recovery, finalization, and guarded promotion.
 
 In MCP-OFF mode it uses the public GitHub website for repository inspection and cannot pretend delegation or direct orchestration writes occurred.
@@ -30,6 +32,12 @@ The current approved implementation agents are:
 
 - `small-developer`: default, configured-provider GPT 5.6 Luna at `max` reasoning effort;
 - `large-developer`: exceptional path, configured-provider GPT 5.6 Sol at `high` reasoning effort.
+
+The separate `repository-scout` is a directly selected primary OpenCode agent
+using GPT 5.6 Luna at `high` reasoning effort. It is not an implementation agent:
+only repository read/search tools are enabled, mutations and delegation are
+denied by the resolved tool/permission surface, and it produces focused facts and
+unknowns rather than orchestration synthesis.
 
 The web orchestrator chooses the agent. Local developers do not launch subagents, review their own work, select escalation, or accept changes.
 
@@ -47,7 +55,19 @@ No normal merge crosses between `web-orchestration` and implementation branches.
 
 ## Scouting boundary
 
-The configured symbol scout is non-authoritative context. `.jcodemunch.jsonc` uses strict freshness and excludes evidence, research, archives, and retired local handoffs to improve relevance and minimize indexed data. A timeout may return an older index, so freshness must be checked before relying on scouting after edits. Provider, credential, and machine-service configuration remain outside Git and must be reviewed by the operator before use.
+The OpenCode Scout transport is authorized through the GitHub issue lane but has
+its own request/session lifecycle rather than mutating task progress,
+finalization, or promotion. Each request names a focused question, exact remote
+developer SHA, scope, and expected evidence. Exact-ref detached worktrees and
+task/request-correlated aliases/results prevent developer-checkout or cross-task
+leakage. Any useful number may run concurrently with one mutating developer task.
+
+The configured optional symbol scout is likewise non-authoritative context.
+`.jcodemunch.jsonc` uses strict freshness and excludes evidence, research,
+archives, and retired local handoffs to improve relevance and minimize indexed
+data. A timeout may return an older index, so freshness must be checked before
+relying on it after edits. Provider, credential, and machine-service
+configuration remain outside Git and must be reviewed by the operator before use.
 
 ## Persistent continuity
 

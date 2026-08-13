@@ -50,10 +50,17 @@ try {
   assert(result.properties?.protocol?.const === compatibility.bridgeProtocolVersion, "Result schema protocol differs");
   assert(Array.isArray(command.properties?.kind?.enum) && command.properties.kind.enum.includes("opencode.request"), "Command schema lacks generic operation support");
   assert(
-    JSON.stringify(request.properties?.kind?.enum) === JSON.stringify(["command.status", "task.status"]),
+    JSON.stringify(request.properties?.kind?.enum) === JSON.stringify(["command.status", "task.status", "scout.start", "scout.status"]),
     "Sequence-free request schema inventory changed without validator update",
   );
   assert(!Object.hasOwn(request.properties ?? {}, "sequence"), "Read request schema must not consume command sequence");
+  assert(Array.isArray(request.allOf) && request.allOf.length === 4, "Request schema must define four kind-specific argument contracts");
+  const scoutStart = request.allOf?.find((entry) => entry.if?.properties?.kind?.const === "scout.start");
+  assert(
+    JSON.stringify(scoutStart?.then?.properties?.arguments?.required) === JSON.stringify(["question", "ref", "scope", "expected_evidence"]),
+    "scout.start must require a focused question, exact ref, scope, and expected evidence",
+  );
+  assert(scoutStart?.then?.properties?.arguments?.properties?.ref?.pattern === "^[0-9a-f]{40}$", "Scout ref must be an exact lowercase SHA");
   assert(packageDocument.engines?.node === ">=22.13.0", "Bridge minimum Node version must be explicit");
   assert(packageLock.packages?.[""]?.dependencies?.["@opencode-ai/sdk"] === "1.18.16", "Lockfile SDK version is not exact");
   assert(example.schema_version === 1 && example.policy?.pty_enabled === false && example.policy?.promotion_enabled === false, "Example config must default-deny PTY and promotion");

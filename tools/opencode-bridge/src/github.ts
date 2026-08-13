@@ -315,8 +315,11 @@ export class GitHubCommandPoller {
 
   async pollOnce(): Promise<PollResult> {
     const issues = await this.github.listControlIssues(this.label);
-    const openBoundIssues = new Set(issues.filter((issue) => this.state.taskForIssue(issue.number) !== undefined).map((issue) => issue.number));
-    if (openBoundIssues.size > 1) throw new Error("Multiple mapped bridge control issues are open; close all but the active serialized task issue");
+    const openMutatingIssues = new Set(issues.filter((issue) => {
+      const task = this.state.taskForIssue(issue.number);
+      return task !== undefined && this.state.hasMutatingTask(task);
+    }).map((issue) => issue.number));
+    if (openMutatingIssues.size > 1) throw new Error("Multiple mutating bridge control issues are open; close all but the active mutating task issue");
     const commands: StoredCommand[] = [];
     const requests: StoredRequest[] = [];
     let sourceCount = 0;
@@ -351,18 +354,24 @@ export class GitHubCommandPoller {
             this.enqueueComment(issue.number, `task-mismatch:${envelope.command_id}`, invalidCommandComment(item.markerHash, "Command task does not match the issue binding"));
             continue;
           }
+          if (bound !== undefined && !this.state.hasMutatingTask(bound) && envelope.kind !== "start") {
+            rejected++;
+            this.enqueueComment(issue.number, `first-mutating-command:${envelope.command_id}`, invalidCommandComment(item.markerHash, "The first mutating-task command must be start"));
+            continue;
+          }
+          if (envelope.kind === "start" && !this.state.hasMutatingTask(envelope.task_id)
+            && [...openMutatingIssues].some((number) => number !== issue.number)) {
+            rejected++;
+            this.enqueueComment(issue.number, `concurrent-task:${envelope.command_id}`, invalidCommandComment(item.markerHash, "Another mutating bridge task issue is already open for this repository"));
+            continue;
+          }
           if (bound === undefined) {
-            if ([...openBoundIssues].some((number) => number !== issue.number)) {
-              rejected++;
-              this.enqueueComment(issue.number, `concurrent-task:${envelope.command_id}`, invalidCommandComment(item.markerHash, "Another bridge control issue is already open for this repository"));
-              continue;
-            }
             this.state.bindIssueTask(issue.number, envelope.task_id);
-            openBoundIssues.add(issue.number);
           }
           const accepted: AcceptedCommand = this.state.acceptCommand(envelope, issue.number);
           if (accepted.disposition === "new") {
             commands.push(accepted.command!);
+            if (envelope.kind === "start") openMutatingIssues.add(issue.number);
             this.enqueueComment(issue.number, `command-ack:${envelope.command_id}`, commandStatusComment(accepted.command!));
           } else if (accepted.disposition === "stale") {
             rejected++;
@@ -387,15 +396,19 @@ export class GitHubCommandPoller {
             continue;
           }
           const envelope = item.envelope;
-          const bound = this.state.taskForIssue(issue.number);
+          let bound = this.state.taskForIssue(issue.number);
           if (bound === undefined) {
-            rejected++;
-            this.enqueueComment(
-              issue.number,
-              `unbound-request:${envelope.request_id}`,
-              invalidRequestComment(item.markerHash, "Read requests require the existing task-bound issue"),
-            );
-            continue;
+            if (envelope.kind !== "scout.start") {
+              rejected++;
+              this.enqueueComment(
+                issue.number,
+                `unbound-request:${envelope.request_id}`,
+                invalidRequestComment(item.markerHash, "Only scout.start may establish a read-only task issue binding"),
+              );
+              continue;
+            }
+            this.state.bindIssueTask(issue.number, envelope.task_id);
+            bound = envelope.task_id;
           }
           if (bound !== envelope.task_id) {
             rejected++;

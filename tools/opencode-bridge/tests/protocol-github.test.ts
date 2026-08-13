@@ -110,6 +110,20 @@ test("sequence-free request scanner validates durable read request envelopes", (
   assert.equal(scanned[1]?.valid, false);
   assert.throws(() => parseRequestEnvelope({ ...request, kind: "command.retry" }), /unsupported/);
   assert.throws(() => parseRequestEnvelope({ ...request, sequence: 1 }), /unknown field/);
+  const scout: RequestEnvelope = {
+    ...request,
+    request_id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    kind: "scout.start",
+    arguments: {
+      question: "Where is admission enforced?",
+      ref: "a".repeat(40),
+      scope: "tools/opencode-bridge/src/state.ts",
+      expected_evidence: "path, symbol, and lines",
+    },
+  };
+  assert.deepEqual(parseRequestEnvelope(scout), scout);
+  assert.throws(() => parseRequestEnvelope({ ...scout, arguments: { ...scout.arguments, ref: "developer" } }), /exact.*commit SHA/);
+  assert.throws(() => parseRequestEnvelope({ ...scout, arguments: { ...scout.arguments, question: "" } }), /question.*non-empty/);
 });
 
 test("status projection never includes command arguments and neutralizes active Markdown", () => {
@@ -347,6 +361,57 @@ test("poller serializes repository work to one open control issue", async (conte
   assert.equal(result.rejected, 1);
   assert.equal(state.taskForIssue(10), "TASK-ONE");
   assert.equal(state.taskForIssue(11), undefined);
+});
+
+test("poller admits multiple Scout-only issues alongside one mutating task issue", async (context) => {
+  const state = stateForTest(context);
+  const mutating = envelope("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1", 1, "start", "TASK-MUTATING");
+  const scout = (id: string, task: string): RequestEnvelope => ({
+    protocol: "agentic-bridge/1",
+    request_id: id,
+    task_id: task,
+    kind: "scout.start",
+    arguments: {
+      question: "Find the exact implementation boundary",
+      ref: "a".repeat(40),
+      scope: "tools/opencode-bridge/src",
+      expected_evidence: "paths and symbols",
+    },
+  });
+  const scoutOne = scout("bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1", "TASK-SCOUT-ONE");
+  const scoutTwo = scout("cccccccc-cccc-4ccc-8ccc-ccccccccccc1", "TASK-SCOUT-TWO");
+  const github = new GitHubClient({
+    owner: "acme",
+    repository: "demo",
+    tokens: new FakeTokens(),
+    state,
+    apiBaseUrl: "https://api.github.test",
+    fetch: asFetch((request) => {
+      const path = new URL(request.url).pathname;
+      if (path === "/repos/acme/demo/issues") {
+        return Response.json([
+          { number: 20, body: requestMarker(scoutOne), ...actor("alice", "OWNER") },
+          { number: 30, body: requestMarker(scoutTwo), ...actor("alice", "OWNER") },
+          { number: 10, body: commandMarker(mutating), ...actor("alice", "OWNER") },
+        ]);
+      }
+      if (path.match(/\/issues\/(10|20|30)\/comments$/)) return Response.json([]);
+      return new Response("not found", { status: 404 });
+    }),
+  });
+  const poller = new GitHubCommandPoller({ github, state, allowedAuthors: ["alice"] });
+  const first = await poller.pollOnce();
+  assert.deepEqual(first.commands.map((entry) => entry.taskId), ["TASK-MUTATING"]);
+  assert.deepEqual(first.requests.map((entry) => entry.taskId), ["TASK-SCOUT-ONE", "TASK-SCOUT-TWO"]);
+  assert.equal(first.rejected, 0);
+  assert.equal(state.taskForIssue(20), "TASK-SCOUT-ONE");
+  assert.equal(state.taskForIssue(30), "TASK-SCOUT-TWO");
+  assert.equal(state.taskForIssue(10), "TASK-MUTATING");
+
+  const second = await poller.pollOnce();
+  assert.equal(second.commands.length, 0);
+  assert.equal(second.requests.length, 0);
+  assert.equal(second.rejected, 0);
 });
 
 test("outbox detects prior comments, appends dedupe markers, delivers labels, and honors retry-after", async (context) => {

@@ -11,6 +11,8 @@ import type {
   RequestEnvelope,
   RequestState,
   ResponseDelivery,
+  ScoutSession,
+  SessionBinding,
   StoredCommand,
   StoredRequest,
   TaskSession,
@@ -63,6 +65,26 @@ function taskSessionFromRow(row: Row): TaskSession {
     sessionId: String(row.session_id),
     issueNumber: Number(row.issue_number),
     agent: String(row.agent),
+    sessionState: String(row.session_state ?? "unknown"),
+    ...(row.latest_response_json === null || row.latest_response_json === undefined
+      ? {}
+      : { latestResponse: parseJson(row.latest_response_json) }),
+    ...(row.latest_event_id === null || row.latest_event_id === undefined
+      ? {}
+      : { latestEventId: String(row.latest_event_id) }),
+    createdAt: Number(row.created_at),
+    updatedAt: Number(row.updated_at),
+  };
+}
+
+function scoutSessionFromRow(row: Row): ScoutSession {
+  return {
+    requestId: String(row.request_id),
+    taskId: String(row.task_id),
+    sessionId: String(row.session_id),
+    issueNumber: Number(row.issue_number),
+    refSha: String(row.ref_sha),
+    workspacePath: String(row.workspace_path),
     sessionState: String(row.session_state ?? "unknown"),
     ...(row.latest_response_json === null || row.latest_response_json === undefined
       ? {}
@@ -144,6 +166,20 @@ export class BridgeState {
         task_id TEXT NOT NULL UNIQUE,
         updated_at INTEGER NOT NULL
       );
+      CREATE TABLE IF NOT EXISTS scout_sessions (
+        request_id TEXT PRIMARY KEY,
+        task_id TEXT NOT NULL,
+        session_id TEXT NOT NULL UNIQUE,
+        issue_number INTEGER NOT NULL,
+        ref_sha TEXT NOT NULL,
+        workspace_path TEXT NOT NULL,
+        session_state TEXT NOT NULL DEFAULT 'starting',
+        latest_response_json TEXT,
+        latest_event_id TEXT,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS scout_sessions_task ON scout_sessions(task_id, created_at);
       CREATE TABLE IF NOT EXISTS aliases (
         alias TEXT PRIMARY KEY,
         kind TEXT NOT NULL,
@@ -172,6 +208,8 @@ export class BridgeState {
         event_type TEXT NOT NULL,
         task_id TEXT,
         session_id TEXT,
+        request_id TEXT,
+        session_kind TEXT,
         payload_json TEXT NOT NULL,
         aggregate_id TEXT,
         durable_seq INTEGER,
@@ -241,6 +279,8 @@ export class BridgeState {
         session_id TEXT NOT NULL,
         issue_number INTEGER NOT NULL,
         event_type TEXT NOT NULL,
+        delivery_kind TEXT NOT NULL DEFAULT 'developer',
+        request_id TEXT,
         attempts INTEGER NOT NULL DEFAULT 0,
         queued_at INTEGER,
         last_error TEXT,
@@ -252,6 +292,14 @@ export class BridgeState {
     if (!taskColumns.has("session_state")) this.db.exec("ALTER TABLE task_sessions ADD COLUMN session_state TEXT NOT NULL DEFAULT 'unknown'");
     if (!taskColumns.has("latest_response_json")) this.db.exec("ALTER TABLE task_sessions ADD COLUMN latest_response_json TEXT");
     if (!taskColumns.has("latest_event_id")) this.db.exec("ALTER TABLE task_sessions ADD COLUMN latest_event_id TEXT");
+
+    const eventColumns = new Set((this.db.prepare("PRAGMA table_info(events)").all() as Row[]).map((row) => String(row.name)));
+    if (!eventColumns.has("request_id")) this.db.exec("ALTER TABLE events ADD COLUMN request_id TEXT");
+    if (!eventColumns.has("session_kind")) this.db.exec("ALTER TABLE events ADD COLUMN session_kind TEXT");
+
+    const deliveryColumns = new Set((this.db.prepare("PRAGMA table_info(response_deliveries)").all() as Row[]).map((row) => String(row.name)));
+    if (!deliveryColumns.has("delivery_kind")) this.db.exec("ALTER TABLE response_deliveries ADD COLUMN delivery_kind TEXT NOT NULL DEFAULT 'developer'");
+    if (!deliveryColumns.has("request_id")) this.db.exec("ALTER TABLE response_deliveries ADD COLUMN request_id TEXT");
 
     const aliasColumns = new Set((this.db.prepare("PRAGMA table_info(aliases)").all() as Row[]).map((row) => String(row.name)));
     if (!aliasColumns.has("scope")) {
@@ -272,7 +320,7 @@ export class BridgeState {
       `);
     }
     this.db.exec("CREATE UNIQUE INDEX IF NOT EXISTS aliases_kind_internal_scope ON aliases(kind, internal_id, scope)");
-    this.setMeta("schema_version", "2");
+    this.setMeta("schema_version", "3");
   }
 
   private transaction<T>(operation: () => T): T {
@@ -393,6 +441,8 @@ export class BridgeState {
   mapTaskSession(taskId: string, sessionId: string, issueNumber: number, agent: string): void {
     const timestamp = now();
     this.transaction(() => {
+      const scout = this.scoutSessionForInternal(sessionId);
+      if (scout) throw new Error(`Developer session ID conflicts with Scout request ${scout.requestId}`);
       this.db.prepare(`
         INSERT INTO task_sessions(task_id, session_id, issue_number, agent, session_state, created_at, updated_at)
         VALUES (?, ?, ?, ?, 'starting', ?, ?)
@@ -416,6 +466,64 @@ export class BridgeState {
     return row ? taskSessionFromRow(row) : undefined;
   }
 
+  mapScoutSession(input: {
+    requestId: string;
+    taskId: string;
+    sessionId: string;
+    issueNumber: number;
+    refSha: string;
+    workspacePath: string;
+  }): void {
+    const timestamp = now();
+    this.transaction(() => {
+      const developer = this.taskSessionForInternal(input.sessionId);
+      if (developer) throw new Error(`Scout session ID conflicts with developer task ${developer.taskId}`);
+      const existing = this.scoutSessionForInternal(input.sessionId);
+      if (existing && existing.requestId !== input.requestId) {
+        throw new Error(`Scout session ID conflicts with request ${existing.requestId}`);
+      }
+      this.db.prepare(`
+        INSERT INTO scout_sessions(
+          request_id, task_id, session_id, issue_number, ref_sha, workspace_path,
+          session_state, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, 'starting', ?, ?)
+        ON CONFLICT(request_id) DO UPDATE SET
+          session_id=excluded.session_id, issue_number=excluded.issue_number,
+          ref_sha=excluded.ref_sha, workspace_path=excluded.workspace_path,
+          session_state=excluded.session_state, updated_at=excluded.updated_at
+      `).run(
+        input.requestId, input.taskId, input.sessionId, input.issueNumber,
+        input.refSha, input.workspacePath, timestamp, timestamp,
+      );
+    });
+  }
+
+  getScoutSession(requestId: string): ScoutSession | undefined {
+    const row = this.db.prepare("SELECT * FROM scout_sessions WHERE request_id=?").get(requestId) as Row | undefined;
+    return row ? scoutSessionFromRow(row) : undefined;
+  }
+
+  scoutSessionForInternal(sessionId: string): ScoutSession | undefined {
+    const row = this.db.prepare("SELECT * FROM scout_sessions WHERE session_id=?").get(sessionId) as Row | undefined;
+    return row ? scoutSessionFromRow(row) : undefined;
+  }
+
+  listScoutSessions(taskId?: string): ScoutSession[] {
+    const rows = taskId === undefined
+      ? this.db.prepare("SELECT * FROM scout_sessions ORDER BY created_at, request_id").all() as Row[]
+      : this.db.prepare("SELECT * FROM scout_sessions WHERE task_id=? ORDER BY created_at, request_id").all(taskId) as Row[];
+    return rows.map(scoutSessionFromRow);
+  }
+
+  sessionBindingForInternal(sessionId: string): SessionBinding | undefined {
+    const developer = this.taskSessionForInternal(sessionId);
+    if (developer) return { taskId: developer.taskId, sessionId, sessionKind: "developer" };
+    const scout = this.scoutSessionForInternal(sessionId);
+    return scout
+      ? { taskId: scout.taskId, sessionId, sessionKind: "scout", requestId: scout.requestId }
+      : undefined;
+  }
+
   taskForIssue(issueNumber: number): string | undefined {
     const row = this.db.prepare("SELECT task_id FROM issue_tasks WHERE issue_number=?").get(issueNumber) as Row | undefined;
     return row ? String(row.task_id) : undefined;
@@ -424,6 +532,11 @@ export class BridgeState {
   issueForTask(taskId: string): number | undefined {
     const row = this.db.prepare("SELECT issue_number FROM issue_tasks WHERE task_id=?").get(taskId) as Row | undefined;
     return row ? Number(row.issue_number) : undefined;
+  }
+
+  hasMutatingTask(taskId: string): boolean {
+    if (this.getTaskSession(taskId)) return true;
+    return this.db.prepare("SELECT 1 AS present FROM commands WHERE task_id=? LIMIT 1").get(taskId) !== undefined;
   }
 
   bindIssueTask(issueNumber: number, taskId: string): void {
@@ -525,6 +638,18 @@ export class BridgeState {
     ).run(stableJson(response), eventId, now(), taskId);
   }
 
+  updateScoutSessionState(requestId: string, sessionState: string, eventId: string): void {
+    this.db.prepare(
+      "UPDATE scout_sessions SET session_state=?, latest_event_id=?, updated_at=? WHERE request_id=?",
+    ).run(sessionState, eventId, now(), requestId);
+  }
+
+  updateScoutLatestResponse(requestId: string, response: JsonValue, eventId: string): void {
+    this.db.prepare(
+      "UPDATE scout_sessions SET latest_response_json=?, latest_event_id=?, updated_at=? WHERE request_id=?",
+    ).run(stableJson(response), eventId, now(), requestId);
+  }
+
   ensureAlias(kind: string, internalId: string, taskId?: string): string {
     const bound = taskBoundAliasKinds.has(kind);
     const scope = bound ? taskId ?? "" : "";
@@ -556,18 +681,30 @@ export class BridgeState {
 
   recordEvent(input: {
     eventKey: string; source: string; eventType: string; payload: JsonValue; taskId?: string; sessionId?: string;
-    aggregateId?: string; durableSeq?: number;
+    requestId?: string; sessionKind?: "developer" | "scout"; aggregateId?: string; durableSeq?: number;
   }): boolean {
     const result = this.db.prepare(`
-      INSERT OR IGNORE INTO events(event_key, source, event_type, task_id, session_id, payload_json, aggregate_id, durable_seq, received_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(input.eventKey, input.source, input.eventType, input.taskId ?? null, input.sessionId ?? null, stableJson(input.payload), input.aggregateId ?? null, input.durableSeq ?? null, now());
+      INSERT OR IGNORE INTO events(
+        event_key, source, event_type, task_id, session_id, request_id,
+        session_kind, payload_json, aggregate_id, durable_seq, received_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      input.eventKey, input.source, input.eventType, input.taskId ?? null,
+      input.sessionId ?? null, input.requestId ?? null, input.sessionKind ?? null,
+      stableJson(input.payload), input.aggregateId ?? null,
+      input.durableSeq ?? null, now(),
+    );
     if (result.changes === 0) {
       this.db.prepare(`
         UPDATE events SET task_id=COALESCE(task_id, ?), session_id=COALESCE(session_id, ?),
+          request_id=COALESCE(request_id, ?), session_kind=COALESCE(session_kind, ?),
           aggregate_id=COALESCE(aggregate_id, ?), durable_seq=COALESCE(durable_seq, ?)
         WHERE event_key=?
-      `).run(input.taskId ?? null, input.sessionId ?? null, input.aggregateId ?? null, input.durableSeq ?? null, input.eventKey);
+      `).run(
+        input.taskId ?? null, input.sessionId ?? null, input.requestId ?? null,
+        input.sessionKind ?? null, input.aggregateId ?? null,
+        input.durableSeq ?? null, input.eventKey,
+      );
     }
     if (input.aggregateId && input.durableSeq !== undefined) this.setDurableCursor(input.source, input.aggregateId, input.durableSeq);
     return result.changes > 0;
@@ -589,15 +726,27 @@ export class BridgeState {
     sessionId: string;
     issueNumber: number;
     eventType: string;
+    deliveryKind?: "developer" | "scout";
+    requestId?: string;
   }): void {
     const timestamp = now();
     this.transaction(() => {
       this.db.prepare(`
         INSERT OR IGNORE INTO response_deliveries(
-          event_id, task_id, session_id, issue_number, event_type, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?)
-      `).run(input.eventId, input.taskId, input.sessionId, input.issueNumber, input.eventType, timestamp, timestamp);
-      this.updateTaskSessionState(input.taskId, input.eventType, input.eventId);
+          event_id, task_id, session_id, issue_number, event_type, delivery_kind,
+          request_id, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        input.eventId, input.taskId, input.sessionId, input.issueNumber,
+        input.eventType, input.deliveryKind ?? "developer", input.requestId ?? null,
+        timestamp, timestamp,
+      );
+      if (input.deliveryKind === "scout") {
+        if (!input.requestId) throw new Error("Scout response delivery requires request correlation");
+        this.updateScoutSessionState(input.requestId, input.eventType, input.eventId);
+      } else {
+        this.updateTaskSessionState(input.taskId, input.eventType, input.eventId);
+      }
     });
   }
 
@@ -610,6 +759,8 @@ export class BridgeState {
       sessionId: String(row.session_id),
       issueNumber: Number(row.issue_number),
       eventType: String(row.event_type),
+      deliveryKind: String(row.delivery_kind) as ResponseDelivery["deliveryKind"],
+      ...(row.request_id === null || row.request_id === undefined ? {} : { requestId: String(row.request_id) }),
       attempts: Number(row.attempts),
       createdAt: Number(row.created_at),
       updatedAt: Number(row.updated_at),

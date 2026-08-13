@@ -1,7 +1,7 @@
 import { OpenCodeClient, OpenCodeHttpError } from "./opencode.js";
 import { subscribeSse } from "./sse.js";
 import { BridgeState } from "./state.js";
-import type { JsonValue, TaskSession } from "./types.js";
+import type { JsonValue, ScoutSession, TaskSession } from "./types.js";
 import { asJson, asRecord, backoff, isRecord, sleep } from "./util.js";
 
 export interface PersistedOpenCodeEvent {
@@ -11,6 +11,8 @@ export interface PersistedOpenCodeEvent {
   payload: JsonValue;
   taskId?: string;
   sessionId?: string;
+  requestId?: string;
+  sessionKind?: "developer" | "scout";
   aggregateId?: string;
   sequence?: number;
 }
@@ -67,7 +69,9 @@ function normalizeLegacy(value: unknown): PersistedOpenCodeEvent {
   };
 }
 
-function normalizeSession(value: unknown, session: TaskSession): PersistedOpenCodeEvent {
+type RecoverableSession = TaskSession | ScoutSession;
+
+function normalizeSession(value: unknown, session: RecoverableSession): PersistedOpenCodeEvent {
   const record = asRecord(value, "durable session event");
   const identity = requireIdentity(record);
   const durable = asRecord(record.durable, "durable session event metadata");
@@ -81,6 +85,8 @@ function normalizeSession(value: unknown, session: TaskSession): PersistedOpenCo
     payload: asJson(record),
     taskId: session.taskId,
     sessionId: session.sessionId,
+    sessionKind: "requestId" in session ? "scout" : "developer",
+    ...("requestId" in session ? { requestId: session.requestId } : {}),
     aggregateId,
     sequence,
   };
@@ -92,14 +98,19 @@ function normalizeSync(value: unknown, state: BridgeState): PersistedOpenCodeEve
   const aggregateId = stringField(record, "aggregate_id");
   if (!aggregateId) throw new TypeError("Sync history event is missing aggregate_id");
   const sequence = requireSequence(record.seq, "Sync history event");
-  const session = state.taskSessionForInternal(aggregateId);
+  const session = state.sessionBindingForInternal(aggregateId);
   return {
     ...identity,
     source: "sync-history",
     payload: asJson(record),
     aggregateId,
     sequence,
-    ...(session ? { taskId: session.taskId, sessionId: session.sessionId } : {}),
+    ...(session ? {
+      taskId: session.taskId,
+      sessionId: session.sessionId,
+      sessionKind: session.sessionKind,
+      ...(session.requestId ? { requestId: session.requestId } : {}),
+    } : {}),
   };
 }
 
@@ -132,6 +143,8 @@ export class RecoveryCoordinator {
       payload: event.payload,
       ...(event.taskId ? { taskId: event.taskId } : {}),
       ...(event.sessionId ? { sessionId: event.sessionId } : {}),
+      ...(event.requestId ? { requestId: event.requestId } : {}),
+      ...(event.sessionKind ? { sessionKind: event.sessionKind } : {}),
       ...(event.aggregateId ? { aggregateId: event.aggregateId } : {}),
       ...(event.sequence === undefined ? {} : { durableSeq: event.sequence }),
     });
@@ -147,7 +160,7 @@ export class RecoveryCoordinator {
     return inserted;
   }
 
-  async recoverSessionHistory(session: TaskSession): Promise<number> {
+  async recoverSessionHistory(session: RecoverableSession): Promise<number> {
     let after = this.state.durableCursor("session-v2", session.sessionId);
     let inserted = 0;
     while (true) {
@@ -226,8 +239,15 @@ export class RecoveryCoordinator {
         for await (const event of subscribeSse(this.client, "event.subscribe", {}, signal)) {
           attempt = 0;
           const normalized = normalizeLegacy(event.data);
-          const session = normalized.sessionId ? this.state.taskSessionForInternal(normalized.sessionId) : undefined;
-          await this.persist({ ...normalized, ...(session ? { taskId: session.taskId } : {}) });
+          const session = normalized.sessionId ? this.state.sessionBindingForInternal(normalized.sessionId) : undefined;
+          await this.persist({
+            ...normalized,
+            ...(session ? {
+              taskId: session.taskId,
+              sessionKind: session.sessionKind,
+              ...(session.requestId ? { requestId: session.requestId } : {}),
+            } : {}),
+          });
         }
         if (!signal.aborted) throw new Error("OpenCode event stream ended");
       } catch (error) {
@@ -238,7 +258,7 @@ export class RecoveryCoordinator {
     }
   }
 
-  async runSession(session: TaskSession, signal: AbortSignal, random = Math.random): Promise<void> {
+  async runSession(session: RecoverableSession, signal: AbortSignal, random = Math.random): Promise<void> {
     let attempt = 0;
     while (!signal.aborted) {
       try {

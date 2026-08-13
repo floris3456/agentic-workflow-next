@@ -22,6 +22,12 @@ This repository uses a human-controlled web-orchestrated implementation system w
 
 The normal implementation route uses `small-developer` (GPT 5.6 Luna, maximum supported applicable reasoning tier). `large-developer` (GPT 5.6 Sol, high effort) is selected only by the web orchestrator after two substantive Luna failures or for exceptional intrinsic complexity. Environmental failures, external blockers, missing information, and poor task design do not consume attempts.
 
+`repository-scout` is a separate Luna/high primary agent selected directly for
+focused read-only fact finding. Its resolved runtime contract enables only
+repository read/search tools and denies shell, Git/file mutation, delegation,
+skills, web, interaction, todo, and external-directory access. It never replaces
+direct GitHub evidence or performs orchestration synthesis.
+
 This routing rule is an orchestration policy, not a permanent validator rule about the number of files under `.opencode/agents/`.
 
 ## Continuity
@@ -34,9 +40,17 @@ GitHub mutating commands use durable UUID/sequence semantics rather than direct-
 
 When a mapped developer session idles or errors, the bridge transports the structurally latest assistant message through the existing public-safety projection to the bound issue and retains it for `task.status` recovery. The bridge does not interpret or semantically validate that response. The web orchestrator correlates it to the task, checks its explicit developer status/handoff information, and uses exact remote GitHub evidence to decide whether review can begin.
 
+Scout starts extend the sequence-free request lane rather than the mutating task
+lifecycle. Each request carries a focused question, exact remote developer SHA,
+scope, and expected evidence; a clean detached worktree and independent
+task/request/session mapping isolate it. Scout work can run concurrently without
+an orchestration-policy cap and can coexist with the one mutating developer task.
+Idle/error results reuse public projection and durable delivery, while synthesis
+stays in the web orchestrator.
+
 ## Synchronization and handoff
 
-Every developer commit is pushed immediately. A failed push stops implementation and blocks further commits. Before normal return of control, the developer pushes a dedicated task-progress snapshot commit and responds with only the five-field contract. The web orchestrator reviews the whole range, not only the snapshot.
+Every developer commit is pushed immediately. A failed push stops implementation and blocks further commits. Before normal return of control, the developer pushes a dedicated task-progress snapshot commit and responds with the six-field contract: explicit status (`completed`, `blocked`, `failed`, or `needs decision`), exact pushed handoff SHA or `none`, changed areas, checks, blockers/decisions, and task record. The web orchestrator reviews the whole range, not only the snapshot.
 
 ## Acceptance
 

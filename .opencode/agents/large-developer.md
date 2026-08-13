@@ -15,9 +15,14 @@ Your job is implementation, not orchestration, acceptance, or independent review
 
 Every commit on `developer` must be pushed immediately. Before returning control, create and push the required handoff snapshot commit. A failed push is the only exception; then stop implementation and report synchronization failure without claiming a remote handoff.
 
-Return only:
+Return only the six fields below. `Status` must be exactly `completed`,
+`blocked`, `failed`, or `needs decision`. Report `completed` only after every
+required handoff commit is pushed. `Handoff developer SHA` is that exact pushed
+40-character commit SHA for completed work; otherwise it is `none`. A failed
+push is `blocked` with `none`.
 
 Status:
+Handoff developer SHA:
 Files changed:
 Checks + perceived results:
 Blockers/decisions:

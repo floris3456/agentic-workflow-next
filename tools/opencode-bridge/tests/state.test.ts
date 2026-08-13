@@ -34,7 +34,7 @@ test("SQLite state creates private durable files and metadata", (context) => {
   const { state, path } = stateForTest(context);
   assert.equal(statSync(path).mode & 0o777, 0o600);
   assert.equal(statSync(join(path, "..")).mode & 0o777, 0o700);
-  assert.equal(state.getMeta("schema_version"), "2");
+  assert.equal(state.getMeta("schema_version"), "3");
   state.setMeta("instance", "project-one");
   assert.equal(state.getMeta("instance"), "project-one");
 });
@@ -165,11 +165,78 @@ test("schema migration replaces global alias identity with task-bound scope", (c
     migrated.close();
     rmSync(root, { recursive: true, force: true });
   });
-  assert.equal(migrated.getMeta("schema_version"), "2");
+  assert.equal(migrated.getMeta("schema_version"), "3");
   assert.equal(migrated.ensureAlias("workspace", "wrk_shared", "TASK-1"), "workspace-1");
   const second = migrated.ensureAlias("workspace", "wrk_shared", "TASK-2");
   assert.equal(second, "workspace-2");
   assert.throws(() => migrated.resolveAlias(second, "workspace", "TASK-1"), /not available/);
+});
+
+test("schema migration extends v2 events and response deliveries for Scout correlation", (context) => {
+  const root = mkdtempSync(join(tmpdir(), "opencode-bridge-v2-"));
+  const path = join(root, "bridge.sqlite");
+  const legacy = new DatabaseSync(path);
+  legacy.exec(`
+    CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at INTEGER NOT NULL);
+    INSERT INTO meta(key, value, updated_at) VALUES ('schema_version', '2', 0);
+    CREATE TABLE events (
+      journal_id INTEGER PRIMARY KEY AUTOINCREMENT, event_key TEXT NOT NULL UNIQUE,
+      source TEXT NOT NULL, event_type TEXT NOT NULL,
+      task_id TEXT, session_id TEXT, payload_json TEXT NOT NULL,
+      aggregate_id TEXT, durable_seq INTEGER, received_at INTEGER NOT NULL
+    );
+    CREATE TABLE response_deliveries (
+      event_id TEXT PRIMARY KEY, task_id TEXT NOT NULL, session_id TEXT NOT NULL,
+      issue_number INTEGER NOT NULL, event_type TEXT NOT NULL,
+      attempts INTEGER NOT NULL DEFAULT 0, queued_at INTEGER, last_error TEXT,
+      created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL
+    );
+    INSERT INTO response_deliveries(
+      event_id, task_id, session_id, issue_number, event_type, created_at, updated_at
+    ) VALUES ('evt_legacy_idle', 'TASK-LEGACY', 'ses_legacy', 10, 'session.idle', 1, 1);
+  `);
+  legacy.close();
+  chmodSync(path, 0o600);
+
+  const migrated = new BridgeState(path);
+  context.after(() => {
+    migrated.close();
+    rmSync(root, { recursive: true, force: true });
+  });
+  assert.equal(migrated.getMeta("schema_version"), "3");
+  assert.equal(migrated.pendingResponseDeliveries()[0]?.deliveryKind, "developer");
+
+  const requestId = "88888888-8888-4888-8888-888888888888";
+  migrated.mapScoutSession({
+    requestId,
+    taskId: "TASK-SCOUT",
+    sessionId: "ses_scout",
+    issueNumber: 20,
+    refSha: "a".repeat(40),
+    workspacePath: "/private/scout",
+  });
+  assert.equal(migrated.recordEvent({
+    eventKey: "opencode:evt_scout_idle",
+    source: "session-v2",
+    eventType: "session.idle",
+    taskId: "TASK-SCOUT",
+    sessionId: "ses_scout",
+    requestId,
+    sessionKind: "scout",
+    payload: { type: "session.idle" },
+  }), true);
+  migrated.queueResponseDelivery({
+    eventId: "evt_scout_idle",
+    taskId: "TASK-SCOUT",
+    sessionId: "ses_scout",
+    issueNumber: 20,
+    eventType: "session.idle",
+    deliveryKind: "scout",
+    requestId,
+  });
+  const scoutDelivery = migrated.pendingResponseDeliveries().find((entry) => entry.eventId === "evt_scout_idle");
+  assert.equal(scoutDelivery?.deliveryKind, "scout");
+  assert.equal(scoutDelivery?.requestId, requestId);
 });
 
 test("outbox retries idempotently and compatibility records remain queryable", (context) => {

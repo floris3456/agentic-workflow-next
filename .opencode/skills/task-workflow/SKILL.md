@@ -80,7 +80,8 @@ When returning control:
 4. load `git-sync-and-handoff`;
 5. create the dedicated handoff snapshot commit;
 6. push it successfully; and
-7. return only the five-field response.
+7. return only the six-field response with explicit status and exact pushed
+   handoff developer SHA or `none`.
 
 ## Finalization
 

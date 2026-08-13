@@ -30,7 +30,7 @@ Before a normal developer response:
 3. Bring task-progress current.
 4. Create a dedicated handoff snapshot commit.
 5. Push successfully.
-6. Return only the five fields in `docs/work/templates/developer-response-template.md`.
+6. Return only the six fields in `docs/work/templates/developer-response-template.md`, including exact pushed handoff SHA or `none`.
 
 A failed push is the sole exception. Report it as an unsuccessful synchronization handoff and stop implementation.
 
