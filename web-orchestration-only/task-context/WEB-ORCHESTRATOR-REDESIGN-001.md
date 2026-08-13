@@ -437,7 +437,9 @@ Routine scouting, delegation, review, and correction proceed without repeated hu
   connector actions; this does not change their runtime contract.
 - Current exact-minimum validation after that correction passes bridge 62/62,
   branch initializer 8/8, Project 14/14, standalone package validation, full
-  repository validation, and cross-branch compatibility.
+  repository validation, and cross-branch compatibility at exact Project
+  correction `ea61410057655d1ef916d3b895d7c0fe5bfbd715` and developer handoff
+  `0352d354acb6a0430d585eaf25649b4fd808f59e`.
 
 ## Steering issued
 
@@ -469,8 +471,9 @@ Routine scouting, delegation, review, and correction proceed without repeated hu
   was reconciled at `141b2f49ceb483c68154f6b5e3685711d9bcd453`, the final-review
   validator fix is pushed at `bbd636d6591d556e3ab15a374b3c31e8d319b93a`,
   and the later live-smoke contract correction is pushed on `developer` through
-  `0352d354acb6a0430d585eaf25649b4fd808f59e`; this Project-package correction
-  follows the prior web candidate without merging the histories.
+  `0352d354acb6a0430d585eaf25649b4fd808f59e` and on `web-orchestration` at
+  `ea61410057655d1ef916d3b895d7c0fe5bfbd715`; this metadata snapshot follows
+  that Project-package correction without merging the histories.
 
 ## Current next action
 
