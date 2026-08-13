@@ -6,7 +6,7 @@
 
 ## Status
 
-In progress.
+Implementation complete; handoff snapshot pending.
 
 ## Task-start developer SHA
 
@@ -67,9 +67,10 @@ record and pushed handoff boundary.
 
 The required phrase choice was supplied as `cobalt-river` after the
 question-tool pathway failed to produce a public alias and was recorded as a
-test deviation. The current branch is `developer`, the starting checkout was
-clean and synchronized with `origin/developer`, and tracked workflow hooks are
-active. This task record is being created before the smoke artifact.
+test deviation. The task-progress record was pushed at
+`765794fff6050286423af8951c2e623244e3fd77`. The permitted smoke artifact has
+now been created and is ready for its artifact commit and the dedicated
+handoff snapshot.
 
 ## Observed
 
@@ -80,6 +81,10 @@ active. This task record is being created before the smoke artifact.
   hooks are active.
 - The user supplied `cobalt-river` as the answer for the required phrase
   choice.
+- Exact inspection of
+  `docs/work/bridge-smoke-tests/BRIDGE-SMOKE-20260813T100217Z-bb061d.md`
+  matched the requested six-line Markdown artifact, including the phrase,
+  random text, and projection probe source.
 
 ## Interpretation
 
@@ -109,8 +114,9 @@ be changed.
   the `developer` branch and a clean synchronized starting point.
 - `./scripts/bootstrap-agent-workflow.sh --check` passed and reported active
   tracked Git hooks.
-- Focused exact-file inspection and `git diff --check` remain to be run after
-  the smoke artifact is created.
+- Exact-file inspection matched the requested artifact content.
+- `git diff --check` passed for the staged task-progress and smoke artifact
+  changes.
 
 ## Blockers / required decisions
 
@@ -118,15 +124,13 @@ None.
 
 ## Remaining work
 
-- Create the one permitted smoke Markdown artifact with `Phrase: cobalt-river`.
-- Inspect that exact file and run `git diff --check`.
-- Commit and push the artifact, then update and push the dedicated handoff
-  snapshot.
+- Commit and push the smoke artifact with the completed task-progress facts.
+- Update and push the dedicated handoff snapshot.
 
 ## Next action
 
-Create the permitted smoke Markdown artifact, then perform only the requested
-focused Markdown checks.
+Commit and push the permitted smoke Markdown artifact, then create and push the
+dedicated task-progress-only handoff snapshot.
 
 ## Relevant durable records
 
