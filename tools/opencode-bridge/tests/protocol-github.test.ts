@@ -479,6 +479,92 @@ test("poller admits multiple Scout-only issues alongside one mutating task issue
   assert.equal(second.rejected, 0);
 });
 
+test("duplicate task issues are rejected without starving already accepted work", async (context) => {
+  const state = stateForTest(context);
+  state.bindIssueTask(15, "TASK-GUARD");
+
+  const pendingCommand = envelope("dddddddd-dddd-4ddd-8ddd-ddddddddddd1", 1, "start", "TASK-MAIN");
+  const pendingRequest: RequestEnvelope = {
+    protocol: "agentic-bridge/1",
+    request_id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1",
+    task_id: "TASK-MAIN",
+    kind: "task.status",
+    arguments: {},
+  };
+  assert.equal(state.acceptCommand(pendingCommand, 14).disposition, "new");
+  assert.equal(state.acceptRequest(pendingRequest, 14).disposition, "new");
+
+  const duplicateScout: RequestEnvelope = {
+    protocol: "agentic-bridge/1",
+    request_id: "ffffffff-ffff-4fff-8fff-fffffffffff1",
+    task_id: "TASK-GUARD",
+    kind: "scout.start",
+    arguments: {
+      question: "Find the root instruction file",
+      ref: "a".repeat(40),
+      scope: "repository root",
+      expected_evidence: "exact path",
+    },
+  };
+  const duplicateStart = envelope("12121212-3434-4567-8567-121212121212", 1, "start", "TASK-GUARD");
+  const duplicateStatus: RequestEnvelope = {
+    protocol: "agentic-bridge/1",
+    request_id: "34343434-5656-4789-8789-343434343434",
+    task_id: "TASK-GUARD",
+    kind: "scout.status",
+    arguments: { scout_request_id: duplicateScout.request_id },
+  };
+  const github = new GitHubClient({
+    owner: "acme",
+    repository: "demo",
+    tokens: new FakeTokens(),
+    state,
+    apiBaseUrl: "https://api.github.test",
+    fetch: asFetch((request) => {
+      const path = new URL(request.url).pathname;
+      if (path === "/repos/acme/demo/issues") {
+        return Response.json([{ number: 16, body: requestMarker(duplicateScout), ...actor("alice", "OWNER") }]);
+      }
+      if (path === "/repos/acme/demo/issues/16/comments") {
+        return Response.json([
+          { id: 1, body: commandMarker(duplicateStart), ...actor("alice", "COLLABORATOR") },
+          { id: 2, body: requestMarker(duplicateStatus), ...actor("alice", "COLLABORATOR") },
+        ]);
+      }
+      return new Response("not found", { status: 404 });
+    }),
+  });
+  const poller = new GitHubCommandPoller({ github, state, allowedAuthors: ["alice"] });
+  const abort = new AbortController();
+  const appliedCommands: string[] = [];
+  const appliedRequests: string[] = [];
+  const loop = new GitHubControlLoop({
+    poller,
+    outbox: { flush: async () => ({ delivered: 0, retried: 0 }) } as unknown as GitHubOutbox,
+    state,
+    activeIntervalMs: 1,
+    idleIntervalMs: 1,
+  });
+  await loop.run(
+    abort.signal,
+    (entries) => {
+      appliedCommands.push(...entries.map((entry) => entry.commandId));
+      abort.abort();
+    },
+    (entries) => { appliedRequests.push(...entries.map((entry) => entry.requestId)); },
+  );
+
+  assert.deepEqual(appliedRequests, [pendingRequest.request_id]);
+  assert.deepEqual(appliedCommands, [pendingCommand.command_id]);
+  assert.equal(state.issueForTask("TASK-GUARD"), 15);
+  assert.equal(state.taskForIssue(16), undefined);
+  assert.match(state.commandRejection(duplicateStart.command_id)?.reason ?? "", /already bound to issue 15/);
+  assert.equal(state.getRequest(duplicateScout.request_id), undefined);
+  assert.equal(state.getRequest(duplicateStatus.request_id), undefined);
+  const bodies = state.pendingOutbox(Date.now() + 1_000).map((item) => JSON.stringify(item.payload));
+  assert.equal(bodies.filter((body) => body.includes("already bound to issue 15")).length, 3);
+});
+
 test("repository mutation ambiguity freezes commands but preserves task-bound recovery requests", async (context) => {
   const state = stateForTest(context);
   const first = envelope("dddddddd-dddd-4ddd-8ddd-ddddddddddd1", 1, "start", "TASK-ONE");

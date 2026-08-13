@@ -12,7 +12,7 @@ Commands are JSON inside a hidden Markdown marker:
 -->
 ```
 
-The bridge accepts markers only from an exact configured GitHub login whose current repository association is `OWNER`, `MEMBER`, or `COLLABORATOR`. It scans both the issue body and every comment by design for compatibility and recovery. The generalized Project package deliberately publishes every command, including the initial `start`, as a fresh comment and keeps the editable issue body command-free. Repeated scans are safe because command UUID and task-sequence uniqueness provide durable idempotency. Only one mapped mutating control issue may remain open per repository. The first valid issue command must be `start`; that permanently binds the issue and task locally. Its sequence is exactly `1`, every later command is exactly the prior accepted sequence plus one, and a task cannot admit another command while one is `accepted` or `applying`. Every authenticated, parse-valid command rejected before the command ledger is recorded by UUID without consuming sequence, including unbound/mismatched-task commands, a non-`start` first mutation, the one-open-mutating-issue gate, sequence/nonterminal failures, and mandatory-guard failures. A later scan returns that same rejection; a corrected command uses a fresh UUID and the still-expected sequence.
+The bridge accepts markers only from an exact configured GitHub login whose current repository association is `OWNER`, `MEMBER`, or `COLLABORATOR`. It scans both the issue body and every comment by design for compatibility and recovery. The generalized Project package deliberately publishes every command, including the initial `start`, as a fresh comment and keeps the editable issue body command-free. Repeated scans are safe because command UUID and task-sequence uniqueness provide durable idempotency. One task ID binds to exactly one issue, and only one mapped mutating control issue may remain open per repository. A marker on a second issue that repeats an already-bound task ID is rejected locally; it cannot replace the binding or abort polling of other issues. The first valid issue command must be `start`; that permanently binds the issue and task locally. Its sequence is exactly `1`, every later command is exactly the prior accepted sequence plus one, and a task cannot admit another command while one is `accepted` or `applying`. Every authenticated, parse-valid command rejected before the command ledger is recorded by UUID without consuming sequence, including duplicate issue/task binding, unbound/mismatched-task commands, a non-`start` first mutation, the one-open-mutating-issue gate, sequence/nonterminal failures, and mandatory-guard failures. A later scan returns that same rejection; a corrected command uses a fresh UUID and the still-expected sequence.
 
 The bridge queues and attempts to publish `applying` before entering the command handler. While a command is `applying`, wait: it is pre-indeterminate and must not be reissued. If the bridge restarts before recording a terminal state, recovery changes it to `indeterminate` and never automatically reissues it.
 
@@ -69,7 +69,9 @@ establish a task/issue binding when no mutating task exists there; this does not
 make that issue a mutating-task issue. Multiple Scout-only issues may be open,
 and any useful number of independent Scout starts may execute concurrently with
 one mutating developer task. Runtime resource preparation may queue briefly but
-there is no policy concurrency cap.
+there is no policy concurrency cap. A second issue cannot establish the same
+task ID; its requests receive bounded rejection output while the original
+binding and unrelated poll work continue.
 
 | Kind | Arguments | Durable result |
 | --- | --- | --- |

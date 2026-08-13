@@ -33,9 +33,9 @@ running.
 
 ## Current position
 
-The source task is initialized after the abandoned disposable smoke run was
-reconciled and its three issues were closed. No source implementation file has
-yet changed in this task.
+The bridge implementation, protocol, architecture, AS-BUILT, and deterministic
+regression are updated. Focused bridge validation passes; the implementation is
+ready for its coherent source commit before cross-branch integration.
 
 ## Observed
 
@@ -70,6 +70,8 @@ None.
 - Prototype bridge suite: 72 tests passed, 0 failed.
 - Live runtime prototype: duplicate issue received three terminal rejections;
   pending commands, requests, response deliveries, and outbox all reached zero.
+- Developer source `npm test`: 72 passed, 0 failed.
+- `git diff --check`: passed.
 
 ## Blockers / required decisions
 
@@ -77,14 +79,14 @@ None.
 
 ## Remaining work
 
-- Apply the proven source and regression changes.
-- Reconcile bridge architecture and AS-BUILT documentation.
-- Run focused and full repository validation.
-- Commit and push the implementation and handoff snapshot.
+- Commit and push the coherent bridge implementation.
+- Complete and validate the independent web-orchestration prevention rules.
+- Run full cross-branch repository validation.
+- Reconcile this record and push the developer handoff snapshot.
 
 ## Next action
 
-Apply the isolated, already-tested poller and regression changes to developer.
+Commit and push the coherent bridge implementation and records.
 
 ## Relevant durable records
 

@@ -372,6 +372,17 @@ export class GitHubCommandPoller {
           }
           const envelope = item.envelope;
           const bound = this.state.taskForIssue(issue.number);
+          const issueForTask = this.state.issueForTask(envelope.task_id);
+          if (bound === undefined && issueForTask !== undefined && issueForTask !== issue.number) {
+            rejected++;
+            this.rejectCommand(
+              issue.number,
+              item.markerHash,
+              envelope,
+              `Task is already bound to issue ${issueForTask}`,
+            );
+            continue;
+          }
           if (bound === undefined && envelope.kind !== "start") {
             rejected++;
             this.rejectCommand(issue.number, item.markerHash, envelope, "The first command for an issue must be start");
@@ -428,6 +439,16 @@ export class GitHubCommandPoller {
           const envelope = item.envelope;
           let bound = this.state.taskForIssue(issue.number);
           if (bound === undefined) {
+            const issueForTask = this.state.issueForTask(envelope.task_id);
+            if (issueForTask !== undefined && issueForTask !== issue.number) {
+              rejected++;
+              this.enqueueComment(
+                issue.number,
+                `request-task-binding-conflict:${envelope.request_id}`,
+                invalidRequestComment(item.markerHash, `Task is already bound to issue ${issueForTask}`),
+              );
+              continue;
+            }
             if (envelope.kind !== "scout.start") {
               rejected++;
               this.enqueueComment(
