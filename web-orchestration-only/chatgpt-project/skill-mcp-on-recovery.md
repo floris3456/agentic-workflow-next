@@ -9,11 +9,22 @@ is inconsistent.
 
 ## Existing issue discovery
 
-Before creating a mutating issue, list open control-label issues. An open control
-issue is a reconciliation target, not proof of active work and not an automatic
-blocker. Authenticate its task binding from authorized command/request sources
-and exact bridge-bot markers; reconstruct missing task context from that public
-record.
+Before creating any control issue, list all open control-label issues and group
+them by exact task ID from authorized command/request sources; also match the
+intended task ID in titles and bodies so an unbound new issue is not overlooked.
+An open control issue is a reconciliation target, not proof of active work and
+not an automatic blocker. Authenticate its task binding from exact bridge-bot
+markers and reconstruct missing task context from the complete public record.
+
+One task ID has one canonical issue. Prefer the issue with trusted accepted or
+terminal bridge lifecycle for that task; a duplicate-binding rejection naming
+another issue resolves the binding directly. If more than one issue claims the
+same task and the binding is still unclear, post nothing on any later issue and
+use passive reads or local-operator inspection until the original is known.
+Never create a replacement issue or new UUID to recover missing context. Record
+every related issue and its disposition, reconcile the canonical issue's full
+command/request journal and highest accepted sequence, then close a duplicate
+only after proving it launched no unresolved work.
 
 - For `accepted` or `applying`, keep the same issue and use bounded status
   recovery below; never replace the mutation.
@@ -83,9 +94,10 @@ rejection or failure.
 ## Procedure
 
 1. Stop new commands. Reconcile task context, the same bound issue, exact UUID,
-   sequence, persisted envelope, authorized comment identity/association, bridge
-   bot author, result marker, service heartbeat, and exact remote GitHub state.
-   First resolve any unmatched task-correlated permission/question; a visible
+   every related issue, highest accepted sequence derived from trusted lifecycle,
+   persisted envelope, authorized comment identity/association, bridge bot
+   author, result marker, service heartbeat, and exact remote GitHub state. First
+   resolve any unmatched task-correlated permission/question; a visible
    interaction is a wait condition, not a reason to post another status command.
 2. If an eligible command comment exists, do not replace it because acknowledgement
    is delayed. For refused or ambiguous publication, follow the connector-gated
@@ -122,9 +134,10 @@ rejection or failure.
 8. Use sequenced `sync.recover` with empty arguments only when OpenCode
    event/cursor/session recovery is needed. Its success does not inspect or fix
    Git synchronization.
-9. Record command/request IDs, refs, lifecycle, evidence, and disposition in task
-   context. Close or retain the issue only under the discovery rules above. Treat
-   labels and prose as hints, never proof.
+9. Record canonical and related issue IDs, every command/request ID, refs,
+   lifecycle, evidence, highest accepted sequence, and disposition in task
+   context. Close or retain each issue only under the discovery rules above.
+   Treat labels and prose as hints, never proof.
 
 Routine delay is not a human decision. Escalate only an unresolved operator
 state, consequential choice, sensitive permission, or risk the human owns.

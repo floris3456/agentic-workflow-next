@@ -18,8 +18,9 @@ routing record, or implementation task.
    only when broad/local exploration or parallel partitioning will save time.
 3. Establish the exact remote `developer` task-start SHA. Maintain one concise
    public-safe `web-orchestration-only/task-context/<task-id>.md`, including its
-   compact routing section, on `web-orchestration`. Never write implementation
-   content to `developer` or `main`.
+   compact routing section, canonical bound issue, and any related/duplicate
+   issue disposition on `web-orchestration`. Never write implementation content
+   to `developer` or `main`.
 4. Design one bounded public-safe task with stable ID, outcome, start SHA, scope,
    constraints, required records, proportional checks, stop conditions, and this
    exact developer response contract:
@@ -45,15 +46,22 @@ Task record:
    persist then post `route` on the same issue with the next sequence, a fresh
    UUID, explicit `arguments.agent`, and optional public-safe message; route
    command success still does not prove implementation success.
-6. Before creating a mutating issue, list open `<bridge-control-label>` issues.
-   Established Scout-only issues may coexist. If any issue is mutating or
-   unclassified, do not create another: load recovery, authenticate its binding,
-   and resume, review, or safely retire it. Otherwise create one public-safe issue
-   without the label, persist its URL and exact pending envelope in task context,
-   confirm that write remotely, apply the label, then post from the configured
-   authorized GitHub identity. The first command is sequence `1`, `start`, with a
-   fresh UUID, explicit `luna` or `sol`, and the exact start-SHA guard. This is a
-   closed shape: `expected` is a top-level peer of `arguments`, never its child:
+6. Before creating any control issue, list all open `<bridge-control-label>`
+   issues and group authorized markers by exact task ID. Search issue titles and
+   bodies for the intended task ID too, because a newly created issue may not yet
+   be bound. If that task ID already has an issue, reuse it; never create a
+   replacement for resume, recovery, or a guard probe. If duplicates already
+   exist, post no marker on the later issue and load recovery to establish the
+   durable binding and reconcile every related issue. Established Scout-only
+   issues for other task IDs may coexist. If any other issue is mutating or
+   unclassified, do not create another mutating task: load recovery and resume,
+   review, or safely retire it. Only after proving the new task ID absent, create
+   one public-safe issue without the label, persist its URL and exact pending
+   envelope in task context, confirm that write remotely, apply the label, then
+   post from the configured authorized GitHub identity. The first command is
+   sequence `1`, `start`, with a fresh UUID, explicit `luna` or `sol`, and the
+   exact start-SHA guard. This is a closed shape: `expected` is a top-level peer
+   of `arguments`, never its child:
 
 ```markdown
 <!-- agentic-bridge-command
@@ -63,14 +71,17 @@ Task record:
 
 7. Keep all later commands on the bound issue with contiguous sequence, a fresh
    UUID, and an exact envelope persisted before posting. Journal command/result
-   URLs and lifecycle. `accepted` means ledger admission; public `applying` means
-   wait and never reissue; `succeeded` means only that the handler returned. For
-   `start`, `route`, `steer`, or `finalize`, success proves prompt handling, not
-   task completion.
+   URLs and lifecycle. Recompute the highest accepted sequence from all trusted
+   task-correlated lifecycle comments before choosing the next sequence; never
+   rely on a remembered checkpoint number. `accepted` means ledger admission;
+   public `applying` means wait and never reissue; `succeeded` means only that
+   the handler returned. For `start`, `route`, `steer`, or `finalize`, success
+   proves prompt handling, not task completion.
 8. Use the durable issue mailbox rather than busy polling. On mapped session idle
    or error, read the latest projected developer response. The bridge does not
-   interpret it. On every new turn, reconcile the bound issue first because
-   autonomous Project wake-up is not assumed.
+   interpret it. On every new turn, first repeat the repository-wide open-issue
+   task-ID map, then reconcile the canonical bound issue and any recorded related
+   issue because autonomous Project wake-up and in-chat memory are not assumed.
 9. Interpret the six fields yourself. A `completed` response is reviewable only
    when its exact SHA exists on remote `developer`, the task record is present
    when applicable, and the response is internally usable. `blocked`, `failed`,
@@ -112,10 +123,11 @@ Task record:
 ## Continuity
 
 Task context records exact start/last-reviewed/handoff/finalization/approval and
-post-promotion SHAs; issue state; pending command; command journal; delegations;
-Scout request journal; findings; steering; decisions; and next action. Persist an
-envelope before posting it. If narrow state persistence fails, do not send the
-command.
+post-promotion SHAs; the canonical bound issue and related issue dispositions;
+highest accepted sequence derived from trusted lifecycle; pending command;
+command journal; delegations; Scout request journal; findings; steering;
+decisions; and next action. Persist an envelope before posting it. If narrow
+state persistence fails, do not send the command.
 
 Only status comments authored by `<bridge-bot-login>` with the exact task,
 command/request, sequence where applicable, and lifecycle marker are trusted as

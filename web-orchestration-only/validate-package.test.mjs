@@ -71,6 +71,8 @@ test("one task context carries routing continuity for a normal delegation", (con
     "# Task context: TASK-001",
     "",
     "- Task ID: TASK-001",
+    "- Related control issues: none",
+    "- Highest accepted bridge sequence: none",
     "",
     "## Routing",
     "",
@@ -185,6 +187,19 @@ test("validator rejects unconditional blocking of every discovered control issue
   const result = run(root);
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /unconditional open-issue blocking/);
+});
+
+test("validator rejects loss of duplicate-task issue containment", (context) => {
+  const root = fixture(context);
+  replace(
+    root,
+    "chatgpt-project/skill-mcp-on-recovery.md",
+    "One task ID has one canonical issue",
+    "A task may use several replacement issues",
+  );
+  const result = run(root);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /canonical duplicate-task issue containment/);
 });
 
 test("validator requires pending interactions to precede status commands", (context) => {

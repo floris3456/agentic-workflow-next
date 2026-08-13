@@ -73,7 +73,9 @@ invalidates it.
 | Public GitHub lookup, analysis, visible review, or bounded future task preparation | `skill-mcp-off-workflow.md` |
 | Likely implementation areas are unknown and public-web orientation is needed | `skill-mcp-off-scouting.md` |
 
-At the start of every MCP-ON turn, discover any open control issue before creating
-one. Treat it as continuity to reconcile, not proof of active work; load recovery
-when its task or disposition is unknown. Never start a second repository-mutating
-task while a prior mutating issue remains unresolved.
+At the start of every MCP-ON turn, map all open control issues by authenticated
+task ID before creating one. One task ID has one canonical issue: reuse it and
+never create a replacement. Treat open issues as continuity to reconcile, not
+proof of active work; if duplicates exist, post nothing on the later issue and
+load recovery to identify the durable binding. Never start a second
+repository-mutating task while a prior mutating issue remains unresolved.

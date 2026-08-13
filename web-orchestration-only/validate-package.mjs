@@ -89,6 +89,8 @@ function taskContextInventory() {
       if (!text.includes(`- Task ID: ${taskId}\n`)) fail(`${label} has the wrong task identity`);
       if (!text.includes("## Routing\n")) fail(`${label} lacks integrated routing continuity`);
       if (!/^- Selected developer: (?:none|Luna|Sol)$/m.test(text)) fail(`${label} lacks one concrete none/Luna/Sol route`);
+      if (!text.includes("- Related control issues:")) fail(`${label} lacks related-issue continuity`);
+      if (!text.includes("- Highest accepted bridge sequence:")) fail(`${label} lacks derived sequence continuity`);
     }
   } catch (error) {
     fail(`Cannot inventory task-context: ${error.message}`);
@@ -130,6 +132,7 @@ for (const term of [
   "read-only Scouts",
   "Distinguish `UNKNOWN` from inference",
   "invalidates it",
+  "One task ID has one canonical issue",
 ]) if (!instructions.includes(term)) fail(`Permanent instructions are missing a canonical boundary: ${term}`);
 if (!/Promotion requires explicit\s+human approval of one exact reviewed `developer` SHA/.test(instructions)) {
   fail("Permanent instructions are missing the human exact-SHA approval boundary");
@@ -268,6 +271,8 @@ for (const term of [
   "Task-start developer SHA:",
   "Current handoff developer SHA:",
   "Human-approved promotion SHA:",
+  "Related control issues:",
+  "Highest accepted bridge sequence:",
   "## Routing",
   "Selected developer: none | Luna | Sol",
   "Attempt classifications:",
@@ -277,6 +282,11 @@ for (const term of [
   "## Bridge command journal",
   "## Scout request journal",
 ]) if (!template.includes(term)) fail(`task-context/TEMPLATE.md is missing continuity field: ${term}`);
+
+const recovery = texts.get("chatgpt-project/skill-mcp-on-recovery.md") ?? "";
+if (!/One task ID has one canonical issue[\s\S]{0,500}post nothing on any later issue/i.test(recovery)) {
+  fail("MCP-ON recovery is missing canonical duplicate-task issue containment");
+}
 
 const unsafePatterns = [
   [/\bopencode[\s._`*-]*mcp\b/i, "stale direct OpenCode transport"],

@@ -15,9 +15,10 @@
 - Verified post-promotion developer SHA: <sha or none>
 - Relevant repository refs: <refs>
 - Last orchestration mode: MCP-ON | MCP-OFF
-- Bridge control issue: <url/number or none>
+- Bridge control issue: <canonical bound url/number or none>
+- Related control issues: <url/number and disposition, or none>
 - Bridge control issue state: open | closed | none
-- Last bridge sequence: <positive integer or none>
+- Highest accepted bridge sequence: <positive integer or none>
 - Last bridge command: <uuid, kind, and lifecycle state or none>
 
 ## Routing

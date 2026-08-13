@@ -18,8 +18,9 @@
 - Relevant repository refs: `developer` post-smoke implementation/documentation `6ff397fdb8aedf196401fff6cbe0497c47befa6c`; `main` unchanged at `6127611113dfdb66f93a0cfd2d355359aa370833`; `web-orchestration` package simplification `48ca0f2f5f2c39574a9fabd66c470ec2832be700` (this completed metadata snapshot follows it and its exact SHA is recorded at handoff)
 - Last orchestration mode: not established; this is design capture, not a bridge operation
 - Bridge control issue: none
+- Related control issues: none
 - Bridge control issue state: none
-- Last bridge sequence: none
+- Highest accepted bridge sequence: none
 - Last bridge command: none
 
 ## Routing
@@ -283,12 +284,23 @@ The orchestrator asks for the exact command's durable status and the task's curr
 
 ### Fresh-turn continuity
 
-A fresh MCP-ON turn discovers an open control issue before creating another. It
-authenticates and reconstructs the task from public continuity, resumes active
-work, reviews a delivered response, or records and closes a verifiably terminal
-or superseded task. The mere presence of an open issue or completion label does
-not block forever or prove completion; only ambiguity remaining after bounded
-read-only reconciliation blocks a new mutation.
+A fresh MCP-ON turn groups every open control issue by authenticated task ID
+before creating another. It reuses the canonical issue, reconstructs the full
+task journal, resumes active work, reviews a delivered response, or records and
+closes a verifiably terminal or superseded task. The mere presence of an open
+issue or completion label does not block forever or prove completion; only
+ambiguity remaining after bounded read-only reconciliation blocks a new
+mutation.
+
+### Duplicate-task issue recovery
+
+If two issues claim one task ID, the orchestrator posts nothing on the later
+issue. Trusted lifecycle or an explicit duplicate-binding rejection identifies
+the canonical bound issue. The orchestrator reconstructs the highest accepted
+sequence and every launched-agent disposition across the related issues, then
+closes only a duplicate proven to have launched no unresolved work. The bridge
+rejects each duplicate marker locally without changing the binding or starving
+already accepted work.
 
 ### Connector-gated recovery
 
@@ -360,11 +372,12 @@ Routine scouting, delegation, review, and correction proceed without repeated hu
   task-ID-named regular Markdown context records with matching identity and a
   concrete `none`/Luna/Sol route; a second routing file and its duplicated refs
   are no longer created.
-- Every MCP-ON turn discovers open control issues before creating one. The short
-  permanent rule routes unknown state to recovery, where authenticated public
-  continuity distinguishes an active task, a response awaiting review, a safely
-  retired terminal task, and genuinely unresolved ambiguity. Issue closure is a
-  web-orchestrator decision; no bridge label gains semantic authority.
+- Every MCP-ON turn groups all open control issues by authenticated task ID
+  before creating one. One task ID has one canonical issue; recovery records
+  related duplicates, identifies the durable binding from trusted lifecycle,
+  reconstructs the highest accepted sequence, and posts nothing on later
+  duplicates. Issue closure is a web-orchestrator decision; no bridge label gains
+  semantic authority.
 - A connector refusal before GitHub is not a bridge disposition. Recovery reads
   back the exact UUID, permits at most three total unchanged-envelope publication
   attempts, cancels a redundant unpublished status request when equivalent

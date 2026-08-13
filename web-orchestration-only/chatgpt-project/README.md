@@ -45,8 +45,9 @@ The implementation branches must not depend on this branch for code or implement
    than retaining stale or duplicate instructions.
 4. Remove the former direct OpenCode connector/tool from the Project and re-verify the capabilities above.
 5. Merge active legacy routing facts into each task context's `## Routing`
-   section, then retire the separate routing record. Backfill new bridge fields
-   with `none` where authority, issue, UUID, sequence, lifecycle, or SHA is
-   unestablished. Put `legacy` or `unknown` only in a non-authoritative migration
-   note; never use either as human approval.
+   section, then retire the separate routing record. Backfill the canonical
+   bridge issue, related-issue dispositions, and highest accepted sequence from
+   exact trusted issue history; use `none` where authority, issue, UUID,
+   lifecycle, or SHA is unestablished. Put `legacy` or `unknown` only in a
+   non-authoritative migration note; never use either as human approval.
 6. Resume only after remote state and old work are reconciled. A task with no existing bridge-bound issue requires a new issue whose first valid command is `start`; never infer a bridge continuation from former transport state.
