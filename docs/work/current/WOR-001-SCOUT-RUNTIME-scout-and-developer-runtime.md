@@ -123,8 +123,7 @@ None for this task.
 
 ## Next action
 
-None; task completed. The migration proceeds to the separately tracked Project
-package redesign.
+None; task completed.
 
 ## Relevant durable records
 

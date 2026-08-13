@@ -103,8 +103,7 @@ None for this task.
 
 ## Next action
 
-None; task completed. The migration proceeds to the separately tracked Scout and
-developer-agent runtime task.
+None; task completed.
 
 ## Relevant durable records
 

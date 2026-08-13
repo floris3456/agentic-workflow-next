@@ -36,8 +36,9 @@ are implemented and pushed.
 Developer Tasks 1-2 and independent Project-package Task 3 are completed and
 pushed. Cross-branch validation and reconciled durable records are pushed in
 developer integration commit `5e8b9c5761c9764413296ee32f1dadbd3f857701`;
-local and remote `developer` are identical. This completed task-progress snapshot
-is the only pending metadata change after that coherent boundary.
+its completed task-progress snapshot is pushed at
+`2fb851149d9e2e1f65919a21a63603f049d7456c`. This record contains the final
+stale-progress reconciliation only; no implementation or design behavior changed.
 
 ## Observed
 
@@ -123,8 +124,7 @@ None for this developer task.
 
 ## Next action
 
-None; task completed. The migration-level external record owns final
-`web-orchestration` SHA reconciliation and the sole final review.
+None; task completed.
 
 ## Relevant durable records
 
@@ -138,5 +138,5 @@ None; task completed. The migration-level external record owns final
 
 ## Last handoff commit
 
-`5e8b9c5761c9764413296ee32f1dadbd3f857701` (pushed integration boundary; this
-completed metadata snapshot follows it).
+`2fb851149d9e2e1f65919a21a63603f049d7456c` (pushed completed task snapshot;
+this final record-only reconciliation follows it).
