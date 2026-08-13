@@ -6,7 +6,7 @@
 
 ## Status
 
-In progress.
+Completed.
 
 ## Task-start developer SHA
 
@@ -27,15 +27,17 @@ mechanically clean branch candidates without modifying or promoting `main`.
 
 ## Current objective
 
-Publish the validated integration boundary, reconcile exact candidate SHAs, and
-leave both independent branch candidates ready for the one final review.
+Completed: the cross-branch compatibility validator, full exact-runtime
+validation, durable-record reconciliation, and developer integration boundary
+are implemented and pushed.
 
 ## Current position
 
 Developer Tasks 1-2 and independent Project-package Task 3 are completed and
-pushed. A developer-side cross-branch validator now checks the exact supplied
-Project checkout against developer schemas, agents, response/Scout contracts,
-non-semantic transport, and lifecycle behavior; focused host checks pass.
+pushed. Cross-branch validation and reconciled durable records are pushed in
+developer integration commit `5e8b9c5761c9764413296ee32f1dadbd3f857701`;
+local and remote `developer` are identical. This completed task-progress snapshot
+is the only pending metadata change after that coherent boundary.
 
 ## Observed
 
@@ -62,6 +64,12 @@ The first integration-validator run compared two required Markdown phrases
 without normalizing line wrapping. It correctly stopped but produced two false
 contract mismatches; comparison now normalizes whitespace while retaining exact
 wording and the validator passes.
+
+The integration commit's automatic post-commit push inherited the environment's
+blocked proxy and set the synchronization-failure guard. No further commit was
+made. The repository recovery script ran through the established proxy-free Git
+route, pushed that exact commit as a fast-forward, fetched it back, verified local
+and remote identity, and cleared the guard without rewriting history.
 
 ## Changed approach
 
@@ -92,19 +100,31 @@ None.
 - Exact Node 22.13.0 Project suite: 9/9 passed; standalone validator passed with
   eight exact Sources, distinct modes/scouting, seven scenarios, five continuity
   files, and protocol `agentic-bridge/1`.
+- Exact task range
+  `d2ddfd6aa5c34d1abe8d1f2127108c859f262045..5e8b9c5761c9764413296ee32f1dadbd3f857701`:
+  `git diff --check` passed and the 12 expected developer integration/record
+  paths were inspected.
+- Synchronization recovery verified local and `origin/developer` at
+  `5e8b9c5761c9764413296ee32f1dadbd3f857701`; divergence count `0 0` and the
+  failed-push guard is absent.
+- Scoped required-marker scan: no `TODO`, `TBD`, or `FIXME` in active changed
+  architecture/workflow/bridge/contract surfaces.
 
 ## Blockers / required decisions
 
-None.
+None. The credentialed GitHub App/native ChatGPT round trip remains an explicitly
+unperformed external observation; complete durable event/status reconciliation
+and deterministic doubles are implemented and passing, so runtime correctness
+does not depend on it.
 
 ## Remaining work
 
-Inspect exact branch ranges, complete and push task records, and verify candidate
-synchronization before the sole final reviewer.
+None for this developer task.
 
 ## Next action
 
-Audit and publish the developer integration boundary.
+None; task completed. The migration-level external record owns final
+`web-orchestration` SHA reconciliation and the sole final review.
 
 ## Relevant durable records
 
@@ -118,4 +138,5 @@ Audit and publish the developer integration boundary.
 
 ## Last handoff commit
 
-None.
+`5e8b9c5761c9764413296ee32f1dadbd3f857701` (pushed integration boundary; this
+completed metadata snapshot follows it).
