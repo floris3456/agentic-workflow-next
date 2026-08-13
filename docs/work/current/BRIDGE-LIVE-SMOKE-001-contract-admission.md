@@ -6,7 +6,7 @@
 
 ## Status
 
-In progress.
+Completed.
 
 ## Task-start developer SHA
 
@@ -33,8 +33,10 @@ and adding regression evidence for the exact live failure shapes.
 
 The strict runtime/schema, durable admission, precise diagnostic, protocol,
 AS-BUILT, and deterministic regressions are implemented. Exact Node 22.13.0
-focused and full repository/cross-branch validation pass. Commit, push, and
-controlled bridge restart remain.
+focused and full repository/cross-branch validation pass. Implementation commit
+`20d9b788e35e0f3b9a587c788614963e134f4460` is pushed, the synchronization
+failure marker is reconciled, and the rebuilt bridge is active, compatible, and
+enabled at boot. No task work remains.
 
 ## Observed
 
@@ -59,6 +61,11 @@ rejection of missing or invalid mandatory guards, without consuming sequence.
   failed before test execution because the TypeScript tests intentionally import
   build-time `.js` paths. The supported build-then-test path was used instead and
   passed.
+- The automatic post-commit push inherited the shell HTTPS proxy and returned
+  `CONNECT tunnel failed, response 403`, creating the expected synchronization
+  stop marker. A proxy-free fast-forward push succeeded, and the repository's
+  guarded recovery script proved local/remote identity at the exact failed
+  commit before clearing the marker.
 
 ## Changed approach
 
@@ -76,6 +83,13 @@ None.
   Project validation, and cross-branch integration.
 - Exact Node `22.13.0` Project package tests: 14/14 passed.
 - `git diff --check`: passed.
+- Implementation commit
+  `20d9b788e35e0f3b9a587c788614963e134f4460`: pushed; guarded synchronization
+  recovery verified local and remote identity at that SHA.
+- Controlled bridge restart: bridge and OpenCode services are active and
+  enabled; bridge status reports initialized/running, OpenCode `1.18.16`
+  compatible, and zero pending commands, requests, response deliveries, or
+  outbox items.
 
 ## Blockers / required decisions
 
@@ -83,14 +97,11 @@ None.
 
 ## Remaining work
 
-- Commit and push the coherent developer change.
-- Install the built candidate by controlled bridge restart and verify service
-  health/boot enablement.
-- Record the exact pushed handoff snapshot.
+None.
 
 ## Next action
 
-Commit and push the validated implementation candidate.
+None.
 
 ## Relevant durable records
 
@@ -100,4 +111,4 @@ Commit and push the validated implementation candidate.
 
 ## Last handoff commit
 
-`802aecea59a3420e4c41cc2c336605e68fd79041`
+None.
