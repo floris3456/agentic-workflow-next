@@ -477,6 +477,11 @@ Routine scouting, delegation, review, and correction proceed without repeated hu
   `d19fefae529ad411b6e32bd85e4165038903c980`. The Project validator now proves
   nine acceptance scenarios, and its 15/15 positive/negative tests pass on exact
   Node 22.13.0, including connector-gate recovery drift detection.
+- Exact Node 22.13.0 full repository validation passes at developer evidence head
+  `cb96f4dc094d1b6651bcdcac9b9def84f1e24788` against Project package correction
+  `c241c8da8ffba1e50e2fafa4807621ae9d92babd`: bridge 65/65, branch initializer
+  8/8, Project 15/15, static structure/agent/research checks, and cross-branch
+  command/request/handoff/Scout/lifecycle compatibility all pass.
 
 ## Steering issued
 
@@ -511,9 +516,16 @@ Routine scouting, delegation, review, and correction proceed without repeated hu
   `0352d354acb6a0430d585eaf25649b4fd808f59e` and on `web-orchestration` at
   `ea61410057655d1ef916d3b895d7c0fe5bfbd715`; this metadata snapshot follows
   that Project-package correction without merging the histories.
+- The issue-#8/#9 correction is implemented on `developer` through live-evidence
+  commit `cb96f4dc094d1b6651bcdcac9b9def84f1e24788`; the minimal Project recovery
+  correction is `c241c8da8ffba1e50e2fafa4807621ae9d92babd`. The external standalone
+  smoke is superseded by v4, which adds bounded connector refusal recovery and a
+  safe durable stale-marker probe. This record snapshot follows those independent
+  implementation commits; neither history is merged into the other.
 
 ## Current next action
 
-Finish exact-runtime integrated validation, synchronize both corrected branch
-candidates, update this record with their exact heads, and provide the external
-read-only review prompt. Do not run another reviewer or promote `main`.
+No implementation work remains in the Project package. The human may use the
+external read-only review prompt against the final reported branch heads and may
+later approve only that exact reviewed developer SHA for promotion. Do not run
+another commissioned reviewer or promote `main` without that approval.
