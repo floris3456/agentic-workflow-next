@@ -44,7 +44,7 @@ Create the requested public-safe bridge smoke artifact and maintain its task-pro
 
 ## Current position
 
-The task brief was received on `developer` at the task-start SHA. The structured question was answered with `cobalt-river`; the single requested sentinel read failed because the expected file was not found. The requested artifact and this task record are created, inspected, committed, and pushed to `developer` in implementation commit `461b28140b28234a8fe72ba09ebf423a895cbd4b`.
+The task brief was received on `developer` at the task-start SHA. The structured question was answered with `cobalt-river`; the single requested sentinel read failed because the expected file was not found. The requested artifact and this task record are created, inspected, committed, and pushed to `developer` in implementation commit `461b28140b28234a8fe72ba09ebf423a895cbd4b`; the first handoff snapshot was pushed in `470a7a682753860807dbdc188560fe2a8877a5ff`.
 
 ## Observed
 
@@ -54,6 +54,7 @@ The task brief was received on `developer` at the task-start SHA. The structured
 - The requested sentinel read returned file not found.
 - The artifact contains the requested heading, task ID, phrase, random text, and projection-probe text.
 - The implementation commit was pushed successfully to `origin/developer`.
+- The first handoff snapshot was pushed successfully to `origin/developer`.
 
 ## Interpretation
 
@@ -77,11 +78,11 @@ None.
 
 ## Remaining work
 
-Create and push the required dedicated handoff snapshot commit for this task-progress record.
+None; the task record is ready for handoff.
 
 ## Next action
 
-Run the final pre-snapshot checks, create the dedicated task-progress handoff commit, and push it immediately.
+Await independent review of the pushed developer range.
 
 ## Relevant durable records
 
@@ -89,4 +90,4 @@ None.
 
 ## Last handoff commit
 
-None
+470a7a682753860807dbdc188560fe2a8877a5ff
