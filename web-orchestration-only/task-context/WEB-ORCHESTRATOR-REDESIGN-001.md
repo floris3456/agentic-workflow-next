@@ -467,7 +467,7 @@ Routine scouting, delegation, review, and correction proceed without repeated hu
   blockage even though no marker reached GitHub and equivalent developer evidence
   arrived later; the bounded readback/retry/supersession procedure above corrects
   that classification.
-- Current exact-minimum validation after that correction passes bridge 62/62,
+- Exact-minimum validation at that issue-#6 correction boundary passed bridge 62/62,
   branch initializer 8/8, Project 14/14, standalone package validation, full
   repository validation, and cross-branch compatibility at exact Project
   correction `ea61410057655d1ef916d3b895d7c0fe5bfbd715` and developer handoff
@@ -491,9 +491,8 @@ Routine scouting, delegation, review, and correction proceed without repeated hu
 
 ## Unresolved questions
 
-- None. All approved open implementation questions now have one implemented or
-  selected resolution; remaining work is package implementation and integrated
-  validation, not design choice.
+- None. All approved open implementation questions have one implemented,
+  documented, and validated resolution.
 
 ## Human decisions required
 
