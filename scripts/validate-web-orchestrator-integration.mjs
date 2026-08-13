@@ -180,6 +180,12 @@ const bridgeProtocol = read(
   "developer protocol documentation",
 );
 
+if (!/One task ID binds to exactly one issue/i.test(bridgeProtocol)
+  || !/One task ID has one canonical issue/i.test(recovery)
+  || !/post nothing on any later issue/i.test(recovery)) {
+  fail("Developer protocol and Project recovery disagree on duplicate task-issue containment");
+}
+
 const handoffSource = read(
   path.join(repositoryRoot, "tools/opencode-bridge/src/handoff.ts"),
   "developer handoff transport",
