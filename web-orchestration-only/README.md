@@ -17,7 +17,7 @@ This independent branch stores concise, public-safe continuity and reusable inst
 - `agent-routing/<task-id>.md`: Luna/Sol routing record for a task.
 - `chatgpt-project/`: concise permanent router plus eight generalized public-safe
   Project Sources with distinct MCP-ON/MCP-OFF workflows and scouting.
-- `validate-package.mjs` and `validate-package.test.mjs`: exact-inventory,
+- `validate-package.mjs` and `validate-package.test.mjs`: exact Project/static-package inventory, safe task-routing-record,
   installation, continuity, mode-separation, bridge request/command contract, and
   acceptance-scenario validation with negative drift fixtures.
 

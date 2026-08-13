@@ -2,10 +2,10 @@
 
 - Continuity schema: agentic-bridge/1
 - Task ID: WEB-ORCHESTRATOR-REDESIGN-001
-- Status: Human-approved design fully implemented; all four bounded tasks pushed and final review pending
+- Status: Sole final review completed; four verified blockers fixed locally with final validation/push in progress
 - Design approval: Human confirmed the corrected design in chat on 2026-08-13
 - Human goal: Make the web orchestrator extremely fast and efficient while still completing the human's task, applying safety and thoroughness in proportion to the task, and preserving the genuinely different MCP-ON and MCP-OFF operating modes.
-- Current orchestration objective: Finish cross-branch deterministic validation and publish synchronized branch candidates without promoting `main`.
+- Current orchestration objective: Validate and push the four independently reproduced final-review fixes without promoting `main`.
 - Task-start developer SHA: `6127611113dfdb66f93a0cfd2d355359aa370833`
 - Last reviewed developer SHA: `b100942ecfc8049c5583276180043a99033bcc7b`
 - Current handoff developer SHA: `b100942ecfc8049c5583276180043a99033bcc7b`
@@ -318,6 +318,16 @@ Routine scouting, delegation, review, and correction proceed without repeated hu
   the service heartbeat and exact remote evidence. It is never reissued;
   unresolved state goes to operator stop/restart, which durably converts an
   interrupted operation to `indeterminate` before further action.
+- Mapped terminal event insertion, durable cursor advancement, session-state
+  update, and response-delivery creation share one SQLite transaction. Startup
+  idempotently repairs a terminal event left without delivery by an older bridge.
+- Scout per-session recovery starts immediately after its durable mapping and
+  before prompt delivery, so an accepted prompt with an ambiguous HTTP result
+  can still surface without replay or a service restart.
+- The routing validator keeps `README.md` and `TEMPLATE.md` mandatory while
+  permitting only task-ID-named regular Markdown routing records with matching
+  identity and a concrete Luna/Sol route. Normal continuity writes therefore do
+  not invalidate the exact Project/static-package checks.
 
 ### Source trigger and dependency audit
 
@@ -339,14 +349,23 @@ Routine scouting, delegation, review, and correction proceed without repeated hu
 - The current developer five-field response omits an explicit handoff SHA and does not by itself distinguish a valid reviewable completion from every idle state.
 - The current task `status` command reports session state, while recovery still lacks exact command-ledger lookup.
 - The current single mutating-task model is compatible with unlimited read-only Scouts only if Scout sessions receive a separate non-mutating concurrency path.
+- The sole GPT-5.6 Sol/max final review inspected developer
+  `6127611113dfdb66f93a0cfd2d355359aa370833..b100942ecfc8049c5583276180043a99033bcc7b`
+  and web
+  `36adae35552c8e32ce8ee8f446aa586eec20b969..3cbab19abe96a937c0b95c890a714fa7a3681051`.
+  It reported four blocking paths: non-atomic terminal delivery persistence,
+  post-prompt Scout monitoring, task-routing files rejected by the validator,
+  and a skill sentence assigning the SHA to `Status`. Independent inspection
+  reproduced all four; focused regression checks now pass for their fixes. No
+  second reviewer will be run.
 
 ## Implementation validation
 
-- Developer bridge/Scout behavior has 56 deterministic tests covering exact
+- Developer bridge/Scout behavior has 59 deterministic tests covering exact
   sequence/nonterminal admission, applying/restart handling, status reads,
   response transport/retry, public projection, task-bound aliases, Scout
   permissions/exact-ref isolation/concurrency, and cross-task result isolation.
-- The Project package has nine positive/negative tests and validates exactly
+- The Project package has 11 positive/negative tests and validates exactly
   eight Sources, separate MCP-ON/MCP-OFF workflow and scouting triggers, the
   command/request examples, installation/upgrade consistency, proportional and
   high-stakes review rules, human boundaries, and all seven acceptance examples.
@@ -357,8 +376,10 @@ Routine scouting, delegation, review, and correction proceed without repeated hu
   `d89b22a439047558ffccbda32a04b14a376b170a` and developer candidate
   `b100942ecfc8049c5583276180043a99033bcc7b`.
 - Full repository validation plus cross-branch validation passed on exact Node
-  22.13.0: bridge 56/56 and branch initializer 8/8. The Project suite passed
-  9/9 and its standalone validator passed on the same runtime.
+  22.13.0 before final review: bridge 56/56 and branch initializer 8/8. The
+  Project suite passed 9/9 and its standalone validator passed on the same
+  runtime. Post-review focused host checks pass at bridge 59/59 and Project
+  11/11; final exact-runtime integration rerun is pending.
 - No GitHub App private key/native ChatGPT account was available for a live issue
   round trip, and this migration forbids exercising its new Scout on itself.
   Deterministic doubles plus durable event/status recovery cover the complete
@@ -396,5 +417,6 @@ Routine scouting, delegation, review, and correction proceed without repeated hu
 
 ## Current next action
 
-Rerun exact-head validation and run the single final read-only review. Do not
-promote to `main` without later exact-SHA approval.
+Run final exact-runtime cross-branch validation, push both corrected histories,
+and reconcile the reviewer disposition. Do not run another reviewer or promote
+to `main` without later exact-SHA approval.

@@ -67,6 +67,37 @@ test("documented installation rendering produces the exact Source inventory", (c
   ]);
 });
 
+test("task-specific routing continuity remains valid after a normal delegation", (context) => {
+  const root = fixture(context);
+  writeFileSync(path.join(root, "agent-routing", "TASK-001.md"), [
+    "# Agent routing: TASK-001",
+    "",
+    "- Task ID: TASK-001",
+    "- Date: 2026-08-13",
+    "- Relevant repository reference: developer 0000000000000000000000000000000000000000",
+    "- Bridge route reference: pending",
+    "- Selected developer: Luna",
+    "- Luna substantive-attempt count: 0",
+    "- Selection route: default Luna",
+    "- Reason: bounded implementation",
+    "",
+    "## Result",
+    "",
+    "Pending.",
+    "",
+  ].join("\n"));
+  const result = run(root);
+  assert.equal(result.status, 0, result.stderr);
+});
+
+test("validator rejects non-task entries in routing continuity", (context) => {
+  const root = fixture(context);
+  writeFileSync(path.join(root, "agent-routing", "state.json"), "{}\n");
+  const result = run(root);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /invalid task record entry/);
+});
+
 test("validator rejects stale or additional Source inventory", (context) => {
   const root = fixture(context);
   writeFileSync(path.join(root, "chatgpt-project", "skill-mcp-on-obsolete.md"), "# Obsolete\n\n## Trigger\n\nNever.\n");

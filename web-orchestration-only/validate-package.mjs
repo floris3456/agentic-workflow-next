@@ -72,6 +72,33 @@ function inventory(directory, expected, label) {
   }
 }
 
+function routingInventory(directory) {
+  const required = new Set(["README.md", "TEMPLATE.md"]);
+  try {
+    const entries = fs.readdirSync(directory, { withFileTypes: true });
+    for (const name of required) {
+      const entry = entries.find((candidate) => candidate.name === name);
+      if (!entry?.isFile()) fail(`agent-routing is missing required regular file: ${name}`);
+    }
+    for (const entry of entries) {
+      if (required.has(entry.name)) continue;
+      const match = /^([A-Za-z0-9][A-Za-z0-9._-]{0,127})\.md$/.exec(entry.name);
+      if (!entry.isFile() || !match) {
+        fail(`agent-routing contains an invalid task record entry: ${entry.name}`);
+        continue;
+      }
+      const taskId = match[1];
+      const label = `agent-routing/${entry.name}`;
+      const text = readFile(path.join(directory, entry.name), label);
+      if (!text.startsWith(`# Agent routing: ${taskId}\n`)) fail(`${label} has the wrong task heading`);
+      if (!text.includes(`- Task ID: ${taskId}\n`)) fail(`${label} has the wrong task identity`);
+      if (!/^- Selected developer: (?:Luna|Sol)$/m.test(text)) fail(`${label} lacks one concrete Luna/Sol route`);
+    }
+  } catch (error) {
+    fail(`Cannot inventory agent-routing: ${error.message}`);
+  }
+}
+
 function requireTerms(file, terms) {
   const text = texts.get(`chatgpt-project/${file}`) ?? "";
   for (const term of terms) if (!text.includes(term)) fail(`chatgpt-project/${file} is missing required contract text: ${term}`);
@@ -98,7 +125,7 @@ function markers(text, name) {
 
 inventory(root, rootEntries, "web-orchestration-only root");
 inventory(projectRoot, projectFiles, "Project package");
-inventory(path.join(root, "agent-routing"), ["README.md", "TEMPLATE.md"], "agent-routing");
+routingInventory(path.join(root, "agent-routing"));
 
 for (const file of branchFiles) readFile(path.join(root, file), file);
 for (const file of projectFiles) readFile(path.join(projectRoot, file), `chatgpt-project/${file}`);
@@ -390,4 +417,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log(`Orchestration package validation passed: ${skills.length} exact Project Sources, distinct MCP-ON/MCP-OFF workflows and scouting, ${scenarioChecks.length} acceptance scenarios, ${branchFiles.length} continuity files, bridge protocol ${protocol}.`);
+console.log(`Orchestration package validation passed: ${skills.length} exact Project Sources, distinct MCP-ON/MCP-OFF workflows and scouting, ${scenarioChecks.length} acceptance scenarios, ${branchFiles.length} static continuity definitions plus validated task-routing records, bridge protocol ${protocol}.`);
