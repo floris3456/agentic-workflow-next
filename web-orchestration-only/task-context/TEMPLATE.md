@@ -32,6 +32,10 @@
 
 - <uuid/sequence/kind>: <command-comment ref, result-comment ref, lifecycle state, and concise resolution>
 
+## Scout request journal
+
+- <request uuid/task/issue/exact ref>: <focus, result ref, lifecycle, and concise disposition>
+
 ## Delegations issued
 
 - <date, issue/command ref, and concise public-safe delegated outcome>
