@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+zero="0000000000000000000000000000000000000000"
+git_dir="$(git rev-parse --git-dir)"
+repair="$git_dir/template-development-bootstrap-repair-authorized"
+
+valid_bootstrap_repair() {
+  local new="$1"
+  local old="$2"
+  [[ -f "$repair" ]] || return 1
+  local expected_old=""
+  local expected_new=""
+  local extra=""
+  read -r expected_old expected_new extra < "$repair" || return 1
+  [[ -z "$extra" && "$old" == "$expected_old" && "$new" == "$expected_new" ]] || return 1
+  [[ "$(git rev-list --parents -n 1 "$new" | wc -w)" -eq 1 ]] || return 1
+  [[ "$(git rev-parse "$new^{tree}")" == "$(git rev-parse "$old^{tree}")" ]] || return 1
+}
+
+while read -r local_ref local_oid remote_ref remote_oid; do
+  [[ -n "$remote_ref" ]] || continue
+  [[ "$remote_ref" == "refs/heads/template-development" ]] || {
+    echo "The ledger checkout may push only template-development." >&2
+    exit 1
+  }
+  [[ "$local_oid" != "$zero" ]] || { echo "Branch deletion is blocked." >&2; exit 1; }
+  if [[ "$remote_oid" != "$zero" ]] && ! git merge-base --is-ancestor "$remote_oid" "$local_oid" \
+    && ! valid_bootstrap_repair "$local_oid" "$remote_oid"; then
+    echo "Non-fast-forward template-development push is blocked." >&2
+    exit 1
+  fi
+done

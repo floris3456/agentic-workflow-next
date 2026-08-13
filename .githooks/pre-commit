@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+branch="$(git symbolic-ref --quiet --short HEAD || true)"
+[[ "$branch" == "template-development" ]] || {
+  echo "This ledger permits commits only on template-development; current state is ${branch:-detached HEAD}." >&2
+  exit 1
+}
+marker="$(git rev-parse --git-dir)/template-development-sync-failed"
+if [[ -f "$marker" ]]; then
+  echo "A prior template-development push failed. Recover synchronization before committing." >&2
+  exit 1
+fi
