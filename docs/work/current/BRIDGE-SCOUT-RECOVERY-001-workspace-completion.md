@@ -6,7 +6,7 @@ BRIDGE-SCOUT-RECOVERY-001
 
 ## Status
 
-In progress
+Completed
 
 ## Task-start developer SHA
 
@@ -22,11 +22,19 @@ You must fix all of these issues properly. After you are done you will write an 
 
 ## Current objective
 
-Correct live Scout completion transport and recovery without replaying Scout prompts, preserve the bridge's transport-only boundary, reconcile the failed disposable smoke safely, and keep developer/web contracts aligned.
+Completed: live Scout completion transport and recovery no longer replays Scout
+prompts, poller-level rejection is durable, the bridge remains transport-only,
+and the developer/web contracts are synchronized and validated.
 
 ## Current position
 
-The failed main smoke was aborted terminally at sequence 5 and issues #8 and #9 are closed; no labeled control issue remains open. The implementation is pushed at `d19fefae529ad411b6e32bd85e4165038903c980`, deployed, and recovered all five historical Scouts on controlled restart without prompt replay. Focused and full bridge validation passes. Web-package alignment and final integrated validation remain.
+The failed main smoke was aborted terminally at sequence 5 and issues #8 and #9
+are closed; no labeled control issue remains open. The implementation is pushed
+at `d19fefae529ad411b6e32bd85e4165038903c980`, its live-evidence records are
+pushed at `cb96f4dc094d1b6651bcdcac9b9def84f1e24788`, and controlled boot recovery
+delivered all five historical Scouts without prompt replay. The aligned Project
+package is pushed through `2b06b95c2ed8b2df1452c7a221303f36a166a323`.
+Exact Node 22.13.0 full integrated validation passes against those heads.
 
 ## Observed
 
@@ -69,6 +77,18 @@ The implementation scope now also includes durable suppression/status visibility
 - Exact Node 22.13.0 build passed; controlled bridge restart returned `active` and `enabled`.
 - Live boot recovery: five Scout mappings became `session.idle`, five projected responses appeared on issues #4/#8/#9, response deliveries pending `0`, outbox pending `0`, canonical-recovery events `5`.
 - No-replay check: all five recovered OpenCode sessions contain exactly one user message.
+- Exact Node 22.13.0 Project package validation: passed with eight exact Sources,
+  distinct MCP-ON/MCP-OFF procedures, and nine acceptance scenarios; Project
+  tests: 15/15 passed.
+- Exact Node 22.13.0 full repository validation against web revision
+  `2b06b95c2ed8b2df1452c7a221303f36a166a323`: passed; bridge 65/65, branch
+  initializer 8/8, all structure/agent/research/contract checks, and
+  cross-branch compatibility passed.
+- The first integrated-validation invocation supplied the repository root rather
+  than `web-orchestration-only` as `WOR_WEB_ORCHESTRATION_ROOT` and failed with
+  the expected missing-package path. The corrected explicit package path passed;
+  no implementation change was needed for that operator invocation error.
+- `origin/main` remained `6127611113dfdb66f93a0cfd2d355359aa370833`.
 
 ## Blockers / required decisions
 
@@ -76,13 +96,12 @@ None.
 
 ## Remaining work
 
-- Coordinate the Project recovery instructions and validators on `web-orchestration`.
-- Run exact-runtime full repository and cross-branch validation.
-- Push durable evidence and final handoff snapshots.
+None.
 
 ## Next action
 
-Implement the minimal Project connector-recovery clarification and validator coverage on `web-orchestration`.
+Human/orchestrator review of the exact final pushed branch heads; promotion
+remains separately human-approved and exact-SHA-bound.
 
 ## Relevant durable records
 
@@ -94,4 +113,8 @@ Implement the minimal Project connector-recovery clarification and validator cov
 
 ## Last handoff commit
 
-`d19fefae529ad411b6e32bd85e4165038903c980`
+- Implementation: `d19fefae529ad411b6e32bd85e4165038903c980`
+- Live evidence and durable documentation:
+  `cb96f4dc094d1b6651bcdcac9b9def84f1e24788`
+- Both commits are pushed to `origin/developer`; this dedicated completed-record
+  snapshot follows them without changing runtime behavior.
