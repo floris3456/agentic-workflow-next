@@ -25,7 +25,9 @@ They do not create developer task progress, routing, finalization, or promotion
 state. Use the existing task-bound issue or create a public-safe Scout-only issue,
 apply `<bridge-control-label>`, and post each request from the authorized identity
 with a fresh UUID, stable task ID, exact lowercase remote `developer` SHA, one
-focused question, bounded scope, and expected evidence:
+focused question, bounded scope, and expected evidence. `arguments` has exactly
+four string fields: `question`, `ref`, `scope`, and `expected_evidence`; `ref`
+itself is the 40-character SHA, so never add a separate `sha` or use a branch name:
 
 ```markdown
 <!-- agentic-bridge-request

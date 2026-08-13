@@ -53,7 +53,8 @@ Task record:
    without the label, persist its URL and exact pending envelope in task context,
    confirm that write remotely, apply the label, then post from the configured
    authorized GitHub identity. The first command is sequence `1`, `start`, with a
-   fresh UUID, explicit `luna` or `sol`, and the exact start-SHA guard:
+   fresh UUID, explicit `luna` or `sol`, and the exact start-SHA guard. This is a
+   closed shape: `expected` is a top-level peer of `arguments`, never its child:
 
 ```markdown
 <!-- agentic-bridge-command

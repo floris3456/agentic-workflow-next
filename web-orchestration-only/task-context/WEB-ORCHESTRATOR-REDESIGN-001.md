@@ -424,6 +424,20 @@ Routine scouting, delegation, review, and correction proceed without repeated hu
   terminal task. The Project now makes discovery universal, classifies the issue
   in recovery, resumes or safely retires it, and blocks only on unresolved
   ambiguity. This changes no bridge transport semantics or human authority.
+- Credentialed issue #6 then exposed malformed input in the standalone smoke
+  prompt, not a permissive bridge defect. Its Scout requests added `sha`, used a
+  branch name for `ref`, and made `scope` an array; its start nested `expected`
+  under `arguments`. The closed Project examples now state those placement/type
+  rules explicitly. The bridge retains strict schemas, identifies unknown fields,
+  and durably rejects a missing/misplaced mandatory top-level Git guard before it
+  consumes sequence, so a corrected fresh UUID can still use sequence 1.
+- Native GitHub connector policy rejected duplicate hidden markers and a
+  multi-marker comment. UUID replay and same-source nonterminal serialization
+  remain deterministically covered rather than being treated as mandatory live
+  connector actions; this does not change their runtime contract.
+- Current exact-minimum validation after that correction passes bridge 62/62,
+  branch initializer 8/8, Project 14/14, standalone package validation, full
+  repository validation, and cross-branch compatibility.
 
 ## Steering issued
 
@@ -441,7 +455,7 @@ Routine scouting, delegation, review, and correction proceed without repeated hu
 
 - None before implementation; the corrected redesign is approved for implementation.
 - Later review and explicitly approve exact developer SHA
-  `daf9b226a4dd87b4fc6741713fcd8a065e08bccf` before any promotion to `main`.
+  `0352d354acb6a0430d585eaf25649b4fd808f59e` before any promotion to `main`.
 
 ## Migration notes
 
@@ -454,11 +468,13 @@ Routine scouting, delegation, review, and correction proceed without repeated hu
   `d89b22a439047558ffccbda32a04b14a376b170a`; final integration reconciliation
   was reconciled at `141b2f49ceb483c68154f6b5e3685711d9bcd453`, the final-review
   validator fix is pushed at `bbd636d6591d556e3ab15a374b3c31e8d319b93a`,
-  and this metadata-only snapshot follows it.
+  and the later live-smoke contract correction is pushed on `developer` through
+  `0352d354acb6a0430d585eaf25649b4fd808f59e`; this Project-package correction
+  follows the prior web candidate without merging the histories.
 
 ## Current next action
 
 None for implementation. The human may now review exact developer SHA
-`daf9b226a4dd87b4fc6741713fcd8a065e08bccf` and, only afterward, explicitly
+`0352d354acb6a0430d585eaf25649b4fd808f59e` and, only afterward, explicitly
 approve that same SHA for guarded promotion. Do not run another reviewer or
 promote `main` without that approval.

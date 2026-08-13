@@ -66,6 +66,9 @@ Mapped developer session state and latest projected response:
    effect may be underway, so wait and never reissue; `succeeded` applies only
    command-specific semantics; `rejected` means no handler ran; `failed` needs
    diagnosis; `indeterminate` means an effect may have started and is terminal.
+   A missing or misplaced mandatory top-level `expected` guard is durably
+   rejected before the ledger and does not consume sequence; correct it with a
+   fresh UUID at the still-expected sequence.
    A pre-ledger rejection has no command tuple: verify its `marker_hash` as the
    lowercase SHA-256 of the exact UTF-8 source-marker body bytes (including the
    canonical trailing newline), retain the rejected source, and do not treat it

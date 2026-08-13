@@ -159,6 +159,32 @@ test("validator rejects lost-result no-replay drift", (context) => {
   assert.match(result.stderr, /lost command result/);
 });
 
+test("validator rejects closed-envelope placement drift", (context) => {
+  const root = fixture(context);
+  replace(
+    root,
+    "chatgpt-project/skill-mcp-on-workflow.md",
+    "top-level peer of `arguments`, never its child",
+    "child of `arguments`",
+  );
+  const result = run(root);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /top-level peer of `arguments`/);
+});
+
+test("validator rejects a separate Scout SHA field instruction", (context) => {
+  const root = fixture(context);
+  replace(
+    root,
+    "chatgpt-project/skill-mcp-on-scouting.md",
+    "never add a separate `sha`",
+    "add a separate `sha`",
+  );
+  const result = run(root);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /never add a separate `sha`/);
+});
+
 test("validator rejects unconditional blocking of a discovered control issue", (context) => {
   const root = fixture(context);
   const target = path.join(root, "chatgpt-project", "skill-mcp-on-recovery.md");
