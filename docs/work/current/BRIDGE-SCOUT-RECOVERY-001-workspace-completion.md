@@ -33,7 +33,7 @@ are closed; no labeled control issue remains open. The implementation is pushed
 at `d19fefae529ad411b6e32bd85e4165038903c980`, its live-evidence records are
 pushed at `cb96f4dc094d1b6651bcdcac9b9def84f1e24788`, and controlled boot recovery
 delivered all five historical Scouts without prompt replay. The aligned Project
-package is pushed through `2b06b95c2ed8b2df1452c7a221303f36a166a323`.
+package is pushed through `a1decee2bbfa44486ec7b7597e863df91c18c160`.
 Exact Node 22.13.0 full integrated validation passes against those heads.
 
 ## Observed
@@ -81,7 +81,7 @@ The implementation scope now also includes durable suppression/status visibility
   distinct MCP-ON/MCP-OFF procedures, and nine acceptance scenarios; Project
   tests: 15/15 passed.
 - Exact Node 22.13.0 full repository validation against web revision
-  `2b06b95c2ed8b2df1452c7a221303f36a166a323`: passed; bridge 65/65, branch
+  `a1decee2bbfa44486ec7b7597e863df91c18c160`: passed; bridge 65/65, branch
   initializer 8/8, all structure/agent/research/contract checks, and
   cross-branch compatibility passed.
 - The first integrated-validation invocation supplied the repository root rather
