@@ -6,7 +6,7 @@
 
 ## Status
 
-In progress.
+Completed.
 
 ## Task-start developer SHA
 
@@ -31,14 +31,15 @@ commit.
 
 ## Current objective
 
-Implement a separate lightweight Scout lifecycle over the sequence-free request
-lane while retaining the one-mutating-task boundary and exact-ref isolation.
+Completed: the separate lightweight Scout lifecycle, exact-ref isolation,
+concurrent read-only execution, durable response recovery, and six-field
+developer response contract are implemented and pushed.
 
 ## Current position
 
-Implementation and validation are complete in the working tree. The pinned
-runtime contract has been reconciled against OpenCode `1.18.16`; only the
-coherent implementation commit, push, and final task-progress snapshot remain.
+Implementation commit `0783e169fc4d14f311af977da8aa0a3b08548850` is pushed and
+identical to `origin/developer`. This completed task-progress snapshot is the
+only change after that coherent implementation boundary.
 
 ## Observed
 
@@ -107,16 +108,22 @@ None.
 
 ## Blockers / required decisions
 
-None.
+None. No live Scout inference was launched because the migration explicitly
+forbids using the newly implemented Scout during its own implementation or
+evaluation. No GitHub App private key/native ChatGPT account is available for a
+live issue round trip. The complete conservative behavior is covered by
+deterministic OpenCode/GitHub doubles, exact pinned-source inspection, durable
+`scout.status`, event recovery, and retry paths; this is an integration-level
+live-observation gap, not missing runtime behavior.
 
 ## Remaining work
 
-- Commit and push the coherent implementation boundary.
-- Record exact synchronization evidence and push the task-progress snapshot.
+None for this task.
 
 ## Next action
 
-Commit and push the validated implementation boundary.
+None; task completed. The migration proceeds to the separately tracked Project
+package redesign.
 
 ## Relevant durable records
 
@@ -127,4 +134,6 @@ Commit and push the validated implementation boundary.
 
 ## Last handoff commit
 
-None.
+Implementation and pushed handoff boundary:
+`0783e169fc4d14f311af977da8aa0a3b08548850`. This completed progress snapshot
+is pushed immediately as the task's final metadata-only commit.
