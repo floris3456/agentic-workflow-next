@@ -6,7 +6,7 @@
 
 ## Status
 
-In progress.
+Completed.
 
 ## Task-start developer SHA
 
@@ -37,8 +37,10 @@ The prior bridge smoke task reached durable `session.idle`, pushed handoff
 `developer` tree. Both implementation agents now explicitly allow structured
 questions, validators and current architecture records carry that fact, and a
 controlled OpenCode restart resolved Luna/Sol to `allow` while retaining Scout
-`deny`. Focused, cross-branch, live, and full repository checks pass; the
-implementation commit is ready.
+`deny`. Focused, cross-branch, live, and full repository checks pass. The exact
+implementation/record commit
+`b54f7a9dcf3188e2720e9f025948696e296cf758` is pushed to `origin/developer`;
+this completed progress record is ready for its dedicated handoff snapshot.
 
 ## Observed
 
@@ -104,6 +106,8 @@ implementation blocker.
   59/59, branch initializer 8/8, agent/research/structure checks, and cross-branch
   Project integration.
 - `git diff --check`: passed.
+- Implementation commit `b54f7a9dcf3188e2720e9f025948696e296cf758`:
+  pushed; local `developer` and `origin/developer` matched exactly.
 
 ## Blockers / required decisions
 
@@ -111,12 +115,11 @@ None.
 
 ## Remaining work
 
-- Commit and push the validated implementation and records.
-- Update this record to completed and push a dedicated handoff snapshot.
+None after the dedicated task-progress-only handoff snapshot is pushed.
 
 ## Next action
 
-Commit and push the validated implementation boundary.
+Create and push the dedicated task-progress-only handoff snapshot.
 
 ## Relevant durable records
 
