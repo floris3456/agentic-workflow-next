@@ -540,6 +540,20 @@ Routine scouting, delegation, review, and correction proceed without repeated hu
   `c241c8da8ffba1e50e2fafa4807621ae9d92babd`: bridge 65/65, branch initializer
   8/8, Project 15/15, static structure/agent/research checks, and cross-branch
   command/request/handoff/Scout/lifecycle compatibility all pass.
+- Credentialed smoke issues #14/#15/#16 exposed a resume-identity defect: issue
+  #15 already contained terminal evidence for the guard task, but the web chat
+  created issue #16 with the same task ID, omitted #15 from its checkpoint, and
+  reported a stale sequence. The Project now maps all open issues by exact task
+  ID, reuses one canonical issue, posts nothing on a later duplicate, rebuilds
+  the full journal and highest accepted sequence, and records related-issue
+  dispositions. The bridge independently rejects duplicate-binding markers per
+  issue without aborting its poll cycle or starving accepted work. Exact Node
+  22.13.0 integrated validation passes at developer implementation candidate
+  `2a4a6ce7c3e1587fc80bb8553fd85d6c67d1b147` against this correction's
+  Project candidate `52ddf36e9bb08006db3a1fc35128f2ee3bdefc13`: bridge
+  72/72, branch initializer 8/8, Project 18/18, and all cross-branch checks.
+  Developer handoff `be315eec10030b3d4499a05b823739a2631cb897`
+  adds only the completed task-progress snapshot.
 
 ## Steering issued
 
