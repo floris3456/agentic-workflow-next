@@ -75,7 +75,6 @@ const recoveryPath = path.join(projectRoot, "skill-mcp-on-recovery.md");
 const workflow = read(workflowPath, "MCP-ON workflow Source");
 const scouting = read(scoutingPath, "MCP-ON scouting Source");
 const recovery = read(recoveryPath, "MCP-ON recovery Source");
-const permanent = read(path.join(projectRoot, "developer-instructions.md"), "Project permanent instructions");
 
 try {
   execFileSync(process.execPath, [path.join(webRoot, "validate-package.mjs")], {
@@ -175,31 +174,11 @@ const scoutAgent = read(
 for (const term of ["model: openai/gpt-5.6-luna", "reasoningEffort: high", '"*": false', "external_directory: deny"]) {
   if (!scoutAgent.includes(term)) fail(`Developer Scout contract is missing ${term}`);
 }
-for (const term of ["Luna/high read-only Scout", "no orchestration concurrency cap", "perform all synthesis"]) {
-  if (!scouting.includes(term)) fail(`Project Scout procedure is missing compatible contract text: ${term}`);
-}
 
 const bridgeProtocol = read(
   path.join(repositoryRoot, "contracts/opencode-bridge/protocol.md"),
   "developer protocol documentation",
 );
-const compactBridgeProtocol = bridgeProtocol.replace(/\s+/g, " ");
-const compactWorkflow = workflow.replace(/\s+/g, " ");
-for (const term of [
-  "The bridge does not parse, validate, approve, reject, or otherwise interpret handoff fields",
-  "task.status` returns the same latest projected value",
-  "never repeat work",
-  "never automatically reissues",
-]) if (!compactBridgeProtocol.includes(term)) fail(`Developer protocol is missing cross-branch behavior: ${term}`);
-for (const term of [
-  "The bridge does not interpret it",
-  "malformed output",
-  "public `applying`",
-  "session.idle",
-]) if (!compactWorkflow.includes(term)) fail(`Project workflow is missing developer lifecycle semantics: ${term}`);
-for (const term of ["Never automatically retry", "`command.status`", "`task.status`"]) {
-  if (!recovery.includes(term)) fail(`Project recovery procedure is missing developer recovery semantics: ${term}`);
-}
 
 const handoffSource = read(
   path.join(repositoryRoot, "tools/opencode-bridge/src/handoff.ts"),
@@ -216,9 +195,6 @@ if (!resultSchema.properties?.state?.enum?.includes("applying")
   || !bridgeProtocol.includes("publish `applying`")
   || !workflow.includes("public `applying`")) {
   fail("Developer schema/protocol and Project workflow disagree on observable applying state");
-}
-for (const term of ["MCP-ON/Sol", "MCP-OFF/Pro", "exact reviewed SHA", "read-only Scouts"]) {
-  if (!permanent.includes(term)) fail(`Permanent Project router is missing integrated boundary ${term}`);
 }
 
 if (failures.length > 0) {

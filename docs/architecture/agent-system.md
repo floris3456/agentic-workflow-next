@@ -15,11 +15,11 @@ The system separates human acceptance, web orchestration, remote evidence, and l
 
 ## Web orchestrator
 
-The web orchestrator is the primary reasoning, task-design, routing, steering, and review layer. Generalized installation instructions and eight audited conditional Sources live under `web-orchestration-only/chatgpt-project/` on the independent branch. Its short permanent instructions route genuinely separate MCP-ON and MCP-OFF workflows and scouting procedures. The installed Project configuration, private conversations, connector credentials, and runtime service configuration remain outside Git.
+The web orchestrator is the primary reasoning, task-design, routing, steering, and review layer. Generalized installation instructions and seven audited conditional Sources live under `web-orchestration-only/chatgpt-project/` on the independent branch. Its short permanent instructions keep universal safety/authority visible and route genuinely separate MCP-ON and MCP-OFF workflows and scouting procedures. The installed Project configuration, private conversations, connector credentials, and runtime service configuration remain outside Git.
 
 In MCP-ON mode it uses:
 
-- an authenticated native GitHub integration for exact remote evidence, writes limited to `task-context/**` and `agent-routing/**`, and public-safe bridge-control issue actions;
+- an authenticated native GitHub integration for exact remote evidence, writes limited to `task-context/**` (including routing continuity), and public-safe bridge-control issue actions;
 - direct GitHub inspection for exact evidence, with targeted concurrent OpenCode
   Scouts when broader local exploration saves time; and
 - the outbound local GitHub App bridge to reach OpenCode indirectly for implementation delegation, steering, recovery, finalization, and guarded promotion.

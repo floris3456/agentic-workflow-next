@@ -12,7 +12,7 @@ This repository uses a human-controlled web-orchestrated implementation system w
 - OpenCode agents implement bounded tasks on `developer`; they do not orchestrate or review.
 - ChatGPT reaches local OpenCode through native GitHub control issues and an outbound local GitHub App bridge; the bridge is not repository evidence or an acceptance authority.
 - `main` contains exact implementation explicitly accepted by the human.
-- `web-orchestration` is an orphan-style branch containing public-safe task context, routing memory, and generalized Project installation sources.
+- `web-orchestration` is an orphan-style branch containing public-safe task context with integrated routing memory and generalized Project installation sources.
 - jCodeMunch scouts code symbols only.
 - Relevance/indexing tools are scouting aids only; they are not access controls.
 - Raw external evidence remains readable but immutable.
@@ -34,7 +34,10 @@ This routing rule is an orchestration policy, not a permanent validator rule abo
 
 Task-progress preserves procedural context and the public-safe delegated brief. AS-BUILT preserves current implementation truth and is also live developer memory. Deviations preserve material intended-versus-actual differences. AS-BUILT and deviations change atomically with implementation commits.
 
-The web orchestrator keeps per-task context and routing records on the independent branch when MCP-ON GitHub write capability is available. The branch also provides a public-safe Project installation package; installed private Project state remains outside Git.
+The web orchestrator keeps one per-task context record with compact routing
+continuity on the independent branch when MCP-ON GitHub write capability is
+available. The branch also provides a public-safe Project installation package;
+installed private Project state remains outside Git.
 
 The Project keeps genuinely distinct operating modes. MCP-ON/Sol uses connected
 GitHub for quick exact evidence, authenticated bridge control and continuity
@@ -44,8 +47,9 @@ navigation and reasoning and cannot claim Scouts, delegation, bridge control, or
 state writes. Scouting and verification scale with size, complexity, uncertainty,
 risk, blast radius, reversibility, and stakes; high-stakes manageable changes
 receive direct inspection of all relevant GitHub files/diffs even if Scouts help.
-The permanent Project instructions route these mechanics to eight narrowly
-triggered Sources instead of loading them on every turn.
+The permanent Project instructions retain universally triggered safety/authority
+boundaries and route detailed mechanics to seven narrowly triggered Sources
+instead of loading them on every turn.
 
 GitHub mutating commands use durable UUID/sequence semantics rather than direct-MCP delivery assumptions: sequence starts at exactly `1`, stays contiguous, and cannot advance while a prior command is accepted or applying. A separate UUID-idempotent, sequence-free request lane exposes `command.status` and `task.status` from durable local state without repeating work. The bridge stores private OpenCode mappings and raw recovery data locally, while only a bounded redacted projection enters public issues. Task-bound aliases, including workspaces, are stored per task. Capability parity comes from the pinned OpenCode operation manifest; consequential generic web operations remain locally allowlisted.
 
@@ -87,13 +91,16 @@ After substantive review, finalization, and targeted finalization review, the hu
 
 ## Validation
 
-Validators enforce only deterministic structure and references. The independent
-Project validator covers exact Source/trigger inventory and seven orchestration
-scenarios; the developer integration validator compares an explicitly supplied
-Project checkout with developer schemas, agents, response fields, Scout contract,
-transport boundary, and observable lifecycle. Semantic record correctness,
-implementation quality, attempt classification, escalation, and human acceptance
-remain reasoning/judgment controls.
+Validators enforce deterministic structure, executable envelope/schema shape,
+and a small canonical safety core. The independent Project validator covers the
+exact Source/trigger inventory, mode separation, integrated task-context routing,
+installation consistency, and focused negative drift cases; it does not make
+editorial wording or a scenario count part of the protocol. The developer
+integration validator compares an explicitly supplied Project checkout with
+developer schemas, agents, response fields, Scout contract, transport boundary,
+and observable lifecycle. Semantic record correctness, implementation quality,
+attempt classification, escalation, and human acceptance remain
+reasoning/judgment controls.
 
 ## Scope
 

@@ -25,14 +25,8 @@
 
 ## Developer response contract
 
-```text
-Status:
-Handoff developer SHA:
-Files changed:
-Checks + perceived results:
-Blockers/decisions:
-Task record:
-```
+The six field names and order have one canonical owner:
+[`templates/developer-response-template.md`](templates/developer-response-template.md).
 
 `Status` is exactly `completed`, `blocked`, `failed`, or `needs decision`.
 `completed` is valid only after the handoff commit is pushed, and `Handoff

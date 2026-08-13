@@ -29,8 +29,10 @@ verified behavior-preserving simplifications from the supplied audit.
 ## Current position
 
 The disposable issues are reconciled and closed. Developer-side runtime,
-recovery, state, agent, tests, contracts, and implementation records are updated
-and pass focused exact-runtime validation; the coherent commit/push remains.
+recovery, state, agent, tests, contracts, and implementation records are pushed
+at `c7e57ee8c06ee822204fbf517a892101798d7598`. The seven-Source Project
+package is pushed at `48ca0f2f5f2c39574a9fabd66c470ec2832be700`;
+developer-owned integration validation and durable documentation now match it.
 
 ## Observed
 
@@ -114,6 +116,9 @@ reviewer suggestions confirmed directly in the repository.
 - Exact Node `22.13.0` `./scripts/validate-opencode-bridge.sh`: passed; bridge
   test suite 71/71 and branch-initializer suite 8/8.
 - Exact Node `22.13.0` `node scripts/validate-agent-system.mjs`: passed.
+- Exact Node `22.13.0` cross-branch integration validation against Project
+  `48ca0f2f5f2c39574a9fabd66c470ec2832be700`: passed.
+- Project package tests: 17/17 passed; standalone package validator passed.
 - `git diff --check`: passed.
 
 ## Blockers / required decisions
@@ -122,17 +127,15 @@ None.
 
 ## Remaining work
 
-- Commit and push the coherent developer-side implementation.
-- Tighten the web smoke interaction procedure.
-- Reconcile Project/package instructions and validators where a smaller design
-  preserves the same safety behavior.
-- Update durable implementation records, run exact-runtime validation, deploy
-  if runtime code changes, and synchronize both independent branches.
+- Commit and push the developer cross-branch validator/documentation
+  reconciliation.
+- Run exact-runtime full repository validation, deploy/restart the changed
+  bridge, reconcile final records, and publish the terminal handoff snapshot.
 
 ## Next action
 
-Commit and push the developer-side implementation with current AS-BUILT and
-protocol records, then implement the independent Project/package changes.
+Commit and push the developer integration/documentation reconciliation, then run
+full exact-runtime validation and deploy the changed bridge.
 
 ## Relevant durable records
 
