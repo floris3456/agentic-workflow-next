@@ -1,4 +1,5 @@
 import { OpenCodeClient, OpenCodeHttpError } from "./opencode.js";
+import { terminalResponseDelivery } from "./handoff.js";
 import { subscribeSse } from "./sse.js";
 import { BridgeState } from "./state.js";
 import type { JsonValue, ScoutSession, TaskSession } from "./types.js";
@@ -147,7 +148,7 @@ export class RecoveryCoordinator {
       ...(event.sessionKind ? { sessionKind: event.sessionKind } : {}),
       ...(event.aggregateId ? { aggregateId: event.aggregateId } : {}),
       ...(event.sequence === undefined ? {} : { durableSeq: event.sequence }),
-    });
+    }, terminalResponseDelivery(this.state, event));
     if (inserted) await this.onPersistedEvent?.(event);
     return inserted;
   }

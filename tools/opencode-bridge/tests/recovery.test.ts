@@ -135,6 +135,68 @@ test("session history pagination advances exclusively and fails when a page make
   await assert.rejects(stalled.recoverSessionHistory(state.getTaskSession("TASK-1")!), /pagination made no progress/);
 });
 
+test("terminal event, durable cursor, and response delivery survive the callback crash window atomically", async (context) => {
+  const root = mkdtempSync(join(tmpdir(), "opencode-bridge-terminal-atomic-"));
+  const statePath = join(root, "private", "bridge.sqlite");
+  context.after(() => rmSync(root, { recursive: true, force: true }));
+
+  const initial = new BridgeState(statePath);
+  initial.mapTaskSession("TASK-ATOMIC", "ses_atomic", 91, "luna");
+  const api = client(asFetch((request) => {
+    const url = new URL(request.url);
+    assert.equal(url.pathname, "/api/session/ses_atomic/history");
+    if (url.searchParams.get("after") === "7") return Response.json({ data: [], hasMore: false });
+    return Response.json({
+      data: [durable("evt_atomic_idle", "ses_atomic", 7, "session.idle")],
+      hasMore: false,
+    });
+  }));
+  const interrupted = new RecoveryCoordinator({
+    client: api,
+    state: initial,
+    onPersistedEvent: () => {
+      assert.equal(initial.pendingResponseDeliveries()[0]?.eventId, "evt_atomic_idle");
+      throw new Error("simulated process stop after durable event commit");
+    },
+  });
+  await assert.rejects(
+    interrupted.recoverSessionHistory(initial.getTaskSession("TASK-ATOMIC")!),
+    /simulated process stop/,
+  );
+  initial.close();
+
+  const restarted = new BridgeState(statePath);
+  context.after(() => restarted.close());
+  assert.equal(restarted.durableCursor("session-v2", "ses_atomic"), 7);
+  assert.equal(restarted.getTaskSession("TASK-ATOMIC")?.sessionState, "session.idle");
+  assert.deepEqual(restarted.pendingResponseDeliveries().map((delivery) => delivery.eventId), ["evt_atomic_idle"]);
+
+  const resumed = new RecoveryCoordinator({ client: api, state: restarted });
+  assert.equal(await resumed.recoverSessionHistory(restarted.getTaskSession("TASK-ATOMIC")!), 0);
+  assert.deepEqual(restarted.pendingResponseDeliveries().map((delivery) => delivery.eventId), ["evt_atomic_idle"]);
+});
+
+test("startup repair queues a terminal event persisted by an older bridge without replay", (context) => {
+  const state = stateForTest(context);
+  state.mapTaskSession("TASK-LEGACY", "ses_legacy", 92, "luna");
+  state.recordEvent({
+    eventKey: "opencode:evt_legacy_idle",
+    source: "session-v2",
+    eventType: "session.idle",
+    taskId: "TASK-LEGACY",
+    sessionId: "ses_legacy",
+    sessionKind: "developer",
+    aggregateId: "ses_legacy",
+    durableSeq: 4,
+    payload: durable("evt_legacy_idle", "ses_legacy", 4, "session.idle"),
+  });
+  assert.equal(state.pendingResponseDeliveries().length, 0);
+  assert.equal(state.recoverTerminalResponseDeliveries(), 1);
+  assert.equal(state.recoverTerminalResponseDeliveries(), 0);
+  assert.deepEqual(state.pendingResponseDeliveries().map((delivery) => delivery.eventId), ["evt_legacy_idle"]);
+  assert.equal(state.durableCursor("session-v2", "ses_legacy"), 4);
+});
+
 test("canonical reconciliation records a missing mapped session without hiding other state", async (context) => {
   const state = stateForTest(context);
   state.mapTaskSession("TASK-1", "ses_missing", 17, "luna");

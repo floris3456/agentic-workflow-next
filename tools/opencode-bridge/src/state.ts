@@ -11,6 +11,7 @@ import type {
   RequestEnvelope,
   RequestState,
   ResponseDelivery,
+  ResponseDeliveryInput,
   ScoutSession,
   SessionBinding,
   StoredCommand,
@@ -682,32 +683,35 @@ export class BridgeState {
   recordEvent(input: {
     eventKey: string; source: string; eventType: string; payload: JsonValue; taskId?: string; sessionId?: string;
     requestId?: string; sessionKind?: "developer" | "scout"; aggregateId?: string; durableSeq?: number;
-  }): boolean {
-    const result = this.db.prepare(`
-      INSERT OR IGNORE INTO events(
-        event_key, source, event_type, task_id, session_id, request_id,
-        session_kind, payload_json, aggregate_id, durable_seq, received_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
-      input.eventKey, input.source, input.eventType, input.taskId ?? null,
-      input.sessionId ?? null, input.requestId ?? null, input.sessionKind ?? null,
-      stableJson(input.payload), input.aggregateId ?? null,
-      input.durableSeq ?? null, now(),
-    );
-    if (result.changes === 0) {
-      this.db.prepare(`
-        UPDATE events SET task_id=COALESCE(task_id, ?), session_id=COALESCE(session_id, ?),
-          request_id=COALESCE(request_id, ?), session_kind=COALESCE(session_kind, ?),
-          aggregate_id=COALESCE(aggregate_id, ?), durable_seq=COALESCE(durable_seq, ?)
-        WHERE event_key=?
+  }, responseDelivery?: ResponseDeliveryInput): boolean {
+    return this.transaction(() => {
+      const result = this.db.prepare(`
+        INSERT OR IGNORE INTO events(
+          event_key, source, event_type, task_id, session_id, request_id,
+          session_kind, payload_json, aggregate_id, durable_seq, received_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).run(
-        input.taskId ?? null, input.sessionId ?? null, input.requestId ?? null,
-        input.sessionKind ?? null, input.aggregateId ?? null,
-        input.durableSeq ?? null, input.eventKey,
+        input.eventKey, input.source, input.eventType, input.taskId ?? null,
+        input.sessionId ?? null, input.requestId ?? null, input.sessionKind ?? null,
+        stableJson(input.payload), input.aggregateId ?? null,
+        input.durableSeq ?? null, now(),
       );
-    }
-    if (input.aggregateId && input.durableSeq !== undefined) this.setDurableCursor(input.source, input.aggregateId, input.durableSeq);
-    return result.changes > 0;
+      if (result.changes === 0) {
+        this.db.prepare(`
+          UPDATE events SET task_id=COALESCE(task_id, ?), session_id=COALESCE(session_id, ?),
+            request_id=COALESCE(request_id, ?), session_kind=COALESCE(session_kind, ?),
+            aggregate_id=COALESCE(aggregate_id, ?), durable_seq=COALESCE(durable_seq, ?)
+          WHERE event_key=?
+        `).run(
+          input.taskId ?? null, input.sessionId ?? null, input.requestId ?? null,
+          input.sessionKind ?? null, input.aggregateId ?? null,
+          input.durableSeq ?? null, input.eventKey,
+        );
+      }
+      if (input.aggregateId && input.durableSeq !== undefined) this.setDurableCursor(input.source, input.aggregateId, input.durableSeq);
+      if (responseDelivery) this.queueResponseDeliveryRecord(responseDelivery);
+      return result.changes > 0;
+    });
   }
 
   listEvents(taskId: string, after = 0, limit = 50): Array<{ journalId: number; eventType: string; payload: JsonValue; receivedAt: number }> {
@@ -720,33 +724,68 @@ export class BridgeState {
     }));
   }
 
-  queueResponseDelivery(input: {
-    eventId: string;
-    taskId: string;
-    sessionId: string;
-    issueNumber: number;
-    eventType: string;
-    deliveryKind?: "developer" | "scout";
-    requestId?: string;
-  }): void {
+  private queueResponseDeliveryRecord(input: ResponseDeliveryInput): boolean {
     const timestamp = now();
-    this.transaction(() => {
-      this.db.prepare(`
-        INSERT OR IGNORE INTO response_deliveries(
-          event_id, task_id, session_id, issue_number, event_type, delivery_kind,
-          request_id, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `).run(
-        input.eventId, input.taskId, input.sessionId, input.issueNumber,
-        input.eventType, input.deliveryKind ?? "developer", input.requestId ?? null,
-        timestamp, timestamp,
-      );
-      if (input.deliveryKind === "scout") {
-        if (!input.requestId) throw new Error("Scout response delivery requires request correlation");
-        this.updateScoutSessionState(input.requestId, input.eventType, input.eventId);
-      } else {
-        this.updateTaskSessionState(input.taskId, input.eventType, input.eventId);
+    const result = this.db.prepare(`
+      INSERT OR IGNORE INTO response_deliveries(
+        event_id, task_id, session_id, issue_number, event_type, delivery_kind,
+        request_id, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      input.eventId, input.taskId, input.sessionId, input.issueNumber,
+      input.eventType, input.deliveryKind ?? "developer", input.requestId ?? null,
+      timestamp, timestamp,
+    );
+    if (input.deliveryKind === "scout") {
+      if (!input.requestId) throw new Error("Scout response delivery requires request correlation");
+      this.updateScoutSessionState(input.requestId, input.eventType, input.eventId);
+    } else {
+      this.updateTaskSessionState(input.taskId, input.eventType, input.eventId);
+    }
+    return result.changes > 0;
+  }
+
+  queueResponseDelivery(input: ResponseDeliveryInput): void {
+    this.transaction(() => this.queueResponseDeliveryRecord(input));
+  }
+
+  recoverTerminalResponseDeliveries(): number {
+    return this.transaction(() => {
+      const rows = this.db.prepare(`
+        SELECT event_key, event_type, task_id, session_id, request_id
+        FROM events
+        WHERE lower(event_type) IN ('session.idle', 'session.error')
+          AND task_id IS NOT NULL AND session_id IS NOT NULL
+        ORDER BY journal_id
+      `).all() as Row[];
+      let recovered = 0;
+      for (const row of rows) {
+        const eventKey = String(row.event_key);
+        if (!eventKey.startsWith("opencode:")) continue;
+        const eventId = eventKey.slice("opencode:".length);
+        const taskId = String(row.task_id);
+        const sessionId = String(row.session_id);
+        const eventType = String(row.event_type);
+        if (row.request_id !== null && row.request_id !== undefined) {
+          const requestId = String(row.request_id);
+          const scout = this.getScoutSession(requestId);
+          if (!scout || scout.taskId !== taskId || scout.sessionId !== sessionId) continue;
+          if (this.queueResponseDeliveryRecord({
+            eventId, taskId, sessionId, eventType,
+            issueNumber: scout.issueNumber,
+            deliveryKind: "scout",
+            requestId,
+          })) recovered++;
+          continue;
+        }
+        const issueNumber = this.issueForTask(taskId);
+        const session = this.getTaskSession(taskId);
+        if (issueNumber === undefined || !session || session.sessionId !== sessionId) continue;
+        if (this.queueResponseDeliveryRecord({
+          eventId, taskId, sessionId, eventType, issueNumber, deliveryKind: "developer",
+        })) recovered++;
       }
+      return recovered;
     });
   }
 

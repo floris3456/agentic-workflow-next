@@ -174,6 +174,16 @@ export interface ResponseDelivery {
   updatedAt: number;
 }
 
+export interface ResponseDeliveryInput {
+  eventId: string;
+  taskId: string;
+  sessionId: string;
+  issueNumber: number;
+  eventType: string;
+  deliveryKind?: "developer" | "scout";
+  requestId?: string;
+}
+
 export interface OutboxItem {
   id: number;
   dedupeKey: string;

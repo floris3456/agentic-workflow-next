@@ -42,7 +42,7 @@ Before a normal response:
 3. leave `Last handoff commit` as the previous successful handoff SHA (or `None` for the first handoff);
 4. create a dedicated commit whose only intended purpose is the current task-progress handoff boundary;
 5. push successfully;
-6. report the resulting current handoff SHA in `Status`;
+6. report the resulting current handoff SHA in `Handoff developer SHA`;
 7. at the start of the next working cycle, record that SHA as `Last handoff commit`; and
 8. return the limited response.
 

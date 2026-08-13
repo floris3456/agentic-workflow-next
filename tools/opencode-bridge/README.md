@@ -56,7 +56,7 @@ Use the sequence-free `command.status` request on the existing task issue for th
 
 For a genuinely stuck `applying` command, wait only for the operation's bounded window, submit one `command.status`, and compare its applying age with the service heartbeat and local `opencode-bridge-status.sh` output. Never retry the uncertain mutation. If local process/upstream inspection cannot resolve it, stop and restart the bridge; startup records the command as `indeterminate`, after which reconcile task and remote Git evidence before issuing any fresh command.
 
-On mapped developer session idle or error, the bridge durably retrieves the latest assistant response, applies the normal public-safety projection, and queues it to the task issue. Retrieval failures retry without re-running the developer task. The bridge transports this response but does not validate its workflow meaning.
+On mapped developer session idle or error, the event, durable cursor, session state, and pending response delivery commit atomically. The bridge then retrieves the latest assistant response, applies the normal public-safety projection, and queues it to the task issue. Retrieval failures retry without re-running the developer task. The bridge transports this response but does not validate its workflow meaning.
 
 ## Read-only Scouts
 
@@ -67,6 +67,11 @@ evidence. The bridge fetches `developer`, verifies the commit in
 state parent, verifies the live `repository-scout` Luna/high read-only contract,
 then creates one request-correlated session. `scout.status` recovers that exact
 request's state and latest projected result.
+
+Recovery monitoring starts immediately after the Scout session mapping commits,
+before `session.prompt_async` can return an ambiguous transport result. If the
+prompt was accepted upstream but its response is lost, idle/error recovery and
+`scout.status` can still surface the result; the bridge never repeats the prompt.
 
 Scout worktree preparation may queue around Git's worktree lock, but independent
 sessions execute concurrently with no bridge policy cap and may coexist with one

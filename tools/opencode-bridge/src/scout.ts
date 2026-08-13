@@ -269,6 +269,9 @@ export class ScoutRuntime {
       refSha,
       workspacePath: workspace,
     });
+    // Monitoring begins from the durable mapping, before prompt delivery can
+    // become ambiguous. Recovery is read-only and never repeats the prompt.
+    this.onSessionStarted?.(request.requestId);
     try {
       await client.request("session.prompt_async", {
         path: { sessionID: internalSessionId },
@@ -283,7 +286,6 @@ export class ScoutRuntime {
         `Scout session was created, but prompt delivery was not proven: ${errorMessage(error)}`,
       );
     }
-    this.onSessionStarted?.(request.requestId);
     return {
       status: "scout-started",
       scout_request_id: request.requestId,

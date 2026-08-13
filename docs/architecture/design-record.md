@@ -49,14 +49,15 @@ triggered Sources instead of loading them on every turn.
 
 GitHub mutating commands use durable UUID/sequence semantics rather than direct-MCP delivery assumptions: sequence starts at exactly `1`, stays contiguous, and cannot advance while a prior command is accepted or applying. A separate UUID-idempotent, sequence-free request lane exposes `command.status` and `task.status` from durable local state without repeating work. The bridge stores private OpenCode mappings and raw recovery data locally, while only a bounded redacted projection enters public issues. Task-bound aliases, including workspaces, are stored per task. Capability parity comes from the pinned OpenCode operation manifest; consequential generic web operations remain locally allowlisted.
 
-When a mapped developer session idles or errors, the bridge transports the structurally latest assistant message through the existing public-safety projection to the bound issue and retains it for `task.status` recovery. The bridge does not interpret or semantically validate that response. The web orchestrator correlates it to the task, checks its explicit developer status/handoff information, and uses exact remote GitHub evidence to decide whether review can begin.
+When a mapped developer session idles or errors, the bridge atomically persists the event/cursor/session-state/delivery boundary, transports the structurally latest assistant message through the existing public-safety projection to the bound issue, and retains it for `task.status` recovery. The bridge does not interpret or semantically validate that response. The web orchestrator correlates it to the task, checks its explicit developer status/handoff information, and uses exact remote GitHub evidence to decide whether review can begin.
 
 Scout starts extend the sequence-free request lane rather than the mutating task
 lifecycle. Each request carries a focused question, exact remote developer SHA,
 scope, and expected evidence; a clean detached worktree and independent
 task/request/session mapping isolate it. Scout work can run concurrently without
 an orchestration-policy cap and can coexist with the one mutating developer task.
-Idle/error results reuse public projection and durable delivery, while synthesis
+Recovery monitoring begins as soon as the mapping is durable, before prompt
+delivery can become ambiguous, and never replays the prompt. Idle/error results reuse public projection and durable delivery, while synthesis
 stays in the web orchestrator.
 
 ## Synchronization and handoff

@@ -6,7 +6,7 @@
 
 ## Status
 
-Completed.
+In progress after sole final-review blocker verification.
 
 ## Task-start developer SHA
 
@@ -34,8 +34,8 @@ coherent commit.
 
 ## Current objective
 
-Completed: the bridge now provides the specified lifecycle, recovery views,
-alias isolation, and response transport with compatible durable migration.
+Close the verified crash window between durable terminal-event/cursor commit and
+response-delivery creation, with atomic persistence and regression coverage.
 
 ## Current position
 
@@ -58,6 +58,9 @@ at `7480d4ede556a068f00abce30da42e4eb064cdd3`. Later migration tasks advance
   read existed.
 - At task start, idle/error publication contained the event payload rather than
   the latest assistant response.
+- The sole final reviewer reproduced a later crash window: event insertion and
+  cursor advancement committed before the delivery callback created its durable
+  row, so a stop in between could strand a valid terminal response.
 
 ## Interpretation
 
@@ -71,6 +74,11 @@ message and applies the existing projection; no response field is parsed or
 judged by the bridge. Status results include timestamps and the service heartbeat
 so an orchestrator can perform one bounded reconciliation before operator restart
 makes an interrupted mutation indeterminate.
+
+Terminal event insertion, cursor advancement, mapped session-state update, and
+response-delivery creation now share one full-synchronous SQLite transaction.
+Startup also idempotently repairs any matching older terminal event that predates
+this invariant, without replaying a command or prompt.
 
 ## Attempts
 
@@ -90,6 +98,8 @@ None.
 - `./scripts/validate-repository.sh`: repository validation passed; bridge 48/48
   and branch-initializer 8/8.
 - `git diff --check`: passed.
+- Post-review focused host run: bridge suite 59/59, including a simulated stop
+  after the atomic commit and an older-state backfill/no-replay regression.
 
 ## Blockers / required decisions
 
@@ -99,11 +109,11 @@ integration-level external check with durable fallback rather than missing code.
 
 ## Remaining work
 
-None for this task.
+Implement and validate atomic terminal-event/delivery persistence.
 
 ## Next action
 
-None; task completed.
+Fix the verified final-review blocker and rerun exact-runtime validation.
 
 ## Relevant durable records
 

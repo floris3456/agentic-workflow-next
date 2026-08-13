@@ -6,7 +6,7 @@
 
 ## Status
 
-Completed.
+In progress after sole final-review blocker verification.
 
 ## Task-start developer SHA
 
@@ -31,9 +31,8 @@ commit.
 
 ## Current objective
 
-Completed: the separate lightweight Scout lifecycle, exact-ref isolation,
-concurrent read-only execution, durable response recovery, and six-field
-developer response contract are implemented and pushed.
+Close the verified ambiguous-prompt monitoring gap and correct the contradictory
+handoff-field sentence while preserving the canonical six-field contract.
 
 ## Current position
 
@@ -61,6 +60,10 @@ completed task boundary.
 - Session message pages are returned in chronological order after the runtime
   reverses its descending database query, so selecting the final assistant item
   yields the latest response.
+- The sole final reviewer reproduced that recovery registration followed the
+  prompt call: an accepted prompt whose HTTP response timed out could remain
+  unmonitored until an unrelated service restart. It also found one skill line
+  assigning the handoff SHA to `Status` instead of its dedicated field.
 
 ## Interpretation
 
@@ -69,6 +72,13 @@ Extend the existing sequence-free request lane with `scout.start` and
 worktree at one verified developer commit. This avoids the mutating issue/task
 progress/finalization lifecycle while reusing authorization, projection, event
 recovery, and public outbox boundaries.
+
+Register per-session read-only recovery immediately after the Scout mapping is
+durable and before prompt delivery. An ambiguous prompt result stays
+`indeterminate` and is never replayed, while any accepted upstream execution can
+still publish through the existing session stream. The handoff skill now names
+`Handoff developer SHA`; validation rejects a regression to assigning it to
+`Status`.
 
 ## Attempts
 
@@ -106,6 +116,9 @@ None.
 - `./scripts/validate-repository.sh`: repository validation passed; bridge
   56/56 and branch-initializer 8/8.
 - `git diff --check`: passed.
+- Post-review focused host run: bridge suite 59/59, including prompt-timeout
+  recovery-registration coverage; agent-system validation passed with the
+  dedicated handoff-field assertion.
 
 ## Blockers / required decisions
 
@@ -119,11 +132,12 @@ live-observation gap, not missing runtime behavior.
 
 ## Remaining work
 
-None for this task.
+Start mapped Scout recovery before prompt delivery can become ambiguous, correct
+the handoff skill, and add regression validation.
 
 ## Next action
 
-None; task completed.
+Implement both verified fixes and rerun exact-runtime validation.
 
 ## Relevant durable records
 

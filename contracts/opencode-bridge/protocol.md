@@ -75,7 +75,10 @@ there is no policy concurrency cap.
 `command.status`, `task.status`, and `scout.status` are local durable reads and
 never repeat work. `scout.start` creates and prompts at most one read-only session
 per request UUID. A restart while it is applying marks the request indeterminate
-and never repeats session creation or prompt delivery. All results are navigation
+and never repeats session creation or prompt delivery. As soon as session mapping
+is durable, read-only per-session recovery starts before prompt delivery, so an
+accepted prompt with an ambiguous HTTP result can still surface through
+`scout.status` without replay or restart. All results are navigation
 and recovery evidence; they do not prove implementation completion, correctness,
 synchronization, review, or acceptance.
 
@@ -125,7 +128,8 @@ The bridge first queues an accepted ACK, then `applying`, then a terminal status
 Raw OpenCode results and events remain in the mode-restricted local database. GitHub projection replaces private session, PTY, permission, question, message, workspace, and event IDs, including embedded text and object-key occurrences, with globally unique task-scoped aliases, redacts secret-like fields and text, removes local paths, neutralizes active Markdown, limits depth/collections/strings, and retains oversized results locally. Local-secret failures publish fixed non-sensitive text while detailed upstream errors remain local.
 
 After a mapped developer session emits `session.idle` or `session.error`, the
-committed event creates a durable response-delivery record. The bridge structurally
+event journal row, durable cursor, session state, and response-delivery row commit
+in one SQLite transaction. The bridge structurally
 selects the latest assistant message, applies the existing public projection,
 stores that projected response with the mapped task, and queues it to the bound
 issue. Retrieval/publication failures remain pending and retry idempotently. The
@@ -134,7 +138,7 @@ fields. `task.status` returns the same latest projected value for missed-result
 recovery.
 
 After a mapped Scout session idles or errors, the same committed-event and
-public-projection path selects its latest assistant response, stores it under the
+atomic-delivery and public-projection path selects its latest assistant response, stores it under the
 exact task and Scout request, and queues it to the bound issue with the requested
 ref. `scout.status` provides missed-result recovery. The bridge does not turn
 Scout facts into an orchestration or implementation decision.

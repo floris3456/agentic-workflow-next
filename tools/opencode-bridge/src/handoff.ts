@@ -2,7 +2,7 @@ import { OpenCodeClient } from "./opencode.js";
 import { PublicProjection } from "./projection.js";
 import type { PersistedOpenCodeEvent } from "./recovery.js";
 import { BridgeState } from "./state.js";
-import type { JsonValue, ResponseDelivery } from "./types.js";
+import type { JsonValue, ResponseDelivery, ResponseDeliveryInput } from "./types.js";
 import { asJson, errorMessage, isRecord } from "./util.js";
 
 export function latestAssistantMessage(value: JsonValue | undefined): JsonValue {
@@ -19,21 +19,43 @@ export function latestAssistantMessage(value: JsonValue | undefined): JsonValue 
   return latest ?? null;
 }
 
-export function queueDeveloperResponseEvent(
+export function terminalResponseDelivery(
   state: BridgeState,
   event: PersistedOpenCodeEvent,
-): ResponseDelivery | undefined {
-  if (event.requestId || !event.taskId || !event.sessionId || !/session\.(?:idle|error)/i.test(event.eventType)) return undefined;
+): ResponseDeliveryInput | undefined {
+  if (!event.taskId || !event.sessionId || !/session\.(?:idle|error)/i.test(event.eventType)) return undefined;
+  if (event.requestId) {
+    const scout = state.getScoutSession(event.requestId);
+    if (!scout || scout.taskId !== event.taskId || scout.sessionId !== event.sessionId) return undefined;
+    return {
+      eventId: event.eventId,
+      taskId: event.taskId,
+      sessionId: event.sessionId,
+      issueNumber: scout.issueNumber,
+      eventType: event.eventType,
+      deliveryKind: "scout",
+      requestId: event.requestId,
+    };
+  }
   const issueNumber = state.issueForTask(event.taskId);
   if (issueNumber === undefined) return undefined;
-  state.queueResponseDelivery({
+  return {
     eventId: event.eventId,
     taskId: event.taskId,
     sessionId: event.sessionId,
     issueNumber,
     eventType: event.eventType,
     deliveryKind: "developer",
-  });
+  };
+}
+
+export function queueDeveloperResponseEvent(
+  state: BridgeState,
+  event: PersistedOpenCodeEvent,
+): ResponseDelivery | undefined {
+  const delivery = terminalResponseDelivery(state, event);
+  if (!delivery || delivery.deliveryKind !== "developer") return undefined;
+  state.queueResponseDelivery(delivery);
   return state.pendingResponseDeliveries(100).find((delivery) => delivery.eventId === event.eventId);
 }
 
@@ -41,18 +63,9 @@ export function queueScoutResponseEvent(
   state: BridgeState,
   event: PersistedOpenCodeEvent,
 ): ResponseDelivery | undefined {
-  if (!event.requestId || !event.taskId || !event.sessionId || !/session\.(?:idle|error)/i.test(event.eventType)) return undefined;
-  const scout = state.getScoutSession(event.requestId);
-  if (!scout || scout.taskId !== event.taskId || scout.sessionId !== event.sessionId) return undefined;
-  state.queueResponseDelivery({
-    eventId: event.eventId,
-    taskId: event.taskId,
-    sessionId: event.sessionId,
-    issueNumber: scout.issueNumber,
-    eventType: event.eventType,
-    deliveryKind: "scout",
-    requestId: event.requestId,
-  });
+  const delivery = terminalResponseDelivery(state, event);
+  if (!delivery || delivery.deliveryKind !== "scout") return undefined;
+  state.queueResponseDelivery(delivery);
   return state.pendingResponseDeliveries(100).find((delivery) => delivery.eventId === event.eventId);
 }
 

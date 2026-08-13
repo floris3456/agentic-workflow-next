@@ -116,6 +116,11 @@ const expectedResponse = [
 ].join("\n") + "\n";
 assert(read("docs/work/templates/developer-response-template.md") === expectedResponse,
   "Developer response template must contain exactly the six canonical fields");
+const handoffSkill = read(".opencode/skills/git-sync-and-handoff/SKILL.md");
+assert(handoffSkill.includes("report the resulting current handoff SHA in `Handoff developer SHA`"),
+  "git-sync-and-handoff must assign the handoff SHA to its dedicated field");
+assert(!handoffSkill.includes("handoff SHA in `Status`"),
+  "git-sync-and-handoff must not assign the handoff SHA to Status");
 for (const file of [
   ".opencode/agents/small-developer.md",
   ".opencode/agents/large-developer.md",

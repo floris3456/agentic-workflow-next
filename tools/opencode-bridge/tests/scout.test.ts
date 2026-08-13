@@ -259,6 +259,51 @@ test("Scout runtime selects the enforced agent and correlates an exact-ref sessi
   assert.doesNotMatch(JSON.stringify(result.publicResult), /ses_scout_private|\/snapshot/);
 });
 
+test("Scout recovery starts from the durable mapping before prompt delivery can become ambiguous", async (context) => {
+  const { root, state } = fixture(context);
+  const workspaces = new ScoutWorkspaceManager(root, join(root, "private", "bridge.sqlite"));
+  workspaces.prepare = async () => "/snapshot";
+  const client = new OpenCodeClient({
+    baseUrl: "http://127.0.0.1:4096",
+    username: "bridge",
+    password: "test",
+    directory: "/snapshot",
+    manifest,
+    fetch: (() => { throw new Error("unexpected fetch"); }) as typeof fetch,
+  });
+  client.compatibility = async () => ({
+    compatible: true,
+    runningVersion: "1.18.16",
+    expectedVersion: "1.18.16",
+    actualHash: "same",
+    expectedHash: "same",
+    added: [],
+    removed: [],
+    changed: [],
+  });
+  client.request = async (operation) => {
+    if (operation === "app.agents") return agentContract;
+    if (operation === "tool.ids") return scoutTools;
+    if (operation === "session.create") return { id: "ses_ambiguous" };
+    if (operation === "session.prompt_async") throw new Error("response timed out after acceptance");
+    throw new Error(`unexpected operation ${operation}`);
+  };
+  const started: string[] = [];
+  const scout = new ScoutRuntime({
+    state,
+    workspaces,
+    clientFor: () => client,
+    onSessionStarted: (requestId) => {
+      assert.equal(state.getScoutSession(requestId)?.sessionId, "ses_ambiguous");
+      started.push(requestId);
+    },
+  });
+  const accepted = state.acceptRequest(scoutStart("51000000-0000-4000-8000-000000000001"), 51).request;
+  await assert.rejects(scout.start(accepted), /prompt delivery was not proven/);
+  assert.deepEqual(started, [accepted.requestId]);
+  assert.equal(state.getScoutSession(accepted.requestId)?.sessionState, "starting");
+});
+
 test("Scout results and status stay task and request correlated without leakage", async (context) => {
   const { state, projection } = fixture(context);
   const firstId = "60000000-0000-4000-8000-000000000001";

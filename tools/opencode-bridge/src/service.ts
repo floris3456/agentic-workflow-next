@@ -328,6 +328,7 @@ export class BridgeService {
       } catch (error) {
         this.state.setMeta("service.last_error", this.projection.safeText(errorMessage(error)));
       }
+      this.state.recoverTerminalResponseDeliveries();
       this.executor.requeueCompletedResults();
       this.requests.requeueCompletedResults();
       this.executor.ptys.restore();

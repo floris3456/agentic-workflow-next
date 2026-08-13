@@ -6,7 +6,7 @@
 
 ## Status
 
-Completed.
+In progress after the sole final review.
 
 ## Task-start developer SHA
 
@@ -27,9 +27,8 @@ mechanically clean branch candidates without modifying or promoting `main`.
 
 ## Current objective
 
-Completed: the cross-branch compatibility validator, full exact-runtime
-validation, durable-record reconciliation, and developer integration boundary
-are implemented and pushed.
+Resolve and independently verify the sole final review's four blocking findings,
+then repeat the complete exact-runtime and cross-branch validation gates.
 
 ## Current position
 
@@ -47,6 +46,10 @@ stale-progress reconciliation only; no implementation or design behavior changed
   1 mutating start example.
 - Developer bridge tests cover the runtime lifecycle, status, projected response,
   Scout concurrency, and isolation requirements independently.
+- The sole GPT-5.6 Sol/max reviewer completed once against the exact prior
+  candidates and reported four blockers. Independent inspection reproduced each:
+  atomic delivery, ambiguous Scout monitoring, dynamic routing validation, and
+  the handoff-field sentence.
 
 ## Interpretation
 
@@ -71,6 +74,12 @@ blocked proxy and set the synchronization-failure guard. No further commit was
 made. The repository recovery script ran through the established proxy-free Git
 route, pushed that exact commit as a fast-forward, fetched it back, verified local
 and remote identity, and cleared the guard without rewriting history.
+
+The prescribed final-review command's obsolete `-a never` flag was rejected by
+the current CLI before any session/result existed. The one permitted technical
+retry omitted only that flag; the CLI reported approval `never`, read-only
+sandboxing, GPT-5.6 Sol, and maximum reasoning, then produced the four findings
+above. No second review will be run after their fixes.
 
 ## Changed approach
 
@@ -110,6 +119,8 @@ None.
   failed-push guard is absent.
 - Scoped required-marker scan: no `TODO`, `TBD`, or `FIXME` in active changed
   architecture/workflow/bridge/contract surfaces.
+- Post-review focused host checks: bridge 59/59, Project 11/11 plus standalone
+  package validation, agent-system validation, and `git diff --check` all passed.
 
 ## Blockers / required decisions
 
@@ -120,11 +131,12 @@ does not depend on it.
 
 ## Remaining work
 
-None for this developer task.
+Integrate the verified developer/web fixes, reconcile durable records, and run
+the final validation/synchronization matrix.
 
 ## Next action
 
-None; task completed.
+Finish blocker fixes and final evidence; do not launch another reviewer.
 
 ## Relevant durable records
 
