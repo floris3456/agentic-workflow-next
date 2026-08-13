@@ -2,20 +2,20 @@
 
 - Continuity schema: agentic-bridge/1
 - Task ID: WEB-ORCHESTRATOR-REDESIGN-001
-- Status: Human-approved design; developer Tasks 1-2 and Project-package Task 3 pushed
+- Status: Human-approved design fully implemented; all four bounded tasks pushed and final review pending
 - Design approval: Human confirmed the corrected design in chat on 2026-08-13
 - Human goal: Make the web orchestrator extremely fast and efficient while still completing the human's task, applying safety and thoroughness in proportion to the task, and preserving the genuinely different MCP-ON and MCP-OFF operating modes.
 - Current orchestration objective: Finish cross-branch deterministic validation and publish synchronized branch candidates without promoting `main`.
 - Task-start developer SHA: `6127611113dfdb66f93a0cfd2d355359aa370833`
-- Last reviewed developer SHA: 6127611113dfdb66f93a0cfd2d355359aa370833
-- Current handoff developer SHA: `d2ddfd6aa5c34d1abe8d1f2127108c859f262045`
+- Last reviewed developer SHA: `2fb851149d9e2e1f65919a21a63603f049d7456c`
+- Current handoff developer SHA: `2fb851149d9e2e1f65919a21a63603f049d7456c`
 - Substantive implementation approval SHA: none
 - Finalization handoff developer SHA: none
 - Human-approved promotion SHA: none
 - Human approval date/reference: none
 - Verified post-promotion main SHA: none
 - Verified post-promotion developer SHA: none
-- Relevant repository refs: `developer` at `d2ddfd6aa5c34d1abe8d1f2127108c859f262045`; `main` unchanged at `6127611113dfdb66f93a0cfd2d355359aa370833`; `web-orchestration` Project-package implementation commit `b5504d37d5474e18ff36399f73abbfe08d20eb80` from design baseline `36adae35552c8e32ce8ee8f446aa586eec20b969`
+- Relevant repository refs: `developer` candidate `2fb851149d9e2e1f65919a21a63603f049d7456c`; `main` unchanged at `6127611113dfdb66f93a0cfd2d355359aa370833`; `web-orchestration` Project-package handoff `d89b22a439047558ffccbda32a04b14a376b170a` from design baseline `36adae35552c8e32ce8ee8f446aa586eec20b969`, with final integration reconciliation pending in this record
 - Last orchestration mode: not established; this is design capture, not a bridge operation
 - Bridge control issue: none
 - Bridge control issue state: none
@@ -340,6 +340,31 @@ Routine scouting, delegation, review, and correction proceed without repeated hu
 - The current task `status` command reports session state, while recovery still lacks exact command-ledger lookup.
 - The current single mutating-task model is compatible with unlimited read-only Scouts only if Scout sessions receive a separate non-mutating concurrency path.
 
+## Implementation validation
+
+- Developer bridge/Scout behavior has 56 deterministic tests covering exact
+  sequence/nonterminal admission, applying/restart handling, status reads,
+  response transport/retry, public projection, task-bound aliases, Scout
+  permissions/exact-ref isolation/concurrency, and cross-task result isolation.
+- The Project package has nine positive/negative tests and validates exactly
+  eight Sources, separate MCP-ON/MCP-OFF workflow and scouting triggers, the
+  command/request examples, installation/upgrade consistency, proportional and
+  high-stakes review rules, human boundaries, and all seven acceptance examples.
+- A developer-owned cross-branch validator compares the supplied independent
+  Project candidate to the developer command/request schemas, exact six-field
+  response, developer/Scout agents, non-semantic response transport, and public
+  lifecycle. It passes against Project-package handoff
+  `d89b22a439047558ffccbda32a04b14a376b170a` and developer candidate
+  `2fb851149d9e2e1f65919a21a63603f049d7456c`.
+- Full repository validation plus cross-branch validation passed on exact Node
+  22.13.0: bridge 56/56 and branch initializer 8/8. The Project suite passed
+  9/9 and its standalone validator passed on the same runtime.
+- No GitHub App private key/native ChatGPT account was available for a live issue
+  round trip, and this migration forbids exercising its new Scout on itself.
+  Deterministic doubles plus durable event/status recovery cover the complete
+  conservative path; every new MCP-ON turn reconciles the bound issue, so
+  correctness does not assume autonomous Project wake-up.
+
 ## Steering issued
 
 - The earlier idea of one shared orchestration workflow and one shared scouting workflow was rejected. Preserve distinct MCP-ON and MCP-OFF operating procedures while consolidating only genuine shared policy and same-mode co-trigger groups.
@@ -361,13 +386,14 @@ Routine scouting, delegation, review, and correction proceed without repeated hu
 
 - The approved design baseline is `web-orchestration` SHA
   `36adae35552c8e32ce8ee8f446aa586eec20b969`. Developer bridge/Scout runtime
-  Tasks 1-2 are pushed through
-  `d2ddfd6aa5c34d1abe8d1f2127108c859f262045`; the audited eight-Source Project
-  package is implemented, deterministically validated, and pushed at
-  `b5504d37d5474e18ff36399f73abbfe08d20eb80`.
+  and cross-branch integration Tasks 1, 2, and 4 are pushed through
+  `2fb851149d9e2e1f65919a21a63603f049d7456c`; the audited eight-Source Project
+  package implementation is pushed at
+  `b5504d37d5474e18ff36399f73abbfe08d20eb80` with its prior record snapshot at
+  `d89b22a439047558ffccbda32a04b14a376b170a`.
 
 ## Current next action
 
-Complete cross-branch deterministic scenarios, durable-record reconciliation,
-full validation, and the single final read-only review. Do not promote to `main`
-without later exact-SHA approval.
+Push this final integration reconciliation, rerun exact-head validation, and run
+the single final read-only review. Do not promote to `main` without later
+exact-SHA approval.
