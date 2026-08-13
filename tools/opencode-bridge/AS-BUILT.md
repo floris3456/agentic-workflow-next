@@ -86,6 +86,9 @@ Issue #8 then proved that legacy-created Scout sessions can complete while v2
 history remains empty. Three completed responses stayed `starting` until the
 workspace/canonical recovery path above was added. Safe cleanup also exposed a
 stale guard marker that became eligible after a different issue closed; durable
-poller-gate rejection now prevents that transition. The service restart path is
-wired to recover mapped Scouts without prompt replay and is covered by the
-deterministic composite-recovery regression in `BRIDGE-SCOUT-RECOVERY-001`.
+poller-gate rejection now prevents that transition. A controlled service restart
+at developer `d19fefae529ad411b6e32bd85e4165038903c980` recovered all five
+historical mapped Scouts (including the three from issues #8/#9) from `starting`
+to `session.idle`, projected each response to its bound issue, and drained the
+response/outbox queues. Every recovered session still had exactly one user
+message, proving the boot path did not replay its prompt.

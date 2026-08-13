@@ -26,7 +26,7 @@ Correct live Scout completion transport and recovery without replaying Scout pro
 
 ## Current position
 
-The failed main smoke was aborted terminally at sequence 5 and issues #8 and #9 are closed; no labeled control issue remains open. The bridge now has focused implementation and deterministic coverage for exact-workspace Scout completion recovery and durable parse-valid poller-gate rejection. Focused TypeScript build and 22 recovery/protocol tests pass; documentation is aligned. Live deployment and integrated validation remain.
+The failed main smoke was aborted terminally at sequence 5 and issues #8 and #9 are closed; no labeled control issue remains open. The implementation is pushed at `d19fefae529ad411b6e32bd85e4165038903c980`, deployed, and recovered all five historical Scouts on controlled restart without prompt replay. Focused and full bridge validation passes. Web-package alignment and final integrated validation remain.
 
 ## Observed
 
@@ -65,6 +65,10 @@ The implementation scope now also includes durable suppression/status visibility
 - `npm run build`: passed.
 - Focused recovery/protocol suite: 22/22 passed.
 - Full bridge suite first run: 64/65 passed; the sole failure was order-sensitive test output, not behavior. After correcting the assertion to compare the unordered durable-delivery set, the full suite passed 65/65.
+- Commit `d19fefae529ad411b6e32bd85e4165038903c980` pushed to `origin/developer`; the hook's proxy failure and one transient GitHub 500 were followed by a successful unchanged push.
+- Exact Node 22.13.0 build passed; controlled bridge restart returned `active` and `enabled`.
+- Live boot recovery: five Scout mappings became `session.idle`, five projected responses appeared on issues #4/#8/#9, response deliveries pending `0`, outbox pending `0`, canonical-recovery events `5`.
+- No-replay check: all five recovered OpenCode sessions contain exactly one user message.
 
 ## Blockers / required decisions
 
@@ -72,14 +76,13 @@ None.
 
 ## Remaining work
 
-- Commit and push the coherent developer correction.
 - Coordinate the Project recovery instructions and validators on `web-orchestration`.
-- Run focused, exact-runtime, full repository, and cross-branch validation; deploy and prove recovery of the existing completed Scouts.
-- Push implementation and final handoff snapshots.
+- Run exact-runtime full repository and cross-branch validation.
+- Push durable evidence and final handoff snapshots.
 
 ## Next action
 
-Inspect the final implementation/documentation diff, then commit and push the coherent developer correction before controlled deployment.
+Implement the minimal Project connector-recovery clarification and validator coverage on `web-orchestration`.
 
 ## Relevant durable records
 
@@ -91,4 +94,4 @@ Inspect the final implementation/documentation diff, then commit and push the co
 
 ## Last handoff commit
 
-None
+`d19fefae529ad411b6e32bd85e4165038903c980`
