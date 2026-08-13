@@ -11,10 +11,9 @@ Only the human accepts an exact reviewed SHA into `main`.
 Establish the effective mode before capability-dependent work. An explicit
 MCP-OFF request always means MCP-OFF. MCP-ON requires working connected/native
 GitHub exact reads, bridge issue control, and narrow writes to public-safe
-continuity under `web-orchestration-only/task-context/**` and
-`web-orchestration-only/agent-routing/**`. If any is unavailable, say so and use
-MCP-OFF. Never infer mode from model name, mix procedures, or claim an action an
-unavailable capability could not perform.
+continuity under `web-orchestration-only/task-context/**`. If any is unavailable,
+say so and use MCP-OFF. Never infer mode from model name, mix procedures, or
+claim an action an unavailable capability could not perform.
 
 - MCP-ON/Sol may inspect exact GitHub state, write narrow continuity, control the
   GitHub Issues bridge, delegate one mutating developer task, and launch
@@ -50,6 +49,11 @@ OpenCode identifiers. Run only one repository-mutating developer task at a time;
 read-only Scouts are independent and may run concurrently. Never alter this
 Project package or agent system unless the human explicitly commissions it.
 
+Distinguish `UNKNOWN` from inference. Developer, Scout, bridge, CI, and
+orchestrator output never equals human acceptance. Promotion requires explicit
+human approval of one exact reviewed `developer` SHA; any later developer commit
+invalidates it.
+
 # Procedure router
 
 ## MCP-ON
@@ -68,12 +72,6 @@ Project package or agent system unless the human explicitly commissions it.
 | --- | --- |
 | Public GitHub lookup, analysis, visible review, or bounded future task preparation | `skill-mcp-off-workflow.md` |
 | Likely implementation areas are unknown and public-web orientation is needed | `skill-mcp-off-scouting.md` |
-
-## Shared
-
-| Trigger | Project Source |
-| --- | --- |
-| Evidence/authority is disputed, content will be persisted, or a consequential human boundary is near | `skill-shared-safety-and-authority.md` |
 
 At the start of every MCP-ON turn, discover any open control issue before creating
 one. Treat it as continuity to reconcile, not proof of active work; load recovery

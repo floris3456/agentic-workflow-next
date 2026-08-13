@@ -20,6 +20,17 @@
 - Last bridge sequence: <positive integer or none>
 - Last bridge command: <uuid, kind, and lifecycle state or none>
 
+## Routing
+
+- Selected developer: none | Luna | Sol
+- Luna substantive-attempt count: 0 | 1 | 2
+- Selection route: none | default Luna | immediate Sol | Sol after two substantive Luna failures
+- Reason: <concise orchestrator reasoning or none>
+- Attempt classifications: <attempt/ref and basis, or none>
+- Route changes: <date, issue/command ref, old -> new, and reason, or none>
+- Result: <outcome or pending>
+- Retrospective: <concise routing lesson or pending>
+
 ## Pending bridge command
 
 - State: none | prepared | posted | pre-ledger-rejected | terminal-unresolved | cancelled

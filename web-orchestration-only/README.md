@@ -14,12 +14,12 @@ This independent branch stores concise, public-safe continuity and reusable inst
 ## Contents
 
 - `task-context/<task-id>.md`: focused orchestration continuity.
-- `agent-routing/<task-id>.md`: Luna/Sol routing record for a task.
-- `chatgpt-project/`: concise permanent router plus eight generalized public-safe
+- `chatgpt-project/`: concise permanent router plus seven generalized public-safe
   Project Sources with distinct MCP-ON/MCP-OFF workflows and scouting.
-- `validate-package.mjs` and `validate-package.test.mjs`: exact Project/static-package inventory, safe task-routing-record,
-  installation, continuity, mode-separation, bridge request/command contract, and
-  acceptance-scenario validation with negative drift fixtures.
+- `validate-package.mjs` and `validate-package.test.mjs`: Project/static-package
+  inventory, task-context continuity/routing, installation, mode separation, and
+  executable bridge request/command contract checks with focused safety-negative
+  fixtures.
 
 Anything written here or in a bridge-control issue, including hidden command markers and projected results, is public disclosure. Do not store secrets, private chat details, personal data, raw sensitive values, connector credentials, absolute host-local paths, or unsupported allegations.
 

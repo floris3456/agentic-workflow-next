@@ -17,10 +17,9 @@ routing record, or implementation task.
 2. Inspect the narrow exact GitHub context first. Load the MCP-ON scouting Source
    only when broad/local exploration or parallel partitioning will save time.
 3. Establish the exact remote `developer` task-start SHA. Maintain one concise
-   public-safe `web-orchestration-only/task-context/<task-id>.md` and, when an
-   implementation route is selected, one
-   `web-orchestration-only/agent-routing/<task-id>.md` on `web-orchestration`.
-   Never write implementation content to `developer` or `main`.
+   public-safe `web-orchestration-only/task-context/<task-id>.md`, including its
+   compact routing section, on `web-orchestration`. Never write implementation
+   content to `developer` or `main`.
 4. Design one bounded public-safe task with stable ID, outcome, start SHA, scope,
    constraints, required records, proportional checks, stop conditions, and this
    exact developer response contract:
@@ -96,11 +95,14 @@ Task record:
     waste, classify substantive Luna failures accurately, and escalate route or
     the genuinely human-owned decision when warranted. Prefer corrective commits
     or `git revert`, never shared-history rewriting.
-13. For a projected permission/question from `<bridge-bot-login>`, verify task
-    correlation and load the shared safety Source. Use `permission.reply` with a
-    task-owned alias; `once` is allowed only for already authorized safe work,
-    `always` needs human approval, and `reject` is the safe default. Use
-    `question.reply` only for public-safe, in-scope answers. Use `abort` only when
+13. On every issue refresh, resolve the newest unmatched task-correlated
+    permission/question from `<bridge-bot-login>` before posting a progress,
+    status, steer, or route command. Never leave a developer waiting on a visible
+    interaction while using status as a substitute. Use `permission.reply` with
+    a task-owned alias; `once` is allowed only for already authorized safe work,
+    `always` needs human approval, and `reject` is the safe default for an
+    unexpected request. Use `question.reply` only for public-safe, in-scope
+    answers; otherwise escalate the real decision. Use `abort` only when
     authorized; it does not revert prior effects.
 14. When substantive work is acceptable, record the exact reviewed SHA. Load
     finalization only if repository durable-record policy requires it. Otherwise

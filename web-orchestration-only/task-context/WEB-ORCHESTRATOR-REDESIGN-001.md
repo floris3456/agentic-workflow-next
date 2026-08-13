@@ -2,25 +2,36 @@
 
 - Continuity schema: agentic-bridge/1
 - Task ID: WEB-ORCHESTRATOR-REDESIGN-001
-- Status: Complete; sole final-review blockers and the post-live existing-issue recovery gap are corrected
+- Status: In progress; issue-#10 interaction handling and simplicity-audit corrections are being integrated
 - Design approval: Human confirmed the corrected design in chat on 2026-08-13
 - Human goal: Make the web orchestrator extremely fast and efficient while still completing the human's task, applying safety and thoroughness in proportion to the task, and preserving the genuinely different MCP-ON and MCP-OFF operating modes.
-- Current orchestration objective: Implementation complete; preserve exact-SHA human review/promotion authority without modifying `main`.
+- Current orchestration objective: Complete the bounded post-smoke correction and package simplification while preserving exact-SHA human review/promotion authority and leaving `main` unchanged.
 - Task-start developer SHA: `6127611113dfdb66f93a0cfd2d355359aa370833`
 - Last reviewed developer SHA: `b100942ecfc8049c5583276180043a99033bcc7b` (sole external reviewer range; later fixes were verified by the sole implementer as required)
-- Current handoff developer SHA: `daf9b226a4dd87b4fc6741713fcd8a065e08bccf`
+- Current handoff developer SHA: `c7e57ee8c06ee822204fbf517a892101798d7598`
 - Substantive implementation approval SHA: none
 - Finalization handoff developer SHA: none
 - Human-approved promotion SHA: none
 - Human approval date/reference: none
 - Verified post-promotion main SHA: none
 - Verified post-promotion developer SHA: none
-- Relevant repository refs: `developer` final candidate `daf9b226a4dd87b4fc6741713fcd8a065e08bccf`; `main` unchanged at `6127611113dfdb66f93a0cfd2d355359aa370833`; `web-orchestration` review-fix implementation `bbd636d6591d556e3ab15a374b3c31e8d319b93a` from design baseline `36adae35552c8e32ce8ee8f446aa586eec20b969` (this final metadata snapshot follows it)
+- Relevant repository refs: `developer` post-smoke implementation `c7e57ee8c06ee822204fbf517a892101798d7598`; `main` unchanged at `6127611113dfdb66f93a0cfd2d355359aa370833`; `web-orchestration` package simplification is represented by this record's commit from parent `a1decee2bbfa44486ec7b7597e863df91c18c160` (the exact pushed candidate is recorded at handoff)
 - Last orchestration mode: not established; this is design capture, not a bridge operation
 - Bridge control issue: none
 - Bridge control issue state: none
 - Last bridge sequence: none
 - Last bridge command: none
+
+## Routing
+
+- Selected developer: none
+- Luna substantive-attempt count: 0
+- Selection route: none
+- Reason: the human commissioned a sole-agent local migration; no bridge developer route applies
+- Attempt classifications: none
+- Route changes: none
+- Result: local implementation in progress
+- Retrospective: routing is not applicable to this sole-agent migration
 
 ## Pending bridge command
 
@@ -310,12 +321,14 @@ Routine scouting, delegation, review, and correction proceed without repeated hu
 
 ## Resolved implementation questions
 
-- The concrete trigger/dependency audit consolidates 19 Sources to eight: one
-  shared safety/authority Source; separate MCP-ON normal workflow, scouting,
-  recovery, finalization, and promotion Sources; and separate MCP-OFF web-only
-  workflow and scouting Sources. Review/task-design detail moves into each mode
-  because its mechanics differ. Recovery, finalization, and promotion remain
-  exceptional rather than loading during routine work.
+- The concrete trigger/dependency audit now consolidates 19 Sources to seven:
+  separate MCP-ON normal workflow, scouting, recovery, finalization, and
+  promotion Sources; and separate MCP-OFF web-only workflow and scouting
+  Sources. Shared safety/authority is always needed and small enough to remain
+  permanently visible instead of requiring a separate trigger. Review/task-
+  design detail moves into each mode because its mechanics differ. Recovery,
+  finalization, and promotion remain exceptional rather than loading during
+  routine work.
 - Concurrent Scouts use UUID-idempotent `scout.start`/`scout.status` requests on
   the sequence-free issue lane, with independent session/request/worktree state
   and no mutating-task progress/finalization lifecycle.
@@ -343,10 +356,10 @@ Routine scouting, delegation, review, and correction proceed without repeated hu
 - Scout per-session recovery starts immediately after its durable mapping and
   before prompt delivery, so an accepted prompt with an ambiguous HTTP result
   can still surface without replay or a service restart.
-- The routing validator keeps `README.md` and `TEMPLATE.md` mandatory while
-  permitting only task-ID-named regular Markdown routing records with matching
-  identity and a concrete Luna/Sol route. Normal continuity writes therefore do
-  not invalidate the exact Project/static-package checks.
+- Routing is one compact section in task context. The validator admits only
+  task-ID-named regular Markdown context records with matching identity and a
+  concrete `none`/Luna/Sol route; a second routing file and its duplicated refs
+  are no longer created.
 - Every MCP-ON turn discovers open control issues before creating one. The short
   permanent rule routes unknown state to recovery, where authenticated public
   continuity distinguishes an active task, a response awaiting review, a safely
@@ -369,7 +382,7 @@ Routine scouting, delegation, review, and correction proceed without repeated hu
 
 | Existing group | Implemented Source | Co-trigger/dependency evidence |
 | --- | --- | --- |
-| shared evidence/authority + human boundaries + public-safe persistence | shared safety and authority | Same evidence honesty, disclosure, and human-authority rules apply in both modes and are consulted together before persistent or consequential action. |
+| shared evidence/authority + human boundaries + public-safe persistence | permanent router (not a Source) | These short rules apply in every mode and before every persistent or consequential action, so a separately triggered Source only duplicated always-visible policy. |
 | shared task design/review reasoning + MCP-ON routing, orchestration state, task delegation, remote review, task review/steering | MCP-ON workflow | A normal implementation always designs one task, selects a route, persists state, delegates, interprets a handoff, reviews remotely, and either completes or steers; splitting these caused repeated loading. |
 | MCP-ON repository scouting | MCP-ON scouting | Triggered only when broad/local exploration saves time; quick direct GitHub lookup and routine delegation do not require it. |
 | MCP-ON delegation recovery + synchronization recovery | MCP-ON recovery | Both trigger on missing, ambiguous, failed, indeterminate, or unsynchronized state and share the stop/reconcile/no-replay boundary. |
@@ -377,6 +390,29 @@ Routine scouting, delegation, review, and correction proceed without repeated hu
 | MCP-ON main promotion | MCP-ON promotion | Triggered only by explicit human approval of one exact reviewed SHA and stays isolated from routine work. |
 | MCP-OFF public navigation + remote review + task design without delegation | MCP-OFF workflow | All use the same public-web-only evidence path; review and bounded task preparation are normal outcomes of that mode and cannot perform delegation/state writes. |
 | MCP-OFF repository scouting | MCP-OFF scouting | Triggered only when likely areas are unknown and must remain distinct from OpenCode Scout mechanics. |
+
+### Post-smoke simplicity resolution
+
+- A trusted unmatched permission/question is resolved before another progress,
+  status, steer, or route command. An unexpected request is rejected by default;
+  a consequential answer goes to the human. This prevents a visible developer
+  wait from being misclassified as unexplained busy state.
+- Routing state now lives in the task context that already owns task/ref/issue
+  continuity. Existing Git history preserves legacy routing files; upgrades copy
+  active route facts into `## Routing` and retire the duplicate file.
+- Shared authority, public-persistence, `UNKNOWN`, and exact-SHA human boundaries
+  are short and universally applicable, so they moved into permanent
+  instructions and the separately triggered shared Source was removed.
+- Package validation retains exact inventory/references, mode separation,
+  executable command/request envelope shape, six-field response shape,
+  continuity structure, and a small canonical safety core. It no longer treats
+  dozens of editorial sentence fragments, an arbitrary router line limit, or a
+  scenario-count string as protocol.
+- SHA-256 identities remain where they authenticate, bind Git/OpenAPI integrity,
+  or provide restart-stable deduplication. Generic OpenCode parity/PTY,
+  sequenced-status compatibility, public projection, ledgers, exact-SHA guards,
+  Scout isolation, and durable outbox ordering remain because the audit supplied
+  no safe product/migration basis for their removal.
 
 ## Review findings
 
@@ -404,24 +440,25 @@ Routine scouting, delegation, review, and correction proceed without repeated hu
    registering recovery immediately after durable session mapping and before
    prompt delivery; the prompt is never replayed and the timeout regression
    passes.
-3. Routing-record validator conflict — confirmed and fixed on
-   `web-orchestration`: static routing definitions remain mandatory while only
-   well-formed task routing Markdown is admitted; positive normal-delegation and
-   negative unexpected-entry tests pass.
+3. Routing-record validator conflict — originally fixed by admitting task routing
+   Markdown; the post-smoke simplification folds those fields into task context,
+   eliminating the second per-task file while preserving route history.
 4. Handoff-field contradiction — confirmed and fixed on `developer`: the skill
    assigns the commit to `Handoff developer SHA`, and agent-system validation
    rejects the obsolete `Status` wording.
 
 ## Implementation validation
 
-- Developer bridge/Scout behavior has 59 deterministic tests covering exact
-  sequence/nonterminal admission, applying/restart handling, status reads,
-  response transport/retry, public projection, task-bound aliases, Scout
-  permissions/exact-ref isolation/concurrency, and cross-task result isolation.
-- The Project package has 12 positive/negative tests and validates exactly
-  eight Sources, separate MCP-ON/MCP-OFF workflow and scouting triggers, the
-  command/request examples, installation/upgrade consistency, proportional and
-  high-stakes review rules, human boundaries, and all eight acceptance examples.
+- Developer bridge/Scout behavior has 71 deterministic tests at the current
+  candidate, including ledger-derived sequence, mutation freeze with recovery
+  reads, restart-recomputed status requests, canonical pending-interaction
+  repair, exact live version/hash compatibility, existing no-replay/delivery/
+  projection/alias boundaries, and Scout isolation/concurrency.
+- The Project package has 17 focused positive/negative tests and validates
+  exactly seven Sources, separate MCP-ON/MCP-OFF workflows and scouting,
+  five parsed command/request examples, installation/upgrade consistency,
+  integrated routing continuity, pending-interaction priority, proportional and
+  high-stakes evidence, and permanent human exact-SHA authority.
 - A developer-owned cross-branch validator compares the supplied independent
   Project candidate to the developer command/request schemas, exact six-field
   response, developer/Scout agents, non-semantic response transport, and public
@@ -505,8 +542,8 @@ Routine scouting, delegation, review, and correction proceed without repeated hu
 - The approved design baseline is `web-orchestration` SHA
   `36adae35552c8e32ce8ee8f446aa586eec20b969`. Developer bridge/Scout runtime
   and cross-branch integration Tasks 1, 2, and 4 are pushed through final
-  developer candidate `daf9b226a4dd87b4fc6741713fcd8a065e08bccf`; the audited eight-Source Project
-  package implementation is pushed at
+  developer candidate `daf9b226a4dd87b4fc6741713fcd8a065e08bccf`; the historical audited eight-Source Project
+  package implementation was pushed at
   `b5504d37d5474e18ff36399f73abbfe08d20eb80` with its prior record snapshot at
   `d89b22a439047558ffccbda32a04b14a376b170a`; final integration reconciliation
   was reconciled at `141b2f49ceb483c68154f6b5e3685711d9bcd453`, the final-review
@@ -524,7 +561,7 @@ Routine scouting, delegation, review, and correction proceed without repeated hu
 
 ## Current next action
 
-No implementation work remains in the Project package. The human may use the
-external read-only review prompt against the final reported branch heads and may
-later approve only that exact reviewed developer SHA for promotion. Do not run
-another commissioned reviewer or promote `main` without that approval.
+Finish the seven-Source/task-context validator and smoke-procedure correction,
+run exact-runtime package and cross-branch validation, synchronize both branch
+candidates, and update this record to the final exact refs. Do not run another
+commissioned reviewer or promote `main` without human exact-SHA approval.

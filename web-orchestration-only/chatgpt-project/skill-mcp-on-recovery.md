@@ -30,12 +30,19 @@ record.
 If evidence conflicts or a last result is absent, make the status reads below.
 Only unresolved ambiguity blocks a new mutation. Never use
 `bridge-status:complete`, another label, or visible prose as task completion.
+If multiple mapped mutating issues exist, command dispatch is frozen, but
+task-bound sequence-free status requests and read-only Scout recovery remain
+available; use those reads to reconcile rather than treating the control plane
+as unavailable.
 
 ## Durable read requests
 
 Status lookup is exceptional reconciliation, not mandatory polling. Post a
 sequence-free UUID request on the existing task-bound issue from the authorized
 identity. It does not consume command sequence or execute/repeat a mutation.
+If a restart interrupts one of these local status reads, the bridge recomputes it
+under the same request UUID; this does not authorize repeating `scout.start` or a
+mutating command.
 
 Exact command ledger or pre-ledger-rejection state:
 
@@ -78,6 +85,8 @@ rejection or failure.
 1. Stop new commands. Reconcile task context, the same bound issue, exact UUID,
    sequence, persisted envelope, authorized comment identity/association, bridge
    bot author, result marker, service heartbeat, and exact remote GitHub state.
+   First resolve any unmatched task-correlated permission/question; a visible
+   interaction is a wait condition, not a reason to post another status command.
 2. If an eligible command comment exists, do not replace it because acknowledgement
    is delayed. For refused or ambiguous publication, follow the connector-gated
    readback and bounded identical-envelope rule above. Never change content while

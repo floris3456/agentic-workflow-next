@@ -30,12 +30,12 @@ function replace(root, relative, before, after) {
   writeFileSync(target, text.replace(before, after));
 }
 
-test("current eight-Source package passes", (context) => {
-  const root = fixture(context);
-  const result = run(root);
+test("current seven-Source package passes structural and canonical safety validation", (context) => {
+  const result = run(fixture(context));
   assert.equal(result.status, 0, result.stderr);
-  assert.match(result.stdout, /8 exact Project Sources/);
-  assert.match(result.stdout, /9 acceptance scenarios/);
+  assert.match(result.stdout, /7 exact Project Sources/);
+  assert.match(result.stdout, /5 parsed bridge envelopes/);
+  assert.match(result.stdout, /integrated task-context routing/);
 });
 
 test("documented installation rendering produces the exact Source inventory", (context) => {
@@ -54,8 +54,7 @@ test("documented installation rendering produces the exact Source inventory", (c
     writeFileSync(target, text);
     assert.doesNotMatch(text, /<(?:owner\/repository|bridge-control-label|bridge-bot-login)>/);
   }
-  const installed = readdirSync(project).filter((name) => name.startsWith("skill-")).sort();
-  assert.deepEqual(installed, [
+  assert.deepEqual(readdirSync(project).filter((name) => name.startsWith("skill-")).sort(), [
     "skill-mcp-off-scouting.md",
     "skill-mcp-off-workflow.md",
     "skill-mcp-on-finalization.md",
@@ -63,36 +62,35 @@ test("documented installation rendering produces the exact Source inventory", (c
     "skill-mcp-on-recovery.md",
     "skill-mcp-on-scouting.md",
     "skill-mcp-on-workflow.md",
-    "skill-shared-safety-and-authority.md",
   ]);
 });
 
-test("task-specific routing continuity remains valid after a normal delegation", (context) => {
+test("one task context carries routing continuity for a normal delegation", (context) => {
   const root = fixture(context);
-  writeFileSync(path.join(root, "agent-routing", "TASK-001.md"), [
-    "# Agent routing: TASK-001",
+  writeFileSync(path.join(root, "task-context", "TASK-001.md"), [
+    "# Task context: TASK-001",
     "",
     "- Task ID: TASK-001",
-    "- Date: 2026-08-13",
-    "- Relevant repository reference: developer 0000000000000000000000000000000000000000",
-    "- Bridge route reference: pending",
+    "",
+    "## Routing",
+    "",
     "- Selected developer: Luna",
     "- Luna substantive-attempt count: 0",
     "- Selection route: default Luna",
     "- Reason: bounded implementation",
-    "",
-    "## Result",
-    "",
-    "Pending.",
+    "- Attempt classifications: none",
+    "- Route changes: none",
+    "- Result: pending",
+    "- Retrospective: pending",
     "",
   ].join("\n"));
   const result = run(root);
   assert.equal(result.status, 0, result.stderr);
 });
 
-test("validator rejects non-task entries in routing continuity", (context) => {
+test("validator rejects non-task entries in continuity", (context) => {
   const root = fixture(context);
-  writeFileSync(path.join(root, "agent-routing", "state.json"), "{}\n");
+  writeFileSync(path.join(root, "task-context", "state.json"), "{}\n");
   const result = run(root);
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /invalid task record entry/);
@@ -115,19 +113,6 @@ test("validator rejects MCP-ON mechanics in MCP-OFF procedure", (context) => {
   assert.match(result.stderr, /MCP-OFF procedures contain unavailable MCP-ON mechanic/);
 });
 
-test("validator rejects high-stakes direct-inspection drift", (context) => {
-  const root = fixture(context);
-  replace(
-    root,
-    "chatgpt-project/skill-mcp-on-scouting.md",
-    "directly inspect every",
-    "sample",
-  );
-  const result = run(root);
-  assert.notEqual(result.status, 0);
-  assert.match(result.stderr, /high-stakes compact task/);
-});
-
 test("validator rejects detailed bridge procedure in permanent router", (context) => {
   const root = fixture(context);
   const target = path.join(root, "chatgpt-project", "developer-instructions.md");
@@ -146,20 +131,15 @@ test("validator rejects stale Source references", (context) => {
   assert.match(result.stderr, /stale\/unknown Project Source reference/);
 });
 
-test("validator rejects lost-result no-replay drift", (context) => {
+test("validator rejects explicit uncertain-mutation replay", (context) => {
   const root = fixture(context);
-  replace(
-    root,
-    "chatgpt-project/skill-mcp-on-recovery.md",
-    "Never automatically retry",
-    "Automatically retry",
-  );
+  replace(root, "chatgpt-project/skill-mcp-on-recovery.md", "Never automatically retry", "Automatically retry");
   const result = run(root);
   assert.notEqual(result.status, 0);
-  assert.match(result.stderr, /lost command result/);
+  assert.match(result.stderr, /no-replay rule/);
 });
 
-test("validator rejects connector-gate recovery drift", (context) => {
+test("validator rejects connector refusal as bridge evidence", (context) => {
   const root = fixture(context);
   replace(
     root,
@@ -169,42 +149,77 @@ test("validator rejects connector-gate recovery drift", (context) => {
   );
   const result = run(root);
   assert.notEqual(result.status, 0);
-  assert.match(result.stderr, /connector refusal is not a bridge disposition|connector-gated publication/);
+  assert.match(result.stderr, /connector-refusal distinction|connector refusal as bridge evidence/);
 });
 
-test("validator rejects closed-envelope placement drift", (context) => {
+test("validator rejects an extra command-envelope field regardless of prose", (context) => {
   const root = fixture(context);
   replace(
     root,
     "chatgpt-project/skill-mcp-on-workflow.md",
-    "top-level peer of `arguments`, never its child",
-    "child of `arguments`",
+    ',"expected":{"developer_sha"',
+    ',"extra":true,"expected":{"developer_sha"',
   );
   const result = run(root);
   assert.notEqual(result.status, 0);
-  assert.match(result.stderr, /top-level peer of `arguments`/);
+  assert.match(result.stderr, /incorrect top-level fields/);
 });
 
-test("validator rejects a separate Scout SHA field instruction", (context) => {
+test("validator rejects an extra Scout SHA field in the actual marker", (context) => {
   const root = fixture(context);
   replace(
     root,
     "chatgpt-project/skill-mcp-on-scouting.md",
-    "never add a separate `sha`",
-    "add a separate `sha`",
+    ',"scope":"tools/opencode-bridge/src and tests"',
+    ',"sha":"0000000000000000000000000000000000000000","scope":"tools/opencode-bridge/src and tests"',
   );
   const result = run(root);
   assert.notEqual(result.status, 0);
-  assert.match(result.stderr, /never add a separate `sha`/);
+  assert.match(result.stderr, /scout.start example lacks focused exact-ref arguments/);
 });
 
-test("validator rejects unconditional blocking of a discovered control issue", (context) => {
+test("validator rejects unconditional blocking of every discovered control issue", (context) => {
   const root = fixture(context);
   const target = path.join(root, "chatgpt-project", "skill-mcp-on-recovery.md");
   writeFileSync(target, `${readFileSync(target, "utf8")}\nAny open control issue must always block new work.\n`);
   const result = run(root);
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /unconditional open-issue blocking/);
+});
+
+test("validator requires pending interactions to precede status commands", (context) => {
+  const root = fixture(context);
+  replace(
+    root,
+    "chatgpt-project/skill-mcp-on-workflow.md",
+    "resolve the newest unmatched task-correlated",
+    "ignore the newest unmatched task-correlated",
+  );
+  const result = run(root);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /interaction-before-status rule/);
+});
+
+test("validator rejects high-stakes sample-only guidance", (context) => {
+  const root = fixture(context);
+  const target = path.join(root, "chatgpt-project", "skill-mcp-on-scouting.md");
+  writeFileSync(target, `${readFileSync(target, "utf8")}\nFor high-stakes review, sample only.\n`);
+  const result = run(root);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /high-stakes evidence sampling/);
+});
+
+test("validator retains permanent human exact-SHA promotion authority", (context) => {
+  const root = fixture(context);
+  replace(
+    root,
+    "chatgpt-project/developer-instructions.md",
+    "Promotion requires explicit",
+    "Promotion does not require explicit",
+  );
+  const result = run(root);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /human exact-SHA approval boundary/);
 });
 
 test("standalone validator is executable with the current Node runtime", () => {
