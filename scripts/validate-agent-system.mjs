@@ -130,7 +130,11 @@ for (const file of [
   assert(read(file).includes(expectedResponse.trim()), `${file} does not contain the canonical response fields`);
 }
 for (const file of [".opencode/agents/small-developer.md", ".opencode/agents/large-developer.md"]) {
-  const compact = read(file).replace(/\s+/g, " ");
+  const agent = read(file);
+  const compact = agent.replace(/\s+/g, " ");
+  assert(/\n\s*question:\s*allow\s*\n/.test(agent), `${file} must allow structured question interactions`);
+  assert(agent.includes("Do not substitute ordinary") && agent.includes("question-tool interaction"),
+    `${file} must require the structured question pathway when a human answer is needed`);
   for (const term of [
     "`completed`, `blocked`, `failed`, or `needs decision`",
     "Report `completed` only after every required handoff commit is pushed",

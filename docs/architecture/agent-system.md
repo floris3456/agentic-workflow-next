@@ -47,6 +47,12 @@ unknowns rather than orchestration synthesis.
 
 The web orchestrator chooses the agent. Local developers do not launch subagents, review their own work, select escalation, or accept changes.
 
+Both implementation developers explicitly allow OpenCode's structured question
+tool when a human answer is required. This produces a task-correlated event and
+public alias that the web orchestrator can answer through `question.reply`;
+ordinary assistant prose is not a substitute. The read-only Scout continues to
+deny questions and cannot enter this interaction path.
+
 The bridge is transport and local durability, not a new authority. It maps public task aliases to private OpenCode sessions, projects bounded status, and invokes Luna/Sol against the same loopback server a human can attach to with the normal TUI. Direct GitHub inspection remains the proof route.
 
 Routing policy is web-side and intentionally is not frozen through a validator that counts agent files.

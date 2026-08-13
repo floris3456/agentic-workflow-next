@@ -160,6 +160,9 @@ if (workflow.split(responseTemplate).length - 1 !== 1) {
 for (const file of ["small-developer.md", "large-developer.md"]) {
   const agent = read(path.join(repositoryRoot, ".opencode/agents", file), file);
   if (!agent.includes(responseTemplate)) fail(`${file} is missing the cross-branch response contract`);
+  if (!/\n\s*question:\s*allow\s*\n/.test(agent)) {
+    fail(`${file} cannot produce a structured question for Project question.reply`);
+  }
   for (const status of ["completed", "blocked", "failed", "needs decision"]) {
     if (!agent.includes(status)) fail(`${file} is missing developer status ${status}`);
   }
