@@ -1,13 +1,13 @@
 import { OpenCodeClient, OpenCodeHttpError } from "./opencode.js";
-import { terminalResponseDelivery } from "./handoff.js";
+import { latestAssistantMessage, terminalResponseDelivery } from "./handoff.js";
 import { subscribeSse } from "./sse.js";
 import { BridgeState } from "./state.js";
 import type { JsonValue, ScoutSession, TaskSession } from "./types.js";
-import { asJson, asRecord, backoff, isRecord, sleep } from "./util.js";
+import { asJson, asRecord, backoff, isRecord, sha256, sleep, stableJson } from "./util.js";
 
 export interface PersistedOpenCodeEvent {
   eventId: string;
-  source: "legacy-live" | "session-v2" | "sync-history";
+  source: "legacy-live" | "session-v2" | "sync-history" | "canonical-recovery";
   eventType: string;
   payload: JsonValue;
   taskId?: string;
@@ -46,8 +46,8 @@ function sessionFromPayload(record: Record<string, unknown>): string | undefined
   return undefined;
 }
 
-function requireIdentity(record: Record<string, unknown>): { eventId: string; eventType: string } {
-  const eventId = stringField(record, "id");
+function requireIdentity(record: Record<string, unknown>, fallbackId?: string): { eventId: string; eventType: string } {
+  const eventId = stringField(record, "id") ?? fallbackId;
   const eventType = stringField(record, "type");
   if (!eventId || !eventType) throw new TypeError("OpenCode event is missing id or type");
   return { eventId, eventType };
@@ -58,9 +58,9 @@ function requireSequence(value: unknown, label: string): number {
   return Number(value);
 }
 
-function normalizeLegacy(value: unknown): PersistedOpenCodeEvent {
+function normalizeLegacy(value: unknown, streamId?: string): PersistedOpenCodeEvent {
   const record = asRecord(value, "legacy OpenCode event");
-  const identity = requireIdentity(record);
+  const identity = requireIdentity(record, streamId);
   const sessionId = sessionFromPayload(record);
   return {
     ...identity,
@@ -71,6 +71,38 @@ function normalizeLegacy(value: unknown): PersistedOpenCodeEvent {
 }
 
 type RecoverableSession = TaskSession | ScoutSession;
+
+function terminalSessionState(value: string): boolean {
+  return /session\.(?:idle|error)/i.test(value);
+}
+
+function canonicalScoutTerminal(
+  statusValue: JsonValue | undefined,
+  messagesValue: JsonValue | undefined,
+  session: ScoutSession,
+): { eventType: "session.idle" | "session.error"; messageId: string; completedAt: number } | undefined {
+  const status = asRecord(statusValue ?? {}, "OpenCode session status");
+  const current = status[session.sessionId];
+  if (current !== undefined) {
+    const sessionStatus = asRecord(current, "OpenCode Scout session status");
+    const type = stringField(sessionStatus, "type");
+    if (type === "busy" || type === "retry") return undefined;
+    if (type !== "idle") throw new TypeError("OpenCode Scout session status is invalid");
+  }
+
+  const latest = latestAssistantMessage(messagesValue);
+  if (!isRecord(latest)) return undefined;
+  const info = nestedRecord(latest, "info");
+  if (!info || info.role !== "assistant" || stringField(info, "sessionID") !== session.sessionId) return undefined;
+  const messageId = stringField(info, "id");
+  const time = nestedRecord(info, "time");
+  const completedAt = time?.completed;
+  if (!messageId || typeof completedAt !== "number" || !Number.isSafeInteger(completedAt) || completedAt <= 0) return undefined;
+  if (info.error !== undefined && info.error !== null) return { eventType: "session.error", messageId, completedAt };
+  const finish = stringField(info, "finish");
+  if (!finish || finish === "tool-calls") return undefined;
+  return { eventType: "session.idle", messageId, completedAt };
+}
 
 function normalizeSession(value: unknown, session: RecoverableSession): PersistedOpenCodeEvent {
   const record = asRecord(value, "durable session event");
@@ -180,6 +212,44 @@ export class RecoveryCoordinator {
     }
   }
 
+  async recoverScoutCanonical(session: ScoutSession): Promise<boolean> {
+    const current = this.state.getScoutSession(session.requestId);
+    if (!current || current.taskId !== session.taskId || current.sessionId !== session.sessionId) {
+      throw new Error("Scout recovery mapping is missing or inconsistent");
+    }
+    if (terminalSessionState(current.sessionState)) return false;
+    const [status, messages] = await Promise.all([
+      this.client.request("session.status"),
+      this.client.request("session.messages", {
+        path: { sessionID: session.sessionId },
+        query: { limit: 20 },
+      }),
+    ]);
+    const terminal = canonicalScoutTerminal(status, messages, session);
+    if (!terminal) return false;
+    const eventId = `canonical-${sha256(stableJson({
+      sessionId: session.sessionId,
+      messageId: terminal.messageId,
+      completedAt: terminal.completedAt,
+      eventType: terminal.eventType,
+    }))}`;
+    return await this.persist({
+      eventId,
+      source: "canonical-recovery",
+      eventType: terminal.eventType,
+      taskId: session.taskId,
+      sessionId: session.sessionId,
+      requestId: session.requestId,
+      sessionKind: "scout",
+      payload: {
+        id: eventId,
+        type: terminal.eventType,
+        properties: { sessionID: session.sessionId },
+        recovery: { method: "session.status+session.messages", completedAt: terminal.completedAt },
+      },
+    });
+  }
+
   async reconcileCanonical(): Promise<JsonValue> {
     const [sessions, status, permissions, questions] = await Promise.all([
       this.client.request("session.list"),
@@ -239,7 +309,7 @@ export class RecoveryCoordinator {
         await this.recoverOnce();
         for await (const event of subscribeSse(this.client, "event.subscribe", {}, signal)) {
           attempt = 0;
-          const normalized = normalizeLegacy(event.data);
+          const normalized = normalizeLegacy(event.data, event.id);
           const session = normalized.sessionId ? this.state.sessionBindingForInternal(normalized.sessionId) : undefined;
           await this.persist({
             ...normalized,
@@ -279,6 +349,81 @@ export class RecoveryCoordinator {
         await this.onError?.(error);
         await this.retry(attempt++, signal, random);
       }
+    }
+  }
+
+  async runLegacySession(session: ScoutSession, signal: AbortSignal, random = Math.random): Promise<void> {
+    let attempt = 0;
+    while (!signal.aborted) {
+      try {
+        for await (const event of subscribeSse(this.client, "event.subscribe", {}, signal)) {
+          const record = asRecord(event.data, "legacy OpenCode event");
+          if (sessionFromPayload(record) !== session.sessionId) continue;
+          attempt = 0;
+          const syntheticId = `legacy-${sha256(stableJson(record))}`;
+          const normalized = normalizeLegacy(record, event.id ?? syntheticId);
+          await this.persist({
+            ...normalized,
+            taskId: session.taskId,
+            sessionId: session.sessionId,
+            sessionKind: "scout",
+            requestId: session.requestId,
+          });
+          if (terminalSessionState(this.state.getScoutSession(session.requestId)?.sessionState ?? "")) return;
+        }
+        if (!signal.aborted) throw new Error("OpenCode workspace event stream ended");
+      } catch (error) {
+        if (signal.aborted) return;
+        await this.onError?.(error);
+        await this.retry(attempt++, signal, random);
+      }
+    }
+  }
+
+  private async runScoutCanonical(session: ScoutSession, signal: AbortSignal, random: () => number): Promise<void> {
+    let attempt = 0;
+    while (!signal.aborted) {
+      try {
+        if (await this.recoverScoutCanonical(session)) return;
+        attempt = 0;
+        await sleep(1_000, signal);
+      } catch (error) {
+        if (signal.aborted) return;
+        await this.onError?.(error);
+        await this.retry(attempt++, signal, random);
+      }
+    }
+  }
+
+  async runScoutSession(session: ScoutSession, signal: AbortSignal, random = Math.random): Promise<void> {
+    if (terminalSessionState(this.state.getScoutSession(session.requestId)?.sessionState ?? "")) return;
+    const child = new AbortController();
+    const stop = () => child.abort(signal.reason);
+    if (signal.aborted) stop();
+    else signal.addEventListener("abort", stop, { once: true });
+    const watchTerminal = async (): Promise<void> => {
+      while (!child.signal.aborted) {
+        if (terminalSessionState(this.state.getScoutSession(session.requestId)?.sessionState ?? "")) {
+          child.abort();
+          return;
+        }
+        try {
+          await sleep(100, child.signal);
+        } catch {
+          return;
+        }
+      }
+    };
+    try {
+      await Promise.all([
+        this.runSession(session, child.signal, random),
+        this.runLegacySession(session, child.signal, random),
+        this.runScoutCanonical(session, child.signal, random),
+        watchTerminal(),
+      ]);
+    } finally {
+      signal.removeEventListener("abort", stop);
+      child.abort();
     }
   }
 }

@@ -312,7 +312,7 @@ export class BridgeService {
       onPersistedEvent: (event) => this.publishEvent(event),
       onError: (error) => this.state.setMeta("service.last_error", this.projection.safeText(errorMessage(error))),
     });
-    const run = recovery.runSession(session, this.signal).finally(() => this.sessionRuns.delete(key));
+    const run = recovery.runScoutSession(session, this.signal).finally(() => this.sessionRuns.delete(key));
     this.sessionRuns.set(key, run);
   }
 

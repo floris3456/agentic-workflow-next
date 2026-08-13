@@ -409,6 +409,34 @@ export class BridgeState {
     });
   }
 
+  rejectCommand(envelope: CommandEnvelope, reason: string): AcceptedCommand {
+    return this.transaction(() => {
+      const serialized = stableJson(envelope);
+      const existing = this.getCommand(envelope.command_id);
+      if (existing) {
+        return {
+          disposition: stableJson(existing.envelope) === serialized ? "duplicate" : "conflict",
+          command: existing,
+        };
+      }
+      const prior = this.db.prepare("SELECT envelope_json, reason FROM command_rejections WHERE command_id=?")
+        .get(envelope.command_id) as Row | undefined;
+      if (prior) {
+        return {
+          disposition: "rejected",
+          reason: stableJson(JSON.parse(String(prior.envelope_json))) === serialized
+            ? String(prior.reason)
+            : "Command UUID conflicts with a previously rejected command",
+        };
+      }
+      this.db.prepare(`
+        INSERT INTO command_rejections(command_id, task_id, sequence, envelope_json, reason, created_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `).run(envelope.command_id, envelope.task_id, envelope.sequence, serialized, reason, now());
+      return { disposition: "rejected", reason };
+    });
+  }
+
   commandRejection(commandId: string): { taskId: string; sequence: number; reason: string; createdAt: number } | undefined {
     const row = this.db.prepare("SELECT task_id, sequence, reason, created_at FROM command_rejections WHERE command_id=?")
       .get(commandId) as Row | undefined;

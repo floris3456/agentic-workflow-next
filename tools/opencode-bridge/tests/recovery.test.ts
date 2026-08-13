@@ -15,12 +15,12 @@ function asFetch(handler: (request: Request) => Response | Promise<Response>): t
   return (async (input: string | URL | Request, init?: RequestInit) => handler(new Request(input, init))) as typeof fetch;
 }
 
-function client(fetchImpl: typeof fetch): OpenCodeClient {
+function client(fetchImpl: typeof fetch, directory = "/work/project"): OpenCodeClient {
   return new OpenCodeClient({
     baseUrl: "http://127.0.0.1:4096",
     username: "bridge",
     password: "test-only-password",
-    directory: "/work/project",
+    directory,
     manifest,
     fetch: fetchImpl,
   });
@@ -287,4 +287,150 @@ test("durable session SSE resumes from its stored cursor", async (context) => {
     "/api/session/ses_private/event?after=2",
   ]);
   assert.equal(state.durableCursor("session-v2", "ses_private"), 3);
+});
+
+test("canonical Scout recovery requires terminal lifecycle metadata and is idempotent", async (context) => {
+  const state = stateForTest(context);
+  const scouts = [
+    ["11111111-1111-4111-8111-111111111111", "TASK-IDLE", "ses_idle"],
+    ["22222222-2222-4222-8222-222222222222", "TASK-BUSY", "ses_busy"],
+    ["33333333-3333-4333-8333-333333333333", "TASK-TOOLS", "ses_tools"],
+    ["44444444-4444-4444-8444-444444444444", "TASK-ERROR", "ses_error"],
+  ] as const;
+  for (const [requestId, taskId, sessionId] of scouts) {
+    state.mapScoutSession({
+      requestId,
+      taskId,
+      sessionId,
+      issueNumber: 100,
+      refSha: "a".repeat(40),
+      workspacePath: "/snapshot",
+    });
+  }
+  let calls = 0;
+  const api = client(asFetch((request) => {
+    calls++;
+    const path = new URL(request.url).pathname;
+    if (path === "/session/status") {
+      return Response.json({
+        ses_busy: { type: "busy" },
+        ses_tools: { type: "idle" },
+        ses_error: { type: "idle" },
+      });
+    }
+    const sessionId = path.match(/^\/session\/(.+)\/message$/)?.[1];
+    if (!sessionId) return new Response("not found", { status: 404 });
+    const terminal = sessionId === "ses_tools" ? "tool-calls" : "stop";
+    return Response.json([{
+      info: {
+        id: `msg_${sessionId}`,
+        role: "assistant",
+        sessionID: sessionId,
+        time: { created: 10, completed: 20 },
+        finish: terminal,
+        ...(sessionId === "ses_error" ? { error: { name: "UnknownError", data: { message: "failed" } } } : {}),
+      },
+      parts: [],
+    }]);
+  }));
+  const recovery = new RecoveryCoordinator({ client: api, state });
+
+  assert.equal(await recovery.recoverScoutCanonical(state.getScoutSession(scouts[0][0])!), true);
+  assert.equal(state.getScoutSession(scouts[0][0])?.sessionState, "session.idle");
+  const afterIdle = calls;
+  assert.equal(await recovery.recoverScoutCanonical(state.getScoutSession(scouts[0][0])!), false);
+  assert.equal(calls, afterIdle);
+
+  assert.equal(await recovery.recoverScoutCanonical(state.getScoutSession(scouts[1][0])!), false);
+  assert.equal(state.getScoutSession(scouts[1][0])?.sessionState, "starting");
+  assert.equal(await recovery.recoverScoutCanonical(state.getScoutSession(scouts[2][0])!), false);
+  assert.equal(state.getScoutSession(scouts[2][0])?.sessionState, "starting");
+  assert.equal(await recovery.recoverScoutCanonical(state.getScoutSession(scouts[3][0])!), true);
+  assert.equal(state.getScoutSession(scouts[3][0])?.sessionState, "session.error");
+  assert.deepEqual(
+    state.pendingResponseDeliveries().map((entry) => [entry.requestId, entry.eventType]).sort(),
+    [[scouts[0][0], "session.idle"], [scouts[3][0], "session.error"]],
+  );
+});
+
+test("workspace legacy Scout recovery filters exact sessions and synthesizes stable event identity", async (context) => {
+  const state = stateForTest(context);
+  const requestId = "55555555-5555-4555-8555-555555555555";
+  state.mapScoutSession({
+    requestId,
+    taskId: "TASK-WORKSPACE",
+    sessionId: "ses_workspace",
+    issueNumber: 101,
+    refSha: "b".repeat(40),
+    workspacePath: "/snapshot/workspace",
+  });
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      controller.enqueue(encoder.encode('data: {"type":"session.idle","properties":{"sessionID":"ses_other"}}\n\n'));
+      controller.enqueue(encoder.encode('data: {"type":"session.idle","properties":{"sessionID":"ses_workspace"}}\n\n'));
+      controller.close();
+    },
+  });
+  const api = client(asFetch((request) => {
+    const url = new URL(request.url);
+    assert.equal(url.pathname, "/event");
+    assert.equal(url.searchParams.get("directory"), "/snapshot/workspace");
+    return new Response(stream, { headers: { "content-type": "text/event-stream" } });
+  }), "/snapshot/workspace");
+  const recovery = new RecoveryCoordinator({ client: api, state });
+  await recovery.runLegacySession(state.getScoutSession(requestId)!, new AbortController().signal, () => 0);
+
+  assert.deepEqual(state.listEvents("TASK-WORKSPACE").map((entry) => entry.eventType), ["session.idle"]);
+  assert.equal(state.getScoutSession(requestId)?.sessionState, "session.idle");
+  assert.equal(state.pendingResponseDeliveries().length, 1);
+});
+
+test("composite Scout recovery completes from canonical state when v2 history is empty", async (context) => {
+  const state = stateForTest(context);
+  const requestId = "66666666-6666-4666-8666-666666666666";
+  state.mapScoutSession({
+    requestId,
+    taskId: "TASK-COMPOSITE",
+    sessionId: "ses_composite",
+    issueNumber: 102,
+    refSha: "c".repeat(40),
+    workspacePath: "/snapshot/composite",
+  });
+  const paths: string[] = [];
+  const api = client(asFetch((request) => {
+    const url = new URL(request.url);
+    paths.push(url.pathname);
+    if (url.pathname === "/api/session/ses_composite/history") {
+      return Response.json({ data: [], hasMore: false });
+    }
+    if (url.pathname === "/api/session/ses_composite/event" || url.pathname === "/event") {
+      return new Response(new ReadableStream<Uint8Array>({ start(controller) { controller.close(); } }), {
+        headers: { "content-type": "text/event-stream" },
+      });
+    }
+    if (url.pathname === "/session/status") return Response.json({});
+    if (url.pathname === "/session/ses_composite/message") {
+      return Response.json([{
+        info: {
+          id: "msg_composite",
+          role: "assistant",
+          sessionID: "ses_composite",
+          time: { created: 100, completed: 200 },
+          finish: "stop",
+        },
+        parts: [],
+      }]);
+    }
+    return new Response("not found", { status: 404 });
+  }), "/snapshot/composite");
+  const recovery = new RecoveryCoordinator({ client: api, state });
+  await recovery.runScoutSession(state.getScoutSession(requestId)!, new AbortController().signal, () => 0);
+
+  assert.equal(state.getScoutSession(requestId)?.sessionState, "session.idle");
+  assert.equal(paths.includes("/api/session/ses_composite/history"), true);
+  assert.equal(paths.includes("/event"), true);
+  assert.equal(paths.includes("/session/status"), true);
+  assert.equal(paths.includes("/session/ses_composite/message"), true);
+  assert.equal(paths.some((path) => /prompt/i.test(path)), false);
 });

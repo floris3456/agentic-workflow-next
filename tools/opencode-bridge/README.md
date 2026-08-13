@@ -50,7 +50,7 @@ Core operation is portable foreground CLI behavior; no systemd dependency exists
 
 ## Durable status and ambiguous commands
 
-Mutating commands are strictly serialized per task: the first sequence is `1`, every later accepted sequence is contiguous, and a second command is rejected while one is `accepted` or `applying`. The public lifecycle is accepted, applying, then one terminal state. A rejected admission does not consume sequence.
+Mutating commands are strictly serialized per task: the first sequence is `1`, every later accepted sequence is contiguous, and a second command is rejected while one is `accepted` or `applying`. The public lifecycle is accepted, applying, then one terminal state. Every parse-valid pre-ledger rejection is durable by command UUID, including the one-open-mutating-issue gate; it cannot become executable after a later rescan and does not consume sequence.
 
 Use the sequence-free `command.status` request on the existing task issue for the exact durable state and known public result of one command. Use `task.status` there for the mapped session state and latest projected developer response. These requests have their own UUIDs and never execute or repeat a mutation. See the protocol for exact markers.
 
@@ -72,6 +72,10 @@ Recovery monitoring starts immediately after the Scout session mapping commits,
 before `session.prompt_async` can return an ambiguous transport result. If the
 prompt was accepted upstream but its response is lost, idle/error recovery and
 `scout.status` can still surface the result; the bridge never repeats the prompt.
+The monitor combines v2 session recovery, exact-workspace legacy events, and a
+read-only canonical status/message fallback for the pinned runtime's
+legacy-created sessions. Canonical recovery requires completed terminal lifecycle
+metadata and never interprets the Scout's response text.
 
 Scout worktree preparation may queue around Git's worktree lock, but independent
 sessions execute concurrently with no bridge policy cap and may coexist with one

@@ -4,7 +4,7 @@
 BRIDGE-FULL-SMOKE-20260813T132120Z-AJW6OL
 
 ## Status
-Ready for handoff
+Completed; ready for human/orchestrator review
 
 ## Task-start developer SHA
 0352d354acb6a0430d585eaf25649b4fd808f59e
@@ -19,7 +19,7 @@ Perform a harmless bridge smoke task on developer only. Follow AGENTS.md and all
 Create the bounded public-safe bridge smoke artifact and maintain its task-progress record on developer only.
 
 ## Current position
-The structured phrase question was answered with `cobalt-river`. The requested external sentinel read was attempted exactly once and returned file not found. The repository is on `developer` at task-start SHA `0352d354acb6a0430d585eaf25649b4fd808f59e`; tracked workflow hooks are active. The two requested task files are created, inspected, committed, and pushed in `e28b71ccd9797f74c6d0c309df9f4171734de0dc`.
+The structured phrase question was answered with `cobalt-river`. The requested external sentinel read was attempted exactly once and returned file not found. The two requested task files were created, inspected, committed, and pushed in `e28b71ccd9797f74c6d0c309df9f4171734de0dc`; the dedicated task-progress handoff snapshot was pushed in `cce2ffa217233c0637d7413f40e3ebdbe0b33bcf`. The enclosing issue #8 bridge smoke later failed on Scout response transport, not on this bounded developer task, and its cleanup is complete.
 
 ## Observed
 - The current branch is `developer`.
@@ -39,20 +39,20 @@ The missing sentinel does not block this harmless smoke task because the brief e
 None.
 
 ## Checks
-Initial branch, status, and log inspection completed. Tracked hook check completed successfully. Both exact task files were inspected and `git diff --check` completed without output. The implementation commit was pushed successfully to `origin/developer`.
+Initial branch, status, and log inspection completed. Tracked hook check completed successfully. Both exact task files were inspected and `git diff --check` completed without output. The implementation and handoff commits were pushed successfully to `origin/developer`.
 
 ## Blockers / required decisions
 None.
 
 ## Remaining work
-Create and push the dedicated handoff snapshot commit.
+None. The developer-side smoke task and cleanup are terminal.
 
 ## Next action
-Commit this completed task-progress handoff snapshot and push it to `developer`.
+None; this record remains current for human/orchestrator review.
 
 ## Relevant durable records
 - `docs/work/bridge-smoke-tests/BRIDGE-FULL-SMOKE-20260813T132120Z-AJW6OL.md`
 - `docs/work/current/BRIDGE-FULL-SMOKE-20260813T132120Z-AJW6OL-bridge-full-smoke.md`
 
 ## Last handoff commit
-None
+`cce2ffa217233c0637d7413f40e3ebdbe0b33bcf`

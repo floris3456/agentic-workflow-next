@@ -384,6 +384,8 @@ test("poller serializes repository work to one open control issue", async (conte
   const state = stateForTest(context);
   const firstStart = envelope("66666666-6666-4666-8666-666666666666", 1, "start", "TASK-ONE");
   const secondStart = envelope("77777777-7777-4777-8777-777777777777", 1, "start", "TASK-TWO");
+  const replacementStart = envelope("88888888-8888-4888-8888-888888888888", 1, "start", "TASK-TWO");
+  let polls = 0;
   const github = new GitHubClient({
     owner: "acme",
     repository: "demo",
@@ -393,20 +395,37 @@ test("poller serializes repository work to one open control issue", async (conte
     fetch: asFetch((request) => {
       const path = new URL(request.url).pathname;
       if (path === "/repos/acme/demo/issues") {
-        return Response.json([
+        polls++;
+        return Response.json(polls === 1 ? [
           { number: 10, body: commandMarker(firstStart), ...actor("alice", "OWNER") },
+          { number: 11, body: commandMarker(secondStart), ...actor("alice", "OWNER") },
+        ] : [
           { number: 11, body: commandMarker(secondStart), ...actor("alice", "OWNER") },
         ]);
       }
-      if (path.match(/\/issues\/(10|11)\/comments$/)) return Response.json([]);
+      if (path === "/repos/acme/demo/issues/10/comments") return Response.json([]);
+      if (path === "/repos/acme/demo/issues/11/comments") {
+        return Response.json(polls === 1 ? [] : [
+          { id: 1, body: commandMarker(replacementStart), ...actor("alice", "COLLABORATOR") },
+        ]);
+      }
       return new Response("not found", { status: 404 });
     }),
   });
-  const result = await new GitHubCommandPoller({ github, state, allowedAuthors: ["alice"] }).pollOnce();
-  assert.deepEqual(result.commands.map((entry) => entry.taskId), ["TASK-ONE"]);
+  const poller = new GitHubCommandPoller({ github, state, allowedAuthors: ["alice"] });
+  const result = await poller.pollOnce();
+  assert.deepEqual(result.commands.map((entry) => entry.commandId), [firstStart.command_id]);
   assert.equal(result.rejected, 1);
   assert.equal(state.taskForIssue(10), "TASK-ONE");
   assert.equal(state.taskForIssue(11), undefined);
+  assert.match(state.commandRejection(secondStart.command_id)?.reason ?? "", /another mutating bridge task issue/i);
+
+  const recovered = await poller.pollOnce();
+  assert.deepEqual(recovered.commands.map((entry) => entry.commandId), [replacementStart.command_id]);
+  assert.equal(recovered.rejected, 1);
+  assert.equal(state.getCommand(secondStart.command_id), undefined);
+  assert.equal(state.getCommand(replacementStart.command_id)?.sequence, 1);
+  assert.equal(state.taskForIssue(11), "TASK-TWO");
 });
 
 test("poller admits multiple Scout-only issues alongside one mutating task issue", async (context) => {

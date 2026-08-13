@@ -57,8 +57,12 @@ scope, and expected evidence; a clean detached worktree and independent
 task/request/session mapping isolate it. Scout work can run concurrently without
 an orchestration-policy cap and can coexist with the one mutating developer task.
 Recovery monitoring begins as soon as the mapping is durable, before prompt
-delivery can become ambiguous, and never replays the prompt. Idle/error results reuse public projection and durable delivery, while synthesis
-stays in the web orchestrator.
+delivery can become ambiguous, and never replays the prompt. Because the pinned
+runtime exposes empty v2 history for legacy-created sessions, monitoring also
+uses the exact Scout workspace's legacy stream and a canonical status/message
+fallback that requires terminal lifecycle metadata without reading response
+meaning. Idle/error results reuse public projection and durable delivery, while
+synthesis stays in the web orchestrator.
 
 ## Synchronization and handoff
 

@@ -12,7 +12,7 @@ Commands are JSON inside a hidden Markdown marker:
 -->
 ```
 
-The bridge accepts markers only from an exact configured GitHub login whose current repository association is `OWNER`, `MEMBER`, or `COLLABORATOR`. It scans both the issue body and every comment by design for compatibility and recovery. The generalized Project package deliberately publishes every command, including the initial `start`, as a fresh comment and keeps the editable issue body command-free. Repeated scans are safe because command UUID and task-sequence uniqueness provide durable idempotency. Only one mapped mutating control issue may remain open per repository. The first valid issue command must be `start`; that permanently binds the issue and task locally. Its sequence is exactly `1`, every later command is exactly the prior accepted sequence plus one, and a task cannot admit another command while one is `accepted` or `applying`. A sequence/nonterminal admission rejection is recorded before the command ledger and never becomes executable on a later scan; a corrected command uses a fresh UUID and the still-expected sequence.
+The bridge accepts markers only from an exact configured GitHub login whose current repository association is `OWNER`, `MEMBER`, or `COLLABORATOR`. It scans both the issue body and every comment by design for compatibility and recovery. The generalized Project package deliberately publishes every command, including the initial `start`, as a fresh comment and keeps the editable issue body command-free. Repeated scans are safe because command UUID and task-sequence uniqueness provide durable idempotency. Only one mapped mutating control issue may remain open per repository. The first valid issue command must be `start`; that permanently binds the issue and task locally. Its sequence is exactly `1`, every later command is exactly the prior accepted sequence plus one, and a task cannot admit another command while one is `accepted` or `applying`. Every authenticated, parse-valid command rejected before the command ledger is recorded by UUID without consuming sequence, including unbound/mismatched-task commands, a non-`start` first mutation, the one-open-mutating-issue gate, sequence/nonterminal failures, and mandatory-guard failures. A later scan returns that same rejection; a corrected command uses a fresh UUID and the still-expected sequence.
 
 The bridge queues and attempts to publish `applying` before entering the command handler. While a command is `applying`, wait: it is pre-indeterminate and must not be reissued. If the bridge restarts before recording a terminal state, recovery changes it to `indeterminate` and never automatically reissues it.
 
@@ -82,9 +82,13 @@ there is no policy concurrency cap.
 never repeat work. `scout.start` creates and prompts at most one read-only session
 per request UUID. A restart while it is applying marks the request indeterminate
 and never repeats session creation or prompt delivery. As soon as session mapping
-is durable, read-only per-session recovery starts before prompt delivery, so an
-accepted prompt with an ambiguous HTTP result can still surface through
-`scout.status` without replay or restart. All results are navigation
+is durable, recovery starts before prompt delivery and combines per-session v2
+history/SSE, workspace-scoped legacy SSE, and a canonical read-only
+`session.status` plus `session.messages` fallback. The fallback requires a
+completed assistant lifecycle with a terminal finish/error and a non-busy status;
+it does not inspect response text. Thus an accepted prompt with an ambiguous HTTP
+result or an empty upstream v2 history can still surface through `scout.status`
+without prompt replay. All results are navigation
 and recovery evidence; they do not prove implementation completion, correctness,
 synchronization, review, or acceptance.
 
@@ -143,16 +147,19 @@ bridge does not parse, validate, approve, reject, or otherwise interpret handoff
 fields. `task.status` returns the same latest projected value for missed-result
 recovery.
 
-After a mapped Scout session idles or errors, the same committed-event and
-atomic-delivery and public-projection path selects its latest assistant response, stores it under the
-exact task and Scout request, and queues it to the bound issue with the requested
-ref. `scout.status` provides missed-result recovery. The bridge does not turn
-Scout facts into an orchestration or implementation decision.
+After a mapped Scout session idles or errors, the same committed-event,
+atomic-delivery, and public-projection path selects its latest assistant response,
+stores it under the exact task and Scout request, and queues it to the bound issue
+with the requested ref. Workspace legacy events have deterministic local identity
+when upstream omits an event ID. The canonical lifecycle fallback creates one
+stable synthetic terminal event, so restart recovery is idempotent and never
+replays the prompt. `scout.status` provides missed-result recovery. The bridge
+does not turn Scout facts into an orchestration or implementation decision.
 
 Permission and question events remain projected after the raw event is committed.
-Durable session history, project sync history, legacy live SSE, canonical
-reconciliation, and deduplication recover local state without claiming unsupported
-SSE `Last-Event-ID` replay.
+Durable session history, project sync history, repository/workspace legacy live
+SSE, canonical reconciliation, Scout lifecycle fallback, and deduplication recover
+local state without claiming unsupported SSE `Last-Event-ID` replay.
 
 For a genuinely stuck `applying` command, issue one `command.status` request and
 compare its applying age with the published service heartbeat. Do not poll

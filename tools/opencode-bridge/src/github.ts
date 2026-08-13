@@ -1,4 +1,4 @@
-import type { AcceptedCommand, AcceptedRequest, JsonValue, OutboxItem, StoredCommand, StoredRequest } from "./types.js";
+import type { AcceptedCommand, AcceptedRequest, CommandEnvelope, JsonValue, OutboxItem, StoredCommand, StoredRequest } from "./types.js";
 import { githubApiVersion, type InstallationTokenProvider } from "./github-auth.js";
 import {
   commandStatusComment,
@@ -313,6 +313,23 @@ export class GitHubCommandPoller {
     this.state.enqueue(dedupeKey, "issue-comment", issueNumber, { body });
   }
 
+  private rejectCommand(
+    issueNumber: number,
+    markerHash: string,
+    envelope: CommandEnvelope,
+    reason: string,
+  ): void {
+    const admission = this.state.rejectCommand(envelope, reason);
+    const detail = admission.disposition === "rejected"
+      ? admission.reason ?? reason
+      : "Command UUID conflicts with an existing command";
+    this.enqueueComment(
+      issueNumber,
+      `preledger-command:${envelope.command_id}`,
+      invalidCommandComment(markerHash, detail),
+    );
+  }
+
   async pollOnce(): Promise<PollResult> {
     const issues = await this.github.listControlIssues(this.label);
     const openMutatingIssues = new Set(issues.filter((issue) => {
@@ -346,23 +363,23 @@ export class GitHubCommandPoller {
           const bound = this.state.taskForIssue(issue.number);
           if (bound === undefined && envelope.kind !== "start") {
             rejected++;
-            this.enqueueComment(issue.number, `unbound-command:${envelope.command_id}`, invalidCommandComment(item.markerHash, "The first command for an issue must be start"));
+            this.rejectCommand(issue.number, item.markerHash, envelope, "The first command for an issue must be start");
             continue;
           }
           if (bound !== undefined && bound !== envelope.task_id) {
             rejected++;
-            this.enqueueComment(issue.number, `task-mismatch:${envelope.command_id}`, invalidCommandComment(item.markerHash, "Command task does not match the issue binding"));
+            this.rejectCommand(issue.number, item.markerHash, envelope, "Command task does not match the issue binding");
             continue;
           }
           if (bound !== undefined && !this.state.hasMutatingTask(bound) && envelope.kind !== "start") {
             rejected++;
-            this.enqueueComment(issue.number, `first-mutating-command:${envelope.command_id}`, invalidCommandComment(item.markerHash, "The first mutating-task command must be start"));
+            this.rejectCommand(issue.number, item.markerHash, envelope, "The first mutating-task command must be start");
             continue;
           }
           if (envelope.kind === "start" && !this.state.hasMutatingTask(envelope.task_id)
             && [...openMutatingIssues].some((number) => number !== issue.number)) {
             rejected++;
-            this.enqueueComment(issue.number, `concurrent-task:${envelope.command_id}`, invalidCommandComment(item.markerHash, "Another mutating bridge task issue is already open for this repository"));
+            this.rejectCommand(issue.number, item.markerHash, envelope, "Another mutating bridge task issue is already open for this repository");
             continue;
           }
           if (bound === undefined) {
