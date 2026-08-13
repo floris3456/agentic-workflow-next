@@ -58,7 +58,7 @@ Project package or agent system unless the human explicitly commissions it.
 | --- | --- |
 | Quick exact lookup, bounded implementation, developer handoff interpretation, remote review, or ordinary steering | `skill-mcp-on-workflow.md` |
 | Broad/local exploration would save time or independent areas can be searched concurrently | `skill-mcp-on-scouting.md` |
-| Command/result is lost, delayed, stuck, rejected, failed, indeterminate, or synchronization is inconsistent | `skill-mcp-on-recovery.md` |
+| An open control issue needs classification, or command/result/synchronization state is missing, failed, or inconsistent | `skill-mcp-on-recovery.md` |
 | Repository durable-record policy requires finalization after substantive review | `skill-mcp-on-finalization.md` |
 | Human approved one exact reviewed `developer` SHA for promotion | `skill-mcp-on-promotion.md` |
 
@@ -75,6 +75,7 @@ Project package or agent system unless the human explicitly commissions it.
 | --- | --- |
 | Evidence/authority is disputed, content will be persisted, or a consequential human boundary is near | `skill-shared-safety-and-authority.md` |
 
-At the start of every new MCP-ON turn with an active task, reconcile its durable
-bound issue and task context before further consequential action. Do not assume
-the Project stayed active or woke when an issue changed.
+At the start of every MCP-ON turn, discover any open control issue before creating
+one. Treat it as continuity to reconcile, not proof of active work; load recovery
+when its task or disposition is unknown. Never start a second repository-mutating
+task while a prior mutating issue remains unresolved.

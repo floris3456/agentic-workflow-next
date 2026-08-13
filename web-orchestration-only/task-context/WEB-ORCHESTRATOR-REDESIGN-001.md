@@ -2,7 +2,7 @@
 
 - Continuity schema: agentic-bridge/1
 - Task ID: WEB-ORCHESTRATOR-REDESIGN-001
-- Status: Complete; sole final-review blockers fixed, pushed, and independently revalidated
+- Status: Complete; sole final-review blockers and the post-live existing-issue recovery gap are corrected
 - Design approval: Human confirmed the corrected design in chat on 2026-08-13
 - Human goal: Make the web orchestrator extremely fast and efficient while still completing the human's task, applying safety and thoroughness in proportion to the task, and preserving the genuinely different MCP-ON and MCP-OFF operating modes.
 - Current orchestration objective: Implementation complete; preserve exact-SHA human review/promotion authority without modifying `main`.
@@ -270,6 +270,15 @@ Pro uses the public web to inspect available GitHub evidence, explains uncertain
 
 The orchestrator asks for the exact command's durable status and the task's current status. The lookup does not repeat the mutation. It resumes from a valid handoff or escalates a genuinely unresolved state.
 
+### Fresh-turn continuity
+
+A fresh MCP-ON turn discovers an open control issue before creating another. It
+authenticates and reconstructs the task from public continuity, resumes active
+work, reviews a delivered response, or records and closes a verifiably terminal
+or superseded task. The mere presence of an open issue or completion label does
+not block forever or prove completion; only ambiguity remaining after bounded
+read-only reconciliation blocks a new mutation.
+
 ### Human decision
 
 Routine scouting, delegation, review, and correction proceed without repeated human prompts. The human is asked when intent or risk truly requires a decision and must approve the exact final SHA before promotion.
@@ -328,6 +337,11 @@ Routine scouting, delegation, review, and correction proceed without repeated hu
   permitting only task-ID-named regular Markdown routing records with matching
   identity and a concrete Luna/Sol route. Normal continuity writes therefore do
   not invalidate the exact Project/static-package checks.
+- Every MCP-ON turn discovers open control issues before creating one. The short
+  permanent rule routes unknown state to recovery, where authenticated public
+  continuity distinguishes an active task, a response awaiting review, a safely
+  retired terminal task, and genuinely unresolved ambiguity. Issue closure is a
+  web-orchestrator decision; no bridge label gains semantic authority.
 
 ### Source trigger and dependency audit
 
@@ -382,10 +396,10 @@ Routine scouting, delegation, review, and correction proceed without repeated hu
   sequence/nonterminal admission, applying/restart handling, status reads,
   response transport/retry, public projection, task-bound aliases, Scout
   permissions/exact-ref isolation/concurrency, and cross-task result isolation.
-- The Project package has 11 positive/negative tests and validates exactly
+- The Project package has 12 positive/negative tests and validates exactly
   eight Sources, separate MCP-ON/MCP-OFF workflow and scouting triggers, the
   command/request examples, installation/upgrade consistency, proportional and
-  high-stakes review rules, human boundaries, and all seven acceptance examples.
+  high-stakes review rules, human boundaries, and all eight acceptance examples.
 - A developer-owned cross-branch validator compares the supplied independent
   Project candidate to the developer command/request schemas, exact six-field
   response, developer/Scout agents, non-semantic response transport, and public
@@ -405,6 +419,11 @@ Routine scouting, delegation, review, and correction proceed without repeated hu
   Deterministic doubles plus durable event/status recovery cover the complete
   conservative path; every new MCP-ON turn reconciles the bound issue, so
   correctness does not assume autonomous Project wake-up.
+- A later credentialed smoke exposed one gap in that fallback: a fresh chat knew
+  only that an issue was open and stopped before reconstructing its already
+  terminal task. The Project now makes discovery universal, classifies the issue
+  in recovery, resumes or safely retires it, and blocks only on unresolved
+  ambiguity. This changes no bridge transport semantics or human authority.
 
 ## Steering issued
 

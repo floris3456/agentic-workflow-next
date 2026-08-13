@@ -46,10 +46,12 @@ Task record:
    persist then post `route` on the same issue with the next sequence, a fresh
    UUID, explicit `arguments.agent`, and optional public-safe message; route
    command success still does not prove implementation success.
-6. Ensure no other repository-mutating task issue is open. Create one public-safe
-   issue without `<bridge-control-label>`, persist its URL and the exact pending
-   command envelope in task context, confirm that write remotely, apply the
-   control label, then post the command as a fresh comment from the configured
+6. Before creating a mutating issue, list open `<bridge-control-label>` issues.
+   Established Scout-only issues may coexist. If any issue is mutating or
+   unclassified, do not create another: load recovery, authenticate its binding,
+   and resume, review, or safely retire it. Otherwise create one public-safe issue
+   without the label, persist its URL and exact pending envelope in task context,
+   confirm that write remotely, apply the label, then post from the configured
    authorized GitHub identity. The first command is sequence `1`, `start`, with a
    fresh UUID, explicit `luna` or `sol`, and the exact start-SHA guard:
 

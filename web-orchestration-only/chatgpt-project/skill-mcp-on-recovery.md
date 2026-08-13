@@ -2,8 +2,33 @@
 
 ## Trigger
 
-Use when a command/result is missing, delayed, stuck, rejected, failed,
-indeterminate, or when developer/remote synchronization is inconsistent.
+Use when an open control issue needs discovery or adoption; a command/result is
+missing, delayed, stuck, rejected, failed, or indeterminate; or developer/remote
+synchronization is inconsistent.
+
+## Existing issue discovery
+
+Before creating a mutating issue, list open control-label issues. An open control
+issue is a reconciliation target, not proof of active work and not an automatic
+blocker. Authenticate its task binding from authorized command/request sources
+and exact bridge-bot markers; reconstruct missing task context from that public
+record.
+
+- For `accepted` or `applying`, keep the same issue and use bounded status
+  recovery below; never replace the mutation.
+- For a mapped active session with terminal command delivery, resume the existing
+  task at its next justified action.
+- For idle/error with a projected response, interpret and verify it under the
+  normal workflow; session state alone proves nothing.
+- When all mutations are terminal and the task is verifiably completed or
+  superseded, record the disposition and close the issue. Close an orphan only
+  after establishing that no valid start exists.
+- Resolve `blocked`, `failed`, or `needs decision` under normal authority rules;
+  do not discard them merely to release the issue.
+
+If evidence conflicts or a last result is absent, make the status reads below.
+Only unresolved ambiguity blocks a new mutation. Never use
+`bridge-status:complete`, another label, or visible prose as task completion.
 
 ## Durable read requests
 
@@ -66,8 +91,8 @@ Mapped developer session state and latest projected response:
    event/cursor/session recovery is needed. Its success does not inspect or fix
    Git synchronization.
 9. Record command/request IDs, refs, lifecycle, evidence, and disposition in task
-   context. Close an orphaned issue only when no valid start exists. Treat labels
-   and prose as hints, never proof.
+   context. Close or retain the issue only under the discovery rules above. Treat
+   labels and prose as hints, never proof.
 
 Routine delay is not a human decision. Escalate only an unresolved operator
 state, consequential choice, sensitive permission, or risk the human owns.

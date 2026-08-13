@@ -141,7 +141,7 @@ for (const term of [
   "one repository-mutating developer task",
   "read-only Scouts",
   "exact reviewed SHA",
-  "reconcile its durable",
+  "discover any open control issue",
 ]) if (!instructions.includes(term)) fail(`Permanent instructions are missing router boundary: ${term}`);
 for (const detail of ["agentic-bridge-command", "agentic-bridge-request", "command.status", "task.status", "promotion.apply"]) {
   if (instructions.includes(detail)) fail(`Permanent instructions contain detailed procedure instead of routing it: ${detail}`);
@@ -251,6 +251,8 @@ requireTerms("skill-mcp-on-workflow.md", [
   "`question.reply`",
   "`abort`",
   "`route`",
+  "If any issue is mutating or",
+  "do not create another",
 ]);
 requireTerms("skill-mcp-on-scouting.md", [
   "Use connected GitHub directly",
@@ -278,6 +280,11 @@ requireTerms("skill-mcp-on-recovery.md", [
   "failed push",
   "`sync.recover`",
   "force-push normal",
+  "reconciliation target, not proof of active work",
+  "resume the existing",
+  "verifiably completed or",
+  "Only unresolved ambiguity blocks",
+  "`bridge-status:complete`",
 ]);
 requireTerms("skill-mcp-on-finalization.md", [
   "`finalize`",
@@ -382,6 +389,7 @@ const scenarioChecks = [
   ["high-stakes compact task", "skill-mcp-on-scouting.md", ["directly inspect every", "relevant GitHub file and diff"]],
   ["MCP-OFF analysis", "skill-mcp-off-workflow.md", ["public GitHub lookup", "Do not claim it was sent or started"]],
   ["lost command result", "skill-mcp-on-recovery.md", ["`command.status`", "`task.status`", "Never automatically retry"]],
+  ["fresh-turn continuity", "skill-mcp-on-recovery.md", ["reconciliation target, not proof of active work", "resume the existing", "record the disposition and close"]],
   ["human decision", "skill-shared-safety-and-authority.md", ["Routine in-scope inspection", "Promotion always requires explicit approval"]],
 ];
 for (const [scenario, file, terms] of scenarioChecks) {
@@ -404,6 +412,7 @@ const unsafePatterns = [
   [/\b(?:always|automatically|may|must|should)\s+retry\b[^.\n]{0,80}\bindeterminate\b/i, "retry of indeterminate mutation"],
   [/\b(?:may|can|should|must|always)\s+(?:send|store|persist|publish)\s+(?:secrets|credentials)\b/i, "secret persistence"],
   [/\b(?:may|can|should|must|always)\s+promote\b[^.\n]{0,80}\bwithout\s+(?:explicit\s+)?human\s+approval\b/i, "promotion without approval"],
+  [/\bany open (?:bridge )?(?:control )?issue\b[^.\n]{0,80}\b(?:(?:must|should)(?:\s+always)?|always)\s+(?:block|stop)\b/i, "unconditional open-issue blocking"],
 ];
 for (const [file, text] of texts) {
   for (const identifier of retiredIdentifiers) if (text.toLowerCase().includes(identifier.toLowerCase())) fail(`${file} contains a source-project identifier`);
