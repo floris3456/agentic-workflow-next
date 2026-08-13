@@ -36,6 +36,17 @@ Task-progress preserves procedural context and the public-safe delegated brief. 
 
 The web orchestrator keeps per-task context and routing records on the independent branch when MCP-ON GitHub write capability is available. The branch also provides a public-safe Project installation package; installed private Project state remains outside Git.
 
+The Project keeps genuinely distinct operating modes. MCP-ON/Sol uses connected
+GitHub for quick exact evidence, authenticated bridge control and continuity
+writes, one mutating developer task, and focused concurrent Luna/high read-only
+Scouts when broad local exploration saves time. MCP-OFF/Pro uses only public-web
+navigation and reasoning and cannot claim Scouts, delegation, bridge control, or
+state writes. Scouting and verification scale with size, complexity, uncertainty,
+risk, blast radius, reversibility, and stakes; high-stakes manageable changes
+receive direct inspection of all relevant GitHub files/diffs even if Scouts help.
+The permanent Project instructions route these mechanics to eight narrowly
+triggered Sources instead of loading them on every turn.
+
 GitHub mutating commands use durable UUID/sequence semantics rather than direct-MCP delivery assumptions: sequence starts at exactly `1`, stays contiguous, and cannot advance while a prior command is accepted or applying. A separate UUID-idempotent, sequence-free request lane exposes `command.status` and `task.status` from durable local state without repeating work. The bridge stores private OpenCode mappings and raw recovery data locally, while only a bounded redacted projection enters public issues. Task-bound aliases, including workspaces, are stored per task. Capability parity comes from the pinned OpenCode operation manifest; consequential generic web operations remain locally allowlisted.
 
 When a mapped developer session idles or errors, the bridge transports the structurally latest assistant message through the existing public-safety projection to the bound issue and retains it for `task.status` recovery. The bridge does not interpret or semantically validate that response. The web orchestrator correlates it to the task, checks its explicit developer status/handoff information, and uses exact remote GitHub evidence to decide whether review can begin.
@@ -58,7 +69,13 @@ After substantive review, finalization, and targeted finalization review, the hu
 
 ## Validation
 
-Validators enforce only deterministic structure and references. Semantic record correctness, implementation quality, attempt classification, escalation, and human acceptance remain reasoning/judgment controls.
+Validators enforce only deterministic structure and references. The independent
+Project validator covers exact Source/trigger inventory and seven orchestration
+scenarios; the developer integration validator compares an explicitly supplied
+Project checkout with developer schemas, agents, response fields, Scout contract,
+transport boundary, and observable lifecycle. Semantic record correctness,
+implementation quality, attempt classification, escalation, and human acceptance
+remain reasoning/judgment controls.
 
 ## Scope
 

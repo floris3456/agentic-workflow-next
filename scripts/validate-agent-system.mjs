@@ -124,6 +124,15 @@ for (const file of [
 ]) {
   assert(read(file).includes(expectedResponse.trim()), `${file} does not contain the canonical response fields`);
 }
+for (const file of [".opencode/agents/small-developer.md", ".opencode/agents/large-developer.md"]) {
+  const compact = read(file).replace(/\s+/g, " ");
+  for (const term of [
+    "`completed`, `blocked`, `failed`, or `needs decision`",
+    "Report `completed` only after every required handoff commit is pushed",
+    "exact pushed 40-character commit SHA for completed work; otherwise it is `none`",
+    "failed push is `blocked` with `none`",
+  ]) assert(compact.includes(term), `${file} is missing developer response rule: ${term}`);
+}
 
 const finalizationPolicyFiles = [
   "README.md",
@@ -164,7 +173,8 @@ for (const file of [
   "scripts/bootstrap-agent-workflow.sh", "scripts/recover-remote-sync.sh",
   "scripts/promote-developer-to-main.sh", "scripts/initialize-template-branches.sh",
   "scripts/bootstrap-opencode-bridge.sh", "scripts/opencode-bridge-status.sh",
-  "scripts/opencode-attach.sh", "scripts/validate-opencode-bridge.sh", "scripts/validate-repository.sh",
+  "scripts/opencode-attach.sh", "scripts/validate-opencode-bridge.sh",
+  "scripts/validate-web-orchestrator-integration.mjs", "scripts/validate-repository.sh",
 ]) {
   assert(exists(file), `Missing required executable: ${file}`);
   if (exists(file) && process.platform !== "win32") {

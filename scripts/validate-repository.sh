@@ -13,4 +13,8 @@ node scripts/generate-research-evidence-manifest.mjs --check
 ./scripts/bootstrap-agent-workflow.sh --check
 ./scripts/validate-opencode-bridge.sh
 
+if [[ -n "${WOR_WEB_ORCHESTRATION_ROOT:-}" ]]; then
+  node scripts/validate-web-orchestrator-integration.mjs "$WOR_WEB_ORCHESTRATION_ROOT"
+fi
+
 echo "Repository validation passed."

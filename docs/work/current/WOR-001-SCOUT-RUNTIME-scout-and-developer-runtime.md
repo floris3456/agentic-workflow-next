@@ -37,9 +37,10 @@ developer response contract are implemented and pushed.
 
 ## Current position
 
-Implementation commit `0783e169fc4d14f311af977da8aa0a3b08548850` is pushed and
-identical to `origin/developer`. This completed task-progress snapshot is the
-only change after that coherent implementation boundary.
+Implementation commit `0783e169fc4d14f311af977da8aa0a3b08548850` and its completed
+task-progress snapshot `d2ddfd6aa5c34d1abe8d1f2127108c859f262045` are pushed. Later
+cross-branch integration work advances `developer` without changing this
+completed task boundary.
 
 ## Observed
 
@@ -134,6 +135,6 @@ package redesign.
 
 ## Last handoff commit
 
-Implementation and pushed handoff boundary:
-`0783e169fc4d14f311af977da8aa0a3b08548850`. This completed progress snapshot
-is pushed immediately as the task's final metadata-only commit.
+`d2ddfd6aa5c34d1abe8d1f2127108c859f262045` (completed metadata snapshot; the
+substantive implementation boundary is
+`0783e169fc4d14f311af977da8aa0a3b08548850`).

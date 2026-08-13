@@ -15,7 +15,7 @@ The system separates human acceptance, web orchestration, remote evidence, and l
 
 ## Web orchestrator
 
-The web orchestrator is the primary reasoning, task-design, routing, steering, and review layer. Generalized installation instructions and conditional skills live under `web-orchestration-only/chatgpt-project/` on the independent branch. The installed Project configuration, private conversations, connector credentials, and runtime service configuration remain outside Git.
+The web orchestrator is the primary reasoning, task-design, routing, steering, and review layer. Generalized installation instructions and eight audited conditional Sources live under `web-orchestration-only/chatgpt-project/` on the independent branch. Its short permanent instructions route genuinely separate MCP-ON and MCP-OFF workflows and scouting procedures. The installed Project configuration, private conversations, connector credentials, and runtime service configuration remain outside Git.
 
 In MCP-ON mode it uses:
 
@@ -25,6 +25,12 @@ In MCP-ON mode it uses:
 - the outbound local GitHub App bridge to reach OpenCode indirectly for implementation delegation, steering, recovery, finalization, and guarded promotion.
 
 In MCP-OFF mode it uses the public GitHub website for repository inspection and cannot pretend delegation or direct orchestration writes occurred.
+
+For a quick exact lookup MCP-ON uses connected GitHub directly. It launches
+focused Scouts only when broad/local exploration or independent partitioning
+saves time. Review and verification are proportional to change size, complexity,
+uncertainty, risk, blast radius, reversibility, and stakes. High-stakes work keeps
+an independent direct-GitHub evidence boundary even when Scouts contribute.
 
 ## Local implementation
 
@@ -92,7 +98,7 @@ configuration remain outside Git and must be reviewed by the operator before use
 | Installed Project state and private runtime configuration | Orchestration environment, outside Git |
 | Public Git persistence | `SECURITY.md` |
 | Current architecture | this document and focused architecture documents |
-| Reliable structural checks | `scripts/validate-agent-system.mjs` |
+| Reliable structural checks | `scripts/validate-agent-system.mjs`; with an independent Project checkout, `scripts/validate-web-orchestrator-integration.mjs` |
 
 ## Validation boundary
 

@@ -40,20 +40,24 @@ alias isolation, and response transport with compatible durable migration.
 ## Current position
 
 Implementation, contracts, focused tests, exact-minimum runtime tests, component
-validation, repository validation, and durable records are complete. The task
-boundary is ready in this commit for immediate hook-driven push.
+validation, repository validation, and durable records were completed and pushed
+at `7480d4ede556a068f00abce30da42e4eb064cdd3`. Later migration tasks advance
+`developer` without changing this completed task boundary.
 
 ## Observed
 
-- `acceptCommand` accepts an arbitrary first positive sequence and later gaps.
-- It can accept a later command while a prior command is `accepted` or
-  `applying`.
-- Alias storage makes `internal_id` globally unique even for task-bound kinds.
-- `beginCommand` persists `applying`, but publication occurs only after a
-  terminal state.
-- Sequenced `status` queries live OpenCode and no exact ledger read exists.
-- Idle/error publication contains the event payload rather than the latest
-  assistant response.
+- At task start, `acceptCommand` accepted an arbitrary first positive sequence
+  and later gaps.
+- At task start, it could accept a later command while a prior command was
+  `accepted` or `applying`.
+- At task start, alias storage made `internal_id` globally unique even for
+  task-bound kinds.
+- At task start, `beginCommand` persisted `applying`, but publication occurred
+  only after a terminal state.
+- At task start, sequenced `status` queried live OpenCode and no exact ledger
+  read existed.
+- At task start, idle/error publication contained the event payload rather than
+  the latest assistant response.
 
 ## Interpretation
 
@@ -112,4 +116,4 @@ developer-agent runtime task.
 
 ## Last handoff commit
 
-None.
+`7480d4ede556a068f00abce30da42e4eb064cdd3`.

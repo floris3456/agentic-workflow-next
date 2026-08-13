@@ -45,6 +45,13 @@ Anything committed must be safe for public disclosure. See [`SECURITY.md`](SECUR
 
 Use `./scripts/bootstrap-agent-workflow.sh --check` for a non-mutating activation check. The generic CI workflow runs the same repository validation on `developer` and `main`.
 
+When both independent branch worktrees are available, include exact Project/bridge
+contract validation by setting the package directory for the same command:
+
+```bash
+WOR_WEB_ORCHESTRATION_ROOT=<path-to-web-orchestration-only> ./scripts/validate-repository.sh
+```
+
 ## Project content
 
 This template intentionally contains no product implementation, domain model, evidence package, or project decisions. Future adopters can place their own implementation under `src/`, tests under `tests/`, schemas and examples under `contracts/`, and project-specific research under `research/` while retaining the workflow boundaries.
