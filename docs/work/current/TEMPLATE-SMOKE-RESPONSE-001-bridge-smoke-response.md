@@ -6,7 +6,7 @@ TEMPLATE-SMOKE-RESPONSE-001
 
 ## Status
 
-In progress
+Completed
 
 ## Task-start template-development SHA
 
@@ -34,7 +34,8 @@ the correction, and create a portable change package.
 The developer and web-orchestration repairs are pushed and synchronized, the
 live bridge is running the source fix, the disposable smoke is safely closed,
 and the exact cross-branch change package has been generated and dry-run
-verified. Final ledger validation and handoff reconciliation remain.
+verified. The reconciled package/source-lock commit is pushed, final ledger
+validation passes, and this maintenance task is ready for exact-range review.
 
 ## Source ranges
 
@@ -110,6 +111,11 @@ service was rebuilt from pushed source. The scratch worktree was then removed.
 - Source exact-range `git diff --check`: passed on both branches.
 - Change package: 8 developer paths and 10 web-orchestration paths; both patches
   passed clean dry-run application from their exact bases.
+- Template-development full validation after package creation: structural
+  validator passed, deterministic package tests 3/3 passed, `git diff --check`
+  passed.
+- Package/source-lock commit `468d0054dde59752a444548821b02a0b102345a9`
+  is pushed to `origin/template-development`.
 
 ## Blockers / required decisions
 
@@ -119,14 +125,14 @@ observation, not required for runtime correctness.
 
 ## Remaining work
 
-- Run final ledger validation.
-- Commit and push the package/source-lock/continuity update.
-- Mark this task completed and push its dedicated ledger handoff snapshot.
+None for implementation. Human/orchestrator review and optional downstream
+application use the exact source ranges and packaged patches above.
 
 ## Next action
 
-Run final ledger validation, then commit and push the portable package and
-reconciled source lock.
+Review the exact source ranges and this ledger handoff. Install the updated
+Project instructions/Sources where used; optionally run the external v4.2 smoke
+as a fresh credentialed observation. Archive this record only after review.
 
 ## Relevant durable records
 
