@@ -15,7 +15,7 @@
 - Human approval date/reference: none
 - Verified post-promotion main SHA: none
 - Verified post-promotion developer SHA: none
-- Relevant repository refs: `developer` candidate `2fb851149d9e2e1f65919a21a63603f049d7456c`; `main` unchanged at `6127611113dfdb66f93a0cfd2d355359aa370833`; `web-orchestration` Project-package handoff `d89b22a439047558ffccbda32a04b14a376b170a` from design baseline `36adae35552c8e32ce8ee8f446aa586eec20b969`, with final integration reconciliation pending in this record
+- Relevant repository refs: `developer` candidate `2fb851149d9e2e1f65919a21a63603f049d7456c`; `main` unchanged at `6127611113dfdb66f93a0cfd2d355359aa370833`; `web-orchestration` integration reconciliation `141b2f49ceb483c68154f6b5e3685711d9bcd453` from design baseline `36adae35552c8e32ce8ee8f446aa586eec20b969` (this metadata-only snapshot follows it)
 - Last orchestration mode: not established; this is design capture, not a bridge operation
 - Bridge control issue: none
 - Bridge control issue state: none
@@ -390,10 +390,11 @@ Routine scouting, delegation, review, and correction proceed without repeated hu
   `2fb851149d9e2e1f65919a21a63603f049d7456c`; the audited eight-Source Project
   package implementation is pushed at
   `b5504d37d5474e18ff36399f73abbfe08d20eb80` with its prior record snapshot at
-  `d89b22a439047558ffccbda32a04b14a376b170a`.
+  `d89b22a439047558ffccbda32a04b14a376b170a`; final integration reconciliation
+  is pushed at `141b2f49ceb483c68154f6b5e3685711d9bcd453` and this metadata-only
+  snapshot follows it.
 
 ## Current next action
 
-Push this final integration reconciliation, rerun exact-head validation, and run
-the single final read-only review. Do not promote to `main` without later
-exact-SHA approval.
+Rerun exact-head validation and run the single final read-only review. Do not
+promote to `main` without later exact-SHA approval.
