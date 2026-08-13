@@ -4,13 +4,13 @@
 BRIDGE-FULL-SMOKE-20260813T132120Z-AJW6OL
 
 ## Status
-In progress
+Ready for handoff
 
 ## Task-start developer SHA
-0352d35
+0352d354acb6a0430d585eaf25649b4fd808f59e
 
 ## Review-base developer SHA
-0352d35
+0352d354acb6a0430d585eaf25649b4fd808f59e
 
 ## Original task brief
 Perform a harmless bridge smoke task on developer only. Follow AGENTS.md and all triggered repository skills. Before editing, use OpenCode's structured question tool to ask exactly ‘Which smoke phrase should be written?’ with exactly two choices: amber-orbit and cobalt-river. Do not edit until answered. After the answer, use the read tool exactly once on ../BRIDGE_SMOKE_PERMISSION_SENTINEL_BRIDGE-FULL-SMOKE-20260813T132120Z-AJW6OL.txt. It is expected not to exist; do not create it, use shell for it, inspect another external file, or quote external content. If permission is rejected or the read fails, continue. Create docs/work/current/BRIDGE-FULL-SMOKE-20260813T132120Z-AJW6OL-bridge-full-smoke.md from the task-progress template and create only docs/work/bridge-smoke-tests/BRIDGE-FULL-SMOKE-20260813T132120Z-AJW6OL.md plus that task record. The artifact must contain heading ‘Agentic bridge full smoke test’, Task: BRIDGE-FULL-SMOKE-20260813T132120Z-AJW6OL, Phrase: <answered phrase>, Random text: The violet toaster counted seven quiet moons., and Projection probe source: <b>safe-probe</b> ```safe-fence```. Do not change main, web-orchestration, implementation, or configuration files. Inspect exact files, run git diff --check, commit and push every commit to developer, then return only Status, Handoff developer SHA, Files changed, Checks + perceived results, Blockers/decisions, Task record. completed requires an exact pushed SHA; otherwise use blocked/failed/needs decision and SHA none.
@@ -19,7 +19,7 @@ Perform a harmless bridge smoke task on developer only. Follow AGENTS.md and all
 Create the bounded public-safe bridge smoke artifact and maintain its task-progress record on developer only.
 
 ## Current position
-The structured phrase question was answered with `cobalt-river`. The requested external sentinel read was attempted exactly once and returned file not found. The repository is on `developer` at task-start SHA `0352d35`; tracked workflow hooks are active. The two requested task files are created and inspected.
+The structured phrase question was answered with `cobalt-river`. The requested external sentinel read was attempted exactly once and returned file not found. The repository is on `developer` at task-start SHA `0352d354acb6a0430d585eaf25649b4fd808f59e`; tracked workflow hooks are active. The two requested task files are created, inspected, committed, and pushed in `e28b71ccd9797f74c6d0c309df9f4171734de0dc`.
 
 ## Observed
 - The current branch is `developer`.
@@ -39,16 +39,16 @@ The missing sentinel does not block this harmless smoke task because the brief e
 None.
 
 ## Checks
-Initial branch, status, and log inspection completed. Tracked hook check completed successfully. Both exact task files were inspected and `git diff --check` completed without output.
+Initial branch, status, and log inspection completed. Tracked hook check completed successfully. Both exact task files were inspected and `git diff --check` completed without output. The implementation commit was pushed successfully to `origin/developer`.
 
 ## Blockers / required decisions
 None.
 
 ## Remaining work
-Commit and push the task files, update this record for handoff, then create and push the dedicated handoff snapshot commit.
+Create and push the dedicated handoff snapshot commit.
 
 ## Next action
-Commit the two requested task files and push the commit to `developer`.
+Commit this completed task-progress handoff snapshot and push it to `developer`.
 
 ## Relevant durable records
 - `docs/work/bridge-smoke-tests/BRIDGE-FULL-SMOKE-20260813T132120Z-AJW6OL.md`
