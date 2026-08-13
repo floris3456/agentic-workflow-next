@@ -6,7 +6,7 @@
 
 ## Status
 
-Completed; handoff snapshot pending.
+Completed.
 
 ## Task-start developer SHA
 
@@ -70,8 +70,8 @@ question-tool pathway failed to produce a public alias and was recorded as a
 test deviation. The initial task-progress record was pushed at
 `765794fff6050286423af8951c2e623244e3fd77`. The permitted smoke artifact and
 updated task-progress facts were pushed at
-`b58d3abddb31cb8cee9850ede96b6c5abef52491`. Only the dedicated
-task-progress-only handoff snapshot remains.
+`b58d3abddb31cb8cee9850ede96b6c5abef52491`. The dedicated
+task-progress-only handoff snapshot is now being prepared.
 
 ## Observed
 
@@ -129,7 +129,7 @@ None.
 
 ## Remaining work
 
-- Update and push the dedicated task-progress-only handoff snapshot.
+None after the dedicated task-progress-only handoff snapshot is pushed.
 
 ## Next action
 
