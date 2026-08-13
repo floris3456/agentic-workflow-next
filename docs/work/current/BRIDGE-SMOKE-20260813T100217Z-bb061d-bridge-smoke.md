@@ -6,7 +6,7 @@
 
 ## Status
 
-Implementation complete; handoff snapshot pending.
+Completed; handoff snapshot pending.
 
 ## Task-start developer SHA
 
@@ -67,10 +67,11 @@ record and pushed handoff boundary.
 
 The required phrase choice was supplied as `cobalt-river` after the
 question-tool pathway failed to produce a public alias and was recorded as a
-test deviation. The task-progress record was pushed at
-`765794fff6050286423af8951c2e623244e3fd77`. The permitted smoke artifact has
-now been created and is ready for its artifact commit and the dedicated
-handoff snapshot.
+test deviation. The initial task-progress record was pushed at
+`765794fff6050286423af8951c2e623244e3fd77`. The permitted smoke artifact and
+updated task-progress facts were pushed at
+`b58d3abddb31cb8cee9850ede96b6c5abef52491`. Only the dedicated
+task-progress-only handoff snapshot remains.
 
 ## Observed
 
@@ -85,6 +86,8 @@ handoff snapshot.
   `docs/work/bridge-smoke-tests/BRIDGE-SMOKE-20260813T100217Z-bb061d.md`
   matched the requested six-line Markdown artifact, including the phrase,
   random text, and projection probe source.
+- The smoke artifact commit `b58d3abddb31cb8cee9850ede96b6c5abef52491` was
+  pushed to `developer`.
 
 ## Interpretation
 
@@ -117,6 +120,8 @@ be changed.
 - Exact-file inspection matched the requested artifact content.
 - `git diff --check` passed for the staged task-progress and smoke artifact
   changes.
+- The pushed artifact commit changed only the required task-progress record and
+  permitted smoke artifact.
 
 ## Blockers / required decisions
 
@@ -124,13 +129,11 @@ None.
 
 ## Remaining work
 
-- Commit and push the smoke artifact with the completed task-progress facts.
-- Update and push the dedicated handoff snapshot.
+- Update and push the dedicated task-progress-only handoff snapshot.
 
 ## Next action
 
-Commit and push the permitted smoke Markdown artifact, then create and push the
-dedicated task-progress-only handoff snapshot.
+Create and push the dedicated task-progress-only handoff snapshot.
 
 ## Relevant durable records
 
