@@ -39,8 +39,9 @@ questions, validators and current architecture records carry that fact, and a
 controlled OpenCode restart resolved Luna/Sol to `allow` while retaining Scout
 `deny`. Focused, cross-branch, live, and full repository checks pass. The exact
 implementation/record commit
-`b54f7a9dcf3188e2720e9f025948696e296cf758` is pushed to `origin/developer`;
-this completed progress record is ready for its dedicated handoff snapshot.
+`b54f7a9dcf3188e2720e9f025948696e296cf758` and task-progress-only handoff
+snapshot `d50b67e2f7b94592b9e87f9f24847a870fc576f8` are pushed to
+`origin/developer`. No task work remains.
 
 ## Observed
 
@@ -115,11 +116,11 @@ None.
 
 ## Remaining work
 
-None after the dedicated task-progress-only handoff snapshot is pushed.
+None.
 
 ## Next action
 
-Create and push the dedicated task-progress-only handoff snapshot.
+None.
 
 ## Relevant durable records
 
@@ -133,4 +134,4 @@ Create and push the dedicated task-progress-only handoff snapshot.
 
 ## Last handoff commit
 
-`None`
+`d50b67e2f7b94592b9e87f9f24847a870fc576f8`
