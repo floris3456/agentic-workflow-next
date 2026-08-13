@@ -16,7 +16,13 @@ The bridge accepts markers only from an exact configured GitHub login whose curr
 
 The bridge queues and attempts to publish `applying` before entering the command handler. While a command is `applying`, wait: it is pre-indeterminate and must not be reissued. If the bridge restarts before recording a terminal state, recovery changes it to `indeterminate` and never automatically reissues it.
 
-`start` and `promotion.apply` require both expected fields, `expected.ref` equal to `developer`, and a clean checkout. Other commands may include expected guards while implementation files are dirty. Expected state is checked against a freshly fetched, synchronized local `developer` checkout before consequential work.
+`start` and `promotion.apply` require both fields in top-level `expected`, with
+`expected.ref` equal to `developer`, and a clean checkout. A missing or misplaced
+mandatory guard is a durable pre-ledger rejection and does not consume sequence;
+the corrected command uses a fresh UUID. Other commands may include expected
+guards while implementation files are dirty. Expected state is checked against a
+freshly fetched, synchronized local `developer` checkout before consequential
+work.
 
 ## Commands
 
@@ -69,7 +75,7 @@ there is no policy concurrency cap.
 | --- | --- | --- |
 | `command.status` | exact `command_id` UUID | matching task's exact ledger or pre-ledger-rejection state, known projected result/error, timestamps, applying age, and service heartbeat |
 | `task.status` | none | mapped session alias/agent/state and latest projected developer response plus event/update timestamps |
-| `scout.start` | focused `question`, exact lowercase 40-character `ref`, bounded `scope`, and `expected_evidence` | one request-correlated `repository-scout` session in a clean detached worktree at the fetched `origin/developer` commit |
+| `scout.start` | exactly four fields: focused string `question`, exact lowercase 40-character SHA in `ref`, bounded string `scope`, and string `expected_evidence` | one request-correlated `repository-scout` session in a clean detached worktree at the fetched `origin/developer` commit |
 | `scout.status` | exact `scout_request_id` UUID | matching task/request start state, exact ref, session state, and latest projected Scout response |
 
 `command.status`, `task.status`, and `scout.status` are local durable reads and

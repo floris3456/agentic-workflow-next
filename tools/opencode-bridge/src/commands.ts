@@ -185,7 +185,7 @@ export class CommandExecutor {
 
   private async guardExpected(envelope: CommandEnvelope, required: boolean): Promise<void> {
     if (required && (!envelope.expected?.developer_sha || !envelope.expected.ref)) {
-      throw new Error(`${envelope.kind} requires expected.developer_sha and expected.ref`);
+      throw new Error(`${envelope.kind} requires top-level expected.developer_sha and expected.ref`);
     }
     if (required && envelope.expected?.ref !== "developer") throw new Error(`${envelope.kind} requires expected.ref developer`);
     if (!envelope.expected) return;

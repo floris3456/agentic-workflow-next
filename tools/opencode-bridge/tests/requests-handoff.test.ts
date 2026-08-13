@@ -97,6 +97,36 @@ test("sequence-free status requests read durable state without replay or sequenc
   assert.equal(state.listRequests().length, 2);
 });
 
+test("command status recovers a mandatory-guard pre-ledger rejection", async (context) => {
+  const { state, projection } = fixture(context);
+  const rejectedId = "15151515-1515-4151-8151-151515151515";
+  const rejected: CommandEnvelope = {
+    protocol: "agentic-bridge/1",
+    sequence: 1,
+    command_id: rejectedId,
+    task_id: "TASK-READ",
+    kind: "start",
+    arguments: {
+      brief: "Malformed guarded start",
+      expected: { developer_sha: "a".repeat(40), ref: "developer" },
+    },
+  };
+  assert.equal(state.acceptCommand(rejected, 41).disposition, "rejected");
+
+  const executor = new RequestExecutor({ state, projection });
+  const status = state.acceptRequest(request(
+    "25252525-2525-4252-8252-252525252525",
+    "command.status",
+    { command_id: rejectedId },
+  ), 41).request;
+  const result = await executor.execute(status);
+  assert.equal(result.state, "succeeded");
+  assert.match(JSON.stringify(result.publicResult), /pre-ledger-rejected/);
+  assert.match(JSON.stringify(result.publicResult), /top-level expected/);
+  assert.equal(state.listCommands().length, 0);
+  assert.equal(state.acceptCommand(command("35353535-3535-4353-8353-353535353535", 1), 41).disposition, "new");
+});
+
 test("idle and error delivery transports the latest projected assistant response without interpreting it", async (context) => {
   const { state, projection } = fixture(context);
   state.mapTaskSession("TASK-READ", "ses_private_read", 41, "small-developer");

@@ -44,7 +44,7 @@ export type ScannedRequest =
 
 function rejectUnknownKeys(record: Record<string, unknown>, allowed: Set<string>, label: string): void {
   const unknown = Object.keys(record).filter((key) => !allowed.has(key));
-  if (unknown.length > 0) throw new TypeError(`${label} contains an unknown field`);
+  if (unknown.length > 0) throw new TypeError(`${label} contains unknown field ${unknown[0]}`);
 }
 
 function validRef(value: string): boolean {

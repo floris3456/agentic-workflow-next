@@ -77,6 +77,43 @@ test("command ledger requires sequence one, contiguous progress, and one nonterm
   assert.equal(state.acceptCommand(envelope("77777777-7777-4777-8777-777777777773", 3), 10).disposition, "new");
 });
 
+test("mandatory Git guards reject durably before consuming sequence", (context) => {
+  const { state } = stateForTest(context);
+  const nested = envelope("18181818-1818-4181-8181-181818181818", 1, {
+    kind: "start",
+    arguments: {
+      brief: "Malformed guarded start",
+      expected: { developer_sha: "a".repeat(40), ref: "developer" },
+    },
+  });
+  assert.equal(state.acceptCommand(nested, 10).disposition, "rejected");
+  assert.match(state.commandRejection(nested.command_id)?.reason ?? "", /top-level expected/);
+
+  const wrongRef = envelope("28282828-2828-4282-8282-282828282828", 1, {
+    kind: "start",
+    arguments: { brief: "Wrong-ref guarded start" },
+    expected: { developer_sha: "a".repeat(40), ref: "refs/heads/developer" },
+  });
+  assert.equal(state.acceptCommand(wrongRef, 10).disposition, "rejected");
+  assert.match(state.commandRejection(wrongRef.command_id)?.reason ?? "", /expected\.ref developer/);
+
+  const valid = envelope("38383838-3838-4383-8383-383838383838", 1, {
+    kind: "start",
+    arguments: { brief: "Canonical guarded start" },
+    expected: { developer_sha: "a".repeat(40), ref: "developer" },
+  });
+  assert.equal(state.acceptCommand(valid, 10).disposition, "new");
+  state.beginCommand(valid.command_id);
+  state.finishCommand(valid.command_id, "succeeded", undefined, { status: "ok" });
+
+  const promotion = envelope("48484848-4848-4484-8484-484848484848", 2, {
+    kind: "promotion.apply",
+    arguments: { approved_sha: "a".repeat(40) },
+  });
+  assert.equal(state.acceptCommand(promotion, 10).disposition, "rejected");
+  assert.match(state.commandRejection(promotion.command_id)?.reason ?? "", /top-level expected/);
+});
+
 test("an interrupted applying command remains non-reissuable after restart", (context) => {
   const root = mkdtempSync(join(tmpdir(), "opencode-bridge-restart-"));
   const path = join(root, "private", "bridge.sqlite");

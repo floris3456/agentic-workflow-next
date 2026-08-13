@@ -29,5 +29,22 @@
         "ref": { "type": "string", "minLength": 1, "maxLength": 255 }
       }
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "kind": { "enum": ["start", "promotion.apply"] } },
+        "required": ["kind"]
+      },
+      "then": {
+        "required": ["expected"],
+        "properties": {
+          "expected": {
+            "required": ["developer_sha", "ref"],
+            "properties": { "ref": { "const": "developer" } }
+          }
+        }
+      }
+    }
+  ]
 }

@@ -383,6 +383,11 @@ export class BridgeState {
         rejection = `Command sequence must be exactly ${expected}; received ${envelope.sequence}`;
       } else if (nonterminal) {
         rejection = `Task already has nonterminal command ${String(nonterminal.command_id)} in state ${String(nonterminal.state)}`;
+      } else if ((envelope.kind === "start" || envelope.kind === "promotion.apply")
+        && (!envelope.expected?.developer_sha || !envelope.expected.ref)) {
+        rejection = `${envelope.kind} requires top-level expected.developer_sha and expected.ref`;
+      } else if ((envelope.kind === "start" || envelope.kind === "promotion.apply") && envelope.expected?.ref !== "developer") {
+        rejection = `${envelope.kind} requires expected.ref developer`;
       }
       if (rejection) {
         this.db.prepare(`

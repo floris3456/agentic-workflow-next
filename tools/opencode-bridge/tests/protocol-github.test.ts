@@ -54,6 +54,7 @@ function envelope(commandId: string, sequence: number, kind = "status", task = "
     task_id: task,
     kind,
     arguments: {},
+    ...(kind === "start" ? { expected: { developer_sha: "a".repeat(40), ref: "developer" } } : {}),
   };
 }
 
@@ -122,8 +123,53 @@ test("sequence-free request scanner validates durable read request envelopes", (
     },
   };
   assert.deepEqual(parseRequestEnvelope(scout), scout);
+  assert.throws(
+    () => parseRequestEnvelope({ ...scout, arguments: { ...scout.arguments, sha: "a".repeat(40) } }),
+    /unknown field sha/,
+  );
   assert.throws(() => parseRequestEnvelope({ ...scout, arguments: { ...scout.arguments, ref: "developer" } }), /exact.*commit SHA/);
   assert.throws(() => parseRequestEnvelope({ ...scout, arguments: { ...scout.arguments, question: "" } }), /question.*non-empty/);
+});
+
+test("poller durably rejects a nested start guard without consuming sequence one", async (context) => {
+  const state = stateForTest(context);
+  const invalid = {
+    ...envelope("12121212-1212-4121-8121-121212121212", 1, "start"),
+    arguments: {
+      brief: "Do not execute this malformed probe",
+      expected: { developer_sha: "a".repeat(40), ref: "developer" },
+    },
+    expected: undefined,
+  } as unknown as CommandEnvelope;
+  const valid = {
+    ...envelope("34343434-3434-4343-8343-343434343434", 1, "start"),
+    arguments: { brief: "Execute only the canonical guarded start" },
+  };
+  const github = new GitHubClient({
+    owner: "acme",
+    repository: "demo",
+    tokens: new FakeTokens(),
+    state,
+    apiBaseUrl: "https://api.github.test",
+    fetch: asFetch((request) => {
+      const path = new URL(request.url).pathname;
+      if (path === "/repos/acme/demo/issues") {
+        return Response.json([{ number: 7, body: "Smoke probe", labels: [{ name: "agentic-bridge" }], ...actor("alice", "OWNER") }]);
+      }
+      if (path === "/repos/acme/demo/issues/7/comments") {
+        return Response.json([
+          { id: 1, body: commandMarker(invalid), ...actor("alice", "COLLABORATOR") },
+          { id: 2, body: commandMarker(valid), ...actor("alice", "COLLABORATOR") },
+        ]);
+      }
+      return new Response("not found", { status: 404 });
+    }),
+  });
+  const poller = new GitHubCommandPoller({ github, state, allowedAuthors: ["alice"] });
+  const result = await poller.pollOnce();
+  assert.deepEqual(result.commands.map((command) => command.commandId), [valid.command_id]);
+  assert.match(state.commandRejection(invalid.command_id)?.reason ?? "", /top-level expected/);
+  assert.equal(state.getCommand(valid.command_id)?.sequence, 1);
 });
 
 test("status projection never includes command arguments and neutralizes active Markdown", () => {

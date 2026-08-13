@@ -1,6 +1,8 @@
 # AS-BUILT: OpenCode bridge
 
-**Status:** Integrated through `WOR-001-INTEGRATION`; live GitHub App/native ChatGPT account exercise remains operator-owned
+**Status:** Integrated through `WOR-001-INTEGRATION`; credentialed GitHub issue
+smokes are observed and contract-input corrections are integrated through
+`BRIDGE-LIVE-SMOKE-001`
 
 ## Contract and transport
 
@@ -14,7 +16,7 @@ Consequential OpenCode commands re-run live version/hash compatibility and fail 
 
 `RecoveryCoordinator` combines legacy project SSE, direct per-session v2 history/SSE, project sync history, event-ID deduplication, aggregate cursors, and canonical session/status/permission/question/message reconciliation. Events enter SQLite before callbacks. For a mapped idle/error event, the event row, cursor, session state, and pending response delivery commit in the same transaction, so a stop before the callback cannot strand the handoff behind an advanced cursor. Reconnect loops use bounded exponential backoff and jitter. It does not send or claim standard SSE `Last-Event-ID`; a transient event that upstream never durably records can remain unrecoverable after complete outage.
 
-SQLite uses Node's built-in `node:sqlite` and requires Node `22.13.0` or newer. Configuration lexically confines the state file outside the tracked working tree or beneath its Git directory. The state loader requires an owner-only parent, rejects an existing final path that is a symlink or non-regular file, creates a mode `0700` parent, and normalizes the database to mode `0600`; it does not claim to reject symlinks in every ancestor component. SQLite enables WAL, full synchronization, foreign keys, and a busy timeout. Schema 3 stores command state/results and pre-ledger admission rejections, sequence-free recovery/Scout requests, task/developer-session/Scout-session and issue mappings, latest projected responses, response-delivery retries, public aliases, events/cursors, GitHub outbox/cache, compatibility, reconciliation, PTY metadata/output, and service health. Command UUID and accepted task-sequence uniqueness are fail-closed. The first command sequence is exactly `1`, every later accepted sequence is contiguous, and no task admits another command while one is `accepted` or `applying`. Admission rejections are durable without consuming sequence. An interrupted command or Scout start in `applying` becomes `indeterminate` on restart and is never reissued.
+SQLite uses Node's built-in `node:sqlite` and requires Node `22.13.0` or newer. Configuration lexically confines the state file outside the tracked working tree or beneath its Git directory. The state loader requires an owner-only parent, rejects an existing final path that is a symlink or non-regular file, creates a mode `0700` parent, and normalizes the database to mode `0600`; it does not claim to reject symlinks in every ancestor component. SQLite enables WAL, full synchronization, foreign keys, and a busy timeout. Schema 3 stores command state/results and pre-ledger admission rejections, sequence-free recovery/Scout requests, task/developer-session/Scout-session and issue mappings, latest projected responses, response-delivery retries, public aliases, events/cursors, GitHub outbox/cache, compatibility, reconciliation, PTY metadata/output, and service health. Command UUID and accepted task-sequence uniqueness are fail-closed. The first command sequence is exactly `1`, every later accepted sequence is contiguous, and no task admits another command while one is `accepted` or `applying`. Admission rejections, including a missing or misplaced mandatory top-level Git guard on `start` or `promotion.apply`, are durable without consuming sequence. An interrupted command or Scout start in `applying` becomes `indeterminate` on restart and is never reissued.
 
 ## GitHub control plane
 
@@ -30,7 +32,19 @@ Bridge comments and label changes use a paced durable outbox. Comments carry det
 
 `command.status` returns one task-correlated command's exact durable ledger or pre-ledger-rejection state, known public result/error, timestamps, `applying` age, and service heartbeat. `task.status` returns the mapped developer session state and latest projected developer response. These are reconciliation views rather than progress-consuming commands. A stuck or ambiguous mutation gets one bounded status reconciliation; it is never automatically retried. If local inspection and a current heartbeat cannot resolve the state, an operator stops/restarts the bridge, which converts durable `applying` to `indeterminate` for evidence-based reconciliation.
 
-`scout.start` requires a focused question, exact lowercase developer commit SHA, bounded scope, and expected evidence. The bridge fetches `developer`, verifies that SHA in `origin/developer` history, and creates/reuses a clean detached worktree under its private state parent. Worktree preparation is a brief resource-safety queue; independent session creation and Scout execution use `Promise.all` with no policy cap. Each Scout has a request/session/task/ref/workspace mapping and a directory-bound OpenCode client, so it cannot share the developer checkout or another Scout's result. Read-only recovery starts immediately after that mapping commits and before prompt delivery, allowing an ambiguously acknowledged prompt to complete and become visible without replay or service restart. `scout.status` reads only the matching task/request state and projected response.
+`scout.start` requires exactly four closed arguments: a focused string question,
+the exact lowercase developer commit SHA in `ref`, a bounded string scope, and
+string expected evidence. Unknown fields are rejected with the offending field
+name. The bridge fetches `developer`, verifies that SHA in `origin/developer`
+history, and creates/reuses a clean detached worktree under its private state
+parent. Worktree preparation is a brief resource-safety queue; independent
+session creation and Scout execution use `Promise.all` with no policy cap. Each
+Scout has a request/session/task/ref/workspace mapping and a directory-bound
+OpenCode client, so it cannot share the developer checkout or another Scout's
+result. Read-only recovery starts immediately after that mapping commits and
+before prompt delivery, allowing an ambiguously acknowledged prompt to complete
+and become visible without replay or service restart. `scout.status` reads only
+the matching task/request state and projected response.
 
 Before a Scout session is created, live `app.agents` data must resolve `repository-scout` as primary, `openai/gpt-5.6-luna`, high reasoning effort, and an allowlist consisting only of repository read/search tools. OpenCode `1.18.16` omits tools from `Agent.Info` and omits dynamic MCP tools from `tool.ids`, so the bridge checks the resolved permission rules, the live built-in inventory, and the wildcard deny that disables every unlisted or dynamic tool. OpenCode maps its three fixed MCP resource tools to the otherwise allowed `read` permission; the Scout prompt request therefore sets all three exact tool flags false. Any enabled mutation, shell, delegation, skill, web, interaction, or other tool fails closed; external-directory paths that the runtime reserves for truncation must still resolve deny under `read`. The tracked agent has no Bash/Git path. Its prompt requires concise facts with exact evidence and unknowns and denies synthesis, implementation strategy, steering, acceptance, or human decisions.
 
@@ -52,8 +66,16 @@ The template initializer repairs only complete-history, synchronized clean one-c
 
 ## Verification
 
-The supported runtime is Node `22.13.0` or newer. Strict TypeScript build and `npm test` pass 59 deterministic tests at this task boundary; the final integrated suite is also exercised on exact-minimum Node `22.13.0`. Coverage includes all-operation preparation, contract drift, serialization, SSE, PTY, SQLite security/durability and schema migration, exact sequence/nonterminal enforcement, non-executing status recovery, task-scoped aliases, applying publication, atomic terminal-event/delivery recovery, latest-response delivery/retry, ambiguous Scout-prompt monitoring, Scout model/effort/tool/permission enforcement, exact-ref worktree isolation, concurrent Scouts with a mutating task, cross-task/result isolation, recovery/reconciliation, App auth/token rotation/permissions, conditional polling, authorization/serialization, outbox spoof/rate-limit handling, projection/redaction, secret/alias policy, high-level workflow commands, promotion transport, and restart recovery. Node `22.13.0` emits its expected upstream `node:sqlite` experimental warning.
+The supported runtime is Node `22.13.0` or newer. Strict TypeScript build and `npm test` pass 62 deterministic tests at this task boundary; the final integrated suite is also exercised on exact-minimum Node `22.13.0`. Coverage includes all-operation preparation, contract drift, serialization, SSE, PTY, SQLite security/durability and schema migration, exact sequence/nonterminal/mandatory-guard admission, non-executing status recovery, task-scoped aliases, applying publication, atomic terminal-event/delivery recovery, latest-response delivery/retry, ambiguous Scout-prompt monitoring, Scout model/effort/tool/permission enforcement, exact-ref worktree isolation, concurrent Scouts with a mutating task, cross-task/result isolation, recovery/reconciliation, App auth/token rotation/permissions, conditional polling, authorization/serialization, outbox spoof/rate-limit handling, projection/redaction, secret/alias policy, high-level workflow commands, promotion transport, and restart recovery. Node `22.13.0` emits its expected upstream `node:sqlite` experimental warning.
 
 Eight disposable-Git tests prove correct-ancestry no-op, fresh unrelated-root repair with identical developer tree and an old-root backup, and refusal of established/shallow, generated-fingerprint-mismatched, local-HEAD-mismatched, shared-ancestry, dirty, active-task, and synchronization-failed-marker states. Repository validation includes bridge structure/contracts, package tests, branch tests, mandatory agent-system/research checks, and active hooks. When `WOR_WEB_ORCHESTRATION_ROOT` names an independent checkout, it also runs the Project package validator and compares that exact checkout's command/request examples, six-field handoff, Scout model/effort boundary, non-semantic response transport, and observable lifecycle to developer-owned contracts. A real authenticated loopback OpenCode `1.18.16` run returned the exact version/hash, 188-operation manifest, `compatible: true`, and a successful project read.
 
-No GitHub App private key/installation and no native ChatGPT connected-app account are available in this environment. Those live external interactions are not claimed; deterministic doubles cover the complete local command path and the operator log records the residual exercise.
+Credentialed GitHub issue smokes now exercise authenticated parsing, lifecycle
+publication, sequence enforcement, and durable status views. Issue #6 identified
+contract-invalid client input rather than a permissive bridge defect: Scout
+requests added `sha` and non-string/branch-valued fields, while start nested its
+Git guard under `arguments`. The strict rejections are retained, mandatory guard
+rejections now occur durably before sequence consumption, and deterministic tests
+cover connector-blocked duplicate-marker and same-source serialization probes.
+The corrected full external smoke remains an operator rerun; no runtime behavior
+depends on it.

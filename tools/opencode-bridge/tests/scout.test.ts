@@ -162,6 +162,7 @@ test("independent Scout starts execute concurrently while one mutating command i
     sequence: 1,
     kind: "start",
     arguments: { brief: "Implement bounded work" },
+    expected: { developer_sha: "a".repeat(40), ref: "developer" },
   };
   assert.equal(state.acceptCommand(mutation, 10).disposition, "new");
 
