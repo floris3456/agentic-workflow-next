@@ -2,18 +2,23 @@ import { chmodSync, existsSync, lstatSync } from "node:fs";
 import { DatabaseSync } from "node:sqlite";
 import type {
   AcceptedCommand,
+  AcceptedRequest,
   CommandEnvelope,
   CommandState,
   CompatibilityResult,
   JsonValue,
   OutboxItem,
+  RequestEnvelope,
+  RequestState,
+  ResponseDelivery,
   StoredCommand,
+  StoredRequest,
   TaskSession,
 } from "./types.js";
 import { asJson, ensureParent, now, stableJson } from "./util.js";
 
 type Row = Record<string, unknown>;
-const taskBoundAliasKinds = new Set(["session", "pty", "permission", "question", "message", "part", "event", "project"]);
+const taskBoundAliasKinds = new Set(["session", "pty", "permission", "question", "message", "part", "workspace", "event", "project"]);
 
 function parseJson(value: unknown): JsonValue {
   return asJson(JSON.parse(String(value)));
@@ -31,6 +36,40 @@ function commandFromRow(row: Row): StoredCommand {
     ...(row.raw_result_json === null ? {} : { rawResult: parseJson(row.raw_result_json) }),
     ...(row.public_result_json === null ? {} : { publicResult: parseJson(row.public_result_json) }),
     ...(row.error === null ? {} : { error: String(row.error) }),
+    createdAt: Number(row.created_at),
+    updatedAt: Number(row.updated_at),
+  };
+}
+
+function requestFromRow(row: Row): StoredRequest {
+  return {
+    requestId: String(row.request_id),
+    taskId: String(row.task_id),
+    issueNumber: Number(row.issue_number),
+    kind: String(row.kind) as RequestEnvelope["kind"],
+    envelope: JSON.parse(String(row.envelope_json)) as RequestEnvelope,
+    state: String(row.state) as RequestState,
+    ...(row.raw_result_json === null ? {} : { rawResult: parseJson(row.raw_result_json) }),
+    ...(row.public_result_json === null ? {} : { publicResult: parseJson(row.public_result_json) }),
+    ...(row.error === null ? {} : { error: String(row.error) }),
+    createdAt: Number(row.created_at),
+    updatedAt: Number(row.updated_at),
+  };
+}
+
+function taskSessionFromRow(row: Row): TaskSession {
+  return {
+    taskId: String(row.task_id),
+    sessionId: String(row.session_id),
+    issueNumber: Number(row.issue_number),
+    agent: String(row.agent),
+    sessionState: String(row.session_state ?? "unknown"),
+    ...(row.latest_response_json === null || row.latest_response_json === undefined
+      ? {}
+      : { latestResponse: parseJson(row.latest_response_json) }),
+    ...(row.latest_event_id === null || row.latest_event_id === undefined
+      ? {}
+      : { latestEventId: String(row.latest_event_id) }),
     createdAt: Number(row.created_at),
     updatedAt: Number(row.updated_at),
   };
@@ -76,6 +115,14 @@ export class BridgeState {
         updated_at INTEGER NOT NULL
       );
       CREATE UNIQUE INDEX IF NOT EXISTS commands_task_sequence ON commands(task_id, sequence);
+      CREATE TABLE IF NOT EXISTS command_rejections (
+        command_id TEXT PRIMARY KEY,
+        task_id TEXT NOT NULL,
+        sequence INTEGER NOT NULL,
+        envelope_json TEXT NOT NULL,
+        reason TEXT NOT NULL,
+        created_at INTEGER NOT NULL
+      );
       CREATE TABLE IF NOT EXISTS task_sequences (
         task_id TEXT PRIMARY KEY,
         last_sequence INTEGER NOT NULL,
@@ -86,6 +133,9 @@ export class BridgeState {
         session_id TEXT NOT NULL UNIQUE,
         issue_number INTEGER NOT NULL,
         agent TEXT NOT NULL,
+        session_state TEXT NOT NULL DEFAULT 'unknown',
+        latest_response_json TEXT,
+        latest_event_id TEXT,
         created_at INTEGER NOT NULL,
         updated_at INTEGER NOT NULL
       );
@@ -97,9 +147,23 @@ export class BridgeState {
       CREATE TABLE IF NOT EXISTS aliases (
         alias TEXT PRIMARY KEY,
         kind TEXT NOT NULL,
-        internal_id TEXT NOT NULL UNIQUE,
+        internal_id TEXT NOT NULL,
         task_id TEXT,
+        scope TEXT NOT NULL,
         created_at INTEGER NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS requests (
+        request_id TEXT PRIMARY KEY,
+        task_id TEXT NOT NULL,
+        issue_number INTEGER NOT NULL,
+        kind TEXT NOT NULL,
+        envelope_json TEXT NOT NULL,
+        state TEXT NOT NULL,
+        raw_result_json TEXT,
+        public_result_json TEXT,
+        error TEXT,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
       );
       CREATE TABLE IF NOT EXISTS events (
         journal_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -171,8 +235,44 @@ export class BridgeState {
         text TEXT NOT NULL,
         received_at INTEGER NOT NULL
       );
+      CREATE TABLE IF NOT EXISTS response_deliveries (
+        event_id TEXT PRIMARY KEY,
+        task_id TEXT NOT NULL,
+        session_id TEXT NOT NULL,
+        issue_number INTEGER NOT NULL,
+        event_type TEXT NOT NULL,
+        attempts INTEGER NOT NULL DEFAULT 0,
+        queued_at INTEGER,
+        last_error TEXT,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      );
     `);
-    this.setMeta("schema_version", "1");
+    const taskColumns = new Set((this.db.prepare("PRAGMA table_info(task_sessions)").all() as Row[]).map((row) => String(row.name)));
+    if (!taskColumns.has("session_state")) this.db.exec("ALTER TABLE task_sessions ADD COLUMN session_state TEXT NOT NULL DEFAULT 'unknown'");
+    if (!taskColumns.has("latest_response_json")) this.db.exec("ALTER TABLE task_sessions ADD COLUMN latest_response_json TEXT");
+    if (!taskColumns.has("latest_event_id")) this.db.exec("ALTER TABLE task_sessions ADD COLUMN latest_event_id TEXT");
+
+    const aliasColumns = new Set((this.db.prepare("PRAGMA table_info(aliases)").all() as Row[]).map((row) => String(row.name)));
+    if (!aliasColumns.has("scope")) {
+      this.db.exec(`
+        ALTER TABLE aliases RENAME TO aliases_v1;
+        CREATE TABLE aliases (
+          alias TEXT PRIMARY KEY,
+          kind TEXT NOT NULL,
+          internal_id TEXT NOT NULL,
+          task_id TEXT,
+          scope TEXT NOT NULL,
+          created_at INTEGER NOT NULL
+        );
+        INSERT INTO aliases(alias, kind, internal_id, task_id, scope, created_at)
+          SELECT alias, kind, internal_id, task_id, COALESCE(task_id, ''), created_at FROM aliases_v1;
+        DROP TABLE aliases_v1;
+        CREATE UNIQUE INDEX aliases_kind_internal_scope ON aliases(kind, internal_id, scope);
+      `);
+    }
+    this.db.exec("CREATE UNIQUE INDEX IF NOT EXISTS aliases_kind_internal_scope ON aliases(kind, internal_id, scope)");
+    this.setMeta("schema_version", "2");
   }
 
   private transaction<T>(operation: () => T): T {
@@ -211,26 +311,59 @@ export class BridgeState {
         const disposition = stableJson(existing.envelope) === serialized ? "duplicate" : "conflict";
         return { disposition, command: existing };
       }
+      const priorRejection = this.db.prepare("SELECT envelope_json, reason FROM command_rejections WHERE command_id=?")
+        .get(envelope.command_id) as Row | undefined;
+      if (priorRejection) {
+        return {
+          disposition: "rejected",
+          reason: stableJson(JSON.parse(String(priorRejection.envelope_json))) === serialized
+            ? String(priorRejection.reason)
+            : "Command UUID conflicts with a previously rejected command",
+        };
+      }
       const sameSequence = this.db.prepare("SELECT * FROM commands WHERE task_id=? AND sequence=?").get(envelope.task_id, envelope.sequence) as Row | undefined;
       if (sameSequence) return { disposition: "conflict", command: commandFromRow(sameSequence) };
       const latest = this.db.prepare("SELECT last_sequence FROM task_sequences WHERE task_id=?").get(envelope.task_id) as Row | undefined;
       const timestamp = now();
-      const stale = latest !== undefined && envelope.sequence <= Number(latest.last_sequence);
-      const state: CommandState = stale ? "rejected" : "accepted";
-      const error = stale ? `Stale sequence ${envelope.sequence}; latest is ${String(latest?.last_sequence)}` : null;
+      const expected = latest === undefined ? 1 : Number(latest.last_sequence) + 1;
+      const nonterminal = this.db.prepare(
+        "SELECT command_id, state FROM commands WHERE task_id=? AND state IN ('accepted','applying') ORDER BY created_at LIMIT 1",
+      ).get(envelope.task_id) as Row | undefined;
+      let rejection: string | undefined;
+      if (envelope.sequence !== expected) {
+        rejection = `Command sequence must be exactly ${expected}; received ${envelope.sequence}`;
+      } else if (nonterminal) {
+        rejection = `Task already has nonterminal command ${String(nonterminal.command_id)} in state ${String(nonterminal.state)}`;
+      }
+      if (rejection) {
+        this.db.prepare(`
+          INSERT INTO command_rejections(command_id, task_id, sequence, envelope_json, reason, created_at)
+          VALUES (?, ?, ?, ?, ?, ?)
+        `).run(envelope.command_id, envelope.task_id, envelope.sequence, serialized, rejection, timestamp);
+        return { disposition: "rejected", reason: rejection };
+      }
       this.db.prepare(`
         INSERT INTO commands(command_id, task_id, sequence, issue_number, kind, envelope_json, state, error, created_at, updated_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `).run(envelope.command_id, envelope.task_id, envelope.sequence, issueNumber, envelope.kind, serialized, state, error, timestamp, timestamp);
-      if (!stale) {
-        this.db.prepare(`
-          INSERT INTO task_sequences(task_id, last_sequence, updated_at) VALUES (?, ?, ?)
-          ON CONFLICT(task_id) DO UPDATE SET last_sequence=excluded.last_sequence, updated_at=excluded.updated_at
-        `).run(envelope.task_id, envelope.sequence, timestamp);
-      }
+      `).run(envelope.command_id, envelope.task_id, envelope.sequence, issueNumber, envelope.kind, serialized, "accepted", null, timestamp, timestamp);
+      this.db.prepare(`
+        INSERT INTO task_sequences(task_id, last_sequence, updated_at) VALUES (?, ?, ?)
+        ON CONFLICT(task_id) DO UPDATE SET last_sequence=excluded.last_sequence, updated_at=excluded.updated_at
+      `).run(envelope.task_id, envelope.sequence, timestamp);
       const command = this.getCommand(envelope.command_id)!;
-      return { disposition: stale ? "stale" : "new", command };
+      return { disposition: "new", command };
     });
+  }
+
+  commandRejection(commandId: string): { taskId: string; sequence: number; reason: string; createdAt: number } | undefined {
+    const row = this.db.prepare("SELECT task_id, sequence, reason, created_at FROM command_rejections WHERE command_id=?")
+      .get(commandId) as Row | undefined;
+    return row ? {
+      taskId: String(row.task_id),
+      sequence: Number(row.sequence),
+      reason: String(row.reason),
+      createdAt: Number(row.created_at),
+    } : undefined;
   }
 
   getCommand(commandId: string): StoredCommand | undefined {
@@ -261,10 +394,10 @@ export class BridgeState {
     const timestamp = now();
     this.transaction(() => {
       this.db.prepare(`
-        INSERT INTO task_sessions(task_id, session_id, issue_number, agent, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO task_sessions(task_id, session_id, issue_number, agent, session_state, created_at, updated_at)
+        VALUES (?, ?, ?, ?, 'starting', ?, ?)
         ON CONFLICT(task_id) DO UPDATE SET session_id=excluded.session_id, issue_number=excluded.issue_number,
-          agent=excluded.agent, updated_at=excluded.updated_at
+          agent=excluded.agent, session_state=excluded.session_state, updated_at=excluded.updated_at
       `).run(taskId, sessionId, issueNumber, agent, timestamp, timestamp);
       this.db.prepare(`
         INSERT INTO issue_tasks(issue_number, task_id, updated_at) VALUES (?, ?, ?)
@@ -275,28 +408,12 @@ export class BridgeState {
 
   getTaskSession(taskId: string): TaskSession | undefined {
     const row = this.db.prepare("SELECT * FROM task_sessions WHERE task_id=?").get(taskId) as Row | undefined;
-    if (!row) return undefined;
-    return {
-      taskId: String(row.task_id),
-      sessionId: String(row.session_id),
-      issueNumber: Number(row.issue_number),
-      agent: String(row.agent),
-      createdAt: Number(row.created_at),
-      updatedAt: Number(row.updated_at),
-    };
+    return row ? taskSessionFromRow(row) : undefined;
   }
 
   taskSessionForInternal(sessionId: string): TaskSession | undefined {
     const row = this.db.prepare("SELECT * FROM task_sessions WHERE session_id=?").get(sessionId) as Row | undefined;
-    if (!row) return undefined;
-    return {
-      taskId: String(row.task_id),
-      sessionId: String(row.session_id),
-      issueNumber: Number(row.issue_number),
-      agent: String(row.agent),
-      createdAt: Number(row.created_at),
-      updatedAt: Number(row.updated_at),
-    };
+    return row ? taskSessionFromRow(row) : undefined;
   }
 
   taskForIssue(issueNumber: number): string | undefined {
@@ -322,10 +439,7 @@ export class BridgeState {
   }
 
   listTaskSessions(): TaskSession[] {
-    return (this.db.prepare("SELECT * FROM task_sessions ORDER BY task_id").all() as Row[]).map((row) => ({
-      taskId: String(row.task_id), sessionId: String(row.session_id), issueNumber: Number(row.issue_number),
-      agent: String(row.agent), createdAt: Number(row.created_at), updatedAt: Number(row.updated_at),
-    }));
+    return (this.db.prepare("SELECT * FROM task_sessions ORDER BY task_id").all() as Row[]).map(taskSessionFromRow);
   }
 
   listCommands(states?: CommandState[]): StoredCommand[] {
@@ -336,21 +450,91 @@ export class BridgeState {
     return (this.db.prepare(`SELECT * FROM commands WHERE state IN (${placeholders}) ORDER BY created_at, command_id`).all(...states) as Row[]).map(commandFromRow);
   }
 
+  acceptRequest(envelope: RequestEnvelope, issueNumber: number): AcceptedRequest {
+    return this.transaction(() => {
+      const existing = this.getRequest(envelope.request_id);
+      const serialized = stableJson(envelope);
+      if (existing) {
+        return {
+          disposition: stableJson(existing.envelope) === serialized ? "duplicate" : "conflict",
+          request: existing,
+        };
+      }
+      const timestamp = now();
+      this.db.prepare(`
+        INSERT INTO requests(request_id, task_id, issue_number, kind, envelope_json, state, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, 'accepted', ?, ?)
+      `).run(envelope.request_id, envelope.task_id, issueNumber, envelope.kind, serialized, timestamp, timestamp);
+      return { disposition: "new", request: this.getRequest(envelope.request_id)! };
+    });
+  }
+
+  getRequest(requestId: string): StoredRequest | undefined {
+    const row = this.db.prepare("SELECT * FROM requests WHERE request_id=?").get(requestId) as Row | undefined;
+    return row ? requestFromRow(row) : undefined;
+  }
+
+  beginRequest(requestId: string): StoredRequest {
+    const result = this.db.prepare(
+      "UPDATE requests SET state='applying', updated_at=? WHERE request_id=? AND state='accepted'",
+    ).run(now(), requestId);
+    const request = this.getRequest(requestId);
+    if (!request) throw new Error(`Unknown bridge request ${requestId}`);
+    if (result.changes === 0) throw new Error(`Bridge request ${requestId} cannot begin from ${request.state}`);
+    return this.getRequest(requestId)!;
+  }
+
+  finishRequest(
+    requestId: string,
+    state: Extract<RequestState, "succeeded" | "failed" | "indeterminate">,
+    raw?: JsonValue,
+    projected?: JsonValue,
+    error?: string,
+  ): StoredRequest {
+    this.db.prepare(`
+      UPDATE requests SET state=?, raw_result_json=?, public_result_json=?, error=?, updated_at=?
+      WHERE request_id=? AND state IN ('accepted','applying')
+    `).run(state, raw === undefined ? null : stableJson(raw), projected === undefined ? null : stableJson(projected), error ?? null, now(), requestId);
+    const request = this.getRequest(requestId);
+    if (!request) throw new Error(`Unknown bridge request ${requestId}`);
+    return request;
+  }
+
+  listRequests(states?: RequestState[]): StoredRequest[] {
+    if (!states || states.length === 0) {
+      return (this.db.prepare("SELECT * FROM requests ORDER BY created_at, request_id").all() as Row[]).map(requestFromRow);
+    }
+    const placeholders = states.map(() => "?").join(",");
+    return (this.db.prepare(`SELECT * FROM requests WHERE state IN (${placeholders}) ORDER BY created_at, request_id`).all(...states) as Row[])
+      .map(requestFromRow);
+  }
+
   updateTaskAgent(taskId: string, agent: string): void {
     this.db.prepare("UPDATE task_sessions SET agent=?, updated_at=? WHERE task_id=?").run(agent, now(), taskId);
   }
 
+  updateTaskSessionState(taskId: string, sessionState: string, eventId: string): void {
+    this.db.prepare(
+      "UPDATE task_sessions SET session_state=?, latest_event_id=?, updated_at=? WHERE task_id=?",
+    ).run(sessionState, eventId, now(), taskId);
+  }
+
+  updateTaskLatestResponse(taskId: string, response: JsonValue, eventId: string): void {
+    this.db.prepare(
+      "UPDATE task_sessions SET latest_response_json=?, latest_event_id=?, updated_at=? WHERE task_id=?",
+    ).run(stableJson(response), eventId, now(), taskId);
+  }
+
   ensureAlias(kind: string, internalId: string, taskId?: string): string {
-    const existing = this.db.prepare("SELECT alias, task_id FROM aliases WHERE internal_id=?").get(internalId) as Row | undefined;
-    if (existing) {
-      if (taskId && taskBoundAliasKinds.has(kind) && existing.task_id === null) {
-        this.db.prepare("UPDATE aliases SET task_id=? WHERE internal_id=? AND task_id IS NULL").run(taskId, internalId);
-      }
-      return String(existing.alias);
-    }
+    const bound = taskBoundAliasKinds.has(kind);
+    const scope = bound ? taskId ?? "" : "";
+    const existing = this.db.prepare("SELECT alias FROM aliases WHERE kind=? AND internal_id=? AND scope=?")
+      .get(kind, internalId, scope) as Row | undefined;
+    if (existing) return String(existing.alias);
     const count = this.db.prepare("SELECT COUNT(*) AS count FROM aliases WHERE kind=?").get(kind) as Row;
     const alias = `${kind}-${Number(count.count) + 1}`;
-    this.db.prepare("INSERT INTO aliases(alias, kind, internal_id, task_id, created_at) VALUES (?, ?, ?, ?, ?)").run(alias, kind, internalId, taskId ?? null, now());
+    this.db.prepare("INSERT INTO aliases(alias, kind, internal_id, task_id, scope, created_at) VALUES (?, ?, ?, ?, ?, ?)")
+      .run(alias, kind, internalId, bound ? taskId ?? null : null, scope, now());
     return alias;
   }
 
@@ -362,8 +546,11 @@ export class BridgeState {
     return String(row.internal_id);
   }
 
-  aliasFor(internalId: string): string | undefined {
-    const row = this.db.prepare("SELECT alias FROM aliases WHERE internal_id=?").get(internalId) as Row | undefined;
+  aliasFor(internalId: string, kind?: string, taskId?: string): string | undefined {
+    const row = kind === undefined
+      ? this.db.prepare("SELECT alias FROM aliases WHERE internal_id=? ORDER BY created_at LIMIT 1").get(internalId) as Row | undefined
+      : this.db.prepare("SELECT alias FROM aliases WHERE kind=? AND internal_id=? AND scope=?")
+        .get(kind, internalId, taskBoundAliasKinds.has(kind) ? taskId ?? "" : "") as Row | undefined;
     return row ? String(row.alias) : undefined;
   }
 
@@ -394,6 +581,51 @@ export class BridgeState {
     `).all(taskId, after, bounded) as Row[]).map((row) => ({
       journalId: Number(row.journal_id), eventType: String(row.event_type), payload: parseJson(row.payload_json), receivedAt: Number(row.received_at),
     }));
+  }
+
+  queueResponseDelivery(input: {
+    eventId: string;
+    taskId: string;
+    sessionId: string;
+    issueNumber: number;
+    eventType: string;
+  }): void {
+    const timestamp = now();
+    this.transaction(() => {
+      this.db.prepare(`
+        INSERT OR IGNORE INTO response_deliveries(
+          event_id, task_id, session_id, issue_number, event_type, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)
+      `).run(input.eventId, input.taskId, input.sessionId, input.issueNumber, input.eventType, timestamp, timestamp);
+      this.updateTaskSessionState(input.taskId, input.eventType, input.eventId);
+    });
+  }
+
+  pendingResponseDeliveries(limit = 25): ResponseDelivery[] {
+    return (this.db.prepare(`
+      SELECT * FROM response_deliveries WHERE queued_at IS NULL ORDER BY created_at, event_id LIMIT ?
+    `).all(Math.max(1, Math.min(100, limit))) as Row[]).map((row) => ({
+      eventId: String(row.event_id),
+      taskId: String(row.task_id),
+      sessionId: String(row.session_id),
+      issueNumber: Number(row.issue_number),
+      eventType: String(row.event_type),
+      attempts: Number(row.attempts),
+      createdAt: Number(row.created_at),
+      updatedAt: Number(row.updated_at),
+    }));
+  }
+
+  completeResponseDelivery(eventId: string): void {
+    this.db.prepare(
+      "UPDATE response_deliveries SET queued_at=?, last_error=NULL, updated_at=? WHERE event_id=?",
+    ).run(now(), now(), eventId);
+  }
+
+  retryResponseDelivery(eventId: string, error: string): void {
+    this.db.prepare(
+      "UPDATE response_deliveries SET attempts=attempts+1, last_error=?, updated_at=? WHERE event_id=?",
+    ).run(error.slice(0, 1_000), now(), eventId);
   }
 
   setDurableCursor(source: string, aggregateId: string, sequence: number): void {
@@ -511,9 +743,10 @@ export class BridgeState {
   mapPty(alias: string, ptyId: string, taskId: string): void {
     const timestamp = now();
     this.transaction(() => {
-      const existingAlias = this.aliasFor(ptyId);
+      const existingAlias = this.aliasFor(ptyId, "pty", taskId);
       if (existingAlias !== undefined && existingAlias !== alias) throw new Error(`PTY ${ptyId} is already mapped as ${existingAlias}`);
-      this.db.prepare("INSERT OR IGNORE INTO aliases(alias, kind, internal_id, task_id, created_at) VALUES (?, 'pty', ?, ?, ?)").run(alias, ptyId, taskId, timestamp);
+      this.db.prepare("INSERT OR IGNORE INTO aliases(alias, kind, internal_id, task_id, scope, created_at) VALUES (?, 'pty', ?, ?, ?, ?)")
+        .run(alias, ptyId, taskId, taskId, timestamp);
       this.db.prepare("INSERT INTO pty_sessions(alias, pty_id, task_id, cursor, status, created_at, updated_at) VALUES (?, ?, ?, 0, 'created', ?, ?)")
         .run(alias, ptyId, taskId, timestamp, timestamp);
     });

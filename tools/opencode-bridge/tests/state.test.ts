@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
-import { mkdtempSync, rmSync, statSync } from "node:fs";
+import { chmodSync, mkdtempSync, rmSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { DatabaseSync } from "node:sqlite";
 import test, { type TestContext } from "node:test";
 import { BridgeState } from "../src/state.js";
 import type { CommandEnvelope, CompatibilityResult } from "../src/types.js";
@@ -33,33 +34,47 @@ test("SQLite state creates private durable files and metadata", (context) => {
   const { state, path } = stateForTest(context);
   assert.equal(statSync(path).mode & 0o777, 0o600);
   assert.equal(statSync(join(path, "..")).mode & 0o777, 0o700);
-  assert.equal(state.getMeta("schema_version"), "1");
+  assert.equal(state.getMeta("schema_version"), "2");
   state.setMeta("instance", "project-one");
   assert.equal(state.getMeta("instance"), "project-one");
 });
 
-test("command ledger is idempotent, monotonic, and fail-closed while applying", (context) => {
+test("command ledger requires sequence one, contiguous progress, and one nonterminal command", (context) => {
   const { state } = stateForTest(context);
+  const early = envelope("00000000-0000-4000-8000-000000000002", 2);
+  assert.equal(state.acceptCommand(early, 10).disposition, "rejected");
+  assert.match(state.commandRejection(early.command_id)?.reason ?? "", /exactly 1/);
+  assert.equal(state.acceptCommand(early, 10).disposition, "rejected");
+
   const first = envelope("11111111-1111-4111-8111-111111111111", 1);
   assert.equal(state.acceptCommand(first, 10).disposition, "new");
   assert.equal(state.acceptCommand(first, 10).disposition, "duplicate");
   assert.equal(state.acceptCommand({ ...first, kind: "abort" }, 10).disposition, "conflict");
   assert.equal(state.acceptCommand(envelope("22222222-2222-4222-8222-222222222222", 1), 10).disposition, "conflict");
 
-  const second = envelope("33333333-3333-4333-8333-333333333333", 3);
-  assert.equal(state.acceptCommand(second, 10).disposition, "new");
-  const stale = state.acceptCommand(envelope("44444444-4444-4444-8444-444444444444", 2), 10);
-  assert.equal(stale.disposition, "stale");
-  assert.equal(stale.command.state, "rejected");
-  assert.match(stale.command.error ?? "", /latest is 3/);
+  const blocked = envelope("33333333-3333-4333-8333-333333333333", 2);
+  assert.equal(state.acceptCommand(blocked, 10).disposition, "rejected");
+  assert.match(state.commandRejection(blocked.command_id)?.reason ?? "", /nonterminal/);
 
   assert.equal(state.beginCommand(first.command_id).state, "applying");
+  const blockedApplying = envelope("44444444-4444-4444-8444-444444444444", 2);
+  assert.equal(state.acceptCommand(blockedApplying, 10).disposition, "rejected");
+  assert.match(state.commandRejection(blockedApplying.command_id)?.reason ?? "", /applying/);
   assert.throws(() => state.beginCommand(first.command_id), /cannot begin from applying/);
   const complete = state.finishCommand(first.command_id, "succeeded", { internal: true }, { status: "ok" });
   assert.equal(complete.state, "succeeded");
   assert.deepEqual(complete.rawResult, { internal: true });
   assert.deepEqual(complete.publicResult, { status: "ok" });
   assert.throws(() => state.beginCommand(first.command_id), /cannot begin from succeeded/);
+
+  const second = envelope("55555555-5555-4555-8555-555555555552", 2);
+  assert.equal(state.acceptCommand(second, 10).disposition, "new");
+  const gap = envelope("66666666-6666-4666-8666-666666666664", 4);
+  assert.equal(state.acceptCommand(gap, 10).disposition, "rejected");
+  assert.match(state.commandRejection(gap.command_id)?.reason ?? "", /exactly 3/);
+  state.beginCommand(second.command_id);
+  state.finishCommand(second.command_id, "failed", undefined, { error: "expected test failure" });
+  assert.equal(state.acceptCommand(envelope("77777777-7777-4777-8777-777777777773", 3), 10).disposition, "new");
 });
 
 test("an interrupted applying command remains non-reissuable after restart", (context) => {
@@ -97,6 +112,13 @@ test("task, alias, event, and durable cursor mappings survive projection needs",
   assert.equal(state.aliasFor("ses_private"), alias);
   assert.throws(() => state.resolveAlias(alias, "pty"), /not pty/);
 
+  const workspaceOne = state.ensureAlias("workspace", "wrk_shared", "TASK-1");
+  const workspaceTwo = state.ensureAlias("workspace", "wrk_shared", "TASK-2");
+  assert.notEqual(workspaceOne, workspaceTwo);
+  assert.equal(state.resolveAlias(workspaceOne, "workspace", "TASK-1"), "wrk_shared");
+  assert.equal(state.resolveAlias(workspaceTwo, "workspace", "TASK-2"), "wrk_shared");
+  assert.throws(() => state.resolveAlias(workspaceOne, "workspace", "TASK-2"), /not available/);
+
   const recorded = state.recordEvent({
     eventKey: "session:ses_private:1",
     source: "session-v2",
@@ -116,6 +138,38 @@ test("task, alias, event, and durable cursor mappings survive projection needs",
   }), false);
   assert.deepEqual(state.durableCursors("session-v2"), { ses_private: 1 });
   assert.equal(state.listEvents("TASK-1")[0]?.eventType, "message.updated");
+});
+
+test("schema migration replaces global alias identity with task-bound scope", (context) => {
+  const root = mkdtempSync(join(tmpdir(), "opencode-bridge-v1-"));
+  const path = join(root, "bridge.sqlite");
+  const legacy = new DatabaseSync(path);
+  legacy.exec(`
+    CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at INTEGER NOT NULL);
+    INSERT INTO meta(key, value, updated_at) VALUES ('schema_version', '1', 0);
+    CREATE TABLE aliases (
+      alias TEXT PRIMARY KEY,
+      kind TEXT NOT NULL,
+      internal_id TEXT NOT NULL UNIQUE,
+      task_id TEXT,
+      created_at INTEGER NOT NULL
+    );
+    INSERT INTO aliases(alias, kind, internal_id, task_id, created_at)
+      VALUES ('workspace-1', 'workspace', 'wrk_shared', 'TASK-1', 0);
+  `);
+  legacy.close();
+  chmodSync(path, 0o600);
+
+  const migrated = new BridgeState(path);
+  context.after(() => {
+    migrated.close();
+    rmSync(root, { recursive: true, force: true });
+  });
+  assert.equal(migrated.getMeta("schema_version"), "2");
+  assert.equal(migrated.ensureAlias("workspace", "wrk_shared", "TASK-1"), "workspace-1");
+  const second = migrated.ensureAlias("workspace", "wrk_shared", "TASK-2");
+  assert.equal(second, "workspace-2");
+  assert.throws(() => migrated.resolveAlias(second, "workspace", "TASK-1"), /not available/);
 });
 
 test("outbox retries idempotently and compatibility records remain queryable", (context) => {

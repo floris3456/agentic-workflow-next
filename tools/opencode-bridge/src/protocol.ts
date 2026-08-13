@@ -1,7 +1,16 @@
-import type { CommandEnvelope, CommandState, JsonValue, StoredCommand } from "./types.js";
+import type {
+  CommandEnvelope,
+  CommandState,
+  JsonValue,
+  RequestEnvelope,
+  RequestState,
+  StoredCommand,
+  StoredRequest,
+} from "./types.js";
 import { asJson, asRecord, sha256 } from "./util.js";
 
 const marker = /<!--\s*agentic-bridge-command\s*\n([\s\S]*?)-->/g;
+const requestMarker = /<!--\s*agentic-bridge-request\s*\n([\s\S]*?)-->/g;
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const taskId = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
 const allowedKinds = new Set([
@@ -23,9 +32,14 @@ const allowedKinds = new Set([
   "promotion.apply",
   "opencode.request",
 ]);
+const allowedRequestKinds = new Set(["command.status", "task.status"]);
 
 export type ScannedCommand =
   | { valid: true; envelope: CommandEnvelope; markerHash: string }
+  | { valid: false; error: string; markerHash: string };
+
+export type ScannedRequest =
+  | { valid: true; envelope: RequestEnvelope; markerHash: string }
   | { valid: false; error: string; markerHash: string };
 
 function rejectUnknownKeys(record: Record<string, unknown>, allowed: Set<string>, label: string): void {
@@ -78,6 +92,22 @@ export function parseCommandEnvelope(value: unknown): CommandEnvelope {
   };
 }
 
+export function parseRequestEnvelope(value: unknown): RequestEnvelope {
+  const input = asRecord(value, "bridge request envelope");
+  rejectUnknownKeys(input, new Set(["protocol", "request_id", "task_id", "kind", "arguments"]), "Bridge request envelope");
+  if (input.protocol !== "agentic-bridge/1") throw new TypeError("Unsupported bridge protocol");
+  if (typeof input.request_id !== "string" || !uuid.test(input.request_id)) throw new TypeError("Request ID must be a UUID");
+  if (typeof input.task_id !== "string" || !taskId.test(input.task_id)) throw new TypeError("Task ID is invalid");
+  if (typeof input.kind !== "string" || !allowedRequestKinds.has(input.kind)) throw new TypeError("Bridge request kind is unsupported");
+  return {
+    protocol: "agentic-bridge/1",
+    request_id: input.request_id,
+    task_id: input.task_id,
+    kind: input.kind as RequestEnvelope["kind"],
+    arguments: asJson(asRecord(input.arguments, "bridge request arguments")) as Record<string, JsonValue>,
+  };
+}
+
 export function scanCommandEnvelopes(markdown: string): ScannedCommand[] {
   if (Buffer.byteLength(markdown, "utf8") > 1_000_000) throw new Error("GitHub command source exceeds the bridge scan limit");
   const results: ScannedCommand[] = [];
@@ -92,6 +122,25 @@ export function scanCommandEnvelopes(markdown: string): ScannedCommand[] {
       results.push({ valid: true, envelope: parseCommandEnvelope(JSON.parse(raw) as unknown), markerHash });
     } catch (error) {
       results.push({ valid: false, error: error instanceof Error ? error.message : "Invalid command envelope", markerHash });
+    }
+  }
+  return results;
+}
+
+export function scanRequestEnvelopes(markdown: string): ScannedRequest[] {
+  if (Buffer.byteLength(markdown, "utf8") > 1_000_000) throw new Error("GitHub request source exceeds the bridge scan limit");
+  const results: ScannedRequest[] = [];
+  for (const match of markdown.matchAll(requestMarker)) {
+    const raw = match[1] ?? "";
+    const markerHash = sha256(raw);
+    if (Buffer.byteLength(raw, "utf8") > 65_536) {
+      results.push({ valid: false, error: "Bridge request envelope exceeds 65536 bytes", markerHash });
+      continue;
+    }
+    try {
+      results.push({ valid: true, envelope: parseRequestEnvelope(JSON.parse(raw) as unknown), markerHash });
+    } catch (error) {
+      results.push({ valid: false, error: error instanceof Error ? error.message : "Invalid bridge request envelope", markerHash });
     }
   }
   return results;
@@ -114,4 +163,25 @@ export function invalidCommandComment(markerHash: string, detail: string): strin
   const machine = { protocol: "agentic-bridge/1", marker_hash: markerHash, state: "rejected" };
   const safeDetail = safePublicText(detail);
   return `<!-- agentic-bridge-status\n${JSON.stringify(machine)}\n-->\nBridge command was **rejected**: ${safeDetail}`;
+}
+
+export function requestStatusComment(
+  request: Pick<StoredRequest, "requestId" | "taskId" | "kind" | "state">,
+  detail?: string,
+): string {
+  const state: RequestState = request.state;
+  const machine = {
+    protocol: "agentic-bridge/1",
+    request_id: request.requestId,
+    task_id: request.taskId,
+    kind: request.kind,
+    state,
+  };
+  const safeDetail = detail ? safePublicText(detail) : undefined;
+  return `<!-- agentic-bridge-request-status\n${JSON.stringify(machine)}\n-->\nBridge request \`${request.requestId}\` is **${state}**${safeDetail ? `: ${safeDetail}` : "."}`;
+}
+
+export function invalidRequestComment(markerHash: string, detail: string): string {
+  const machine = { protocol: "agentic-bridge/1", marker_hash: markerHash, state: "rejected" };
+  return `<!-- agentic-bridge-request-status\n${JSON.stringify(machine)}\n-->\nBridge request was **rejected**: ${safePublicText(detail)}`;
 }

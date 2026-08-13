@@ -5,10 +5,12 @@ import { CommandExecutor, type GitState } from "./commands.js";
 import type { BridgeConfig } from "./config.js";
 import { GitHubAppAuth } from "./github-auth.js";
 import { GitHubClient, GitHubCommandPoller, GitHubControlLoop, GitHubOutbox } from "./github.js";
+import { DeveloperResponseTransport, queueDeveloperResponseEvent } from "./handoff.js";
 import { Manifest } from "./manifest.js";
 import { OpenCodeClient } from "./opencode.js";
 import { OperationPolicy, PublicProjection } from "./projection.js";
 import { RecoveryCoordinator, type PersistedOpenCodeEvent } from "./recovery.js";
+import { RequestExecutor } from "./requests.js";
 import { BridgeState } from "./state.js";
 import type { JsonValue, TaskSession } from "./types.js";
 import { ensurePrivateDirectory, errorMessage, sleep } from "./util.js";
@@ -155,6 +157,10 @@ function visibleEvent(event: PersistedOpenCodeEvent): boolean {
   return /(?:permission|question)|session\.(?:idle|error)/i.test(event.eventType);
 }
 
+function terminalSessionEvent(event: PersistedOpenCodeEvent): boolean {
+  return /session\.(?:idle|error)/i.test(event.eventType);
+}
+
 export class BridgeService {
   private readonly config: BridgeConfig;
   private readonly signal: AbortSignal;
@@ -164,6 +170,9 @@ export class BridgeService {
   private readonly projection: PublicProjection;
   private readonly recovery: RecoveryCoordinator;
   private readonly executor: CommandExecutor;
+  private readonly requests: RequestExecutor;
+  private readonly responses: DeveloperResponseTransport;
+  private readonly outbox: GitHubOutbox;
   private readonly control: GitHubControlLoop;
   private readonly sessionRuns = new Map<string, Promise<void>>();
 
@@ -176,11 +185,24 @@ export class BridgeService {
     this.client = opencode(config, manifest);
     this.projection = new PublicProjection({ state: this.state, privateRoots: config.privateRoots });
     const githubClient = github(config, this.state);
+    const poller = new GitHubCommandPoller({
+      github: githubClient,
+      state: this.state,
+      allowedAuthors: config.github.allowedAuthors,
+      label: config.github.controlLabel,
+    });
+    this.outbox = new GitHubOutbox({ github: githubClient, state: this.state, commentAuthor: config.github.commentAuthor });
     this.recovery = new RecoveryCoordinator({
       client: this.client,
       state: this.state,
       onPersistedEvent: (event) => this.publishEvent(event),
       onError: (error) => this.state.setMeta("service.last_error", this.projection.safeText(errorMessage(error))),
+    });
+    this.responses = new DeveloperResponseTransport({
+      client: this.client,
+      state: this.state,
+      projection: this.projection,
+      onError: (message) => this.state.setMeta("service.last_error", message),
     });
     this.executor = new CommandExecutor({
       client: this.client,
@@ -200,17 +222,18 @@ export class BridgeService {
       currentGitState: () => synchronizedGitState(config),
       ...(config.policy.promotionEnabled ? { runPromotion: promotion(config) } : {}),
       onSessionStarted: (taskId) => this.startSessionRecovery(taskId),
+      onApplying: async () => {
+        try {
+          await this.outbox.flush();
+        } catch (error) {
+          this.state.setMeta("service.last_error", this.projection.safeText(errorMessage(error)));
+        }
+      },
     });
-    const poller = new GitHubCommandPoller({
-      github: githubClient,
-      state: this.state,
-      allowedAuthors: config.github.allowedAuthors,
-      label: config.github.controlLabel,
-    });
-    const outbox = new GitHubOutbox({ github: githubClient, state: this.state, commentAuthor: config.github.commentAuthor });
+    this.requests = new RequestExecutor({ state: this.state, projection: this.projection });
     this.control = new GitHubControlLoop({
       poller,
-      outbox,
+      outbox: this.outbox,
       state: this.state,
       activeIntervalMs: config.github.activeIntervalMs,
       idleIntervalMs: config.github.idleIntervalMs,
@@ -218,14 +241,29 @@ export class BridgeService {
     });
   }
 
-  private publishEvent(event: PersistedOpenCodeEvent): void {
+  private async publishEvent(event: PersistedOpenCodeEvent): Promise<void> {
     if (!event.taskId || !visibleEvent(event)) return;
     const issue = this.state.issueForTask(event.taskId);
     if (issue === undefined) return;
+    if (terminalSessionEvent(event) && event.sessionId) {
+      await this.responses.deliver(queueDeveloperResponseEvent(this.state, event));
+      return;
+    }
     const projected = this.projection.project({ type: event.eventType, event: event.payload }, event.taskId);
     this.state.enqueue(`opencode-event:${event.eventId}`, "issue-comment", issue, {
       body: `OpenCode task event:\n\n${this.projection.comment(projected)}`,
     });
+  }
+
+  private async runResponseDeliveries(): Promise<void> {
+    while (!this.signal.aborted) {
+      for (const delivery of this.state.pendingResponseDeliveries()) await this.responses.deliver(delivery);
+      try {
+        await sleep(this.config.github.activeIntervalMs, this.signal);
+      } catch (error) {
+        if (!this.signal.aborted) throw error;
+      }
+    }
   }
 
   private startSessionRecovery(taskId: string): void {
@@ -249,11 +287,17 @@ export class BridgeService {
         this.state.setMeta("service.last_error", this.projection.safeText(errorMessage(error)));
       }
       this.executor.requeueCompletedResults();
+      this.requests.requeueCompletedResults();
       this.executor.ptys.restore();
       for (const session of this.state.listTaskSessions()) this.startSessionRecovery(session.taskId);
       await Promise.all([
         this.recovery.run(this.signal),
-        this.control.run(this.signal, (commands) => this.executor.executeAll(commands)),
+        this.control.run(
+          this.signal,
+          (commands) => this.executor.executeAll(commands),
+          (requests) => this.requests.executeAll(requests),
+        ),
+        this.runResponseDeliveries(),
       ]);
     } finally {
       clearInterval(heartbeat);
@@ -339,6 +383,8 @@ export function bridgeStatus(config: BridgeConfig): JsonValue {
       heartbeat_at: Number(state.getMeta("service.heartbeat_at")) || null,
       compatibility: compatibility ? { compatible: compatibility.compatible, running_version: compatibility.runningVersion, checked_at: compatibility.checkedAt } : null,
       pending_commands: state.listCommands(["accepted", "applying"]).length,
+      pending_requests: state.listRequests(["accepted", "applying"]).length,
+      pending_response_deliveries: state.pendingResponseDeliveries(100).length,
       pending_outbox: state.pendingOutbox(Date.now() + 365 * 24 * 60 * 60 * 1_000, 10_000).length,
     };
   } finally {

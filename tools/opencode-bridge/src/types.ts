@@ -60,6 +60,16 @@ export interface CommandEnvelope {
 
 export type CommandState = "accepted" | "applying" | "succeeded" | "failed" | "rejected" | "indeterminate";
 
+export interface RequestEnvelope {
+  protocol: "agentic-bridge/1";
+  request_id: string;
+  task_id: string;
+  kind: "command.status" | "task.status";
+  arguments: Record<string, JsonValue>;
+}
+
+export type RequestState = "accepted" | "applying" | "succeeded" | "failed" | "indeterminate";
+
 export interface StoredCommand {
   commandId: string;
   taskId: string;
@@ -76,8 +86,28 @@ export interface StoredCommand {
 }
 
 export interface AcceptedCommand {
-  disposition: "new" | "duplicate" | "stale" | "conflict";
-  command: StoredCommand;
+  disposition: "new" | "duplicate" | "stale" | "conflict" | "rejected";
+  command?: StoredCommand;
+  reason?: string;
+}
+
+export interface StoredRequest {
+  requestId: string;
+  taskId: string;
+  issueNumber: number;
+  kind: RequestEnvelope["kind"];
+  envelope: RequestEnvelope;
+  state: RequestState;
+  rawResult?: JsonValue;
+  publicResult?: JsonValue;
+  error?: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface AcceptedRequest {
+  disposition: "new" | "duplicate" | "conflict";
+  request: StoredRequest;
 }
 
 export interface SseEvent {
@@ -103,6 +133,20 @@ export interface TaskSession {
   sessionId: string;
   issueNumber: number;
   agent: string;
+  sessionState: string;
+  latestResponse?: JsonValue;
+  latestEventId?: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface ResponseDelivery {
+  eventId: string;
+  taskId: string;
+  sessionId: string;
+  issueNumber: number;
+  eventType: string;
+  attempts: number;
   createdAt: number;
   updatedAt: number;
 }

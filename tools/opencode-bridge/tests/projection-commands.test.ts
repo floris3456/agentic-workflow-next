@@ -69,7 +69,7 @@ test("public projection aliases private IDs, redacts secrets and paths, and boun
   });
   const comment = projection.comment(result);
   assert.doesNotMatch(comment, /ses_private|do-not-publish|\/home\/operator|@team|<script>/);
-  assert.equal(projection.safeText("OpenCode rejected ses_private123"), "OpenCode rejected session-1");
+  assert.equal(projection.safeText("OpenCode rejected ses_private123", "TASK-1"), "OpenCode rejected session-1");
   assert.equal(state.resolveAlias("session-1", "session"), "ses_private123");
   assert.equal(state.resolveAlias("project-1", "project"), "d85910b40169bd2af241432892d1e99817ea8eaf");
 
@@ -194,6 +194,7 @@ test("command executor starts a guarded session, persists aliases, and publishes
     throw new Error(`unexpected operation ${operationId}`);
   };
   const recovered: string[] = [];
+  let applyingObserved = false;
   const recovery = { recoverOnce: async () => { recovered.push("once"); } } as unknown as RecoveryCoordinator;
   const controller = new AbortController();
   const executor = new CommandExecutor({
@@ -205,17 +206,24 @@ test("command executor starts a guarded session, persists aliases, and publishes
     instanceId: "test",
     signal: controller.signal,
     currentGitState: async () => ({ developerSha: "a".repeat(40), ref: "developer", clean: true }),
+    onApplying: (command) => {
+      applyingObserved = true;
+      assert.equal(requests.length, 0);
+      assert.equal(state.getCommand(command.commandId)?.state, "applying");
+      assert.ok(state.pendingOutbox(Date.now() + 1_000).some((item) => JSON.stringify(item.payload).includes("applying")));
+    },
   });
-  const accepted = state.acceptCommand(envelope(1, "start", { brief: "Implement the task", agent: "luna" }, true), 7).command;
+  const accepted = state.acceptCommand(envelope(1, "start", { brief: "Implement the task", agent: "luna" }, true), 7).command!;
   const result = await executor.execute(accepted);
   assert.equal(result.state, "succeeded");
+  assert.equal(applyingObserved, true);
   assert.equal(state.getTaskSession("TASK-1")?.sessionId, "ses_private123");
   assert.equal(state.resolveAlias("session-1", "session"), "ses_private123");
   assert.doesNotMatch(JSON.stringify(result.publicResult), /ses_private|\/home\/operator/);
   assert.deepEqual(requests.map((request) => request.operationId), ["session.create", "session.prompt_async"]);
-  assert.equal(state.pendingOutbox(Date.now() + 1_000).length, 4);
+  assert.equal(state.pendingOutbox(Date.now() + 1_000).length, 7);
   executor.requeueCompletedResults();
-  assert.equal(state.pendingOutbox(Date.now() + 1_000).length, 4);
+  assert.equal(state.pendingOutbox(Date.now() + 1_000).length, 7);
   controller.abort();
 });
 
@@ -251,13 +259,13 @@ test("command executor rejects invalid input before mutation and fails closed on
     signal: controller.signal,
     currentGitState: async () => ({ developerSha: "a".repeat(40), ref: "developer", clean: true }),
   });
-  const invalid = state.acceptCommand(envelope(1, "start", { unexpected: true }, true), 7).command;
+  const invalid = state.acceptCommand(envelope(1, "start", { unexpected: true }, true), 7).command!;
   assert.equal((await executor.execute(invalid)).state, "failed");
 
   const unknownRequest = state.acceptCommand(envelope(2, "opencode.request", {
     operation_id: "project.current",
     request: { headers: { authorization: "ignored" } },
-  }), 7).command;
+  }), 7).command!;
   const unknownResult = await executor.execute(unknownRequest);
   assert.equal(unknownResult.state, "failed");
   assert.match(unknownResult.error ?? "", /request contains unknown field headers/);
@@ -265,7 +273,7 @@ test("command executor rejects invalid input before mutation and fails closed on
   const malformedRequest = state.acceptCommand(envelope(3, "opencode.request", {
     operation_id: "project.current",
     request: { query: [] },
-  }), 7).command;
+  }), 7).command!;
   const malformedResult = await executor.execute(malformedRequest);
   assert.equal(malformedResult.state, "failed");
   assert.match(malformedResult.error ?? "", /request query must be an object/);
@@ -276,7 +284,7 @@ test("command executor rejects invalid input before mutation and fails closed on
       path: { providerID: "provider" },
       body: { value: { secret_ref: "provider-token" } },
     },
-  }), 7).command;
+  }), 7).command!;
   const localSecretResult = await executor.execute(localSecret);
   assert.equal(localSecretResult.state, "indeterminate");
   assert.match(JSON.stringify(localSecretResult.rawResult), /upstream echoed local-value/);
@@ -284,7 +292,7 @@ test("command executor rejects invalid input before mutation and fails closed on
   assert.match(localSecretResult.error ?? "", /sensitive detail retained locally/);
 
   compatibleNow = false;
-  const drifted = state.acceptCommand(envelope(5, "start", { brief: "safe" }, true), 7).command;
+  const drifted = state.acceptCommand(envelope(5, "start", { brief: "safe" }, true), 7).command!;
   const result = await executor.execute(drifted);
   assert.equal(result.state, "failed");
   assert.match(result.error ?? "", /compatibility drift/);

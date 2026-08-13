@@ -1,6 +1,13 @@
-import type { AcceptedCommand, JsonValue, OutboxItem, StoredCommand } from "./types.js";
+import type { AcceptedCommand, AcceptedRequest, JsonValue, OutboxItem, StoredCommand, StoredRequest } from "./types.js";
 import { githubApiVersion, type InstallationTokenProvider } from "./github-auth.js";
-import { commandStatusComment, invalidCommandComment, scanCommandEnvelopes } from "./protocol.js";
+import {
+  commandStatusComment,
+  invalidCommandComment,
+  invalidRequestComment,
+  requestStatusComment,
+  scanCommandEnvelopes,
+  scanRequestEnvelopes,
+} from "./protocol.js";
 import { BridgeState } from "./state.js";
 import { asJson, asRecord, backoff, errorMessage, isRecord, sha256, sleep } from "./util.js";
 
@@ -277,6 +284,7 @@ export interface PollResult {
   issueCount: number;
   sourceCount: number;
   commands: StoredCommand[];
+  requests: StoredRequest[];
   rejected: number;
   unauthorized: number;
 }
@@ -310,6 +318,7 @@ export class GitHubCommandPoller {
     const openBoundIssues = new Set(issues.filter((issue) => this.state.taskForIssue(issue.number) !== undefined).map((issue) => issue.number));
     if (openBoundIssues.size > 1) throw new Error("Multiple mapped bridge control issues are open; close all but the active serialized task issue");
     const commands: StoredCommand[] = [];
+    const requests: StoredRequest[] = [];
     let sourceCount = 0;
     let rejected = 0;
     let unauthorized = 0;
@@ -320,10 +329,10 @@ export class GitHubCommandPoller {
         sourceCount++;
         if (!this.authorized(source.author, source.authorAssociation)) {
           unauthorized += source.body.match(/<!--\s*agentic-bridge-command/g)?.length ?? 0;
+          unauthorized += source.body.match(/<!--\s*agentic-bridge-request/g)?.length ?? 0;
           continue;
         }
         const scanned = scanCommandEnvelopes(source.body);
-        if (scanned.length === 0) continue;
         for (const item of scanned) {
           if (!item.valid) {
             rejected++;
@@ -353,19 +362,70 @@ export class GitHubCommandPoller {
           }
           const accepted: AcceptedCommand = this.state.acceptCommand(envelope, issue.number);
           if (accepted.disposition === "new") {
-            commands.push(accepted.command);
-            this.enqueueComment(issue.number, `command-ack:${envelope.command_id}`, commandStatusComment(accepted.command));
+            commands.push(accepted.command!);
+            this.enqueueComment(issue.number, `command-ack:${envelope.command_id}`, commandStatusComment(accepted.command!));
           } else if (accepted.disposition === "stale") {
             rejected++;
-            this.enqueueComment(issue.number, `stale-command:${envelope.command_id}`, commandStatusComment(accepted.command, "sequence is stale"));
+            this.enqueueComment(issue.number, `stale-command:${envelope.command_id}`, commandStatusComment(accepted.command!, "sequence is stale"));
           } else if (accepted.disposition === "conflict") {
             rejected++;
             this.enqueueComment(issue.number, `conflict-command:${envelope.command_id}`, invalidCommandComment(item.markerHash, "Command UUID or task sequence conflicts with an existing command"));
+          } else if (accepted.disposition === "rejected") {
+            rejected++;
+            this.enqueueComment(
+              issue.number,
+              `preledger-command:${envelope.command_id}`,
+              invalidCommandComment(item.markerHash, accepted.reason ?? "Command admission was rejected"),
+            );
+          }
+        }
+
+        for (const item of scanRequestEnvelopes(source.body)) {
+          if (!item.valid) {
+            rejected++;
+            this.enqueueComment(issue.number, `invalid-request:${issue.number}:${item.markerHash}`, invalidRequestComment(item.markerHash, item.error));
+            continue;
+          }
+          const envelope = item.envelope;
+          const bound = this.state.taskForIssue(issue.number);
+          if (bound === undefined) {
+            rejected++;
+            this.enqueueComment(
+              issue.number,
+              `unbound-request:${envelope.request_id}`,
+              invalidRequestComment(item.markerHash, "Read requests require the existing task-bound issue"),
+            );
+            continue;
+          }
+          if (bound !== envelope.task_id) {
+            rejected++;
+            this.enqueueComment(
+              issue.number,
+              `request-task-mismatch:${envelope.request_id}`,
+              invalidRequestComment(item.markerHash, "Request task does not match the issue binding"),
+            );
+            continue;
+          }
+          const accepted: AcceptedRequest = this.state.acceptRequest(envelope, issue.number);
+          if (accepted.disposition === "new") {
+            requests.push(accepted.request);
+            this.enqueueComment(
+              issue.number,
+              `request-ack:${envelope.request_id}`,
+              requestStatusComment(accepted.request),
+            );
+          } else if (accepted.disposition === "conflict") {
+            rejected++;
+            this.enqueueComment(
+              issue.number,
+              `conflict-request:${envelope.request_id}`,
+              invalidRequestComment(item.markerHash, "Request UUID conflicts with an existing request"),
+            );
           }
         }
       }
     }
-    return { issueCount: issues.length, sourceCount, commands, rejected, unauthorized };
+    return { issueCount: issues.length, sourceCount, commands, requests, rejected, unauthorized };
   }
 }
 
@@ -484,17 +544,24 @@ export class GitHubControlLoop {
     this.onError = options.onError;
   }
 
-  async run(signal: AbortSignal, apply: (commands: StoredCommand[]) => void | Promise<void>): Promise<void> {
+  async run(
+    signal: AbortSignal,
+    applyCommands: (commands: StoredCommand[]) => void | Promise<void>,
+    applyRequests: (requests: StoredRequest[]) => void | Promise<void>,
+  ): Promise<void> {
     let failures = 0;
     let hasOpenControlIssues = false;
     while (!signal.aborted) {
       try {
         const recovered = this.state.listCommands(["accepted"]);
-        if (recovered.length > 0) await apply(recovered);
+        if (recovered.length > 0) await applyCommands(recovered);
+        const recoveredRequests = this.state.listRequests(["accepted"]);
+        if (recoveredRequests.length > 0) await applyRequests(recoveredRequests);
         await this.outbox.flush();
         const result = await this.poller.pollOnce();
         hasOpenControlIssues = result.issueCount > 0;
-        if (result.commands.length > 0) await apply(result.commands);
+        if (result.commands.length > 0) await applyCommands(result.commands);
+        if (result.requests.length > 0) await applyRequests(result.requests);
         await this.outbox.flush();
         failures = 0;
         const active = hasOpenControlIssues || this.state.listCommands(["accepted", "applying"]).length > 0;

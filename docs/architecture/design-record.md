@@ -30,7 +30,9 @@ Task-progress preserves procedural context and the public-safe delegated brief. 
 
 The web orchestrator keeps per-task context and routing records on the independent branch when MCP-ON GitHub write capability is available. The branch also provides a public-safe Project installation package; installed private Project state remains outside Git.
 
-GitHub commands use durable UUID/sequence semantics rather than direct-MCP delivery assumptions. The bridge stores private OpenCode mappings and raw recovery data locally, while only a bounded redacted projection enters public issues. Capability parity comes from the pinned OpenCode operation manifest; consequential generic web operations remain locally allowlisted.
+GitHub mutating commands use durable UUID/sequence semantics rather than direct-MCP delivery assumptions: sequence starts at exactly `1`, stays contiguous, and cannot advance while a prior command is accepted or applying. A separate UUID-idempotent, sequence-free request lane exposes `command.status` and `task.status` from durable local state without repeating work. The bridge stores private OpenCode mappings and raw recovery data locally, while only a bounded redacted projection enters public issues. Task-bound aliases, including workspaces, are stored per task. Capability parity comes from the pinned OpenCode operation manifest; consequential generic web operations remain locally allowlisted.
+
+When a mapped developer session idles or errors, the bridge transports the structurally latest assistant message through the existing public-safety projection to the bound issue and retains it for `task.status` recovery. The bridge does not interpret or semantically validate that response. The web orchestrator correlates it to the task, checks its explicit developer status/handoff information, and uses exact remote GitHub evidence to decide whether review can begin.
 
 ## Synchronization and handoff
 

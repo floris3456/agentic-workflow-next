@@ -84,7 +84,7 @@ test("deterministic workflow covers routing, interaction, recovery, finalization
   async function apply(sequence: number, kind: string, args: Record<string, JsonValue>, guarded = false) {
     const accepted = state.acceptCommand(command(sequence, kind, args, guarded), 42);
     assert.equal(accepted.disposition, "new");
-    const result = await executor.execute(accepted.command);
+    const result = await executor.execute(accepted.command!);
     assert.equal(result.state, "succeeded", `${kind}: ${result.error ?? "unknown error"}`);
     assert.doesNotMatch(JSON.stringify(result.publicResult), /ses_workflow_private|msg_workflow_private|\/private\/repository/);
     return result;

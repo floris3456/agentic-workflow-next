@@ -13,6 +13,7 @@ const required = [
   "contracts/opencode-bridge/compatibility.json",
   "contracts/opencode-bridge/operation-manifest.json",
   "contracts/opencode-bridge/command.schema.json",
+  "contracts/opencode-bridge/request.schema.json",
   "contracts/opencode-bridge/result.schema.json",
   "contracts/opencode-bridge/protocol.md",
   "docs/architecture/opencode-bridge.md",
@@ -28,6 +29,7 @@ try {
   const compatibility = parse("contracts/opencode-bridge/compatibility.json");
   const manifest = parse("contracts/opencode-bridge/operation-manifest.json");
   const command = parse("contracts/opencode-bridge/command.schema.json");
+  const request = parse("contracts/opencode-bridge/request.schema.json");
   const result = parse("contracts/opencode-bridge/result.schema.json");
   const packageDocument = parse("tools/opencode-bridge/package.json");
   const packageLock = parse("tools/opencode-bridge/package-lock.json");
@@ -44,8 +46,14 @@ try {
   assert(operations.filter((operation) => operation.transport === "sse").length === 4, "SSE operation count changed");
   assert(operations.filter((operation) => operation.transport === "websocket").length === 2, "WebSocket operation count changed");
   assert(command.properties?.protocol?.const === compatibility.bridgeProtocolVersion, "Command schema protocol differs");
+  assert(request.properties?.protocol?.const === compatibility.bridgeProtocolVersion, "Request schema protocol differs");
   assert(result.properties?.protocol?.const === compatibility.bridgeProtocolVersion, "Result schema protocol differs");
   assert(Array.isArray(command.properties?.kind?.enum) && command.properties.kind.enum.includes("opencode.request"), "Command schema lacks generic operation support");
+  assert(
+    JSON.stringify(request.properties?.kind?.enum) === JSON.stringify(["command.status", "task.status"]),
+    "Sequence-free request schema inventory changed without validator update",
+  );
+  assert(!Object.hasOwn(request.properties ?? {}, "sequence"), "Read request schema must not consume command sequence");
   assert(packageDocument.engines?.node === ">=22.13.0", "Bridge minimum Node version must be explicit");
   assert(packageLock.packages?.[""]?.dependencies?.["@opencode-ai/sdk"] === "1.18.16", "Lockfile SDK version is not exact");
   assert(example.schema_version === 1 && example.policy?.pty_enabled === false && example.policy?.promotion_enabled === false, "Example config must default-deny PTY and promotion");

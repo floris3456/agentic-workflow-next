@@ -6,9 +6,16 @@ import { join } from "node:path";
 import test, { type TestContext } from "node:test";
 import { GitHubAppAuth, type InstallationTokenProvider } from "../src/github-auth.js";
 import { GitHubClient, GitHubCommandPoller, GitHubOutbox } from "../src/github.js";
-import { commandStatusComment, invalidCommandComment, parseCommandEnvelope, scanCommandEnvelopes } from "../src/protocol.js";
+import {
+  commandStatusComment,
+  invalidCommandComment,
+  parseCommandEnvelope,
+  parseRequestEnvelope,
+  scanCommandEnvelopes,
+  scanRequestEnvelopes,
+} from "../src/protocol.js";
 import { BridgeState } from "../src/state.js";
-import type { CommandEnvelope } from "../src/types.js";
+import type { CommandEnvelope, RequestEnvelope } from "../src/types.js";
 import { sha256 } from "../src/util.js";
 
 function asFetch(handler: (request: Request) => Response | Promise<Response>): typeof fetch {
@@ -54,6 +61,10 @@ function commandMarker(command: CommandEnvelope): string {
   return `<!-- agentic-bridge-command\n${JSON.stringify(command)}\n-->`;
 }
 
+function requestMarker(request: RequestEnvelope): string {
+  return `<!-- agentic-bridge-request\n${JSON.stringify(request)}\n-->`;
+}
+
 function actor(login: string, association: string) {
   return { user: { login }, author_association: association };
 }
@@ -81,6 +92,24 @@ test("protocol scanner validates complete envelopes and isolates malformed marke
   assert.throws(() => parseCommandEnvelope({ ...command, extra: true }), /unknown field/);
   assert.throws(() => parseCommandEnvelope({ ...command, expected: { developer_sha: "A".repeat(40) } }), /lowercase hexadecimal/);
   assert.throws(() => parseCommandEnvelope({ ...command, expected: { ref: "refs/heads/../main" } }), /ref is invalid/);
+});
+
+test("sequence-free request scanner validates durable read request envelopes", () => {
+  const request: RequestEnvelope = {
+    protocol: "agentic-bridge/1",
+    request_id: "99999999-9999-4999-8999-999999999999",
+    task_id: "TASK-1",
+    kind: "command.status",
+    arguments: { command_id: "11111111-1111-4111-8111-111111111111" },
+  };
+  assert.deepEqual(parseRequestEnvelope(request), request);
+  const scanned = scanRequestEnvelopes(`${requestMarker(request)}\n<!-- agentic-bridge-request\n{}\n-->`);
+  assert.equal(scanned.length, 2);
+  assert.equal(scanned[0]?.valid, true);
+  assert.equal(scanned[0]?.markerHash, sha256(`${JSON.stringify(request)}\n`));
+  assert.equal(scanned[1]?.valid, false);
+  assert.throws(() => parseRequestEnvelope({ ...request, kind: "command.retry" }), /unsupported/);
+  assert.throws(() => parseRequestEnvelope({ ...request, sequence: 1 }), /unknown field/);
 });
 
 test("status projection never includes command arguments and neutralizes active Markdown", () => {
@@ -239,6 +268,13 @@ test("poller accepts only authorized issue-bound commands and persists sequence 
   const stale = envelope("22222222-2222-4222-8222-222222222222", 2, "steer");
   const mismatch = envelope("44444444-4444-4444-8444-444444444444", 4, "status", "OTHER-TASK");
   const unauthorized = envelope("55555555-5555-4555-8555-555555555555", 4);
+  const readRequest: RequestEnvelope = {
+    protocol: "agentic-bridge/1",
+    request_id: "88888888-8888-4888-8888-888888888888",
+    task_id: "AGENTIC-BRIDGE-001",
+    kind: "task.status",
+    arguments: {},
+  };
   const github = new GitHubClient({
     owner: "acme",
     repository: "demo",
@@ -252,11 +288,12 @@ test("poller accepts only authorized issue-bound commands and persists sequence 
       }
       if (path === "/repos/acme/demo/issues/7/comments") {
         return Response.json([
-          { id: 1, body: commandMarker(status), ...actor("alice", "COLLABORATOR") },
-          { id: 2, body: commandMarker(stale), ...actor("alice", "COLLABORATOR") },
-          { id: 3, body: commandMarker(mismatch), ...actor("alice", "COLLABORATOR") },
-          { id: 4, body: "<!-- agentic-bridge-command\n{\"kind\":\"shell.exec\"}\n-->", ...actor("alice", "COLLABORATOR") },
-          { id: 5, body: commandMarker(unauthorized), ...actor("mallory", "COLLABORATOR") },
+          { id: 1, body: requestMarker(readRequest), ...actor("alice", "COLLABORATOR") },
+          { id: 2, body: commandMarker(status), ...actor("alice", "COLLABORATOR") },
+          { id: 3, body: commandMarker(stale), ...actor("alice", "COLLABORATOR") },
+          { id: 4, body: commandMarker(mismatch), ...actor("alice", "COLLABORATOR") },
+          { id: 5, body: "<!-- agentic-bridge-command\n{\"kind\":\"shell.exec\"}\n-->", ...actor("alice", "COLLABORATOR") },
+          { id: 6, body: commandMarker(unauthorized), ...actor("mallory", "COLLABORATOR") },
         ]);
       }
       return new Response("not found", { status: 404 });
@@ -265,20 +302,22 @@ test("poller accepts only authorized issue-bound commands and persists sequence 
   const poller = new GitHubCommandPoller({ github, state, allowedAuthors: ["alice"] });
   const first = await poller.pollOnce();
   assert.equal(first.issueCount, 1);
-  assert.equal(first.sourceCount, 6);
-  assert.deepEqual(first.commands.map((command) => command.commandId), [start.command_id, status.command_id]);
-  assert.equal(first.rejected, 3);
+  assert.equal(first.sourceCount, 7);
+  assert.deepEqual(first.commands.map((command) => command.commandId), [start.command_id]);
+  assert.deepEqual(first.requests.map((request) => request.requestId), [readRequest.request_id]);
+  assert.equal(first.rejected, 4);
   assert.equal(first.unauthorized, 1);
   assert.equal(state.taskForIssue(7), "AGENTIC-BRIDGE-001");
   assert.equal(state.issueForTask("AGENTIC-BRIDGE-001"), 7);
-  assert.deepEqual(state.listCommands(["accepted"]).map((command) => command.sequence), [1, 3]);
-  assert.deepEqual(state.listCommands(["rejected"]).map((command) => command.sequence), [2]);
-  assert.equal(state.pendingOutbox(Date.now() + 1_000).length, 5);
+  assert.deepEqual(state.listCommands(["accepted"]).map((command) => command.sequence), [1]);
+  assert.match(state.commandRejection(status.command_id)?.reason ?? "", /exactly 2/);
+  assert.match(state.commandRejection(stale.command_id)?.reason ?? "", /nonterminal/);
+  assert.equal(state.pendingOutbox(Date.now() + 1_000).length, 6);
 
   const second = await poller.pollOnce();
   assert.equal(second.commands.length, 0);
-  assert.equal(second.rejected, 2);
-  assert.equal(state.pendingOutbox(Date.now() + 1_000).length, 5);
+  assert.equal(second.rejected, 4);
+  assert.equal(state.pendingOutbox(Date.now() + 1_000).length, 6);
 });
 
 test("poller serializes repository work to one open control issue", async (context) => {

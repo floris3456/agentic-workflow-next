@@ -87,6 +87,7 @@ export interface CommandExecutorOptions {
   currentGitState?: () => Promise<GitState>;
   runPromotion?: (approvedSha: string) => Promise<JsonValue>;
   onSessionStarted?: (taskId: string) => void;
+  onApplying?: (command: StoredCommand) => void | Promise<void>;
 }
 
 class IndeterminateCommandError extends Error {
@@ -163,6 +164,7 @@ export class CommandExecutor {
   private readonly currentGitState: (() => Promise<GitState>) | undefined;
   private readonly runPromotion: ((approvedSha: string) => Promise<JsonValue>) | undefined;
   private readonly onSessionStarted: ((taskId: string) => void) | undefined;
+  private readonly onApplying: ((command: StoredCommand) => void | Promise<void>) | undefined;
   readonly ptys: PtyManager;
 
   constructor(options: CommandExecutorOptions) {
@@ -177,6 +179,7 @@ export class CommandExecutor {
     this.currentGitState = options.currentGitState;
     this.runPromotion = options.runPromotion;
     this.onSessionStarted = options.onSessionStarted;
+    this.onApplying = options.onApplying;
     this.ptys = new PtyManager({ client: options.client, state: options.state, signal: options.signal });
   }
 
@@ -480,7 +483,9 @@ export class CommandExecutor {
   }
 
   async execute(command: StoredCommand): Promise<StoredCommand> {
-    this.state.beginCommand(command.commandId);
+    const applying = this.state.beginCommand(command.commandId);
+    this.publish(applying);
+    await this.onApplying?.(applying);
     let mutationStarted = false;
     try {
       const result = await this.apply(command, () => {

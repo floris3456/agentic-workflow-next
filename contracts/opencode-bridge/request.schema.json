@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/agentic-workflow/opencode-bridge/request.schema.json",
+  "title": "Agentic bridge sequence-free read request envelope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["protocol", "request_id", "task_id", "kind", "arguments"],
+  "properties": {
+    "protocol": { "const": "agentic-bridge/1" },
+    "request_id": {
+      "type": "string",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+    },
+    "task_id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" },
+    "kind": { "enum": ["command.status", "task.status"] },
+    "arguments": { "type": "object" }
+  }
+}

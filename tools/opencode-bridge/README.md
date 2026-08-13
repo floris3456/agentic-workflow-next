@@ -48,6 +48,16 @@ Inspect local status with `./scripts/opencode-bridge-status.sh --config <file>`.
 
 Core operation is portable foreground CLI behavior; no systemd dependency exists. Run one config/state/port/App installation mapping per repository so multiple projects can operate concurrently.
 
+## Durable status and ambiguous commands
+
+Mutating commands are strictly serialized per task: the first sequence is `1`, every later accepted sequence is contiguous, and a second command is rejected while one is `accepted` or `applying`. The public lifecycle is accepted, applying, then one terminal state. A rejected admission does not consume sequence.
+
+Use the sequence-free `command.status` request on the existing task issue for the exact durable state and known public result of one command. Use `task.status` there for the mapped session state and latest projected developer response. These requests have their own UUIDs and never execute or repeat a mutation. See the protocol for exact markers.
+
+For a genuinely stuck `applying` command, wait only for the operation's bounded window, submit one `command.status`, and compare its applying age with the service heartbeat and local `opencode-bridge-status.sh` output. Never retry the uncertain mutation. If local process/upstream inspection cannot resolve it, stop and restart the bridge; startup records the command as `indeterminate`, after which reconcile task and remote Git evidence before issuing any fresh command.
+
+On mapped developer session idle or error, the bridge durably retrieves the latest assistant response, applies the normal public-safety projection, and queues it to the task issue. Retrieval failures retry without re-running the developer task. The bridge transports this response but does not validate its workflow meaning.
+
 ## Policy
 
 High-level workflow commands have bounded handlers. Generic manifest reads are enabled. Generic mutations, local-secret operations, PTY execution, and mechanical promotion are independently default-denied in local config. Enabling promotion does not grant acceptance authority: the command must carry one exact approved SHA, the web orchestrator may emit it only after explicit human approval, and the existing promotion script re-verifies synchronized remote state and a content-identical merge.
