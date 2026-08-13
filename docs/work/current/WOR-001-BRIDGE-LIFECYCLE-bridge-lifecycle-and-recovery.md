@@ -6,7 +6,7 @@
 
 ## Status
 
-In progress after sole final-review blocker verification.
+Completed.
 
 ## Task-start developer SHA
 
@@ -34,15 +34,16 @@ coherent commit.
 
 ## Current objective
 
-Close the verified crash window between durable terminal-event/cursor commit and
-response-delivery creation, with atomic persistence and regression coverage.
+Completed: the bridge closes the terminal-event/delivery crash window atomically
+and repairs compatible older persisted state without replay.
 
 ## Current position
 
-Implementation, contracts, focused tests, exact-minimum runtime tests, component
-validation, repository validation, and durable records were completed and pushed
-at `7480d4ede556a068f00abce30da42e4eb064cdd3`. Later migration tasks advance
-`developer` without changing this completed task boundary.
+The original task boundary remains `7480d4ede556a068f00abce30da42e4eb064cdd3`.
+The independently verified final-review repair, regression tests, contracts, and
+durable records are pushed at
+`bbb35d0c2b52a63e68bfe0df85df820b98ed416c`; exact Node 22.13.0 integrated
+validation passes against the paired web candidate.
 
 ## Observed
 
@@ -100,6 +101,10 @@ None.
 - `git diff --check`: passed.
 - Post-review focused host run: bridge suite 59/59, including a simulated stop
   after the atomic commit and an older-state backfill/no-replay regression.
+- Exact Node 22.13.0 full integrated repository validation at pushed developer
+  `bbb35d0c2b52a63e68bfe0df85df820b98ed416c`: passed, including bridge 59/59
+  and cross-branch validation against pushed web
+  `bbd636d6591d556e3ab15a374b3c31e8d319b93a`.
 
 ## Blockers / required decisions
 
@@ -109,11 +114,11 @@ integration-level external check with durable fallback rather than missing code.
 
 ## Remaining work
 
-Implement and validate atomic terminal-event/delivery persistence.
+None.
 
 ## Next action
 
-Fix the verified final-review blocker and rerun exact-runtime validation.
+None; task completed.
 
 ## Relevant durable records
 
@@ -125,4 +130,5 @@ Fix the verified final-review blocker and rerun exact-runtime validation.
 
 ## Last handoff commit
 
-`7480d4ede556a068f00abce30da42e4eb064cdd3`.
+`bbb35d0c2b52a63e68bfe0df85df820b98ed416c` (pushed review-fix boundary; the
+completed record snapshot follows it).

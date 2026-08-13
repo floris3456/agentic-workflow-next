@@ -6,7 +6,7 @@
 
 ## Status
 
-In progress after sole final-review blocker verification.
+Completed.
 
 ## Task-start developer SHA
 
@@ -31,15 +31,17 @@ commit.
 
 ## Current objective
 
-Close the verified ambiguous-prompt monitoring gap and correct the contradictory
-handoff-field sentence while preserving the canonical six-field contract.
+Completed: ambiguous Scout prompt delivery remains monitored without replay, and
+the canonical six-field handoff instructions consistently use the dedicated SHA
+field.
 
 ## Current position
 
-Implementation commit `0783e169fc4d14f311af977da8aa0a3b08548850` and its completed
-task-progress snapshot `d2ddfd6aa5c34d1abe8d1f2127108c859f262045` are pushed. Later
-cross-branch integration work advances `developer` without changing this
-completed task boundary.
+The original implementation and task snapshot remain pushed at `0783e169fc4d14f311af977da8aa0a3b08548850`
+and `d2ddfd6aa5c34d1abe8d1f2127108c859f262045`. The final-review Scout/handoff
+repairs and their regression coverage are pushed at
+`bbb35d0c2b52a63e68bfe0df85df820b98ed416c` and pass exact Node 22.13.0
+integrated validation.
 
 ## Observed
 
@@ -119,6 +121,9 @@ None.
 - Post-review focused host run: bridge suite 59/59, including prompt-timeout
   recovery-registration coverage; agent-system validation passed with the
   dedicated handoff-field assertion.
+- Exact Node 22.13.0 full integrated repository validation at pushed developer
+  `bbb35d0c2b52a63e68bfe0df85df820b98ed416c`: passed, including bridge 59/59,
+  agent-system validation, and pushed Project compatibility.
 
 ## Blockers / required decisions
 
@@ -132,12 +137,11 @@ live-observation gap, not missing runtime behavior.
 
 ## Remaining work
 
-Start mapped Scout recovery before prompt delivery can become ambiguous, correct
-the handoff skill, and add regression validation.
+None.
 
 ## Next action
 
-Implement both verified fixes and rerun exact-runtime validation.
+None; task completed.
 
 ## Relevant durable records
 
@@ -148,6 +152,5 @@ Implement both verified fixes and rerun exact-runtime validation.
 
 ## Last handoff commit
 
-`d2ddfd6aa5c34d1abe8d1f2127108c859f262045` (completed metadata snapshot; the
-substantive implementation boundary is
-`0783e169fc4d14f311af977da8aa0a3b08548850`).
+`bbb35d0c2b52a63e68bfe0df85df820b98ed416c` (pushed review-fix boundary; the
+completed record snapshot follows it).
