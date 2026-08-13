@@ -7,7 +7,7 @@
 - Human goal: Make the web orchestrator extremely fast and efficient while still completing the human's task, applying safety and thoroughness in proportion to the task, and preserving the genuinely different MCP-ON and MCP-OFF operating modes.
 - Current orchestration objective: Implementation complete; preserve exact-SHA human review/promotion authority without modifying `main`.
 - Task-start developer SHA: `6127611113dfdb66f93a0cfd2d355359aa370833`
-- Last reviewed developer SHA: `daf9b226a4dd87b4fc6741713fcd8a065e08bccf`
+- Last reviewed developer SHA: `b100942ecfc8049c5583276180043a99033bcc7b` (sole external reviewer range; later fixes were verified by the sole implementer as required)
 - Current handoff developer SHA: `daf9b226a4dd87b4fc6741713fcd8a065e08bccf`
 - Substantive implementation approval SHA: none
 - Finalization handoff developer SHA: none
