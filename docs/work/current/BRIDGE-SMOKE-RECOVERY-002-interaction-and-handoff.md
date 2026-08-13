@@ -6,7 +6,7 @@ BRIDGE-SMOKE-RECOVERY-002
 
 ## Status
 
-in progress
+completed
 
 ## Task-start developer SHA
 
@@ -28,11 +28,12 @@ verified behavior-preserving simplifications from the supplied audit.
 
 ## Current position
 
-The disposable issues are reconciled and closed. Developer-side runtime,
-recovery, state, agent, tests, contracts, and implementation records are pushed
-at `c7e57ee8c06ee822204fbf517a892101798d7598`. The seven-Source Project
-package is pushed at `48ca0f2f5f2c39574a9fabd66c470ec2832be700`;
-developer-owned integration validation and durable documentation now match it.
+The disposable issues are reconciled and closed. Runtime/state/agent behavior is
+pushed at `c7e57ee8c06ee822204fbf517a892101798d7598`; developer-owned
+validation/documentation is pushed at
+`6ff397fdb8aedf196401fff6cbe0497c47befa6c`; and the completed Project
+package/record is pushed at `04e111dd874c2f431805b52b3eb24c6b04de95b8`.
+The bridge is deployed, healthy, and enabled. No implementation work remains.
 
 ## Observed
 
@@ -80,6 +81,11 @@ not cause this failure and remain intact.
 - The first repository-root `npm test` validation invocation failed with the
   expected missing `package.json`; it was an incorrect working-directory
   invocation and was replaced with the component validation script.
+- The validator/documentation commit's automatic push inherited the known
+  failing CONNECT proxy, activated the synchronization stop, and made no remote
+  change. The guarded proxy-free recovery script pushed the unchanged commit,
+  fetched it back, verified exact identity, and cleared the stop before work
+  continued.
 
 ## Changed approach
 
@@ -117,8 +123,14 @@ reviewer suggestions confirmed directly in the repository.
   test suite 71/71 and branch-initializer suite 8/8.
 - Exact Node `22.13.0` `node scripts/validate-agent-system.mjs`: passed.
 - Exact Node `22.13.0` cross-branch integration validation against Project
-  `48ca0f2f5f2c39574a9fabd66c470ec2832be700`: passed.
+  `04e111dd874c2f431805b52b3eb24c6b04de95b8`: passed.
 - Project package tests: 17/17 passed; standalone package validator passed.
+- Exact Node `22.13.0` full repository validation: passed with bridge 71/71,
+  branch initializer 8/8, Project 17/17, and repository/cross-branch checks.
+- Controlled runtime restart: bridge and OpenCode services are active and
+  enabled; compatibility reports OpenCode `1.18.16`; pending commands,
+  requests, response deliveries, and outbox rows are all zero.
+- Live cleanup verification: no open issue has the `agentic-bridge` label.
 - `git diff --check`: passed.
 
 ## Blockers / required decisions
@@ -127,15 +139,12 @@ None.
 
 ## Remaining work
 
-- Commit and push the developer cross-branch validator/documentation
-  reconciliation.
-- Run exact-runtime full repository validation, deploy/restart the changed
-  bridge, reconcile final records, and publish the terminal handoff snapshot.
+None.
 
 ## Next action
 
-Commit and push the developer integration/documentation reconciliation, then run
-full exact-runtime validation and deploy the changed bridge.
+Human/orchestrator review of the final exact pushed handoff; promotion remains a
+separate human-approved exact-SHA action.
 
 ## Relevant durable records
 
