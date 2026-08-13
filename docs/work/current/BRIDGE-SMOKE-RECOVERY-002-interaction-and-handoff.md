@@ -34,6 +34,8 @@ validation/documentation is pushed at
 `6ff397fdb8aedf196401fff6cbe0497c47befa6c`; and the completed Project
 package/record is pushed at `04e111dd874c2f431805b52b3eb24c6b04de95b8`.
 The bridge is deployed, healthy, and enabled. No implementation work remains.
+The final record audit also reconciled the issue-#10 smoke task from stale
+`Ready for handoff` wording to its observed completed/cleaned-up state.
 
 ## Observed
 
@@ -60,6 +62,8 @@ The bridge is deployed, healthy, and enabled. No implementation work remains.
   production consumer, while its pending permission/question lists could instead
   repair a missed interaction publication.
 - `task_sequences` duplicated accepted command-ledger authority.
+- The issue-#10 developer task record still described an awaiting-review state
+  after the enclosing smoke had been aborted and both issues closed.
 
 ## Interpretation
 
@@ -131,6 +135,8 @@ reviewer suggestions confirmed directly in the repository.
   enabled; compatibility reports OpenCode `1.18.16`; pending commands,
   requests, response deliveries, and outbox rows are all zero.
 - Live cleanup verification: no open issue has the `agentic-bridge` label.
+- Final tracked/external progress audit: every bounded task is completed and no
+  record retains an active implementation next action.
 - `git diff --check`: passed.
 
 ## Blockers / required decisions

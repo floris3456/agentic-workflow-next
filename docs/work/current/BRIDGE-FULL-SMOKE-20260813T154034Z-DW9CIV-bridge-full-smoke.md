@@ -6,7 +6,7 @@ BRIDGE-FULL-SMOKE-20260813T154034Z-DW9CIV
 
 ## Status
 
-Ready for handoff.
+Completed; developer task and smoke cleanup are terminal.
 
 ## Task-start developer SHA
 
@@ -44,7 +44,15 @@ Create the requested public-safe bridge smoke artifact and maintain its task-pro
 
 ## Current position
 
-The task brief was received on `developer` at the task-start SHA. The structured question was answered with `cobalt-river`; the single requested sentinel read failed because the expected file was not found. The requested artifact and this task record are created, inspected, committed, and pushed to `developer` in implementation commit `461b28140b28234a8fe72ba09ebf423a895cbd4b`; the first handoff snapshot was pushed in `470a7a682753860807dbdc188560fe2a8877a5ff`.
+The structured question was answered with `cobalt-river`; the requested sentinel
+read failed because the expected file was absent. The artifact and task record
+were inspected and pushed in implementation commit
+`461b28140b28234a8fe72ba09ebf423a895cbd4b`; the first handoff snapshot was
+pushed in `470a7a682753860807dbdc188560fe2a8877a5ff`; and the later same-cycle
+record-only commit was pushed at `04a6387b457dcecb2b862d5dcb111d3cb73a1fef`.
+The enclosing smoke was safely aborted and issues #10/#11 were closed. Its FAIL
+classification concerned the consumer interaction procedure, now corrected by
+`BRIDGE-SMOKE-RECOVERY-002`, not unfinished developer artifact work.
 
 ## Observed
 
@@ -55,6 +63,8 @@ The task brief was received on `developer` at the task-start SHA. The structured
 - The artifact contains the requested heading, task ID, phrase, random text, and projection-probe text.
 - The implementation commit was pushed successfully to `origin/developer`.
 - The first handoff snapshot was pushed successfully to `origin/developer`.
+- The later record-only commit was pushed successfully; recovery subsequently
+  aborted the mapped session and completed issue cleanup.
 
 ## Interpretation
 
@@ -78,11 +88,11 @@ None.
 
 ## Remaining work
 
-None; the task record is ready for handoff.
+None.
 
 ## Next action
 
-Await independent review of the pushed developer range.
+None; the bounded developer task and its cleanup are complete.
 
 ## Relevant durable records
 
@@ -90,4 +100,4 @@ None.
 
 ## Last handoff commit
 
-470a7a682753860807dbdc188560fe2a8877a5ff
+04a6387b457dcecb2b862d5dcb111d3cb73a1fef
