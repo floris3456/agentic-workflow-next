@@ -129,3 +129,17 @@ exploration, interacting implementation, nontrivial generation/tests, or
 independent developer execution remains delegated. Direct and delegated mutation
 routes never overlap, and both retain exact remote review and human-only `main`
 promotion.
+
+`TEMPLATE-PROMPT-CREATION-001` adds context-transfer prompt creation to the
+Project package without coupling it to one orchestration mode. The package now
+contains eleven Project Sources: nine user-facing routed Sources and two support
+Sources. `skill-prompt-creation.md` is the single cross-mode route; it composes a
+destination profile with a mission profile, transfers only receiver-needed task
+state, and preserves Observed versus Interpretation versus Requested outcome.
+`skill-prompt-destinations.md` and `skill-prompt-missions.md` are support Sources
+loaded by the core rather than independent router entries. Initial destinations
+are fresh MCP-ON, fresh MCP-OFF, and direct OpenCode; initial missions include
+research, review, implementation, reproduce/test, continuation/recovery, and
+template-maintenance transfer. The destination describes the future receiver and
+never changes the current chat's effective mode. General prompt-craft methodology
+remains intentionally deferred to a separately evolving layer.
