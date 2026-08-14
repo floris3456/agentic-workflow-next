@@ -6,7 +6,7 @@ TEMPLATE-CONNECTOR-SCHEDULING-001
 
 ## Status
 
-In progress
+Completed
 
 ## Task-start template-development SHA
 
@@ -26,21 +26,29 @@ Make connector-delivery-pending a nonterminal scheduling state: continue safe in
 
 ## Current position
 
-The isolated web-orchestration source range is implemented, validated, pushed,
-and remotely confirmed. Its exact two-branch change package is generated and
-applies cleanly in a disposable base checkout; ledger reconciliation is ready
-for commit.
+The isolated web-orchestration source range and exact two-branch package are
+pushed and remotely confirmed. The package applies cleanly from its recorded
+bases, integrated repository validation passes, and this dedicated progress
+snapshot closes the maintenance cycle.
 
 ## Source ranges
 
+- `template-development`: `a597da0d7835a15830bb1763b6c0e86e5bb975f0..138dd69107c87750fc31ad4e74e2017864c491a3` (package handoff before this dedicated snapshot)
 - `developer`: `be315eec10030b3d4499a05b823739a2631cb897..be315eec10030b3d4499a05b823739a2631cb897` (expected unchanged)
 - `web-orchestration`: `b9814d5c7ae1cfb2f6068c19f08c03850e9b8874..7c1a0094e77ce3fcf06515bf49b3c09b6696d9f8`
 
 ## Observed
 
-- The current package correctly preserves a required publication after three failed attempts, but tells the orchestrator to emit `RESUME REQUIRED` immediately.
+- Before this task, the package preserved a required publication after three
+  failed attempts but told the orchestrator to emit `RESUME REQUIRED`
+  immediately.
 - A transient connector refusal that succeeds in a later window should not interrupt safe independent inspection, waiting, review, or other already-planned work.
 - Work that depends on the unpublished effect must remain paused, and accepted or ambiguous mutations must never be replayed.
+- The installed Project package now rejects connector-only `RESUME REQUIRED`
+  behavior while retaining that checkpoint for genuinely active or ambiguous
+  launched-agent work.
+- Package/source-lock commit `138dd69107c87750fc31ad4e74e2017864c491a3`
+  is pushed to `origin/template-development`.
 
 ## Interpretation
 
@@ -75,20 +83,26 @@ None.
 - Change package contains 0 developer paths and 9 web-orchestration paths.
 - The web patch applies cleanly from its exact base in a disposable checkout;
   the developer patch is empty by design.
+- Exact Node 22.13.0 full repository validation passed: bridge 72/72, branch
+  initializer 8/8, Project package/integration, structure, agent-system, and
+  research checks all passed; `Repository validation passed.`
+- Exact Node 22.13.0 template-development validation passed: structure and
+  package integrity passed, deterministic package tests passed 3/3, and
+  `git diff --check` passed.
 
 ## Blockers / required decisions
 
-None.
+None. No implementation blocker or residual live-validation gap remains for
+this policy correction.
 
 ## Remaining work
 
-- Commit and push the change package, source lock, AS-BUILT, and current progress.
-- Run final integrated repository and ledger validation.
-- Push the dedicated completed task-progress snapshot.
+None.
 
 ## Next action
 
-Commit and push the reconciled package and durable records.
+None. The human may review the exact source range or apply the validated package
+to a downstream repository through its normal branch workflow.
 
 ## Relevant durable records
 
@@ -98,4 +112,4 @@ Commit and push the reconciled package and durable records.
 
 ## Last handoff commit
 
-None
+138dd69107c87750fc31ad4e74e2017864c491a3
