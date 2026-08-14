@@ -16,9 +16,9 @@ a597da0d7835a15830bb1763b6c0e86e5bb975f0
 
 a597da0d7835a15830bb1763b6c0e86e5bb975f0
 
-## Original task brief
+## Public-safe task brief
 
-> No resume required should not be allowed. Connector-delivery-pending means try other actions first that you were doing anyways and do that command 1-3 times again after those.
+Treat connector-delivery-pending as a nonterminal scheduling state: continue safe independent work first, then retry the same required publication in another bounded one-to-three-attempt window instead of returning a connector-only resume checkpoint.
 
 ## Current objective
 
