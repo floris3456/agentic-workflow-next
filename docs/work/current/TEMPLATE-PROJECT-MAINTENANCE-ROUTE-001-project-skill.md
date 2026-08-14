@@ -28,12 +28,14 @@ permanent routing trigger that directs template evaluation or changes to the
 
 ## Current position
 
-The ledger task is initialized before source inspection or implementation.
-Exact live refs match the recorded source lock.
+The Project inventory, routing, installation material, validators, maintenance
+ledger, and developer architecture records are audited. The change requires one
+new MCP-ON Source and router trigger on `web-orchestration`, plus removal of
+stale derived Source counts from three developer architecture records.
 
 ## Source ranges
 
-- `developer`: `be315eec10030b3d4499a05b823739a2631cb897..be315eec10030b3d4499a05b823739a2631cb897` (expected unchanged)
+- `developer`: `be315eec10030b3d4499a05b823739a2631cb897..pending`
 - `web-orchestration`: `7c1a0094e77ce3fcf06515bf49b3c09b6696d9f8..pending`
 
 ## Observed
@@ -44,6 +46,13 @@ Exact live refs match the recorded source lock.
 - The repository has a local template-maintenance skill on
   `template-development`, but the uploaded ChatGPT Project package does not yet
   expose a corresponding route.
+- Normal MCP-ON continuity is hard-coded to
+  `web-orchestration-only/task-context/**`; template-maintenance evaluation needs
+  `docs/work/current/**` on `template-development` as its alternative canonical
+  owner.
+- Developer AS-BUILT, agent-system, and design records repeat the derived count
+  of seven Project Sources. Keeping those exact counts would make them false as
+  soon as the focused Source is added.
 
 ## Interpretation
 
@@ -65,6 +74,7 @@ None.
 - Local `template-development` equals live `origin/template-development`.
 - Live `main`, `developer`, and `web-orchestration` equal `source-lock.json`.
 - Tracked template-development worktree was clean before this record.
+- The Project currently validates seven exact Sources and 21 package tests.
 
 ## Blockers / required decisions
 
@@ -73,14 +83,14 @@ None.
 ## Remaining work
 
 - Commit and push this start record.
-- Audit the current Project routing, inventory, installation, and validator.
+- Create the developer task record and replace stale derived Source counts with
+  references to the exact web-owned inventory.
 - Implement and validate the minimal template-maintenance Source and trigger.
 - Push the source range, create the exact package, and complete this ledger.
 
 ## Next action
 
-Commit the start record, then inspect the isolated `web-orchestration` source
-worktree.
+Commit this audit snapshot, then start the bounded developer documentation task.
 
 ## Relevant durable records
 
