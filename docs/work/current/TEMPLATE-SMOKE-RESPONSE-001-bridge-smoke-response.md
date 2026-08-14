@@ -16,12 +16,9 @@ Completed
 
 08d7eb82ea13eca3285ad562f19106d84233471d
 
-## Original task brief
+## Public-safe task brief
 
-Immediately after implementing the new template-development workflow, identify
-the problems in the web orchestrator's saved smoke-test response and fix them.
-Use the operator-provided external response file, and start using the new branch
-for this task. The host-local response path is intentionally not persisted.
+After implementing the template-development workflow, diagnose the problems in the saved web-orchestrator smoke response using operator-provided external evidence, fix the reusable template, and use the new ledger for the task without persisting host-local source details.
 
 ## Current objective
 
