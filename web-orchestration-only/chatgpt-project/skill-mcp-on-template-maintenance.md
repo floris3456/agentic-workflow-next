@@ -49,19 +49,26 @@ claim that MCP-ON maintenance ran.
 1. Read `source-lock.json`, compare it with exact live `main`, `developer`, and
    `web-orchestration` refs, and preserve the task's original review bases.
 2. Distinguish an evaluation-only run from a reusable source change. For an
-   evaluation, use the normal MCP-ON scouting, delegation, review, interaction,
-   and recovery procedures with the maintenance record substituted as the
-   continuity target. No change package is required when no reusable source
-   changed.
+   evaluation, use the normal MCP-ON scouting, implementation-route selection,
+   review, interaction, and recovery procedures with the maintenance record
+   substituted as the continuity target. No change package is required when no
+   reusable source changed.
 3. For a reusable change, identify whether each fact belongs on `developer`,
    `web-orchestration`, or both. Keep implementation on the authoritative source
-   branch and its normal records. Never make a developer task inspect or modify
-   the independent `web-orchestration` branch. Modify the Project package there
-   only when the human explicitly commissioned template maintenance and the
-   connected exact-GitHub write is bounded to the reviewed source paths.
-4. Run only one mutating source task at a time. Read-only Scouts may overlap.
-   Review and push each changed source range independently; a successful branch
-   does not make another branch atomic or accepted.
+   branch and its normal records. For `developer`, apply the normal MCP-ON
+   proportional route selection: use a bounded direct connected-GitHub edit when
+   exact paths and edits are already known and direct remote checks can prove the
+   outcome more simply; delegate when local repository context/tools, interacting
+   implementation, nontrivial generation/tests, uncertainty, or independent
+   developer execution materially improves confidence. A direct route must still
+   honor the `developer` branch's task/durable-record and validation rules. Never
+   make a developer task inspect or modify the independent `web-orchestration`
+   branch. Modify the Project package there only when the human explicitly
+   commissioned template maintenance and the connected exact-GitHub write is
+   bounded to the reviewed source paths.
+4. Run only one mutating source route at a time, whether direct or delegated.
+   Read-only Scouts may overlap. Review each changed source range independently;
+   a successful branch does not make another branch atomic or accepted.
 5. After exact source review, use the tracked template-maintenance skill and
    package scripts on `template-development` through an authorized maintainer
    route. Never hand-build a patch, merge the ledger into a source branch, or
