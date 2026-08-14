@@ -11,8 +11,10 @@ branch.
 - Keep every persisted value public-safe. Never store credentials, private chat,
   personal data, host-local absolute paths, or raw private agent identifiers.
 - Record exact remote refs; reports and task notes are navigation, not proof.
-- Do not copy source trees into this branch. Actual edits belong in isolated
-  checkouts of the canonical template source branches.
+- Do not copy source trees into this branch. Actual edits belong on the canonical
+  template source branches, using a bounded direct connected-GitHub route when
+  proportionality selects it or isolated source checkouts when local execution is
+  warranted.
 - Do not merge histories. Transfer reviewed content only through a deterministic
   change package.
 - Keep one mutating template-maintenance task at a time. Read-only inspection may
