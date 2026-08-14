@@ -13,8 +13,11 @@ compatibility: template-development ledger branch
 2. Read `source-lock.json`, the active task record, AS-BUILT, design record, and
    deviations before source work.
 3. For a new task, create
-   `docs/work/current/<task-id>-<slug>.md` from the task template first and copy
-   the exact public-safe brief without rewriting it.
+   `docs/work/current/<task-id>-<slug>.md` from the task template first and record
+   a concise public-safe brief that preserves the requested outcome, scope,
+   constraints, and material decisions without quoting or reproducing private
+   chat, personal data, secrets, host-local absolute paths, or raw private agent
+   identifiers.
 4. Resolve exact live canonical source refs. Record changes from the lock as
    observations; never silently move a task's review base.
 
