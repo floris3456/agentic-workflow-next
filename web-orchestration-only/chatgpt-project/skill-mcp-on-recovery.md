@@ -73,23 +73,40 @@ Mapped developer session state and latest projected response:
 
 ## Connector-gated publication
 
-A ChatGPT/tool connector refusal is not a bridge disposition. Immediately read
-the issue and comments for the exact prepared UUID and marker. If present,
-reconcile that posted envelope normally. If absent, make at most three total
-connector attempts using the same UUID and byte-identical envelope, reading back
-after each attempt. This retries only idempotent publication; never invent a
-replacement UUID, alter the envelope to evade the gate, or repeat an accepted or
-ambiguous underlying mutation.
+A ChatGPT/tool connector refusal is not a bridge disposition. Before retrying,
+record one public-safe refusal-log entry with phase, tool and target, delivery
+window/attempt, content class, exact safe arguments, exact error, readback,
+confirmed external effect, and eventual resolution. Never record a secret. Read
+the target for the exact intended effect; if present, reconcile it normally.
+
+If definitely absent, retry only publication. Within one delivery window make at
+most three total attempts, reading back after each. A protocol comment retains
+the same UUID and byte-identical envelope. Never repeat an accepted or ambiguous
+underlying mutation. Ordinary, definitely unpublished issue prose may be
+shortened once between windows only by removing nonessential repetition while
+preserving authorization, task identity, scope, refs, and intended effect;
+record both forms and never obscure a safety-relevant fact.
+
+Three attempts end the current delivery window; they do not cancel the required
+operation. If indispensable publication remains definitely absent, mark it
+`connector-delivery-pending`, retain its current exact arguments, do not advance,
+and return a `RESUME REQUIRED` checkpoint. On the next turn reconcile first,
+then open another bounded window for the same logical operation. Repeated windows
+may end in an exact copyable manual-delivery packet, but remain a continuation
+until readback proves one exact effect. Never use this route to bypass a denied
+approval, workspace policy, authorization failure, provider validation or
+protection error, duplicate/unexpected effect, or ambiguous readback; stop
+automatic retries and name the exact human/configuration action instead.
 
 Stop a redundant status request when equivalent trusted evidence arrives: an
 exact terminal command marker can supersede `command.status`, a correlated
 developer response can supersede `task.status`, and a correlated Scout response
 can supersede `scout.status`. Record the definitely unpublished request as
 cancelled and continue from that evidence. Before reporting `BLOCKED` or `RESUME
-REQUIRED`, refresh the issue comments and relevant remote refs once more. If the
-marker remains absent after the bounded attempts and no equivalent evidence can
-resolve an indispensable fact, report the connector capability gap, not a bridge
-rejection or failure.
+REQUIRED`, refresh the issue comments and relevant remote refs once more. A
+generic connector gap with confirmed absence is pending delivery, not a bridge
+rejection, task failure, or reason to abandon already launched work. Continue
+safe passive reconciliation until every launched agent is terminal and absorbed.
 
 ## Procedure
 
@@ -101,8 +118,8 @@ rejection or failure.
    interaction is a wait condition, not a reason to post another status command.
 2. If an eligible command comment exists, do not replace it because acknowledgement
    is delayed. For refused or ambiguous publication, follow the connector-gated
-   readback and bounded identical-envelope rule above. Never change content while
-   reusing a UUID.
+   readback and bounded delivery-window rule above. Never change a protocol
+   envelope while reusing its UUID.
 3. Interpret lifecycle exactly: `accepted` means wait; `applying` means a side
    effect may be underway, so wait and never reissue; `succeeded` applies only
    command-specific semantics; `rejected` means no handler ran; `failed` needs
@@ -134,10 +151,11 @@ rejection or failure.
 8. Use sequenced `sync.recover` with empty arguments only when OpenCode
    event/cursor/session recovery is needed. Its success does not inspect or fix
    Git synchronization.
-9. Record canonical and related issue IDs, every command/request ID, refs,
-   lifecycle, evidence, highest accepted sequence, and disposition in task
-   context. Close or retain each issue only under the discovery rules above.
-   Treat labels and prose as hints, never proof.
+9. Record canonical and related issue IDs, active work and absorption, pending
+   publication, every command/request ID, refs, lifecycle, refusal evidence,
+   highest accepted sequence, and disposition in task context. Close or retain
+   each issue only under the discovery rules above. Treat labels and prose as
+   hints, never proof.
 
 Routine delay is not a human decision. Escalate only an unresolved operator
 state, consequential choice, sensitive permission, or risk the human owns.

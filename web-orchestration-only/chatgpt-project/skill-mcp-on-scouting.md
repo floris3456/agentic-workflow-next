@@ -40,10 +40,11 @@ task. Multiple useful Scout requests and Scout-only issues may run concurrently,
 including beside one mutating developer task. Runtime worktree preparation may
 briefly queue for Git safety; impose no orchestration concurrency cap. Record
 only the exact request envelope, task, issue, exact ref, focus, and disposition in
-the task-context Scout journal before posting; do not create mutating developer
-records for a Scout. If the connector refuses the write or publication is
-ambiguous, load `skill-mcp-on-recovery.md` and apply its readback/bounded retry
-rule to only the exact same UUID/envelope, never a fresh Scout start.
+the task-context Scout journal before posting; after confirmed publication, add
+one active-work entry. Do not create mutating developer records for a Scout. If
+the connector refuses the write or publication is ambiguous, load
+`skill-mcp-on-recovery.md` and apply its readback/delivery-window rule to only the
+same logical Scout start, never a fresh UUID.
 
 ## Results and recovery
 
@@ -67,4 +68,6 @@ sequence-free read request on that same task issue; it never relaunches the Scou
 
 Compare independent results, resolve disagreement with exact GitHub evidence,
 state unknowns, and perform all synthesis/task design/review yourself. Scout
-output is never post-change proof or acceptance.
+output is never post-change proof or acceptance. A Scout becomes terminal only
+from its correlated result, and becomes absorbed only after that result affects
+your own evidence or decision; record both states.

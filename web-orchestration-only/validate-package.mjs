@@ -133,6 +133,7 @@ for (const term of [
   "Distinguish `UNKNOWN` from inference",
   "invalidates it",
   "One task ID has one canonical issue",
+  "terminal and absorbed",
 ]) if (!instructions.includes(term)) fail(`Permanent instructions are missing a canonical boundary: ${term}`);
 if (!/Promotion requires explicit\s+human approval of one exact reviewed `developer` SHA/.test(instructions)) {
   fail("Permanent instructions are missing the human exact-SHA approval boundary");
@@ -222,6 +223,7 @@ for (const rule of [
   [texts.get("chatgpt-project/skill-mcp-on-scouting.md") ?? "", /high-stakes[\s\S]{0,220}directly inspect/i, "high-stakes direct-inspection rule"],
   [texts.get("chatgpt-project/skill-mcp-on-recovery.md") ?? "", /Never automatically retry/i, "uncertain-mutation no-replay rule"],
   [texts.get("chatgpt-project/skill-mcp-on-recovery.md") ?? "", /connector refusal is not a bridge disposition/i, "connector-refusal distinction"],
+  [texts.get("chatgpt-project/skill-mcp-on-recovery.md") ?? "", /delivery window[\s\S]{0,500}do not cancel the required[\s\S]{0,500}manual-delivery packet/i, "durable connector-delivery continuation"],
   [texts.get("chatgpt-project/skill-mcp-on-promotion.md") ?? "", /human explicitly approves[\s\S]{0,160}exact/i, "human exact-SHA promotion rule"],
 ]) if (!rule[1].test(rule[0])) fail(`Project package is missing canonical ${rule[2]}`);
 
@@ -277,10 +279,14 @@ for (const term of [
   "Selected developer: none | Luna | Sol",
   "Attempt classifications:",
   "Route changes:",
-  "## Pending bridge command",
-  "Exact one-line JSON envelope:",
+  "## Active work",
+  "absorbed yes/no",
+  "## Pending publication",
+  "connector-delivery-pending",
+  "Exact public-safe arguments/envelope:",
   "## Bridge command journal",
   "## Scout request journal",
+  "## Connector refusal log",
 ]) if (!template.includes(term)) fail(`task-context/TEMPLATE.md is missing continuity field: ${term}`);
 
 const recovery = texts.get("chatgpt-project/skill-mcp-on-recovery.md") ?? "";

@@ -429,6 +429,23 @@ Routine scouting, delegation, review, and correction proceed without repeated hu
 
 ## Review findings
 
+### Post-smoke completion and delivery resolution (2026-08-14)
+
+- A self-contained credentialed smoke procedure exposed two Project-policy
+  gaps: a turn could end while launched work was not yet absorbed, and three
+  connector refusals could be mistaken for permission to abandon a required
+  publication.
+- The installed package now has one permanent completion barrier, one compact
+  active-work ledger, and one pending-publication/refusal record. Three attempts
+  bound a delivery window rather than the logical operation; later turns reuse
+  the same operation after readback, with an exact manual-delivery packet as the
+  last safe transport fallback.
+- Protocol payloads remain byte-identical for a UUID and uncertain mutations are
+  never replayed. Only definitely unpublished ordinary issue prose may be
+  shortened once without changing authorization, identity, scope, refs, or
+  effect. Smoke-only parser, guard, PTY, routing, and cleanup probes remain
+  outside normal Project instructions.
+
 - The present package is safety-oriented but repeats procedure across permanent instructions and 19 Sources.
 - The current bridge already persists and recovers OpenCode streams, so task handoff should reuse that path.
 - The current developer five-field response omits an explicit handoff SHA and does not by itself distinguish a valid reviewable completion from every idle state.

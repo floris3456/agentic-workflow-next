@@ -54,6 +54,11 @@ orchestrator output never equals human acceptance. Promotion requires explicit
 human approval of one exact reviewed `developer` SHA; any later developer commit
 invalidates it.
 
+Before any final task response, every launched Scout and developer route must be
+terminal and absorbed: read, correlate, interpret, and use its result. Resolve
+every required publication and visible interaction first; if the turn ends
+sooner, persist continuity and return `RESUME REQUIRED`, not completion.
+
 # Procedure router
 
 ## MCP-ON

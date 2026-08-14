@@ -154,6 +154,32 @@ test("validator rejects connector refusal as bridge evidence", (context) => {
   assert.match(result.stderr, /connector-refusal distinction|connector refusal as bridge evidence/);
 });
 
+test("validator rejects final completion with unabsorbed launched work", (context) => {
+  const root = fixture(context);
+  replace(
+    root,
+    "chatgpt-project/developer-instructions.md",
+    "must be\nterminal and absorbed",
+    "may remain\nactive and unabsorbed",
+  );
+  const result = run(root);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /canonical boundary: terminal and absorbed/);
+});
+
+test("validator rejects abandoning a required publication after one delivery window", (context) => {
+  const root = fixture(context);
+  replace(
+    root,
+    "chatgpt-project/skill-mcp-on-recovery.md",
+    "they do not cancel the required\noperation",
+    "they cancel the required\noperation",
+  );
+  const result = run(root);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /durable connector-delivery continuation/);
+});
+
 test("validator rejects an extra command-envelope field regardless of prose", (context) => {
   const root = fixture(context);
   replace(

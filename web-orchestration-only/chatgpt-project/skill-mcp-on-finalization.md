@@ -29,3 +29,7 @@ without such a policy.
    path, and shared blob OID.
 7. Ask the human about promotion only if appropriate. Keep the exact task issue
    available while promotion is pending; close it when no command remains.
+
+Finalization does not waive the global completion barrier: do not give the final
+task response while any launched Scout or developer route remains nonterminal or
+unabsorbed.

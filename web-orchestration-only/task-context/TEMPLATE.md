@@ -32,13 +32,20 @@
 - Result: <outcome or pending>
 - Retrospective: <concise routing lesson or pending>
 
-## Pending bridge command
+## Active work
 
-- State: none | prepared | posted | pre-ledger-rejected | terminal-unresolved | cancelled
+- <Scout/developer route and request/command ID>: <current state; correlated terminal result or none; absorbed yes/no; concise effect on the decision>
+
+## Pending publication
+
+- State: none | prepared | connector-delivery-pending | posted | pre-ledger-rejected | terminal-unresolved | cancelled
+- Operation and target: <issue/label/comment/request/command and target, or none>
 - Prepared at: <date/time or none>
+- Delivery window/attempt: <window and attempt, or none>
+- Last remote readback: <method and confirmed effect, or none>
 - Command-comment ref: <url/number or none>
 - Result-comment ref: <url/number or none>
-- Exact one-line JSON envelope: <public-safe JSON or none>
+- Exact public-safe arguments/envelope: <arguments or one-line JSON, or none>
 
 ## Bridge command journal
 
@@ -47,6 +54,10 @@
 ## Scout request journal
 
 - <request uuid/task/issue/exact ref>: <focus, result ref, lifecycle, and concise disposition>
+
+## Connector refusal log
+
+- <date/time, phase, tool/target, delivery window/attempt, content class, exact safe arguments, exact error, remote readback, confirmed effect, and resolution; or none>
 
 ## Delegations issued
 

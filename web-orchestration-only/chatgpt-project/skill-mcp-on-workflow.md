@@ -82,6 +82,8 @@ Task record:
    interpret it. On every new turn, first repeat the repository-wide open-issue
    task-ID map, then reconcile the canonical bound issue and any recorded related
    issue because autonomous Project wake-up and in-chat memory are not assumed.
+   After confirmed launch, keep one active-work entry per Scout and developer
+   route until its correlated terminal response is read and incorporated.
 9. Interpret the six fields yourself. A `completed` response is reviewable only
    when its exact SHA exists on remote `developer`, the task record is present
    when applicable, and the response is internally usable. `blocked`, `failed`,
@@ -124,10 +126,18 @@ Task record:
 
 Task context records exact start/last-reviewed/handoff/finalization/approval and
 post-promotion SHAs; the canonical bound issue and related issue dispositions;
-highest accepted sequence derived from trusted lifecycle; pending command;
-command journal; delegations; Scout request journal; findings; steering;
-decisions; and next action. Persist an envelope before posting it. If narrow
-state persistence fails, do not send the command.
+highest accepted sequence derived from trusted lifecycle; active work; pending
+publication; command and Scout journals; connector refusals; delegations;
+findings; steering; decisions; and next action. Persist exact public-safe
+publication arguments before sending them. If narrow state persistence fails,
+do not publish.
+
+Do not give a final task response while active work is nonterminal or unabsorbed,
+a required publication is pending, or a task-correlated interaction is
+unanswered. If the execution window ends first, return `RESUME REQUIRED` with
+the task-to-issue map, active-work ledger, pending publication, and one safe next
+read. This is a continuation checkpoint. Rebuild those facts from every related
+issue before continuing on the next turn.
 
 Only status comments authored by `<bridge-bot-login>` with the exact task,
 command/request, sequence where applicable, and lifecycle marker are trusted as

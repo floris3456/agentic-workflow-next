@@ -49,5 +49,7 @@ The implementation branches must not depend on this branch for code or implement
    bridge issue, related-issue dispositions, and highest accepted sequence from
    exact trusted issue history; use `none` where authority, issue, UUID,
    lifecycle, or SHA is unestablished. Put `legacy` or `unknown` only in a
-   non-authoritative migration note; never use either as human approval.
+   non-authoritative migration note; never use either as human approval. Migrate
+   active launched work and prepared publication into the current task-context
+   sections; use `none` for connector refusals that were never recorded.
 6. Resume only after remote state and old work are reconciled. A task with no existing bridge-bound issue requires a new issue whose first valid command is `start`; never infer a bridge continuation from former transport state.
