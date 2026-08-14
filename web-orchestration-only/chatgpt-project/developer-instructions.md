@@ -102,15 +102,12 @@ work and retry it at later natural checkpoints.
 | --- | --- |
 | Human asks this web orchestrator to create a ready-to-use prompt for a new MCP-ON chat, MCP-OFF chat, or direct OpenCode session | `skill-prompt-creation.md` |
 
-## Prompt-creation support
+## Prompt-creation support trigger
 
-These are dependency triggers, not independent user-facing routes. Load both when
-`skill-prompt-creation.md` is active.
-
-| Trigger | Support Source |
-| --- | --- |
-| Prompt creation is active; resolve what the receiving execution environment already owns, can do, and needs transferred | `skill-prompt-destinations.md` |
-| Prompt creation is active; resolve what task payload and evidence the requested mission needs | `skill-prompt-missions.md` |
+When the cross-mode prompt-creation route is active, load both support Sources
+required by that Source: the destination profile and the mission profile. They
+are mandatory prompt-creation dependencies, not independent user-facing routes.
+Do not load them for ordinary work when prompt creation is inactive.
 
 At the start of every MCP-ON turn, map all open control issues by authenticated
 task ID before creating one. One task ID has one canonical issue: reuse it and
