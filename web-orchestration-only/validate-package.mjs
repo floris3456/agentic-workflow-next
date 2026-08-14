@@ -8,7 +8,7 @@ const projectRoot = path.join(root, "chatgpt-project");
 const protocol = "agentic-bridge/1";
 const failures = [];
 
-const skills = [
+const modeSkills = [
   "skill-mcp-on-template-maintenance.md",
   "skill-mcp-on-workflow.md",
   "skill-mcp-on-scouting.md",
@@ -18,6 +18,10 @@ const skills = [
   "skill-mcp-off-workflow.md",
   "skill-mcp-off-scouting.md",
 ];
+const crossModeSkills = ["skill-prompt-creation.md"];
+const supportSkills = ["skill-prompt-destinations.md", "skill-prompt-missions.md"];
+const routedSkills = [...modeSkills, ...crossModeSkills];
+const skills = [...routedSkills, ...supportSkills];
 const projectFiles = ["README.md", "developer-instructions.md", ...skills];
 const rootEntries = [
   "README.md",
@@ -144,17 +148,23 @@ for (const detail of ["agentic-bridge-command", "agentic-bridge-request", "comma
 }
 
 const skillSet = new Set(skills);
+const routedSkillSet = new Set(routedSkills);
 const triggerRows = [...instructions.matchAll(/^\|[^|\n]+\|\s*`(skill-[^`]+\.md)`\s*\|\s*$/gm)].map((match) => match[1]);
-for (const skill of skills) {
+for (const skill of routedSkills) {
   const count = triggerRows.filter((entry) => entry === skill).length;
-  if (count !== 1) fail(`Project Source must have exactly one trigger row: ${skill} (found ${count})`);
+  if (count !== 1) fail(`Routed Project Source must have exactly one trigger row: ${skill} (found ${count})`);
 }
-for (const source of triggerRows) if (!skillSet.has(source)) fail(`Trigger table references unknown Project Source: ${source}`);
-if (triggerRows.length !== skills.length) fail(`Trigger tables must contain exactly ${skills.length} Source rows`);
+for (const skill of supportSkills) {
+  const count = triggerRows.filter((entry) => entry === skill).length;
+  if (count !== 0) fail(`Support Project Source must not have a permanent trigger row: ${skill} (found ${count})`);
+}
+for (const source of triggerRows) if (!routedSkillSet.has(source)) fail(`Trigger table references unknown or support-only Project Source: ${source}`);
+if (triggerRows.length !== routedSkills.length) fail(`Trigger tables must contain exactly ${routedSkills.length} routed Source rows`);
 
 for (const [heading, next, expected] of [
-  ["## MCP-ON", "## MCP-OFF", skills.filter((file) => file.startsWith("skill-mcp-on-"))],
-  ["## MCP-OFF", "At the start", skills.filter((file) => file.startsWith("skill-mcp-off-"))],
+  ["## MCP-ON", "## MCP-OFF", modeSkills.filter((file) => file.startsWith("skill-mcp-on-"))],
+  ["## MCP-OFF", "## Cross-mode", modeSkills.filter((file) => file.startsWith("skill-mcp-off-"))],
+  ["## Cross-mode", "At the start", crossModeSkills],
 ]) {
   const start = instructions.indexOf(`${heading}\n`);
   const end = instructions.indexOf(next, start + heading.length);
@@ -164,19 +174,43 @@ for (const [heading, next, expected] of [
   }
   const actual = [...instructions.slice(start, end).matchAll(/^\|[^|\n]+\|\s*`(skill-[^`]+\.md)`\s*\|\s*$/gm)]
     .map((match) => match[1]).sort();
-  if (JSON.stringify(actual) !== JSON.stringify([...expected].sort())) fail(`${heading} has the wrong mode-specific Source set`);
+  if (JSON.stringify(actual) !== JSON.stringify([...expected].sort())) fail(`${heading} has the wrong routed Source set`);
 }
 
 for (const skill of skills) {
   const text = texts.get(`chatgpt-project/${skill}`) ?? "";
   if (!text.startsWith("# ")) fail(`${skill} must begin with one title`);
   if (!text.includes("## Trigger")) fail(`${skill} must declare an explicit Trigger`);
+}
+for (const skill of routedSkills) {
   const references = instructions.split(`\`${skill}\``).length - 1;
-  if (references !== 1) fail(`Permanent router must reference ${skill} exactly once (found ${references})`);
+  if (references !== 1) fail(`Permanent router must reference routed Source ${skill} exactly once (found ${references})`);
+}
+for (const skill of supportSkills) {
+  const references = instructions.split(`\`${skill}\``).length - 1;
+  if (references !== 0) fail(`Permanent router must not reference support Source ${skill} (found ${references})`);
 }
 
+const promptCreation = texts.get("chatgpt-project/skill-prompt-creation.md") ?? "";
+const promptDestinations = texts.get("chatgpt-project/skill-prompt-destinations.md") ?? "";
+const promptMissions = texts.get("chatgpt-project/skill-prompt-missions.md") ?? "";
+for (const skill of supportSkills) {
+  const count = promptCreation.split(`\`${skill}\``).length - 1;
+  if (count !== 1) fail(`Prompt creation core must reference support Source ${skill} exactly once (found ${count})`);
+}
+for (const [text, pattern, label] of [
+  [promptCreation, /context transfer across an execution boundary/i, "prompt context-transfer model"],
+  [promptCreation, /Destination:[\s\S]{0,160}Mission:/i, "prompt destination-plus-mission composition"],
+  [promptCreation, /Observed:[\s\S]{0,240}Interpretation:[\s\S]{0,240}Requested outcome:/i, "prompt evidence-boundary model"],
+  [promptCreation, /destination describes the future receiver[\s\S]{0,220}never changes this chat's[\s\S]{0,120}effective mode/i, "prompt destination/current-mode separation"],
+  [promptDestinations, /## MCP-ON web orchestration[\s\S]*## MCP-OFF web orchestration[\s\S]*## Direct OpenCode/i, "three prompt destination profiles"],
+  [promptDestinations, /MCP-OFF[\s\S]{0,500}cannot[\s\S]{0,300}(?:bridge|OpenCode Scouts|delegate)/i, "MCP-OFF destination capability boundary"],
+  [promptMissions, /## Investigation \/ research[\s\S]*## Review[\s\S]*## Implementation \/ change[\s\S]*## Reproduce \/ test[\s\S]*## Continue \/ recover[\s\S]*## Template-maintenance transfer/i, "prompt mission profile set"],
+  [promptMissions, /Template-maintenance transfer[\s\S]{0,2200}independent verification[\s\S]{0,2200}deterministic[\s\S]{0,200}change package/i, "template-maintenance prompt transfer model"],
+]) if (!pattern.test(text)) fail(`Project package is missing canonical ${label}`);
+
 const install = texts.get("chatgpt-project/README.md") ?? "";
-if (!install.includes("eight rendered files") || !install.includes("exact eight-Source")) fail("Installation/upgrade material must require the exact eight-Source inventory");
+if (!install.includes("eleven rendered files") || !install.includes("exact eleven-Source")) fail("Installation/upgrade material must require the exact eleven-Source inventory");
 if (!install.includes("Remove every superseded")) fail("Upgrade material must remove superseded Sources");
 for (const skill of skills) {
   const count = install.split(`\`${skill}\``).length - 1;
@@ -329,4 +363,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log(`Orchestration package validation passed: ${skills.length} exact Project Sources, distinct MCP-ON/MCP-OFF procedures, ${commandExamples.length + requestExamples.length} parsed bridge envelopes, integrated task-context routing, and canonical safety boundaries.`);
+console.log(`Orchestration package validation passed: ${skills.length} exact Project Sources (${routedSkills.length} routed, ${supportSkills.length} support), distinct MCP-ON/MCP-OFF/cross-mode procedures, ${commandExamples.length + requestExamples.length} parsed bridge envelopes, integrated task-context routing, and canonical safety boundaries.`);
