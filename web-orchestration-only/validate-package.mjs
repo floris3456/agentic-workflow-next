@@ -255,7 +255,7 @@ const templateMaintenance = texts.get("chatgpt-project/skill-mcp-on-template-mai
 if (workflow.split(responseContract).length - 1 !== 1) fail("MCP-ON workflow must contain exactly one canonical six-field developer response block");
 for (const rule of [
   [workflow, /lookup answerable[\s\S]{0,180}Do not create a Scout, issue, task record/i, "quick direct-GitHub path"],
-  [workflow, /resolve the newest unmatched task-correlated[\s\S]{0,220}before posting[\s\S]{0,80}status/i, "interaction-before-status rule"],
+  [workflow, /resolve the newest unmatched\s+task-correlated[\s\S]{0,220}before posting[\s\S]{0,80}status/i, "interaction-before-status rule"],
   [texts.get("chatgpt-project/skill-mcp-on-scouting.md") ?? "", /high-stakes[\s\S]{0,220}directly inspect/i, "high-stakes direct-inspection rule"],
   [texts.get("chatgpt-project/skill-mcp-on-recovery.md") ?? "", /Never automatically retry/i, "uncertain-mutation no-replay rule"],
   [texts.get("chatgpt-project/skill-mcp-on-recovery.md") ?? "", /connector refusal is not a bridge disposition/i, "connector-refusal distinction"],
