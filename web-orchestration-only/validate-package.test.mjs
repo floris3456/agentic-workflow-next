@@ -177,7 +177,20 @@ test("validator rejects abandoning a required publication after one delivery win
   );
   const result = run(root);
   assert.notEqual(result.status, 0);
-  assert.match(result.stderr, /durable connector-delivery continuation/);
+  assert.match(result.stderr, /durable connector-delivery scheduling/);
+});
+
+test("validator rejects connector-only RESUME REQUIRED checkpoints", (context) => {
+  const root = fixture(context);
+  replace(
+    root,
+    "chatgpt-project/skill-mcp-on-recovery.md",
+    "Pending delivery alone never causes a\ncheckpoint",
+    "Pending delivery alone causes a\nRESUME REQUIRED checkpoint",
+  );
+  const result = run(root);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /must not produce a RESUME REQUIRED checkpoint/);
 });
 
 test("validator rejects an extra command-envelope field regardless of prose", (context) => {

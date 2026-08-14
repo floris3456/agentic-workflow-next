@@ -56,8 +56,9 @@ invalidates it.
 
 Before any final task response, every launched Scout and developer route must be
 terminal and absorbed: read, correlate, interpret, and use its result. Resolve
-every required publication and visible interaction first; if the turn ends
-sooner, persist continuity and return `RESUME REQUIRED`, not completion.
+every required publication and visible interaction first. Connector delivery
+pending is work to reschedule, not a reason to end: continue safe independent
+work and retry it at later natural checkpoints.
 
 # Procedure router
 

@@ -89,11 +89,17 @@ record both forms and never obscure a safety-relevant fact.
 
 Three attempts end the current delivery window; they do not cancel the required
 operation. If indispensable publication remains definitely absent, mark it
-`connector-delivery-pending`, retain its current exact arguments, do not advance,
-and return a `RESUME REQUIRED` checkpoint. On the next turn reconcile first,
-then open another bounded window for the same logical operation. Repeated windows
-may end in an exact copyable manual-delivery packet, but remain a continuation
-until readback proves one exact effect. Never use this route to bypass a denied
+`connector-delivery-pending`, retain its current exact arguments, and pause only
+work that depends on that effect. Continue safe independent work already in the
+plan; after a meaningful independent action or batch, read back and open another
+one-to-three-attempt delivery window for the same logical operation. Do not
+invent filler work or busy-loop retries. Pending delivery alone never causes a
+checkpoint, final response, or task failure.
+
+If no independent work remains, alternate bounded read-only reconciliation with
+later delivery windows. Use an exact copyable manual-delivery packet only when
+write capability becomes a genuine human/configuration boundary, not merely
+after repeated generic safety refusals. Never use this route to bypass a denied
 approval, workspace policy, authorization failure, provider validation or
 protection error, duplicate/unexpected effect, or ambiguous readback; stop
 automatic retries and name the exact human/configuration action instead.
@@ -102,20 +108,21 @@ Stop a redundant status request when equivalent trusted evidence arrives: an
 exact terminal command marker can supersede `command.status`, a correlated
 developer response can supersede `task.status`, and a correlated Scout response
 can supersede `scout.status`. Record the definitely unpublished request as
-cancelled and continue from that evidence. Before reporting `BLOCKED` or `RESUME
-REQUIRED`, refresh the issue comments and relevant remote refs once more. A
-generic connector gap with confirmed absence is pending delivery, not a bridge
-rejection, task failure, or reason to abandon already launched work. Continue
-safe passive reconciliation until every launched agent is terminal and absorbed.
+cancelled and continue from that evidence. Before any final response or genuine
+human/configuration escalation, refresh issue comments and relevant remote refs.
+A generic connector gap with confirmed absence is pending delivery, not a bridge
+rejection, task failure, or reason to end. Keep scheduling it while also
+reconciling every launched agent through terminal absorption.
 
 ## Procedure
 
-1. Stop new commands. Reconcile task context, the same bound issue, exact UUID,
-   every related issue, highest accepted sequence derived from trusted lifecycle,
-   persisted envelope, authorized comment identity/association, bridge bot
-   author, result marker, service heartbeat, and exact remote GitHub state. First
-   resolve any unmatched task-correlated permission/question; a visible
-   interaction is a wait condition, not a reason to post another status command.
+1. Pause only commands that depend on unresolved publication or mutation state.
+   Reconcile task context, the same bound issue, exact UUID, every related issue,
+   highest accepted sequence derived from trusted lifecycle, persisted envelope,
+   authorized comment identity/association, bridge bot author, result marker,
+   service heartbeat, and exact remote GitHub state. First resolve any unmatched
+   task-correlated permission/question; a visible interaction is a wait condition,
+   not a reason to post another status command.
 2. If an eligible command comment exists, do not replace it because acknowledgement
    is delayed. For refused or ambiguous publication, follow the connector-gated
    readback and bounded delivery-window rule above. Never change a protocol

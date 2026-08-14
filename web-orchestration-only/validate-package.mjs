@@ -223,7 +223,7 @@ for (const rule of [
   [texts.get("chatgpt-project/skill-mcp-on-scouting.md") ?? "", /high-stakes[\s\S]{0,220}directly inspect/i, "high-stakes direct-inspection rule"],
   [texts.get("chatgpt-project/skill-mcp-on-recovery.md") ?? "", /Never automatically retry/i, "uncertain-mutation no-replay rule"],
   [texts.get("chatgpt-project/skill-mcp-on-recovery.md") ?? "", /connector refusal is not a bridge disposition/i, "connector-refusal distinction"],
-  [texts.get("chatgpt-project/skill-mcp-on-recovery.md") ?? "", /delivery window[\s\S]{0,500}do not cancel the required[\s\S]{0,500}manual-delivery packet/i, "durable connector-delivery continuation"],
+  [texts.get("chatgpt-project/skill-mcp-on-recovery.md") ?? "", /delivery window[\s\S]{0,500}do not cancel the required[\s\S]{0,500}continue safe independent work[\s\S]{0,500}delivery window/i, "durable connector-delivery scheduling"],
   [texts.get("chatgpt-project/skill-mcp-on-promotion.md") ?? "", /human explicitly approves[\s\S]{0,160}exact/i, "human exact-SHA promotion rule"],
 ]) if (!rule[1].test(rule[0])) fail(`Project package is missing canonical ${rule[2]}`);
 
@@ -290,6 +290,10 @@ for (const term of [
 ]) if (!template.includes(term)) fail(`task-context/TEMPLATE.md is missing continuity field: ${term}`);
 
 const recovery = texts.get("chatgpt-project/skill-mcp-on-recovery.md") ?? "";
+const connectorRecovery = recovery.split("## Connector-gated publication\n")[1]?.split("## Procedure\n")[0] ?? "";
+if (/RESUME REQUIRED/i.test(connectorRecovery)) {
+  fail("Connector delivery pending must not produce a RESUME REQUIRED checkpoint");
+}
 if (!/One task ID has one canonical issue[\s\S]{0,500}post nothing on any later issue/i.test(recovery)) {
   fail("MCP-ON recovery is missing canonical duplicate-task issue containment");
 }

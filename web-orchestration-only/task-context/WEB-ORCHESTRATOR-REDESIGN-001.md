@@ -308,9 +308,11 @@ If ChatGPT refuses a prepared GitHub comment before remote confirmation, the
 orchestrator does not call that a bridge rejection. It reads the issue for the
 exact UUID, makes at most three total attempts with the unchanged idempotent
 envelope when absent, and accepts later equivalent trusted terminal evidence as
-superseding a redundant status request. It refreshes issue comments and remote
-refs once more before reporting `BLOCKED` or `RESUME REQUIRED`; it never evades
-the connector gate or retries an accepted/ambiguous underlying mutation.
+superseding a redundant status request. Three attempts end one delivery window,
+not the required operation: it pauses only dependent work, continues meaningful
+independent work, and opens another bounded window at a later natural checkpoint.
+Connector delivery alone never causes `RESUME REQUIRED`; it never retries an
+accepted or ambiguous underlying mutation.
 
 ### Human decision
 
@@ -437,9 +439,10 @@ Routine scouting, delegation, review, and correction proceed without repeated hu
   publication.
 - The installed package now has one permanent completion barrier, one compact
   active-work ledger, and one pending-publication/refusal record. Three attempts
-  bound a delivery window rather than the logical operation; later turns reuse
-  the same operation after readback, with an exact manual-delivery packet as the
-  last safe transport fallback.
+  bound a delivery window rather than the logical operation. A pending operation
+  pauses only dependent work; the orchestrator continues meaningful independent
+  work and retries another one-to-three times at later natural checkpoints. It
+  never emits `RESUME REQUIRED` for connector delivery alone.
 - Protocol payloads remain byte-identical for a UUID and uncertain mutations are
   never replayed. Only definitely unpublished ordinary issue prose may be
   shortened once without changing authorization, identity, scope, refs, or

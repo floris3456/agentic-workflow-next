@@ -6,12 +6,14 @@ The task ID must match the delegated developer task and bridge envelope. Keep th
 file concise. Before any GitHub publication, persist its exact public-safe
 arguments as `prepared`; after exact readback, add its ref and mark it `posted`.
 Use `connector-delivery-pending` when a required effect is definitely absent
-after one bounded delivery window. Journal every refusal immediately even if a
-later attempt succeeds. Journal every resolved command with command/result refs
-and lifecycle state. Clear ordinary terminal pending state only after journaling;
-retain an exact envelope as `pre-ledger-rejected` or `terminal-unresolved` until
-reconciled, and use `cancelled` only for a definitely unpublished superseded
-request.
+after one bounded delivery window. It is a scheduling state: pause only dependent
+work, continue meaningful independent work, then retry the same logical
+publication at a later natural checkpoint. Journal every refusal immediately
+even if a later attempt succeeds. Journal every resolved command with
+command/result refs and lifecycle state. Clear ordinary terminal pending state
+only after journaling; retain an exact envelope as `pre-ledger-rejected` or
+`terminal-unresolved` until reconciled, and use `cancelled` only for a definitely
+unpublished superseded request.
 
 Record the canonical bound issue, every related/duplicate issue and disposition,
 control-issue state, latest command UUID/kind/lifecycle, highest accepted
