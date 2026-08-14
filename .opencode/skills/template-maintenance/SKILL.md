@@ -10,8 +10,8 @@ compatibility: template-development ledger branch
 
 1. Require the current branch to be `template-development`, a clean tracked tree,
    and local HEAD equal to `origin/template-development`.
-2. Read `source-lock.json`, the active task record, AS-BUILT, design record, and
-   deviations before source work.
+2. Read `source-lock.json`, the not-yet-finalized task record, AS-BUILT, design
+   record, and deviations before source work.
 3. For a new task, create
    `docs/work/current/<task-id>-<slug>.md` from the task template first and record
    a concise public-safe brief that preserves the requested outcome, scope,
@@ -34,10 +34,10 @@ compatibility: template-development ledger branch
 
 ## Maintain the ledger
 
-Keep the active task useful after compaction: exact current position, direct
-observations, interpretations, attempts, changed approach, checks, blockers,
-remaining work, next action, source ranges, and relevant durable records. Do not
-store private reasoning or sensitive data.
+Keep the not-yet-finalized task record useful after compaction: exact current
+position, direct observations, interpretations, attempts, changed approach,
+checks, blockers, remaining work, next action, source ranges, and relevant
+durable records. Do not store private reasoning or sensitive data.
 
 Push every ledger commit immediately to `origin/template-development`. On a
 failed push, stop mutation and use the directed recovery script; never claim a
@@ -71,10 +71,13 @@ Task record:
 
 `Status` is exactly `completed`, `blocked`, `failed`, or `needs decision`.
 `completed` requires the exact pushed ledger SHA; all other statuses use `none`.
+A `completed` handoff ends the working cycle but does not by itself finalize or
+archive the task record.
 
 ## Finalization
 
 After source and downstream application review, reconcile durable records and
 move the exact approved task blob unchanged to the same basename under
-`docs/work/archive/`. Refuse an archive collision or blob mismatch. Commit and
-push finalization; never self-approve source work or promotion.
+`docs/work/archive/`. This move is the transition from not-yet-finalized to
+finalized. Refuse an archive collision or blob mismatch. Commit and push
+finalization; never self-approve source work or promotion.
