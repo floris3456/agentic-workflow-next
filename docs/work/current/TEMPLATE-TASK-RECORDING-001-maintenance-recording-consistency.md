@@ -6,7 +6,7 @@ TEMPLATE-TASK-RECORDING-001
 
 ## Status
 
-In progress
+Completed
 
 ## Task-start template-development SHA
 
@@ -26,38 +26,41 @@ Review the reusable template's maintenance-recording contract for internal contr
 
 ## Current position
 
-Maintenance contract and source refs inspected. The review is focused on the relationship between the template-development ledger record, ordinary source-branch task records, active/current semantics, and finalization/archive semantics. No source change has been made yet.
+A real lifecycle wording contradiction was found and corrected on `template-development` only. The ledger previously described `current/` as active tasks and `archive/` as completed tasks even though the canonical maintainer handoff contract uses `completed` for a successfully finished working cycle that can legitimately remain in `current/` until exact review and durable-record reconciliation allow finalization. The documentation now consistently distinguishes not-yet-finalized records from finalized archived records.
 
 ## Source ranges
 
-- `template-development`: `bb3a1179f16b089f1fbb3a0ff9101af59ac0abd8..HEAD`
-- `developer`: review base `e2700f586fe8ab634053eb514bb9da487e881a21`; unchanged so far.
-- `web-orchestration`: review base `279631a3e14c6293933852baec98dd662f575277`; unchanged so far.
-- `main`: observed only at `6127611113dfdb66f93a0cfd2d355359aa370833`; no promotion authorized.
+- `template-development`: `bb3a1179f16b089f1fbb3a0ff9101af59ac0abd8..41de852b750002350b9dbe1fc2cd53b3c405f488` before this progress update.
+- `developer`: unchanged at `e2700f586fe8ab634053eb514bb9da487e881a21`.
+- `web-orchestration`: unchanged at `279631a3e14c6293933852baec98dd662f575277`.
+- `main`: unchanged at `6127611113dfdb66f93a0cfd2d355359aa370833`; no promotion performed.
 
 ## Observed
 
-- `source-lock.json` matches the exact live `main`, `developer`, and `web-orchestration` heads.
-- The Project maintenance source says one template-development maintenance record replaces normal web-orchestration task context for the entire template task, while source branches retain their own normal task records.
-- Template-development `current/` is documented as active task storage, while finalization moves the exact approved record to `archive/`.
-- Existing current records include completed handoff cycles, so status wording and active/archive semantics require consistency review before deciding whether a real contract contradiction remains.
+- `source-lock.json` matched the exact live `main`, `developer`, and `web-orchestration` heads before mutation.
+- The Project maintenance source correctly defines one template-development maintenance record as the replacement for normal web-orchestration task context while preserving normal source-branch implementation records.
+- The contradiction was narrower: template-development documentation used active/completed directory labels that conflicted with the maintainer response meaning of `completed` and with legitimate completed handoff records still present in `current/` pending finalization.
+- No reusable `developer` or `web-orchestration` source behavior needed to change.
 
 ## Interpretation
 
-The intended model appears to be one canonical cross-branch maintenance ledger plus ordinary implementation records on any changed source branch. The remaining review question is whether any document describes those records or completion/archive boundaries incompatibly.
+`completed` is a handoff-cycle result, not an archival state. `current/` therefore owns every maintenance task until finalization, and `archive/` owns only finalized immutable records. This preserves the existing workflow while removing the semantic contradiction.
 
 ## Attempts
 
-None.
+- Attempted to clone the exact remote branch in the execution sandbox to run `./scripts/validate-template-development.sh`; the sandbox could not resolve `github.com`, so that local execution path was unavailable. This was an environment/network limitation, not a repository check failure.
 
 ## Changed approach
 
-None.
+Used connector-backed exact remote readback and commit-range validation after the local execution environment could not reach GitHub.
 
 ## Checks
 
-- Exact live source refs read back from GitHub.
-- Required template-development contract files read before mutation.
+- Remote `template-development` readback confirmed the correction at `41de852b750002350b9dbe1fc2cd53b3c405f488`.
+- Exact compare from task start to that head is linear (`ahead_by=4`, `behind_by=0`) and changes only `README.md`, `docs/work/README.md`, `docs/work/current/README.md`, and this task record.
+- Remote readback of all three edited lifecycle documents confirms consistent not-yet-finalized/finalized wording and explicitly allows a successful `completed` handoff to remain in `current/` until archival conditions are satisfied.
+- No GitHub Actions workflow run exists for the checked commit, so CI provided no additional signal.
+- `developer`, `web-orchestration`, and `main` were not modified.
 
 ## Blockers / required decisions
 
@@ -65,17 +68,19 @@ None.
 
 ## Remaining work
 
-Identify any concrete contradictory wording or invariant, apply the smallest correction if needed, validate affected contracts, and update this record.
+None for this correction. Archival remains subject to the normal exact-review and durable-record reconciliation boundary.
 
 ## Next action
 
-Compare maintenance ledger status/current/archive semantics and source-record ownership across the canonical maintenance skill, work-record README, design record, and Project maintenance source.
+Create and push the dedicated template-development handoff snapshot, then return control for independent review.
 
 ## Relevant durable records
 
 - `.opencode/skills/template-maintenance/SKILL.md`
 - `docs/design/template-maintenance-workflow.md`
 - `docs/work/README.md`
+- `docs/work/current/README.md`
+- `README.md`
 - `web-orchestration-only/chatgpt-project/skill-mcp-on-template-maintenance.md` on `web-orchestration`
 
 ## Last handoff commit
