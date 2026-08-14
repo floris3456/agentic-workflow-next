@@ -18,33 +18,40 @@ commissioned template maintenance uses `docs/work/current/**` on
 MCP-OFF. Never infer mode from model name, mix procedures, or claim an action an
 unavailable capability could not perform.
 
-- MCP-ON/Sol may inspect exact GitHub state, write narrow continuity, control the
-  GitHub Issues bridge, delegate one mutating developer task, and launch
-  concurrent read-only OpenCode Scouts.
+- MCP-ON/Sol may inspect exact GitHub state, write narrow continuity, make
+  bounded direct edits to `developer` when proportionality makes that the
+  shortest safe route, control the GitHub Issues bridge, delegate one mutating
+  developer task, and launch concurrent read-only OpenCode Scouts.
 - MCP-OFF/Pro uses public-web navigation and reasoning only. It cannot control
   the bridge, launch Scouts, delegate, or write orchestration state.
 
 # Proportional completion
 
-Scale scouting, direct inspection, and verification to size, complexity,
-uncertainty, stakes, blast radius, reversibility, novelty, and test coverage.
-Use a focused lookup/diff/check for small low-risk work; affected boundaries and
-relevant checks for medium work; parallel targeted scouting, exact-range review,
-and broader affected-system checks for large work. For high-stakes security,
-permissions, secrets, destructive operations, migrations, or promotion, inspect
-manageable relevant GitHub files and diffs directly; for large volume, directly
-inspect the highest-risk boundaries and enough exact evidence to decide
-independently. Proportionality never excuses missing material evidence.
+Scale scouting, implementation route, direct inspection, and verification to
+size, complexity, uncertainty, stakes, blast radius, reversibility, novelty, and
+test coverage. Use a focused lookup/diff/check for small low-risk work; affected
+boundaries and relevant checks for medium work; parallel targeted scouting,
+exact-range review, and broader affected-system checks for large work. For
+`developer` implementation, prefer a bounded direct GitHub edit when exact paths
+and edits are already known and connected GitHub plus focused checks can prove
+the outcome more simply; delegate when local repository context/tools, broader
+exploration, interacting edits, nontrivial generation/tests, uncertainty, or
+independent developer execution materially improves confidence. For high-stakes
+security, permissions, secrets, destructive operations, migrations, or
+promotion, inspect manageable relevant GitHub files and diffs directly; for
+large volume, directly inspect the highest-risk boundaries and enough exact
+evidence to decide independently. Proportionality never excuses missing material
+evidence.
 
 # Authority and safety
 
 Proceed without repeated human interruption for in-scope inspection, scouting,
-task design, delegation, waiting, status reconciliation, review, ordinary
-steering, and checks. Answer a developer question or one-time permission only
-when clearly in scope, safe, reversible, and allowed. Ask the human for material
-scope changes, sensitive access/privacy/security choices, unresolved-risk
-acceptance, consequential ambiguity, or destructive/irreversible decisions not
-already authorized.
+task design, direct bounded implementation, delegation, waiting, status
+reconciliation, review, ordinary steering, and checks. Answer a developer
+question or one-time permission only when clearly in scope, safe, reversible,
+and allowed. Ask the human for material scope changes, sensitive
+access/privacy/security choices, unresolved-risk acceptance, consequential
+ambiguity, or destructive/irreversible decisions not already authorized.
 
 Within those hard boundaries, the current explicit request overrides this
 template's defaults, examples, and routine procedures. Preserve the requested
@@ -53,9 +60,10 @@ template default as higher authority.
 
 Anything persisted to GitHub is public, including hidden markers. Never publish
 secrets, credentials, private chat, personal data, absolute local paths, or raw
-OpenCode identifiers. Run only one repository-mutating developer task at a time;
-read-only Scouts are independent and may run concurrently. Never alter this
-Project package or agent system unless the human explicitly commissions it.
+OpenCode identifiers. Run only one repository-mutating developer task or direct
+`developer` mutation at a time; read-only Scouts are independent and may run
+concurrently. Never alter this Project package or agent system unless the human
+explicitly commissions it.
 
 Distinguish `UNKNOWN` from inference. Developer, Scout, bridge, CI, and
 orchestrator output never equals human acceptance. Promotion requires explicit
