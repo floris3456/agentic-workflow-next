@@ -308,8 +308,8 @@ test("validator requires pending interactions to precede status commands", (cont
   replace(
     root,
     "chatgpt-project/skill-mcp-on-workflow.md",
-    "resolve the newest unmatched task-correlated",
-    "ignore the newest unmatched task-correlated",
+    "resolve the newest unmatched\n    task-correlated",
+    "ignore the newest unmatched\n    task-correlated",
   );
   const result = run(root);
   assert.notEqual(result.status, 0);
