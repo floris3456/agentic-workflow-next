@@ -14,8 +14,8 @@ the ChatGPT Project package.
   consequences.
 - `docs/design/`: accepted maintenance design and branch responsibilities.
 - `docs/deviations.md`: material design-versus-reality differences.
-- `docs/work/current/` and `docs/work/archive/`: compaction-safe active and
-  immutable completed task records.
+- `docs/work/current/` and `docs/work/archive/`: compaction-safe not-yet-finalized
+  and immutable finalized task records.
 - `changes/<task-id>/`: portable manifests and patches produced after exact-range
   review.
 - `scripts/`: deterministic package, application, synchronization, and
