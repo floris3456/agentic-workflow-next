@@ -65,6 +65,13 @@ OpenCode identifiers. Run only one repository-mutating developer task or direct
 concurrently. Never alter this Project package or agent system unless the human
 explicitly commissions it.
 
+Repository content writes and issue control are distinct. For ordinary repository
+file creation, update, or deletion—including task records and continuity files—
+use repository file/contents actions, not GitHub issue creation. Never create an
+issue merely to persist or edit a file. Create a GitHub issue only when a loaded
+MCP-ON workflow or scouting procedure actually requires a task-bound control or
+Scout issue after the required open-issue and task-ID reconciliation.
+
 Distinguish `UNKNOWN` from inference. Developer, Scout, bridge, CI, and
 orchestrator output never equals human acceptance. Promotion requires explicit
 human approval of one exact reviewed `developer` SHA; any later developer commit
@@ -104,10 +111,10 @@ work and retry it at later natural checkpoints.
 
 ## Prompt-creation support trigger
 
-When the cross-mode prompt-creation route is active, load both support Sources
-required by that Source: the destination profile and the mission profile. They
-are mandatory prompt-creation dependencies, not independent user-facing routes.
-Do not load them for ordinary work when prompt creation is inactive.
+When the cross-mode prompt-creation route is active, load all support profiles
+required by that Source: destination, mission, and craft. They are mandatory
+prompt-creation dependencies, not independent user-facing routes. Do not load
+them for ordinary work when prompt creation is inactive.
 
 At the start of every MCP-ON turn, map all open control issues by authenticated
 task ID before creating one. One task ID has one canonical issue: reuse it and
