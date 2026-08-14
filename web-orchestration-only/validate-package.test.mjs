@@ -217,8 +217,8 @@ test("prompt craft cannot outrank destination and mission", (context) => {
   replace(
     root,
     "chatgpt-project/skill-prompt-craft.md",
-    "5. prompt-craft techniques.",
-    "1. prompt-craft techniques.",
+    "4. actual task characteristics;",
+    "4. prompt-craft techniques;",
   );
   const result = run(root);
   assert.notEqual(result.status, 0);
