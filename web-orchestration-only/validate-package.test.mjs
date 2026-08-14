@@ -30,10 +30,11 @@ function replace(root, relative, before, after) {
   writeFileSync(target, text.replace(before, after));
 }
 
-test("current eight-Source package passes structural and canonical safety validation", (context) => {
+test("current eleven-Source package passes structural and canonical safety validation", (context) => {
   const result = run(fixture(context));
   assert.equal(result.status, 0, result.stderr);
-  assert.match(result.stdout, /8 exact Project Sources/);
+  assert.match(result.stdout, /11 exact Project Sources/);
+  assert.match(result.stdout, /9 routed, 2 support/);
   assert.match(result.stdout, /5 parsed bridge envelopes/);
   assert.match(result.stdout, /integrated task-context routing/);
 });
@@ -63,6 +64,9 @@ test("documented installation rendering produces the exact Source inventory", (c
     "skill-mcp-on-scouting.md",
     "skill-mcp-on-template-maintenance.md",
     "skill-mcp-on-workflow.md",
+    "skill-prompt-creation.md",
+    "skill-prompt-destinations.md",
+    "skill-prompt-missions.md",
   ]);
 });
 
@@ -118,6 +122,41 @@ test("validator rejects stale or additional Source inventory", (context) => {
   const result = run(root);
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /Project package inventory differs/);
+});
+
+test("prompt support Sources are dependencies rather than permanent routes", (context) => {
+  const root = fixture(context);
+  const target = path.join(root, "chatgpt-project", "developer-instructions.md");
+  writeFileSync(target, `${readFileSync(target, "utf8")}\n| Bad support route | \`skill-prompt-destinations.md\` |\n`);
+  const result = run(root);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /Support Project Source must not have a permanent trigger row/);
+});
+
+test("prompt creation core must load both support Sources", (context) => {
+  const root = fixture(context);
+  replace(
+    root,
+    "chatgpt-project/skill-prompt-creation.md",
+    "`skill-prompt-missions.md`",
+    "the mission support profile",
+  );
+  const result = run(root);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /Prompt creation core must reference support Source skill-prompt-missions\.md exactly once/);
+});
+
+test("prompt destination never changes the current chat mode", (context) => {
+  const root = fixture(context);
+  replace(
+    root,
+    "chatgpt-project/skill-prompt-creation.md",
+    "never changes this chat's",
+    "changes this chat's",
+  );
+  const result = run(root);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /prompt destination\/current-mode separation/);
 });
 
 test("validator rejects MCP-ON mechanics in MCP-OFF procedure", (context) => {
