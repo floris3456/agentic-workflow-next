@@ -6,7 +6,7 @@ TEMPLATE-TASK-RECORDING-002
 
 ## Status
 
-In progress
+Completed
 
 ## Task-start template-development SHA
 
@@ -26,62 +26,68 @@ Align the public task-record contract with the permanent GitHub public-safety bo
 
 ## Current position
 
-Exact remote inspection confirmed a real contradiction. Permanent Project and ledger instructions prohibit persisting private chat and host-local absolute paths, but the template-maintenance Source and task template require an original/exact task brief in the public ledger. Existing current records demonstrate both raw chat copying and one host-local path, while a later record already uses a redacted summary.
+A real contradiction was confirmed and corrected. Template-maintenance records now preserve a concise public-safe brief rather than a verbatim/original conversation excerpt. The Project maintenance Source, ledger maintenance skill, task template, current records, validator, and source lock are aligned. The exact `template-development` implementation range through `31f6544fddb1ae9ab7277f31d36a60e28f7c7afd` passed the branch's push-triggered validation workflow.
 
 ## Source ranges
 
-- `template-development`: task start `d10dad3bfa9643f55e9ec925aaaee02575abddde`; task record initialized at `345f2abb54962aebe86e97d88b7dd4e8dbdcb003`.
-- `main`: `6127611113dfdb66f93a0cfd2d355359aa370833`.
-- `developer`: `e2700f586fe8ab634053eb514bb9da487e881a21`.
-- `web-orchestration`: review base `279631a3e14c6293933852baec98dd662f575277`.
+- `template-development`: `d10dad3bfa9643f55e9ec925aaaee02575abddde..31f6544fddb1ae9ab7277f31d36a60e28f7c7afd` before this dedicated task-progress handoff snapshot.
+- `web-orchestration`: `279631a3e14c6293933852baec98dd662f575277..301b37f96b7adae708b199278045feb11c493fdb`.
+- `developer`: unchanged at `e2700f586fe8ab634053eb514bb9da487e881a21`.
+- `main`: unchanged at `6127611113dfdb66f93a0cfd2d355359aa370833`; no promotion performed.
 
 ## Observed
 
-- Live `main`, `developer`, and `web-orchestration` refs match `source-lock.json` at task start.
-- `web-orchestration-only/chatgpt-project/developer-instructions.md` says anything persisted to GitHub is public and forbids private chat, personal data, absolute local paths, and raw OpenCode identifiers.
-- `AGENTS.md` on `template-development` independently forbids private chat and host-local absolute paths in persisted values.
-- `skill-mcp-on-template-maintenance.md` currently says to copy the exact public-safe request into the public maintenance record.
-- `.opencode/skills/template-maintenance/SKILL.md` currently says to copy the exact public-safe brief without rewriting it.
-- The task-progress template labels that section `Original task brief`.
-- The structural validator exempts both `docs/work/current/**` and `docs/work/archive/**` from its host-local absolute-path check.
-- Existing current records prove the mismatch is operational, not theoretical: older records quote chat directly and one contains a host-local absolute path, while a later record explicitly omits that path.
+- Permanent Project instructions and `template-development/AGENTS.md` both treat GitHub persistence as public and prohibit private chat and host-local absolute paths.
+- Before this task, the Project maintenance Source and ledger maintenance skill instructed the maintainer to copy the exact request/brief into the public record, while the task template called the field `Original task brief`.
+- Existing current records demonstrated that the conflict was operational: older records copied conversational wording and one retained a host-local source location, while a later record had already redacted that location.
+- The old structural validator required `Original task brief` and skipped both task-record directories when checking for host-local absolute paths.
+- The corrected Project Source and ledger skill require a concise public-safe brief that preserves requested outcome, scope, constraints, and material decisions without reproducing prohibited private values.
+- The task template now names the field `Public-safe task brief`; all still-current task records were migrated to that field without rewriting Git history.
+- The validator now requires the new heading for current/archive task records, rejects the old heading, and applies its host-local absolute-path check to task records as well.
+- `source-lock.json` now records the reviewed web source handoff `301b37f96b7adae708b199278045feb11c493fdb` and this task identity.
 
 ## Interpretation
 
-A public maintenance ledger must preserve the human's requested outcome and constraints, not the verbatim private conversation. The smallest coherent repair is to make the canonical field a concise public-safe brief, align both maintenance instructions, migrate the still-current records, and remove the validator exemption that allowed a host-local path inside task records.
+The durable record must preserve actionable task intent and constraints, not the private conversation itself. Making that distinction explicit in the canonical field and enforcing it in validation removes the contradiction without changing the one-record continuity model or the current-versus-archive lifecycle semantics fixed previously.
 
 ## Attempts
 
-- A direct local Git transport check could not resolve `github.com`; the local execution route for repository scripts is unavailable in this environment.
+- Direct local Git transport could not resolve the GitHub host, so the local tracked package-generation route was unavailable in this execution environment. No local-only commit or package was claimed.
 
 ## Changed approach
 
-Use connected GitHub exact reads/writes and remote readback for source mutation and verification. Do not hand-build a change package; if no authorized package-execution route becomes available, record that capability boundary explicitly.
+Used connected GitHub exact reads and bounded writes for the one Project Source and the ledger records, then relied on exact remote compare/readback plus the repository's push-triggered `template-development` validator. The task did not require package transfer, and no change package was hand-built when the tracked package route was unavailable.
 
 ## Checks
 
-- Exact connected-GitHub readback of the permanent Project instructions, maintenance Source, ledger agreement, local maintenance skill, task template, work-record READMEs, current records, validator, source lock, and live branch refs.
+- Exact web compare `279631a3e14c6293933852baec98dd662f575277..301b37f96b7adae708b199278045feb11c493fdb`: linear, one commit, only `web-orchestration-only/chatgpt-project/skill-mcp-on-template-maintenance.md` changed (5 additions, 2 deletions).
+- Exact template-development compare `d10dad3bfa9643f55e9ec925aaaee02575abddde..31f6544fddb1ae9ab7277f31d36a60e28f7c7afd`: linear, 11 commits, exactly 10 intended ledger/record-contract paths changed; no unrelated path changed.
+- Remote readback confirmed the corrected Project maintenance Source, ledger maintenance skill, task template, validator, migrated current records, and source lock at their exact pushed SHAs.
+- Push workflow `Validate template development` run `31800913979` completed successfully for `31f6544fddb1ae9ab7277f31d36a60e28f7c7afd`; its `validate` job and `./scripts/validate-template-development.sh` step both concluded `success` under Node 22.13.0.
+- `web-orchestration` exposes no push workflow or commit status for `301b37f96b7adae708b199278045feb11c493fdb`; its verification is the exact one-file remote compare and readback above.
+- No Scout or developer route was launched for this bounded maintenance correction.
 
 ## Blockers / required decisions
 
-No human decision is required. Local package/validator execution is unavailable because Git transport cannot resolve the remote host; remote validation will use exact diff/readback and any available GitHub workflow/check evidence.
+None for the requested fix and validation.
 
 ## Remaining work
 
-Apply the narrow Project-source wording correction, update the ledger contract/template/validator and live current records, reconcile `source-lock.json`, then review the exact remote ranges and available checks.
+None for this working cycle. The record remains under `docs/work/current/` until a separate finalization boundary permits archival.
 
 ## Next action
 
-Publish the bounded Project-source correction on `web-orchestration`, then apply the corresponding ledger migration and validator guard on `template-development`.
+None. Independent human review may use the exact source and ledger ranges above. No `main` promotion is requested or authorized.
 
 ## Relevant durable records
 
 - `web-orchestration-only/chatgpt-project/developer-instructions.md` at `279631a3e14c6293933852baec98dd662f575277`
-- `web-orchestration-only/chatgpt-project/skill-mcp-on-template-maintenance.md` at `279631a3e14c6293933852baec98dd662f575277`
+- `web-orchestration-only/chatgpt-project/skill-mcp-on-template-maintenance.md` at `301b37f96b7adae708b199278045feb11c493fdb`
 - `AGENTS.md`
 - `.opencode/skills/template-maintenance/SKILL.md`
 - `docs/work/templates/task-progress-template.md`
 - `scripts/validate-template-development.mjs`
+- `source-lock.json`
 
 ## Last handoff commit
 
@@ -89,29 +95,30 @@ None
 
 ## Issue mapping
 
-No open `agentic-bridge` control issues existed at task start. No bridge issue is required for this explicitly commissioned, bounded Project-source write plus ledger-only maintenance change.
+No open `agentic-bridge` control issue existed at task start, and none was created. This explicitly commissioned, bounded Project-source write plus ledger-only maintenance correction did not require the bridge.
 
 ## Active work
 
-- Direct exact GitHub review and bounded mutation of the Project maintenance Source.
-- Direct exact GitHub maintenance of the `template-development` ledger contract and current records.
+None.
 
 ## Pending publication
 
-- `web-orchestration`: replace only `web-orchestration-only/chatgpt-project/skill-mcp-on-template-maintenance.md` from exact base blob `2336db40065253aa0f6841df016c799c933702b4` on branch head `279631a3e14c6293933852baec98dd662f575277`, changing the record instruction from verbatim request copying to a concise public-safe brief that never reproduces private chat or prohibited private values.
+None. The bounded Project-source publication completed at `301b37f96b7adae708b199278045feb11c493fdb`; the ledger implementation range completed at `31f6544fddb1ae9ab7277f31d36a60e28f7c7afd` before this snapshot.
 
 ## Command / Scout / refusal journals
 
-- No bridge commands or Scouts launched.
-- Local Git transport attempt failed before GitHub because the execution environment could not resolve the remote host; no repository effect occurred.
+- No bridge command, Scout, or developer route was launched.
+- Local Git transport failed before reaching GitHub; it produced no repository effect. Connected GitHub publication and readback succeeded.
 
 ## Findings
 
-- Confirmed contradiction: verbatim/original task-brief recording conflicts with the permanent public-GitHub prohibition on private chat and absolute local paths.
-- Confirmed validator gap: work-record directories are explicitly skipped by the only host-local absolute-path check.
+- Confirmed and fixed: verbatim/original task-brief recording contradicted the permanent public-GitHub prohibition on private chat and host-local absolute paths.
+- Confirmed and fixed: the validator exempted the very task-record directories that must remain public-safe.
+- No remaining contradiction was found in the not-yet-finalized `current/` versus finalized `archive/` semantics.
 
 ## Decisions
 
-- Fix the contract prospectively and migrate still-current records; do not rewrite Git history.
+- Preserve requested intent through a concise public-safe task brief rather than a verbatim conversation transcript.
+- Migrate still-current records prospectively; do not rewrite public Git history.
 - Keep `main` and `developer` unchanged.
-- Do not hand-build a change package when the tracked package-generation route cannot be executed.
+- Do not hand-build a package when the tracked package-generation route is unavailable and package transfer is not part of the requested outcome.
