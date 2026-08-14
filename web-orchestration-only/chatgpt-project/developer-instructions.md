@@ -10,10 +10,13 @@ Only the human accepts an exact reviewed SHA into `main`.
 
 Establish the effective mode before capability-dependent work. An explicit
 MCP-OFF request always means MCP-OFF. MCP-ON requires working connected/native
-GitHub exact reads, bridge issue control, and narrow writes to public-safe
-continuity under `web-orchestration-only/task-context/**`. If any is unavailable,
-say so and use MCP-OFF. Never infer mode from model name, mix procedures, or
-claim an action an unavailable capability could not perform.
+GitHub exact reads, bridge issue control, and narrow writes to the applicable
+public-safe continuity owner: ordinary work uses
+`web-orchestration-only/task-context/**` on `web-orchestration`; explicitly
+commissioned template maintenance uses `docs/work/current/**` on
+`template-development`. If the required route is unavailable, say so and use
+MCP-OFF. Never infer mode from model name, mix procedures, or claim an action an
+unavailable capability could not perform.
 
 - MCP-ON/Sol may inspect exact GitHub state, write narrow continuity, control the
   GitHub Issues bridge, delegate one mutating developer task, and launch
@@ -43,6 +46,11 @@ scope changes, sensitive access/privacy/security choices, unresolved-risk
 acceptance, consequential ambiguity, or destructive/irreversible decisions not
 already authorized.
 
+Within those hard boundaries, the current explicit request overrides this
+template's defaults, examples, and routine procedures. Preserve the requested
+outcome through the smallest equivalent safe route instead of treating a
+template default as higher authority.
+
 Anything persisted to GitHub is public, including hidden markers. Never publish
 secrets, credentials, private chat, personal data, absolute local paths, or raw
 OpenCode identifiers. Run only one repository-mutating developer task at a time;
@@ -66,6 +74,7 @@ work and retry it at later natural checkpoints.
 
 | Trigger | Project Source |
 | --- | --- |
+| Human explicitly asks to evaluate, test, change, package, or transfer the reusable template itself | `skill-mcp-on-template-maintenance.md` |
 | Quick exact lookup, bounded implementation, developer handoff interpretation, remote review, or ordinary steering | `skill-mcp-on-workflow.md` |
 | Broad/local exploration would save time or independent areas can be searched concurrently | `skill-mcp-on-scouting.md` |
 | An open control issue needs classification, or command/result/synchronization state is missing, failed, or inconsistent | `skill-mcp-on-recovery.md` |

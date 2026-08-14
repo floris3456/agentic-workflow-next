@@ -9,6 +9,7 @@ const protocol = "agentic-bridge/1";
 const failures = [];
 
 const skills = [
+  "skill-mcp-on-template-maintenance.md",
   "skill-mcp-on-workflow.md",
   "skill-mcp-on-scouting.md",
   "skill-mcp-on-recovery.md",
@@ -175,7 +176,7 @@ for (const skill of skills) {
 }
 
 const install = texts.get("chatgpt-project/README.md") ?? "";
-if (!install.includes("seven rendered files") || !install.includes("exact seven-Source")) fail("Installation/upgrade material must require the exact seven-Source inventory");
+if (!install.includes("eight rendered files") || !install.includes("exact eight-Source")) fail("Installation/upgrade material must require the exact eight-Source inventory");
 if (!install.includes("Remove every superseded")) fail("Upgrade material must remove superseded Sources");
 for (const skill of skills) {
   const count = install.split(`\`${skill}\``).length - 1;
@@ -216,6 +217,7 @@ const responseContract = [
   "Task record:",
 ].join("\n");
 const workflow = texts.get("chatgpt-project/skill-mcp-on-workflow.md") ?? "";
+const templateMaintenance = texts.get("chatgpt-project/skill-mcp-on-template-maintenance.md") ?? "";
 if (workflow.split(responseContract).length - 1 !== 1) fail("MCP-ON workflow must contain exactly one canonical six-field developer response block");
 for (const rule of [
   [workflow, /lookup answerable[\s\S]{0,180}Do not create a Scout, issue, task record/i, "quick direct-GitHub path"],
@@ -226,6 +228,12 @@ for (const rule of [
   [texts.get("chatgpt-project/skill-mcp-on-recovery.md") ?? "", /delivery window[\s\S]{0,500}do not cancel the required[\s\S]{0,500}continue safe independent work[\s\S]{0,500}delivery window/i, "durable connector-delivery scheduling"],
   [texts.get("chatgpt-project/skill-mcp-on-promotion.md") ?? "", /human explicitly approves[\s\S]{0,160}exact/i, "human exact-SHA promotion rule"],
 ]) if (!rule[1].test(rule[0])) fail(`Project package is missing canonical ${rule[2]}`);
+if (!/`docs\/work\/current\/<task-id>-<slug>\.md`[\s\S]{0,500}replaces the normal[\s\S]{0,200}`web-orchestration-only\/task-context\/<task-id>\.md`/i.test(templateMaintenance)) {
+  fail("Template maintenance is missing its canonical alternative continuity route");
+}
+if (/create both[\s\S]{0,100}(?:normal|task-context)/i.test(templateMaintenance)) {
+  fail("Template maintenance must not duplicate its canonical continuity record");
+}
 
 const offText = ["skill-mcp-off-workflow.md", "skill-mcp-off-scouting.md"]
   .map((file) => texts.get(`chatgpt-project/${file}`) ?? "").join("\n");
@@ -306,6 +314,7 @@ const unsafePatterns = [
   [/\bconnector refusal is a bridge rejection\b/i, "connector refusal as bridge evidence"],
   [/\b(?:may|can|should|must|always)\s+(?:send|store|persist|publish)\s+(?:secrets|credentials)\b/i, "secret persistence"],
   [/\b(?:may|can|should|must|always)\s+promote\b[^.\n]{0,80}\bwithout\s+(?:explicit\s+)?human\s+approval\b/i, "promotion without approval"],
+  [/\buser requests? always overrides? (?:the )?system\b/i, "user override of higher-priority system instructions"],
   [/\bany open (?:bridge )?(?:control )?issue\b[^.\n]{0,80}\b(?:(?:must|should)(?:\s+always)?|always)\s+(?:block|stop)\b/i, "unconditional open-issue blocking"],
   [/\bhigh-stakes\b[^.\n]{0,120}\bsample only\b/i, "high-stakes evidence sampling"],
 ];

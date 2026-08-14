@@ -2,9 +2,15 @@
 
 Create one file per active or completed orchestration task using `TEMPLATE.md`.
 
-The task ID must match the delegated developer task and bridge envelope. Keep the
-file concise. Before any GitHub publication, persist its exact public-safe
-arguments as `prepared`; after exact readback, add its ref and mark it `posted`.
+This directory owns ordinary MCP-ON task continuity. When the human explicitly
+commissions template evaluation or maintenance, the canonical record under
+`docs/work/current/**` on `template-development` replaces this record; do not
+duplicate it here merely to satisfy the normal path.
+
+For an ordinary task, the task ID must match the delegated developer task and
+bridge envelope. Keep the file concise. Before any GitHub publication, persist
+its exact public-safe arguments as `prepared`; after exact readback, add its ref
+and mark it `posted`.
 Use `connector-delivery-pending` when a required effect is definitely absent
 after one bounded delivery window. It is a scheduling state: pause only dependent
 work, continue meaningful independent work, then retry the same logical

@@ -14,8 +14,9 @@ This independent branch stores concise, public-safe continuity and reusable inst
 ## Contents
 
 - `task-context/<task-id>.md`: focused orchestration continuity.
-- `chatgpt-project/`: concise permanent router plus seven generalized public-safe
-  Project Sources with distinct MCP-ON/MCP-OFF workflows and scouting.
+- `chatgpt-project/`: concise permanent router plus eight focused public-safe
+  Project Sources with distinct MCP-ON/MCP-OFF workflows, scouting, and an
+  exceptional template-maintenance route.
 - `validate-package.mjs` and `validate-package.test.mjs`: Project/static-package
   inventory, task-context continuity/routing, installation, mode separation, and
   executable bridge request/command contract checks with focused safety-negative

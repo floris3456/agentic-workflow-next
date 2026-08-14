@@ -335,14 +335,14 @@ Routine scouting, delegation, review, and correction proceed without repeated hu
 
 ## Resolved implementation questions
 
-- The concrete trigger/dependency audit now consolidates 19 Sources to seven:
-  separate MCP-ON normal workflow, scouting, recovery, finalization, and
-  promotion Sources; and separate MCP-OFF web-only workflow and scouting
-  Sources. Shared safety/authority is always needed and small enough to remain
-  permanently visible instead of requiring a separate trigger. Review/task-
-  design detail moves into each mode because its mechanics differ. Recovery,
-  finalization, and promotion remain exceptional rather than loading during
-  routine work.
+- The concrete trigger/dependency audit now consolidates 19 Sources to eight:
+  separate MCP-ON normal workflow, scouting, recovery, finalization, promotion,
+  and template-maintenance Sources; and separate MCP-OFF web-only workflow and
+  scouting Sources. Shared safety/authority is always needed and small enough to
+  remain permanently visible instead of requiring a separate trigger.
+  Review/task-design detail moves into each mode because its mechanics differ.
+  Recovery, finalization, promotion, and template maintenance remain exceptional
+  rather than loading during routine work.
 - Concurrent Scouts use UUID-idempotent `scout.start`/`scout.status` requests on
   the sequence-free issue lane, with independent session/request/worktree state
   and no mutating-task progress/finalization lifecycle.
@@ -398,6 +398,7 @@ Routine scouting, delegation, review, and correction proceed without repeated hu
 | Existing group | Implemented Source | Co-trigger/dependency evidence |
 | --- | --- | --- |
 | shared evidence/authority + human boundaries + public-safe persistence | permanent router (not a Source) | These short rules apply in every mode and before every persistent or consequential action, so a separately triggered Source only duplicated always-visible policy. |
+| explicit reusable-template evaluation, change, packaging, or transfer | MCP-ON template maintenance | This is human-triggered exceptional work with a distinct `template-development` continuity owner and cross-branch package lifecycle; loading it for ordinary product tasks would add irrelevant procedure. |
 | shared task design/review reasoning + MCP-ON routing, orchestration state, task delegation, remote review, task review/steering | MCP-ON workflow | A normal implementation always designs one task, selects a route, persists state, delegates, interprets a handoff, reviews remotely, and either completes or steers; splitting these caused repeated loading. |
 | MCP-ON repository scouting | MCP-ON scouting | Triggered only when broad/local exploration saves time; quick direct GitHub lookup and routine delegation do not require it. |
 | MCP-ON delegation recovery + synchronization recovery | MCP-ON recovery | Both trigger on missing, ambiguous, failed, indeterminate, or unsynchronized state and share the stop/reconcile/no-replay boundary. |
@@ -451,6 +452,19 @@ Routine scouting, delegation, review, and correction proceed without repeated hu
 - The scheduling correction is implemented at web-orchestration
   `2aa997ebed8ff211406833440492ad0f8a1f13b5`; exact Node 22.13.0 Project
   validation, 21 package tests, and developer cross-branch integration passed.
+
+### Template-maintenance routing resolution (2026-08-14)
+
+- Explicit evaluation or modification of the reusable template now routes to one
+  exceptional MCP-ON Source. Its canonical continuity record lives under
+  `docs/work/current/**` on `template-development` and replaces, rather than
+  duplicates, the ordinary web task-context record.
+- The current explicit request may replace routine template defaults, but never
+  higher-priority platform instructions or the public-safety, no-replay,
+  authority, and human exact-SHA boundaries.
+- Evaluation-only runs use the ordinary Scout/developer/recovery mechanics with
+  the ledger as their persistence target. Reusable source changes retain
+  independent exact ranges and the tracked template-maintenance package route.
 
 - The present package is safety-oriented but repeats procedure across permanent instructions and 19 Sources.
 - The current bridge already persists and recovers OpenCode streams, so task handoff should reuse that path.
