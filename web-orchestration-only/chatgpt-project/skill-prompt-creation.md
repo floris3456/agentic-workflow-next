@@ -30,6 +30,11 @@ reproduce destination protocol, safety boilerplate, routing mechanics, or tool
 syntax that the receiving environment already supplies unless the human
 explicitly asks for those mechanics to be part of the task.
 
+The destination describes the future receiver; it never changes this chat's
+current effective mode or capabilities. An MCP-OFF chat may prepare an MCP-ON
+prompt, for example, but must not perform or imply MCP-ON actions while creating
+it.
+
 ## Procedure
 
 1. **Resolve destination and mission.** Treat the human's explicit destination
