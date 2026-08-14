@@ -6,7 +6,7 @@ TEMPLATE-PROJECT-MAINTENANCE-ROUTE-001
 
 ## Status
 
-In progress
+Completed
 
 ## Task-start developer SHA
 
@@ -29,9 +29,9 @@ derived inventory count.
 ## Current position
 
 The independent Project package is pushed at
-`279631a3e14c6293933852baec98dd662f575277`. Developer architecture records now
-describe its alternative template-maintenance continuity owner without copying
-the web-owned derived Source count; the atomic documentation commit is ready.
+`279631a3e14c6293933852baec98dd662f575277`; developer architecture reconciliation
+is pushed at `5c356af6b900b367bdcb9852f4c7c25334868748`; exact-runtime integrated
+validation passes. This dedicated snapshot closes the developer source task.
 
 ## Observed
 
@@ -68,6 +68,9 @@ None.
 - Project package tests passed 23/23.
 - Developer cross-branch integration validation passed against the pushed web
   source content.
+- Exact Node 22.13.0 full repository validation passed: bridge 72/72, branch
+  initializer 8/8, Project 23/23, and structure, agent-system, research,
+  package, and cross-branch checks all passed; `Repository validation passed.`
 
 ## Blockers / required decisions
 
@@ -75,13 +78,12 @@ None.
 
 ## Remaining work
 
-- Commit and push the three architecture updates with this current task state.
-- Run full repository validation against the exact pushed Project package.
-- Push the dedicated completed handoff snapshot.
+None.
 
 ## Next action
 
-Commit and push the architecture reconciliation.
+None. The template maintainer may review the exact source ranges and package
+them on `template-development`.
 
 ## Relevant durable records
 
