@@ -131,15 +131,43 @@ routes never overlap, and both retain exact remote review and human-only `main`
 promotion.
 
 `TEMPLATE-PROMPT-CREATION-001` adds context-transfer prompt creation to the
-Project package without coupling it to one orchestration mode. The package now
-contains eleven Project Sources: nine user-facing routed Sources and two support
-Sources. `skill-prompt-creation.md` is the single cross-mode route; it composes a
-destination profile with a mission profile, transfers only receiver-needed task
-state, and preserves Observed versus Interpretation versus Requested outcome.
-`skill-prompt-destinations.md` and `skill-prompt-missions.md` are support Sources
-loaded by the core rather than independent router entries. Initial destinations
-are fresh MCP-ON, fresh MCP-OFF, and direct OpenCode; initial missions include
-research, review, implementation, reproduce/test, continuation/recovery, and
-template-maintenance transfer. The destination describes the future receiver and
-never changes the current chat's effective mode. General prompt-craft methodology
-remains intentionally deferred to a separately evolving layer.
+Project package without coupling it to one orchestration mode. The initial
+package contained eleven Project Sources: nine user-facing routed Sources and two
+support Sources. `skill-prompt-creation.md` is the single cross-mode route; it
+composes a destination profile with a mission profile, transfers only receiver-
+needed task state, and preserves Observed versus Interpretation versus Requested
+outcome. `skill-prompt-destinations.md` and `skill-prompt-missions.md` are support
+Sources loaded by the core rather than independent router entries. Initial
+destinations are fresh MCP-ON, fresh MCP-OFF, and direct OpenCode; initial
+missions include research, review, implementation, reproduce/test,
+continuation/recovery, and template-maintenance transfer. The destination
+describes the future receiver and never changes the current chat's effective
+mode.
+
+`TEMPLATE-PROMPT-CRAFT-001` completes that extension seam. The Project package now
+contains twelve Sources: nine routed and three support. `skill-prompt-craft.md`
+is support-only and applies after destination and mission resolution. It selects
+only communication/scaffolding techniques that address a material task failure
+mode, with workflow/authority above destination, destination above mission,
+mission above task characteristics, and craft last; applying no additional
+technique is valid. Conditional techniques cover context organization,
+decomposition, alternatives/anchoring control, examples, targeted verification
+and uncertainty, action framing, output shaping, and evaluation-driven
+optimization for recurring prompts with representative evaluation cases.
+Contraindications prevent craft from granting capabilities, choosing receiver-
+owned routes, changing research-source roles or evidence meaning, taking human
+approval/promotion decisions, demanding private chain-of-thought, or adding
+ceremonial complexity.
+
+The same task resolves two observed reliability gaps. First, when an originating
+MCP-OFF chat creates a prompt for another execution context, prompt creation now
+owns the final handoff shape; MCP-OFF capability/evidence/safety limits carry
+forward, but its generic future-task schema and developer response contract do
+not leak into the destination prompt unless explicitly requested. The exception
+is stated both in the prompt core and at the MCP-OFF future-task decision point
+so it does not depend on fragile cross-file inference. Second, permanent Project
+instructions distinguish repository content writes from GitHub Issue control:
+ordinary file/task-record/continuity writes use repository contents actions, and
+Issue creation is reserved for an actual MCP-ON control/Scout route after its
+required task-ID/open-issue reconciliation. The package validator and negative
+tests enforce both boundaries without phrase-locking the craft taxonomy.
