@@ -33,11 +33,10 @@ These public-safe files configure a ChatGPT Project as the web reasoning, orches
 
 Project Sources are treated as a flat list. The permanent router names every
 user-facing routed Source exactly once: the MCP-ON and MCP-OFF procedure Sources
-plus the cross-mode prompt-creation core. `skill-prompt-destinations.md` and
-`skill-prompt-missions.md` are support Sources loaded only by
-`skill-prompt-creation.md`; they are intentionally not standalone router entries.
-Shared authority and public-safety boundaries stay permanently visible in the
-router.
+plus the cross-mode prompt-creation core. Its destination and mission profile
+Sources are support Sources loaded only by that core; they are intentionally not
+standalone router entries. Shared authority and public-safety boundaries stay
+permanently visible in the router.
 
 ## Boundary
 
