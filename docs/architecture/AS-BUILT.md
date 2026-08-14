@@ -31,12 +31,20 @@ change packages, tests, validation, and local Git synchronization hooks. It
 contains no copy of `developer`, `main`, `web-orchestration-only/**`, bridge
 implementation, or downstream project source.
 
-## Workspaces
+## Source execution
 
-Actual edits happen in isolated source worktrees. The ledger records the exact
-canonical repository, source bases, candidate heads, review state, and downstream
-application heads. Existing source worktrees may be reused only after verifying
+Actual edits stay on the authoritative source branches. The orchestrator selects
+the route proportionally: a bounded direct connected-GitHub edit is appropriate
+when exact paths and edits are already known and remote readback plus focused
+checks can prove the outcome more simply; isolated source worktrees are used when
+local repository context/tools, interacting implementation, generation/tests, or
+uncertainty materially improve confidence. Either route must keep the source
+branch's normal task/durable records current and produce an exact remote range for
+independent review. Existing source worktrees may be reused only after verifying
 the correct repository, branch, cleanliness, and remote synchronization.
+
+The ledger records the exact canonical repository, source bases, candidate heads,
+review state, and downstream application heads regardless of execution route.
 
 ## Change packages
 
@@ -112,3 +120,12 @@ Project package has one focused MCP-ON Source and permanent trigger; its current
 request may replace routine template defaults but not platform, public-safety,
 no-replay, authority, or human exact-SHA boundaries. The exact developer and web
 source ranges are packaged together without merging their histories.
+
+`TEMPLATE-DIRECT-DEVELOPER-001` makes source execution itself proportional. The
+web orchestrator may directly edit a bounded, exact-known `developer` change when
+connected GitHub and focused checks are the shortest route that proves it; work
+that benefits materially from local repository context/tools, broader
+exploration, interacting implementation, nontrivial generation/tests, or
+independent developer execution remains delegated. Direct and delegated mutation
+routes never overlap, and both retain exact remote review and human-only `main`
+promotion.
