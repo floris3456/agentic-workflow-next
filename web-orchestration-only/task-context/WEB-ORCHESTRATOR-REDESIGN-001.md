@@ -479,6 +479,12 @@ Routine scouting, delegation, review, and correction proceed without repeated hu
 
 ## Implementation validation
 
+- The post-smoke completion/delivery refinement passes the Project validator and
+  all 20 focused tests on exact Node 22.13.0. Developer-owned cross-branch
+  integration also passes against unchanged developer
+  `be315eec10030b3d4499a05b823739a2631cb897`; the Project implementation is
+  pushed at `623d274af172f012796b18dfc6dbf212e8b7a360`.
+
 - Exact Node 22.13.0 final integrated validation at developer
   `6ff397fdb8aedf196401fff6cbe0497c47befa6c` and Project package
   `48ca0f2f5f2c39574a9fabd66c470ec2832be700` passed: bridge 71/71,
