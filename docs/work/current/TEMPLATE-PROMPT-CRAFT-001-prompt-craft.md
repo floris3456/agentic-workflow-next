@@ -6,7 +6,7 @@ TEMPLATE-PROMPT-CRAFT-001
 
 ## Status
 
-In progress
+Completed
 
 ## Task-start template-development SHA
 
@@ -22,73 +22,81 @@ First correct three prompt-system reliability issues before adding the fourth pr
 
 ## Current objective
 
-Apply the prerequisite instruction fixes on `web-orchestration`, then add and integrate `skill-prompt-craft.md`, update the Project package contract from 11 Sources (9 routed + 2 support) to 12 Sources (9 routed + 3 support), and reconcile the durable template-development design/AS-BUILT/source lock after exact review and validation.
+Complete. The prerequisite precedence/reliability corrections and the fourth prompt-craft Source are implemented, reviewed, and validated. The Project package now contains twelve Sources: nine routed and three prompt support Sources.
 
 ## Current position
 
-Exact live refs match the last reconciled source lock. No open `agentic-bridge` control issue exists. Repeated accidental issue creation persisted during this turn while repository file writes were intended, confirming the need for an explicit tool-selection boundary. Issues #22-#25 were plain unlabeled orphan issues, contained no bridge markers, launched no work, and were immediately closed `not_planned`.
+`skill-prompt-creation.md` now owns the final destination-aware handoff shape whenever the human explicitly asks for a prompt to another execution context. `skill-mcp-off-workflow.md` states the same exception at its future-task decision point, so MCP-OFF capability/evidence/safety limits carry forward without leaking its generic developer-task schema or receiver-owned procedure into an MCP-ON/OpenCode prompt. Permanent instructions distinguish repository file/contents writes from GitHub Issue control. `skill-prompt-craft.md` is the third support Source and applies only after destination and mission resolution, using material failure mode plus attention/token/rigidity/autonomy cost as its technique gate; applying no additional technique is valid.
 
 ## Source ranges
 
-- `template-development`: task start `0ee64599442c8f77d43090363aa461af9c11e71d`.
-- `web-orchestration`: task start `951a629e0f37d3014baea7b668059b35bafff4db`.
-- `developer`: unchanged at `e2700f586fe8ab634053eb514bb9da487e881a21`.
-- `main`: unchanged at `6127611113dfdb66f93a0cfd2d355359aa370833`.
+- `web-orchestration`: `951a629e0f37d3014baea7b668059b35bafff4db..2b95a9803115b05283494fb3699b9d34c58a91a5`.
+- `template-development`: `0ee64599442c8f77d43090363aa461af9c11e71d..2bd55d836f74509df274686eb6893e6f60cd0b3f` before this dedicated handoff snapshot.
+- `developer`: unchanged at task-start value `e2700f586fe8ab634053eb514bb9da487e881a21`; final live recheck still required after this snapshot.
+- `main`: unchanged at task-start value `6127611113dfdb66f93a0cfd2d355359aa370833`; final live recheck still required after this snapshot.
 
 ## Observed
 
-- The prompt core already says receiver-owned protocol should not be reproduced.
-- The MCP-OFF workflow separately requires a detailed bounded future implementation task with a six-field developer response contract when implementation is needed.
-- A prior MCP-OFF prompt-design agent correctly analyzed the no-duplication rule but still emitted an MCP-ON implementation handoff containing receiver-owned procedure and developer-task formatting, demonstrating that precedence between those two valid instructions is not robust enough when left implicit.
-- Prompt-related instructions are intentionally separated across core, destination, and mission Sources; that modularity remains sound, but material conflicts should be resolved at the decision point rather than requiring fragile cross-file inference.
-- During ordinary direct repository maintenance in this turn, issue creation was repeatedly selected instead of file creation despite no bridge/control-issue need. All accidental issues were unlabeled/inert and closed immediately.
-- The reviewed MCP-OFF research supports a craft layer that is conditional and proportional rather than a universal checklist.
+- The prior prompt core already prohibited reproducing receiver-owned protocol, while the MCP-OFF workflow separately required a detailed generic future implementation task. A previous MCP-OFF prompt-design exercise correctly analyzed the anti-duplication rule yet still produced an over-prescribed MCP-ON handoff, establishing that the precedence between those individually valid instructions was not robust enough when left implicit.
+- The corrected rule is now local at both decision points: explicit prompt creation owns final handoff shape; mode workflows retain capability/evidence/safety/authority/public-safety boundaries but do not inject generic handoff/developer schemas unless explicitly requested.
+- Repeated ordinary file-write attempts in this task were mis-dispatched as plain unlabeled GitHub issues #22-#25. Each issue contained no bridge marker/task binding, launched no agent or mutation route, and was immediately closed `not_planned`. After switching to the explicitly discovered file-content action surface, all repository writes used `GitHub.create_file` / `GitHub.update_file` successfully.
+- Permanent instructions now state that ordinary repository file creation/update/deletion—including task records and continuity—uses repository file/contents actions; Issue creation is reserved for a real loaded MCP-ON control/Scout route after required issue/task-ID reconciliation.
+- `skill-prompt-craft.md` is intentionally support-only and preserves destination and mission as the two content axes. Its precedence is workflow/authority -> destination -> mission -> actual task characteristics -> craft.
+- Craft technique families are compact and conditional: context/evidence organization, decomposition/planning, exploration/anchoring control, examples/demonstrations, targeted verification/uncertainty, tool/action framing, output/interface shaping, and evaluation-driven optimization only for recurring systems with representative evaluations.
+- Craft contraindications preserve capability, evidence/source-role, route, authority, approval/promotion, private-reasoning, and proportionality boundaries.
+- Package inventory is now exactly twelve Sources: nine routed and three support.
 
 ## Interpretation
 
-The clean correction is to make prompt creation explicitly own the final handoff shape whenever the human asked for a prompt: mode-specific workflows still supply capability, evidence, safety, and authority boundaries, but their internal developer-task schemas or receiver-owned procedure must not be copied into the generated prompt unless the human explicitly requests them. This precedence rule should be stated in the core where the conflict occurs. Separately, permanent/tooling instructions should distinguish repository content writes from issue-control actions: ordinary file creation/update must use repository file/contents actions; issue creation is reserved for an actual delegated/Scout/control-issue route after the task-ID/open-issue checks.
+The instruction split remains valuable; the defect was not that core/destination/mission must be collapsed. The robust pattern is modular ownership plus explicit local conflict resolution whenever two loaded Sources could both plausibly prescribe the final artifact. Craft follows the same principle: it optimizes communication only after higher-layer semantics are settled and cannot compensate for missing destination/mission payload or take over receiver workflow.
 
 ## Attempts
 
-- Open control-issue map confirmed empty at task start.
-- Exact live heads and `source-lock.json` confirmed aligned.
-- Accidental unlabeled issues #22, #23, #24, and #25 were created by repeated action mis-selection while file writes were intended; each was rewritten as an accidental orphan and closed `not_planned`. No label, bridge marker, task binding, command, request, Scout, developer, or implementation mutation was launched.
-- Switched to the explicitly discovered file-specific GitHub action surface; this task record was then created using `GitHub.create_file`.
+- Open `agentic-bridge` issue map was empty at task start; no legitimate bridge/control issue was required or created.
+- Accidental issues #22, #23, #24, and #25 were created by repeated tool-action mis-selection while file writes were intended. Each was immediately converted to an explicit accidental-orphan record and closed `not_planned`; no label, bridge command/request, Scout, developer session, or repository implementation mutation was launched from them.
+- Switched to explicit file-specific GitHub actions and completed all subsequent writes without further accidental issue creation.
+- Initial craft draft was deliberately shortened before validation so the support Source would not introduce avoidable runtime attention cost.
+- A first negative precedence fixture changed only list numbering while the validator correctly checked semantic ordering; the fixture was corrected to remove the task-characteristic stage itself, preserving semantic validation rather than phrase/number locking.
+- Reconstructed the exact current Project package locally from the exact changed Sources plus unchanged package Sources and executed the real validator/test suite.
 
 ## Changed approach
 
-Treat the repeated issue/file action confusion as a repository instruction defect worth addressing explicitly. Use only file-specific GitHub content actions for ordinary repository file writes in the remainder of this task; issue actions are out of scope unless an actual bridge/control issue becomes necessary.
+- Treated the persistent issue/file confusion as evidence for a permanent action-selection boundary rather than continuing to rely on implicit tool semantics.
+- Resolved prompt handoff precedence at both the core prompt decision and the MCP-OFF future-task decision to reduce fragile cross-file inference.
+- Kept prompt-craft smaller than the research draft while preserving technique coverage; validator checks hard architectural invariants rather than the full evolving technique taxonomy.
 
 ## Checks
 
-- `web-orchestration` exact live head: `951a629e0f37d3014baea7b668059b35bafff4db`.
-- `template-development` exact live head: `0ee64599442c8f77d43090363aa461af9c11e71d` before this task-record commit.
-- `developer`: `e2700f586fe8ab634053eb514bb9da487e881a21`.
-- `main`: `6127611113dfdb66f93a0cfd2d355359aa370833`.
-- `source-lock.json` matched all four task-start source facts relevant to this maintenance task.
+- Exact web compare `951a629e0f37d3014baea7b668059b35bafff4db..2b95a9803115b05283494fb3699b9d34c58a91a5` is linear (`ahead_by=9`, `behind_by=0`) and changes exactly seven intended Project-package paths: package README, developer instructions, MCP-OFF workflow, prompt core, new prompt craft Source, validator, and validator tests.
+- Exact prompt-craft remote readback confirms the support-only trigger, precedence model, material-failure/attention gate, no-op option, receiver-route boundary, and hidden-reasoning prohibition.
+- Reconstructed exact Project package passed `node web-orchestration-only/validate-package.mjs`: 12 exact Sources, 9 routed, 3 support, 5 parsed bridge envelopes.
+- Reconstructed exact Project package passed `node --test web-orchestration-only/validate-package.test.mjs`: 32 tests, 32 passed, 0 failed. New negatives cover craft routing/dependency/precedence/private-reasoning, prompt handoff precedence, MCP-OFF format yielding, and repository file-write versus issue-control.
+- Exact template-development compare `0ee64599442c8f77d43090363aa461af9c11e71d..2bd55d836f74509df274686eb6893e6f60cd0b3f` is linear (`ahead_by=4`, `behind_by=0`) and changes only prompt design, integrated AS-BUILT, this task record, and source lock.
+- Push-triggered `Validate template development` run `31851151672` completed successfully for `2bd55d836f74509df274686eb6893e6f60cd0b3f`; its `validate` job and `./scripts/validate-template-development.sh` step concluded `success`.
+- `source-lock.json` records reviewed web handoff `2b95a9803115b05283494fb3699b9d34c58a91a5` and task `TEMPLATE-PROMPT-CRAFT-001`.
+- No Scout, delegated developer route, direct `developer` mutation, or `main` promotion occurred.
 
 ## Blockers / required decisions
 
-None.
+None for the requested source implementation.
 
 ## Remaining work
 
-Inspect exact current prompt core, MCP-OFF workflow, permanent router, package README/validator/tests, prompt design and AS-BUILT. Implement the three prerequisite instruction fixes. Then add the reviewed/trimmed `skill-prompt-craft.md`, integrate it as the third prompt support Source, update 12-Source validation and focused negative fixtures, review exact ranges, run Project-package validation/tests, reconcile design/AS-BUILT/source lock, run template-development validation, and create a completed handoff snapshot. No `main` promotion.
+Only final live readback after this dedicated handoff snapshot: confirm exact `template-development` handoff validation and recheck `developer` and `main` remain unchanged. No change package was generated: the current connector-only execution context has no authorized local template-maintenance worktree/package-generator route, and no downstream project application was requested. The repository-owned maintenance contract permits preserving that capability boundary rather than hand-building a package.
 
 ## Next action
 
-Read the exact current prompt core, MCP-OFF workflow, developer instructions, package validator/tests, and prompt-design records at the task-start refs and prepare the smallest coherent patch.
+Verify this handoff snapshot's push-triggered template-development validation, recheck exact live source refs, then report completion. Do not promote `main`.
 
 ## Relevant durable records
 
-- `web-orchestration-only/chatgpt-project/skill-prompt-creation.md`
-- `web-orchestration-only/chatgpt-project/skill-prompt-destinations.md`
-- `web-orchestration-only/chatgpt-project/skill-prompt-missions.md`
-- `web-orchestration-only/chatgpt-project/skill-mcp-off-workflow.md`
-- `web-orchestration-only/chatgpt-project/developer-instructions.md`
-- `web-orchestration-only/chatgpt-project/README.md`
-- `web-orchestration-only/validate-package.mjs`
-- `web-orchestration-only/validate-package.test.mjs`
+- `web-orchestration-only/chatgpt-project/skill-prompt-creation.md` at `2b95a9803115b05283494fb3699b9d34c58a91a5`
+- `web-orchestration-only/chatgpt-project/skill-prompt-craft.md` at `2b95a9803115b05283494fb3699b9d34c58a91a5`
+- `web-orchestration-only/chatgpt-project/skill-mcp-off-workflow.md` at `2b95a9803115b05283494fb3699b9d34c58a91a5`
+- `web-orchestration-only/chatgpt-project/developer-instructions.md` at `2b95a9803115b05283494fb3699b9d34c58a91a5`
+- `web-orchestration-only/chatgpt-project/README.md` at `2b95a9803115b05283494fb3699b9d34c58a91a5`
+- `web-orchestration-only/validate-package.mjs` at `2b95a9803115b05283494fb3699b9d34c58a91a5`
+- `web-orchestration-only/validate-package.test.mjs` at `2b95a9803115b05283494fb3699b9d34c58a91a5`
 - `docs/design/prompt-creation.md`
 - `docs/architecture/AS-BUILT.md`
 - `source-lock.json`
