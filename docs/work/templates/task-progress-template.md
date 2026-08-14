@@ -8,7 +8,11 @@
 
 ## Review-base template-development SHA
 
-## Original task brief
+## Public-safe task brief
+
+Summarize the requested outcome, scope, constraints, and material decisions.
+Never copy or quote private chat or persist secrets, personal data, host-local
+absolute paths, or raw private agent identifiers.
 
 ## Current objective
 
