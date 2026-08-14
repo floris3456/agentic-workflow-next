@@ -30,11 +30,11 @@ function replace(root, relative, before, after) {
   writeFileSync(target, text.replace(before, after));
 }
 
-test("current eleven-Source package passes structural and canonical safety validation", (context) => {
+test("current twelve-Source package passes structural and canonical safety validation", (context) => {
   const result = run(fixture(context));
   assert.equal(result.status, 0, result.stderr);
-  assert.match(result.stdout, /11 exact Project Sources/);
-  assert.match(result.stdout, /9 routed, 2 support/);
+  assert.match(result.stdout, /12 exact Project Sources/);
+  assert.match(result.stdout, /9 routed, 3 support/);
   assert.match(result.stdout, /5 parsed bridge envelopes/);
   assert.match(result.stdout, /integrated task-context routing/);
 });
@@ -64,6 +64,7 @@ test("documented installation rendering produces the exact Source inventory", (c
     "skill-mcp-on-scouting.md",
     "skill-mcp-on-template-maintenance.md",
     "skill-mcp-on-workflow.md",
+    "skill-prompt-craft.md",
     "skill-prompt-creation.md",
     "skill-prompt-destinations.md",
     "skill-prompt-missions.md",
@@ -127,13 +128,13 @@ test("validator rejects stale or additional Source inventory", (context) => {
 test("prompt support Sources are dependencies rather than permanent routes", (context) => {
   const root = fixture(context);
   const target = path.join(root, "chatgpt-project", "developer-instructions.md");
-  writeFileSync(target, `${readFileSync(target, "utf8")}\n| Bad support route | \`skill-prompt-destinations.md\` |\n`);
+  writeFileSync(target, `${readFileSync(target, "utf8")}\n| Bad support route | \`skill-prompt-craft.md\` |\n`);
   const result = run(root);
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /Support Project Source must not have a permanent trigger row/);
 });
 
-test("prompt creation core must load both support Sources", (context) => {
+test("prompt creation core must load all support Sources", (context) => {
   const root = fixture(context);
   replace(
     root,
@@ -144,6 +145,19 @@ test("prompt creation core must load both support Sources", (context) => {
   const result = run(root);
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /Prompt creation core must reference support Source skill-prompt-missions\.md exactly once/);
+});
+
+test("prompt creation core requires craft dependency", (context) => {
+  const root = fixture(context);
+  replace(
+    root,
+    "chatgpt-project/skill-prompt-creation.md",
+    "`skill-prompt-craft.md`",
+    "the craft support profile",
+  );
+  const result = run(root);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /Prompt creation core must reference support Source skill-prompt-craft\.md exactly once/);
 });
 
 test("prompt destination never changes the current chat mode", (context) => {
@@ -157,6 +171,71 @@ test("prompt destination never changes the current chat mode", (context) => {
   const result = run(root);
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /prompt destination\/current-mode separation/);
+});
+
+test("prompt creation owns destination-aware handoff formatting", (context) => {
+  const root = fixture(context);
+  replace(
+    root,
+    "chatgpt-project/skill-prompt-creation.md",
+    "owns the final handoff shape",
+    "does not own the final handoff shape",
+  );
+  const result = run(root);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /prompt handoff-format precedence/);
+});
+
+test("MCP-OFF future-task formatting yields to explicit prompt creation", (context) => {
+  const root = fixture(context);
+  replace(
+    root,
+    "chatgpt-project/skill-mcp-off-workflow.md",
+    "destination-aware handoff format owns the generated prompt",
+    "generic future-task format owns the generated prompt",
+  );
+  const result = run(root);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /MCP-OFF workflow is missing the prompt-creation handoff-format exception/);
+});
+
+test("permanent instructions distinguish file writes from issue control", (context) => {
+  const root = fixture(context);
+  replace(
+    root,
+    "chatgpt-project/developer-instructions.md",
+    "Never create an\nissue merely to persist or edit a file",
+    "Create an\nissue merely to persist or edit a file",
+  );
+  const result = run(root);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /repository file-write versus issue-control boundary/);
+});
+
+test("prompt craft cannot outrank destination and mission", (context) => {
+  const root = fixture(context);
+  replace(
+    root,
+    "chatgpt-project/skill-prompt-craft.md",
+    "5. prompt-craft techniques.",
+    "1. prompt-craft techniques.",
+  );
+  const result = run(root);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /prompt craft precedence/);
+});
+
+test("prompt craft rejects private chain-of-thought demands", (context) => {
+  const root = fixture(context);
+  replace(
+    root,
+    "chatgpt-project/skill-prompt-craft.md",
+    "Never request private\n   chain-of-thought",
+    "Request private\n   chain-of-thought",
+  );
+  const result = run(root);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /prompt craft hidden-reasoning prohibition|private chain-of-thought demand/);
 });
 
 test("validator rejects MCP-ON mechanics in MCP-OFF procedure", (context) => {
