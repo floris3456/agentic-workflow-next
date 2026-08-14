@@ -28,15 +28,15 @@ permanent routing trigger that directs template evaluation or changes to the
 
 ## Current position
 
-The Project inventory, routing, installation material, validators, maintenance
-ledger, and developer architecture records are audited. The change requires one
-new MCP-ON Source and router trigger on `web-orchestration`, plus removal of
-stale derived Source counts from three developer architecture records.
+Both exact source ranges are implemented, validated, pushed, and remotely
+confirmed. The Project has its focused MCP-ON template-maintenance Source and
+permanent trigger; developer architecture records now defer exact inventory to
+the web-owned validator. The ranges are ready for ledger packaging.
 
 ## Source ranges
 
-- `developer`: `be315eec10030b3d4499a05b823739a2631cb897..pending`
-- `web-orchestration`: `7c1a0094e77ce3fcf06515bf49b3c09b6696d9f8..pending`
+- `developer`: `be315eec10030b3d4499a05b823739a2631cb897..e2700f586fe8ab634053eb514bb9da487e881a21`
+- `web-orchestration`: `7c1a0094e77ce3fcf06515bf49b3c09b6696d9f8..279631a3e14c6293933852baec98dd662f575277`
 
 ## Observed
 
@@ -53,6 +53,13 @@ stale derived Source counts from three developer architecture records.
 - Developer AS-BUILT, agent-system, and design records repeat the derived count
   of seven Project Sources. Keeping those exact counts would make them false as
   soon as the focused Source is added.
+- The new Source explicitly substitutes one template-development maintenance
+  record for normal web task context, imports ordinary MCP-ON continuity fields,
+  distinguishes evaluation from reusable changes, and retains independent
+  source/package review.
+- The permanent router lets the current request override template defaults and
+  routine procedures only within non-overridable platform, public-safety,
+  no-replay, authority, and exact-SHA boundaries.
 
 ## Interpretation
 
@@ -75,6 +82,10 @@ None.
 - Live `main`, `developer`, and `web-orchestration` equal `source-lock.json`.
 - Tracked template-development worktree was clean before this record.
 - The Project currently validates seven exact Sources and 21 package tests.
+- The updated Project validates eight exact Sources and 23 package tests.
+- Exact Node 22.13.0 full repository validation passed: bridge 72/72, branch
+  initializer 8/8, Project 23/23, and all repository/cross-branch validators.
+- Both exact source ranges pass `git diff --check`.
 
 ## Blockers / required decisions
 
@@ -83,14 +94,14 @@ None.
 ## Remaining work
 
 - Commit and push this start record.
-- Create the developer task record and replace stale derived Source counts with
-  references to the exact web-owned inventory.
-- Implement and validate the minimal template-maintenance Source and trigger.
-- Push the source range, create the exact package, and complete this ledger.
+- Commit and push this source-handoff snapshot.
+- Generate, dry-run, validate, and push the exact two-branch change package.
+- Reconcile source lock, AS-BUILT, deviations, and this task; push the dedicated
+  completed ledger snapshot.
 
 ## Next action
 
-Commit this audit snapshot, then start the bounded developer documentation task.
+Commit this source-handoff snapshot, then generate the exact package.
 
 ## Relevant durable records
 
