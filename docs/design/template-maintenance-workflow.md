@@ -8,12 +8,15 @@ operating workflow.
 
 ## Task sequence
 
-1. Record the human's exact brief and source lock on `template-development`.
+1. Record the public-safe task brief and source lock on `template-development`.
 2. Inspect the downstream symptom and canonical template evidence.
 3. Decide whether the reusable fix belongs on `developer`,
    `web-orchestration`, or both.
-4. Implement on isolated exact source branches with their normal task records and
-   component AS-BUILT/deviations.
+4. Select each source branch's implementation route proportionally: use bounded
+   direct connected-GitHub edits when exact scope is already known and remotely
+   provable; otherwise use isolated source worktrees when local context/tools or
+   independent implementation materially improve confidence. Keep normal source
+   task records and component AS-BUILT/deviations current in either route.
 5. Review the exact remote range for each changed source branch.
 6. Produce and validate the portable package.
 7. Apply each patch to the downstream matching branch under a new normal task.
@@ -25,10 +28,10 @@ operating workflow.
 
 A human may request: “Start template maintenance for this problem, update the
 canonical template, and apply the reviewed fix to this project.” The orchestrator
-may perform routine setup, inspection, source task design, waiting, review,
-packaging, and downstream application without repeated interruption. It must ask
-for genuinely consequential scope/security decisions and every exact-SHA main
-promotion.
+may perform routine setup, inspection, proportional source-route selection,
+source task design, waiting, review, packaging, and downstream application
+without repeated interruption. It must ask for genuinely consequential
+scope/security decisions and every exact-SHA main promotion.
 
 ## Failure behavior
 
