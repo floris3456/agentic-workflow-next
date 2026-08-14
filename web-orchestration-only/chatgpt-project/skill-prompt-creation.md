@@ -12,10 +12,12 @@ safe execution route instead.
 
 ## Required support Sources
 
-Load `skill-prompt-destinations.md` and `skill-prompt-missions.md` for every prompt
-creation task. The destination Source defines what the receiver already owns and
-can do. The mission Source defines what task information the receiver needs. They
-are support Sources, not independent user-facing routes.
+Load `skill-prompt-destinations.md`, `skill-prompt-missions.md`, and
+`skill-prompt-craft.md` for every prompt creation task. The destination Source
+defines what the receiver already owns and can do. The mission Source defines
+what task information the receiver needs. The craft Source conditionally improves
+how that resolved task is communicated. They are support Sources, not independent
+user-facing routes.
 
 ## Core model
 
@@ -24,6 +26,10 @@ generic prose generation. Compose two orthogonal dimensions:
 
 - **Destination:** where the prompt will execute.
 - **Mission:** what the receiving context must accomplish.
+
+Craft is not a third content dimension. It optimizes the already resolved
+destination, mission, transferable state, and task characteristics without
+changing their meaning or ownership.
 
 The prompt should carry what the receiver needs but does not already own. Do not
 reproduce destination protocol, safety boilerplate, routing mechanics, or tool
@@ -34,6 +40,20 @@ The destination describes the future receiver; it never changes this chat's
 current effective mode or capabilities. An MCP-OFF chat may prepare an MCP-ON
 prompt, for example, but must not perform or imply MCP-ON actions while creating
 it.
+
+## Prompt-handoff precedence
+
+When the human explicitly asks for a prompt to another execution context, this
+Source owns the final handoff shape. Mode-specific workflows still supply
+capability, evidence, safety, authority, and public-safety boundaries, but their
+generic future-task schemas, developer response contracts, issue/Scout/delegation
+procedures, and other receiver-owned operating mechanics do not get copied into
+the generated prompt unless the human explicitly requests them.
+
+If a loaded mode-specific Source would otherwise prescribe a generic handoff
+format, preserve its substantive constraints and capability limits while using
+the destination-aware prompt format here. This conflict is resolved at prompt
+creation rather than left for the model to infer across Sources.
 
 ## Procedure
 
@@ -67,20 +87,24 @@ it.
 6. **Apply the mission profile.** Include the mission's required task payload
    without prescribing implementation details that are not part of the human's
    request or established evidence.
-7. **Compose one self-contained execution prompt.** A fresh receiving context
+7. **Apply prompt craft proportionally.** Use the craft Source only for techniques
+   that address a material failure mode of this destination/mission/task and
+   remain compatible with higher-precedence constraints. Applying no additional
+   craft technique is a valid result.
+8. **Compose one self-contained execution prompt.** A fresh receiving context
    should be able to begin correctly without access to this conversation. Prefer
    concise natural structure over ceremonial headings; use headings or lists
    only when they make evidence, constraints, or deliverables materially clearer.
-8. **Check for context leakage and duplication.** Remove private-chat narration,
+9. **Check for context leakage and duplication.** Remove private-chat narration,
    irrelevant history, duplicated receiver-owned rules, stale guesses, and
    unnecessary tokens. Do not expose secrets, credentials, personal data, or
    other sensitive values merely because they appeared in the originating
    context.
-9. **Check executability.** The prompt must request something the chosen
-   destination can actually do. Where a destination cannot perform the eventual
-   action, ask it for the strongest useful predecessor outcome instead of
-   pretending the action is available.
-10. **Return the ready-to-use prompt.** Add a short note outside the prompt only
+10. **Check executability.** The prompt must request something the chosen
+    destination can actually do. Where a destination cannot perform the eventual
+    action, ask it for the strongest useful predecessor outcome instead of
+    pretending the action is available.
+11. **Return the ready-to-use prompt.** Add a short note outside the prompt only
     when a material assumption, capability limit, or intentionally omitted detail
     must be visible to the human.
 
@@ -89,12 +113,14 @@ it.
 - Do not embed bridge envelopes, issue-control mechanics, Scout protocol,
   Luna/Sol routing rules, promotion procedure, or other Project implementation
   detail into a prompt for a web orchestrator that already owns those rules.
+- Do not copy a generic MCP-OFF future-task schema or developer response contract
+  into an MCP-ON handoff merely because MCP-OFF was the originating mode.
 - Do not force a fixed output template onto every generated prompt. Destination
   and mission requirements control necessary structure.
 - Do not silently copy a project-specific proposed patch into a reusable-template
   handoff as if it were the canonical solution; transfer the observed problem and
   relevant evidence, preserve the interpretation boundary, and let the canonical
   template context determine the reusable fix.
-- General prompt-optimization methodology is intentionally out of scope for this
-  first architecture. A later prompt-craft Source may improve wording and
-  information design without changing the destination/mission contract.
+- Prompt craft may improve information design and task scaffolding but cannot
+  change destination capabilities, mission payload, evidence meaning, research
+  source roles, authority, approval, or receiver-owned workflow.
