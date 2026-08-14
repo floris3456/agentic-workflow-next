@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "task_id": "TEMPLATE-PROJECT-MAINTENANCE-ROUTE-001",
+  "canonical_repository": "https://github.com/floris3456/agentic-workflow-template.git",
+  "created_at": "2026-08-14T11:09:06.115Z",
+  "ranges": {
+    "developer": {
+      "base": "be315eec10030b3d4499a05b823739a2631cb897",
+      "head": "e2700f586fe8ab634053eb514bb9da487e881a21",
+      "changed_paths": [
+        "docs/architecture/AS-BUILT.md",
+        "docs/architecture/agent-system.md",
+        "docs/architecture/design-record.md",
+        "docs/work/current/TEMPLATE-PROJECT-MAINTENANCE-ROUTE-001-template-project-source.md"
+      ],
+      "patch": "developer.patch",
+      "patch_sha256": "7258cfe3fa292bc8e37078d345eba815401d3427943f6c2096044125d38a0d12"
+    },
+    "web-orchestration": {
+      "base": "7c1a0094e77ce3fcf06515bf49b3c09b6696d9f8",
+      "head": "279631a3e14c6293933852baec98dd662f575277",
+      "changed_paths": [
+        "web-orchestration-only/README.md",
+        "web-orchestration-only/chatgpt-project/README.md",
+        "web-orchestration-only/chatgpt-project/developer-instructions.md",
+        "web-orchestration-only/chatgpt-project/skill-mcp-on-template-maintenance.md",
+        "web-orchestration-only/task-context/README.md",
+        "web-orchestration-only/task-context/WEB-ORCHESTRATOR-REDESIGN-001.md",
+        "web-orchestration-only/validate-package.mjs",
+        "web-orchestration-only/validate-package.test.mjs"
+      ],
+      "patch": "web-orchestration.patch",
+      "patch_sha256": "122c82f16d637bffdb052bb002c23674595d5a08f2ce4ed1e33f72815e916cf0"
+    }
+  }
+}

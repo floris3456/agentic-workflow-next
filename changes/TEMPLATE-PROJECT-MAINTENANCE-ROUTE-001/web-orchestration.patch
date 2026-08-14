@@ -1,0 +1,371 @@
+diff --git a/web-orchestration-only/README.md b/web-orchestration-only/README.md
+index 3063207ef7aa3c85a8b05921e1ae0e01c5227769..fcf99a85fb7c4e3c5ab9954b8d4da01a1a1f1b66 100644
+--- a/web-orchestration-only/README.md
++++ b/web-orchestration-only/README.md
+@@ -14,8 +14,9 @@ This independent branch stores concise, public-safe continuity and reusable inst
+ ## Contents
+ 
+ - `task-context/<task-id>.md`: focused orchestration continuity.
+-- `chatgpt-project/`: concise permanent router plus seven generalized public-safe
+-  Project Sources with distinct MCP-ON/MCP-OFF workflows and scouting.
++- `chatgpt-project/`: concise permanent router plus eight focused public-safe
++  Project Sources with distinct MCP-ON/MCP-OFF workflows, scouting, and an
++  exceptional template-maintenance route.
+ - `validate-package.mjs` and `validate-package.test.mjs`: Project/static-package
+   inventory, task-context continuity/routing, installation, mode separation, and
+   executable bridge request/command contract checks with focused safety-negative
+diff --git a/web-orchestration-only/chatgpt-project/README.md b/web-orchestration-only/chatgpt-project/README.md
+index 901fbe8d2076036f45fe8d872dd592df50a288ce..dd50bd8c4c1581a034d53eb8c759e3be0320d953 100644
+--- a/web-orchestration-only/chatgpt-project/README.md
++++ b/web-orchestration-only/chatgpt-project/README.md
+@@ -8,9 +8,10 @@ These public-safe files configure a ChatGPT Project as the web reasoning, orches
+ 2. Render that revision in an external, untracked staging directory. Replace `<owner>/<repository>` and `https://github.com/<owner>/<repository>` throughout the staged `chatgpt-project/` with the target public repository identity.
+ 3. Replace `<bridge-control-label>` and `<bridge-bot-login>` throughout the staged directory with the locally configured bridge label and GitHub App bot login. Never commit the rendered copy or connector configuration.
+ 4. Set the rendered `developer-instructions.md` as the Project developer instructions.
+-5. Add these seven rendered files as individual Project Sources, retaining each
++5. Add these eight rendered files as individual Project Sources, retaining each
+    exact filename:
+ 
++   - `skill-mcp-on-template-maintenance.md`
+    - `skill-mcp-on-workflow.md`
+    - `skill-mcp-on-scouting.md`
+    - `skill-mcp-on-recovery.md`
+@@ -18,7 +19,7 @@ These public-safe files configure a ChatGPT Project as the web reasoning, orches
+    - `skill-mcp-on-promotion.md`
+    - `skill-mcp-off-workflow.md`
+    - `skill-mcp-off-scouting.md`
+-6. Configure connected/native GitHub access for exact repository reads and comparisons; issue list/search, create/read/update/comment/close/reopen, label read/write, and comment-author metadata; and narrowly scoped writes under `web-orchestration-only/task-context/**` on `web-orchestration`.
++6. Configure connected/native GitHub access for exact repository reads and comparisons; issue list/search, create/read/update/comment/close/reopen, label read/write, and comment-author metadata; narrowly scoped ordinary continuity writes under `web-orchestration-only/task-context/**` on `web-orchestration`; and narrowly scoped template-maintenance continuity writes under `docs/work/current/**` on `template-development`.
+ 7. Have the local operator configure and run the repository's outbound GitHub Issues bridge. The connected GitHub identity must be in the bridge author allowlist and have GitHub association `OWNER`, `MEMBER`, or `COLLABORATOR`.
+ 8. Do not configure a direct OpenCode tool in the Project. MCP-ON launches the
+    repository's read-only OpenCode Scout and controls implementation through
+@@ -31,7 +32,7 @@ authority and public-safety boundaries stay permanently visible in the router.
+ 
+ ## Boundary
+ 
+-This directory is an installation source, not live private Project state. Do not commit private conversations, credentials, connector configuration, personal data, or Project-specific context here. Runtime orchestration continuity belongs in the sibling `task-context/` directory and must remain public-safe. Bridge issue titles, bodies, comments, hidden markers, labels, and projected results are public too.
++This directory is an installation source, not live private Project state. Do not commit private conversations, credentials, connector configuration, personal data, or Project-specific context here. Ordinary runtime continuity belongs in the sibling `task-context/` directory; explicitly commissioned template maintenance belongs in `docs/work/current/**` on `template-development` instead. Both must remain public-safe. Bridge issue titles, bodies, comments, hidden markers, labels, and projected results are public too.
+ 
+ The implementation branches must not depend on this branch for code or implementation truth. Exact implementation evidence comes from remote `developer` or accepted `main`.
+ 
+@@ -39,7 +40,7 @@ The implementation branches must not depend on this branch for code or implement
+ 
+ 1. Stop consequential delegation and reconcile any in-flight direct implementation before enabling the bridge. Do not create a bridge task that could duplicate work already running through a former transport.
+ 2. Follow the same validation and external untracked rendering sequence as a fresh install.
+-3. Replace the Project developer instructions and install the exact seven-Source
++3. Replace the Project developer instructions and install the exact eight-Source
+    inventory above from that one rendered revision. Remove every superseded
+    `skill-*.md` Source, including `skill-shared-safety-and-authority.md`, rather
+    than retaining stale or duplicate instructions.
+diff --git a/web-orchestration-only/chatgpt-project/developer-instructions.md b/web-orchestration-only/chatgpt-project/developer-instructions.md
+index eadaefb2b1c8fbad8b10ddb81836e3642691ef14..fd9a316203f0ac243bdd134d8dfbfeb6cb5912b1 100644
+--- a/web-orchestration-only/chatgpt-project/developer-instructions.md
++++ b/web-orchestration-only/chatgpt-project/developer-instructions.md
+@@ -10,10 +10,13 @@ Only the human accepts an exact reviewed SHA into `main`.
+ 
+ Establish the effective mode before capability-dependent work. An explicit
+ MCP-OFF request always means MCP-OFF. MCP-ON requires working connected/native
+-GitHub exact reads, bridge issue control, and narrow writes to public-safe
+-continuity under `web-orchestration-only/task-context/**`. If any is unavailable,
+-say so and use MCP-OFF. Never infer mode from model name, mix procedures, or
+-claim an action an unavailable capability could not perform.
++GitHub exact reads, bridge issue control, and narrow writes to the applicable
++public-safe continuity owner: ordinary work uses
++`web-orchestration-only/task-context/**` on `web-orchestration`; explicitly
++commissioned template maintenance uses `docs/work/current/**` on
++`template-development`. If the required route is unavailable, say so and use
++MCP-OFF. Never infer mode from model name, mix procedures, or claim an action an
++unavailable capability could not perform.
+ 
+ - MCP-ON/Sol may inspect exact GitHub state, write narrow continuity, control the
+   GitHub Issues bridge, delegate one mutating developer task, and launch
+@@ -43,6 +46,11 @@ scope changes, sensitive access/privacy/security choices, unresolved-risk
+ acceptance, consequential ambiguity, or destructive/irreversible decisions not
+ already authorized.
+ 
++Within those hard boundaries, the current explicit request overrides this
++template's defaults, examples, and routine procedures. Preserve the requested
++outcome through the smallest equivalent safe route instead of treating a
++template default as higher authority.
++
+ Anything persisted to GitHub is public, including hidden markers. Never publish
+ secrets, credentials, private chat, personal data, absolute local paths, or raw
+ OpenCode identifiers. Run only one repository-mutating developer task at a time;
+@@ -66,6 +74,7 @@ work and retry it at later natural checkpoints.
+ 
+ | Trigger | Project Source |
+ | --- | --- |
++| Human explicitly asks to evaluate, test, change, package, or transfer the reusable template itself | `skill-mcp-on-template-maintenance.md` |
+ | Quick exact lookup, bounded implementation, developer handoff interpretation, remote review, or ordinary steering | `skill-mcp-on-workflow.md` |
+ | Broad/local exploration would save time or independent areas can be searched concurrently | `skill-mcp-on-scouting.md` |
+ | An open control issue needs classification, or command/result/synchronization state is missing, failed, or inconsistent | `skill-mcp-on-recovery.md` |
+diff --git a/web-orchestration-only/chatgpt-project/skill-mcp-on-template-maintenance.md b/web-orchestration-only/chatgpt-project/skill-mcp-on-template-maintenance.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..2336db40065253aa0f6841df016c799c933702b4
+--- /dev/null
++++ b/web-orchestration-only/chatgpt-project/skill-mcp-on-template-maintenance.md
+@@ -0,0 +1,78 @@
++# MCP-ON template maintenance
++
++## Trigger
++
++Use only when the human explicitly asks to evaluate, test, change, package, or
++transfer the reusable workflow template itself: its bridge, Project package,
++agents, skills, branch workflow, validators, or maintenance system. Do not load
++for ordinary project work or an incidental template observation.
++
++## Instruction precedence
++
++The current explicit user request controls the outcome and may replace a routine
++template default or procedure. It never overrides platform instructions, public
++safety, human-only exact-SHA promotion, authority boundaries, or mutation
++no-replay. When a routine path conflicts, use the smallest equivalent path that
++preserves those hard boundaries instead of stopping merely because the default
++path is unavailable.
++
++## Canonical continuity
++
++1. Inspect the exact `template-development` branch first. Require its `AGENTS.md`,
++   `.opencode/skills/template-maintenance/SKILL.md`, task template, and
++   `source-lock.json`; treat their public-safe procedure as the repository-owned
++   maintenance contract.
++2. Create or resume one
++   `docs/work/current/<task-id>-<slug>.md` record on `template-development`
++   before consequential publication. Copy the exact public-safe request and
++   record exact live source refs.
++3. That maintenance record replaces the normal
++   `web-orchestration-only/task-context/<task-id>.md` record for the entire
++   template task. Never create both merely to satisfy the ordinary workflow.
++   Put every continuity field required by the loaded MCP-ON Sources—including
++   issue mapping, active work, pending publication, command/Scout/refusal
++   journals, findings, decisions, and next action—into concise sections of the
++   maintenance record.
++4. Confirm each ledger write remotely before publishing the effect it protects.
++   Reuse the same task ID across the ledger, bridge issue, source tasks, and
++   change package.
++
++If the branch or required contract is absent, malformed, or not narrowly
++writable, MCP-OFF may inspect and prepare a bounded maintenance task but must not
++claim that MCP-ON maintenance ran.
++
++## Procedure
++
++1. Read `source-lock.json`, compare it with exact live `main`, `developer`, and
++   `web-orchestration` refs, and preserve the task's original review bases.
++2. Distinguish an evaluation-only run from a reusable source change. For an
++   evaluation, use the normal MCP-ON scouting, delegation, review, interaction,
++   and recovery procedures with the maintenance record substituted as the
++   continuity target. No change package is required when no reusable source
++   changed.
++3. For a reusable change, identify whether each fact belongs on `developer`,
++   `web-orchestration`, or both. Keep implementation on the authoritative source
++   branch and its normal records. Never make a developer task inspect or modify
++   the independent `web-orchestration` branch. Modify the Project package there
++   only when the human explicitly commissioned template maintenance and the
++   connected exact-GitHub write is bounded to the reviewed source paths.
++4. Run only one mutating source task at a time. Read-only Scouts may overlap.
++   Review and push each changed source range independently; a successful branch
++   does not make another branch atomic or accepted.
++5. After exact source review, use the tracked template-maintenance skill and
++   package scripts on `template-development` through an authorized maintainer
++   route. Never hand-build a patch, merge the ledger into a source branch, or
++   claim a package that has not been generated, validated, and pushed. If that
++   route is unavailable, finish every independent source action and preserve the
++   exact capability boundary in the ledger.
++6. Apply a reviewed package to a downstream repository only on its corresponding
++   branches and through their normal task, validation, commit, push, and review
++   procedures. Patch conflict is an explicit adaptation task, never permission
++   to alter the package silently.
++7. Reconcile source locks, maintenance AS-BUILT/deviations, checks, source and
++   package SHAs, remaining work, and next action. A completed maintenance handoff
++   requires every launched route to be terminal and absorbed and every claimed
++   source/package commit to exist remotely.
++
++`main` remains human-only. Template maintenance never implies promotion or human
++acceptance.
+diff --git a/web-orchestration-only/task-context/README.md b/web-orchestration-only/task-context/README.md
+index 140014d36bd4736c119a69cc97bdabcbfc15003f..5c255bbe1f4cb54a27a87978753b73abb0b9db2c 100644
+--- a/web-orchestration-only/task-context/README.md
++++ b/web-orchestration-only/task-context/README.md
+@@ -2,9 +2,15 @@
+ 
+ Create one file per active or completed orchestration task using `TEMPLATE.md`.
+ 
+-The task ID must match the delegated developer task and bridge envelope. Keep the
+-file concise. Before any GitHub publication, persist its exact public-safe
+-arguments as `prepared`; after exact readback, add its ref and mark it `posted`.
++This directory owns ordinary MCP-ON task continuity. When the human explicitly
++commissions template evaluation or maintenance, the canonical record under
++`docs/work/current/**` on `template-development` replaces this record; do not
++duplicate it here merely to satisfy the normal path.
++
++For an ordinary task, the task ID must match the delegated developer task and
++bridge envelope. Keep the file concise. Before any GitHub publication, persist
++its exact public-safe arguments as `prepared`; after exact readback, add its ref
++and mark it `posted`.
+ Use `connector-delivery-pending` when a required effect is definitely absent
+ after one bounded delivery window. It is a scheduling state: pause only dependent
+ work, continue meaningful independent work, then retry the same logical
+diff --git a/web-orchestration-only/task-context/WEB-ORCHESTRATOR-REDESIGN-001.md b/web-orchestration-only/task-context/WEB-ORCHESTRATOR-REDESIGN-001.md
+index 188f5df8a153d8dca14fae654da8a47e00647f0a..b39d1347979f0236512b366544ee37cbde128358 100644
+--- a/web-orchestration-only/task-context/WEB-ORCHESTRATOR-REDESIGN-001.md
++++ b/web-orchestration-only/task-context/WEB-ORCHESTRATOR-REDESIGN-001.md
+@@ -335,14 +335,14 @@ Routine scouting, delegation, review, and correction proceed without repeated hu
+ 
+ ## Resolved implementation questions
+ 
+-- The concrete trigger/dependency audit now consolidates 19 Sources to seven:
+-  separate MCP-ON normal workflow, scouting, recovery, finalization, and
+-  promotion Sources; and separate MCP-OFF web-only workflow and scouting
+-  Sources. Shared safety/authority is always needed and small enough to remain
+-  permanently visible instead of requiring a separate trigger. Review/task-
+-  design detail moves into each mode because its mechanics differ. Recovery,
+-  finalization, and promotion remain exceptional rather than loading during
+-  routine work.
++- The concrete trigger/dependency audit now consolidates 19 Sources to eight:
++  separate MCP-ON normal workflow, scouting, recovery, finalization, promotion,
++  and template-maintenance Sources; and separate MCP-OFF web-only workflow and
++  scouting Sources. Shared safety/authority is always needed and small enough to
++  remain permanently visible instead of requiring a separate trigger.
++  Review/task-design detail moves into each mode because its mechanics differ.
++  Recovery, finalization, promotion, and template maintenance remain exceptional
++  rather than loading during routine work.
+ - Concurrent Scouts use UUID-idempotent `scout.start`/`scout.status` requests on
+   the sequence-free issue lane, with independent session/request/worktree state
+   and no mutating-task progress/finalization lifecycle.
+@@ -398,6 +398,7 @@ Routine scouting, delegation, review, and correction proceed without repeated hu
+ | Existing group | Implemented Source | Co-trigger/dependency evidence |
+ | --- | --- | --- |
+ | shared evidence/authority + human boundaries + public-safe persistence | permanent router (not a Source) | These short rules apply in every mode and before every persistent or consequential action, so a separately triggered Source only duplicated always-visible policy. |
++| explicit reusable-template evaluation, change, packaging, or transfer | MCP-ON template maintenance | This is human-triggered exceptional work with a distinct `template-development` continuity owner and cross-branch package lifecycle; loading it for ordinary product tasks would add irrelevant procedure. |
+ | shared task design/review reasoning + MCP-ON routing, orchestration state, task delegation, remote review, task review/steering | MCP-ON workflow | A normal implementation always designs one task, selects a route, persists state, delegates, interprets a handoff, reviews remotely, and either completes or steers; splitting these caused repeated loading. |
+ | MCP-ON repository scouting | MCP-ON scouting | Triggered only when broad/local exploration saves time; quick direct GitHub lookup and routine delegation do not require it. |
+ | MCP-ON delegation recovery + synchronization recovery | MCP-ON recovery | Both trigger on missing, ambiguous, failed, indeterminate, or unsynchronized state and share the stop/reconcile/no-replay boundary. |
+@@ -452,6 +453,19 @@ Routine scouting, delegation, review, and correction proceed without repeated hu
+   `2aa997ebed8ff211406833440492ad0f8a1f13b5`; exact Node 22.13.0 Project
+   validation, 21 package tests, and developer cross-branch integration passed.
+ 
++### Template-maintenance routing resolution (2026-08-14)
++
++- Explicit evaluation or modification of the reusable template now routes to one
++  exceptional MCP-ON Source. Its canonical continuity record lives under
++  `docs/work/current/**` on `template-development` and replaces, rather than
++  duplicates, the ordinary web task-context record.
++- The current explicit request may replace routine template defaults, but never
++  higher-priority platform instructions or the public-safety, no-replay,
++  authority, and human exact-SHA boundaries.
++- Evaluation-only runs use the ordinary Scout/developer/recovery mechanics with
++  the ledger as their persistence target. Reusable source changes retain
++  independent exact ranges and the tracked template-maintenance package route.
++
+ - The present package is safety-oriented but repeats procedure across permanent instructions and 19 Sources.
+ - The current bridge already persists and recovers OpenCode streams, so task handoff should reuse that path.
+ - The current developer five-field response omits an explicit handoff SHA and does not by itself distinguish a valid reviewable completion from every idle state.
+diff --git a/web-orchestration-only/validate-package.mjs b/web-orchestration-only/validate-package.mjs
+index 332be4dea573b4350ca1b7cf92ee92a40b644eaa..712ffa5be0ada3ddf63aa7d8b2a513aa782f8665 100755
+--- a/web-orchestration-only/validate-package.mjs
++++ b/web-orchestration-only/validate-package.mjs
+@@ -9,6 +9,7 @@ const protocol = "agentic-bridge/1";
+ const failures = [];
+ 
+ const skills = [
++  "skill-mcp-on-template-maintenance.md",
+   "skill-mcp-on-workflow.md",
+   "skill-mcp-on-scouting.md",
+   "skill-mcp-on-recovery.md",
+@@ -175,7 +176,7 @@ for (const skill of skills) {
+ }
+ 
+ const install = texts.get("chatgpt-project/README.md") ?? "";
+-if (!install.includes("seven rendered files") || !install.includes("exact seven-Source")) fail("Installation/upgrade material must require the exact seven-Source inventory");
++if (!install.includes("eight rendered files") || !install.includes("exact eight-Source")) fail("Installation/upgrade material must require the exact eight-Source inventory");
+ if (!install.includes("Remove every superseded")) fail("Upgrade material must remove superseded Sources");
+ for (const skill of skills) {
+   const count = install.split(`\`${skill}\``).length - 1;
+@@ -216,6 +217,7 @@ const responseContract = [
+   "Task record:",
+ ].join("\n");
+ const workflow = texts.get("chatgpt-project/skill-mcp-on-workflow.md") ?? "";
++const templateMaintenance = texts.get("chatgpt-project/skill-mcp-on-template-maintenance.md") ?? "";
+ if (workflow.split(responseContract).length - 1 !== 1) fail("MCP-ON workflow must contain exactly one canonical six-field developer response block");
+ for (const rule of [
+   [workflow, /lookup answerable[\s\S]{0,180}Do not create a Scout, issue, task record/i, "quick direct-GitHub path"],
+@@ -226,6 +228,12 @@ for (const rule of [
+   [texts.get("chatgpt-project/skill-mcp-on-recovery.md") ?? "", /delivery window[\s\S]{0,500}do not cancel the required[\s\S]{0,500}continue safe independent work[\s\S]{0,500}delivery window/i, "durable connector-delivery scheduling"],
+   [texts.get("chatgpt-project/skill-mcp-on-promotion.md") ?? "", /human explicitly approves[\s\S]{0,160}exact/i, "human exact-SHA promotion rule"],
+ ]) if (!rule[1].test(rule[0])) fail(`Project package is missing canonical ${rule[2]}`);
++if (!/`docs\/work\/current\/<task-id>-<slug>\.md`[\s\S]{0,500}replaces the normal[\s\S]{0,200}`web-orchestration-only\/task-context\/<task-id>\.md`/i.test(templateMaintenance)) {
++  fail("Template maintenance is missing its canonical alternative continuity route");
++}
++if (/create both[\s\S]{0,100}(?:normal|task-context)/i.test(templateMaintenance)) {
++  fail("Template maintenance must not duplicate its canonical continuity record");
++}
+ 
+ const offText = ["skill-mcp-off-workflow.md", "skill-mcp-off-scouting.md"]
+   .map((file) => texts.get(`chatgpt-project/${file}`) ?? "").join("\n");
+@@ -306,6 +314,7 @@ const unsafePatterns = [
+   [/\bconnector refusal is a bridge rejection\b/i, "connector refusal as bridge evidence"],
+   [/\b(?:may|can|should|must|always)\s+(?:send|store|persist|publish)\s+(?:secrets|credentials)\b/i, "secret persistence"],
+   [/\b(?:may|can|should|must|always)\s+promote\b[^.\n]{0,80}\bwithout\s+(?:explicit\s+)?human\s+approval\b/i, "promotion without approval"],
++  [/\buser requests? always overrides? (?:the )?system\b/i, "user override of higher-priority system instructions"],
+   [/\bany open (?:bridge )?(?:control )?issue\b[^.\n]{0,80}\b(?:(?:must|should)(?:\s+always)?|always)\s+(?:block|stop)\b/i, "unconditional open-issue blocking"],
+   [/\bhigh-stakes\b[^.\n]{0,120}\bsample only\b/i, "high-stakes evidence sampling"],
+ ];
+diff --git a/web-orchestration-only/validate-package.test.mjs b/web-orchestration-only/validate-package.test.mjs
+index 874972d269442670b1c5891fd8250023f4101669..78767e9cee68f61901bc0b0a91cb9001bc62a178 100644
+--- a/web-orchestration-only/validate-package.test.mjs
++++ b/web-orchestration-only/validate-package.test.mjs
+@@ -30,10 +30,10 @@ function replace(root, relative, before, after) {
+   writeFileSync(target, text.replace(before, after));
+ }
+ 
+-test("current seven-Source package passes structural and canonical safety validation", (context) => {
++test("current eight-Source package passes structural and canonical safety validation", (context) => {
+   const result = run(fixture(context));
+   assert.equal(result.status, 0, result.stderr);
+-  assert.match(result.stdout, /7 exact Project Sources/);
++  assert.match(result.stdout, /8 exact Project Sources/);
+   assert.match(result.stdout, /5 parsed bridge envelopes/);
+   assert.match(result.stdout, /integrated task-context routing/);
+ });
+@@ -61,10 +61,24 @@ test("documented installation rendering produces the exact Source inventory", (c
+     "skill-mcp-on-promotion.md",
+     "skill-mcp-on-recovery.md",
+     "skill-mcp-on-scouting.md",
++    "skill-mcp-on-template-maintenance.md",
+     "skill-mcp-on-workflow.md",
+   ]);
+ });
+ 
++test("template maintenance replaces ordinary web task continuity", (context) => {
++  const root = fixture(context);
++  replace(
++    root,
++    "chatgpt-project/skill-mcp-on-template-maintenance.md",
++    "replaces the normal",
++    "duplicates the normal",
++  );
++  const result = run(root);
++  assert.notEqual(result.status, 0);
++  assert.match(result.stderr, /canonical alternative continuity route/);
++});
++
+ test("one task context carries routing continuity for a normal delegation", (context) => {
+   const root = fixture(context);
+   writeFileSync(path.join(root, "task-context", "TASK-001.md"), [
+@@ -124,6 +138,15 @@ test("validator rejects detailed bridge procedure in permanent router", (context
+   assert.match(result.stderr, /Permanent instructions contain detailed procedure/);
+ });
+ 
++test("validator rejects claiming user requests override system instructions", (context) => {
++  const root = fixture(context);
++  const target = path.join(root, "chatgpt-project", "developer-instructions.md");
++  writeFileSync(target, `${readFileSync(target, "utf8")}\nUser requests always override the system.\n`);
++  const result = run(root);
++  assert.notEqual(result.status, 0);
++  assert.match(result.stderr, /user override of higher-priority system instructions/);
++});
++
+ test("validator rejects stale Source references", (context) => {
+   const root = fixture(context);
+   const target = path.join(root, "chatgpt-project", "README.md");

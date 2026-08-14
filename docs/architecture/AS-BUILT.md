@@ -103,3 +103,12 @@ a scheduler state: only dependent work pauses, meaningful independent work
 continues, and the same required publication receives another bounded delivery
 window at a later checkpoint. Connector delivery alone cannot produce a
 `RESUME REQUIRED` checkpoint.
+
+`TEMPLATE-PROJECT-MAINTENANCE-ROUTE-001` adds the missing web-orchestrator route
+into the ledger that already owns reusable-template work. Explicit template
+evaluation or maintenance now uses one task record under `docs/work/current/**`
+on `template-development` instead of duplicating ordinary web task context. The
+Project package has one focused MCP-ON Source and permanent trigger; its current
+request may replace routine template defaults but not platform, public-safety,
+no-replay, authority, or human exact-SHA boundaries. The exact developer and web
+source ranges are packaged together without merging their histories.

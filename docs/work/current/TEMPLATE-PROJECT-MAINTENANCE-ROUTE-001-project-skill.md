@@ -29,9 +29,9 @@ permanent routing trigger that directs template evaluation or changes to the
 ## Current position
 
 Both exact source ranges are implemented, validated, pushed, and remotely
-confirmed. The Project has its focused MCP-ON template-maintenance Source and
-permanent trigger; developer architecture records now defer exact inventory to
-the web-owned validator. The ranges are ready for ledger packaging.
+confirmed. Their deterministic package is generated, passes integrity
+validation, and dry-runs cleanly from both recorded bases. Source-lock and
+integrated AS-BUILT reconciliation are ready for commit.
 
 ## Source ranges
 
@@ -74,7 +74,10 @@ None.
 
 ## Changed approach
 
-None.
+The generic Codex skill initializer was not used because this artifact is a flat
+ChatGPT Project Source governed by the package's exact inventory, not a Codex
+skill directory. Its concise trigger, focused body, and negative validation
+still follow the skill-creator guidance.
 
 ## Checks
 
@@ -86,6 +89,9 @@ None.
 - Exact Node 22.13.0 full repository validation passed: bridge 72/72, branch
   initializer 8/8, Project 23/23, and all repository/cross-branch validators.
 - Both exact source ranges pass `git diff --check`.
+- Change package contains 4 developer paths and 8 web-orchestration paths.
+- Both package patches apply cleanly from their exact bases in a disposable
+  checkout; manifest digests and ledger validation pass.
 
 ## Blockers / required decisions
 
@@ -94,14 +100,13 @@ None.
 ## Remaining work
 
 - Commit and push this start record.
-- Commit and push this source-handoff snapshot.
-- Generate, dry-run, validate, and push the exact two-branch change package.
-- Reconcile source lock, AS-BUILT, deviations, and this task; push the dedicated
-  completed ledger snapshot.
+- Commit and push the package, source lock, AS-BUILT, and current progress.
+- Run final ledger validation and remote synchronization checks.
+- Push the dedicated completed ledger snapshot.
 
 ## Next action
 
-Commit this source-handoff snapshot, then generate the exact package.
+Commit and push the reconciled package and durable records.
 
 ## Relevant durable records
 
