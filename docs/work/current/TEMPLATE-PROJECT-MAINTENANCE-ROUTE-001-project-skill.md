@@ -6,7 +6,7 @@ TEMPLATE-PROJECT-MAINTENANCE-ROUTE-001
 
 ## Status
 
-In progress
+Completed
 
 ## Task-start template-development SHA
 
@@ -28,13 +28,14 @@ permanent routing trigger that directs template evaluation or changes to the
 
 ## Current position
 
-Both exact source ranges are implemented, validated, pushed, and remotely
-confirmed. Their deterministic package is generated, passes integrity
-validation, and dry-runs cleanly from both recorded bases. Source-lock and
-integrated AS-BUILT reconciliation are ready for commit.
+Both exact source ranges and the reconciled template-development package are
+pushed and remotely confirmed. The package passes integrity validation and
+dry-runs cleanly from both recorded bases. This dedicated progress snapshot
+closes the maintenance cycle.
 
 ## Source ranges
 
+- `template-development`: `dd1743d475d4fa98bda2dc533eeae776b7682538..551d8fe45113bd126f47682c8fb4116c1894a0b0` (package handoff before this dedicated snapshot)
 - `developer`: `be315eec10030b3d4499a05b823739a2631cb897..e2700f586fe8ab634053eb514bb9da487e881a21`
 - `web-orchestration`: `7c1a0094e77ce3fcf06515bf49b3c09b6696d9f8..279631a3e14c6293933852baec98dd662f575277`
 
@@ -92,6 +93,8 @@ still follow the skill-creator guidance.
 - Change package contains 4 developer paths and 8 web-orchestration paths.
 - Both package patches apply cleanly from their exact bases in a disposable
   checkout; manifest digests and ledger validation pass.
+- Final exact Node 22.13.0 integrated repository validation passed against the
+  pushed source heads; its terminal result was `Repository validation passed.`
 
 ## Blockers / required decisions
 
@@ -99,21 +102,21 @@ None.
 
 ## Remaining work
 
-- Commit and push this start record.
-- Commit and push the package, source lock, AS-BUILT, and current progress.
-- Run final ledger validation and remote synchronization checks.
-- Push the dedicated completed ledger snapshot.
+None.
 
 ## Next action
 
-Commit and push the reconciled package and durable records.
+None. The human may review the exact source and ledger ranges, install the
+updated eight-Source Project package, or apply the validated package to a
+downstream repository through its normal branch workflow.
 
 ## Relevant durable records
 
 - `docs/architecture/AS-BUILT.md`
 - `docs/architecture/decisions/0001-template-development-ledger.md`
 - `docs/deviations.md`
+- `changes/TEMPLATE-PROJECT-MAINTENANCE-ROUTE-001/manifest.json`
 
 ## Last handoff commit
 
-None
+551d8fe45113bd126f47682c8fb4116c1894a0b0
