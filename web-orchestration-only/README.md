@@ -14,13 +14,14 @@ This independent branch stores concise, public-safe continuity and reusable inst
 ## Contents
 
 - `task-context/<task-id>.md`: focused orchestration continuity.
-- `chatgpt-project/`: concise permanent router plus eight focused public-safe
-  Project Sources with distinct MCP-ON/MCP-OFF workflows, scouting, and an
-  exceptional template-maintenance route.
+- `chatgpt-project/`: concise permanent router plus eleven focused public-safe
+  Project Sources: distinct MCP-ON/MCP-OFF procedures, an exceptional
+  template-maintenance route, and a cross-mode prompt-creation core with
+  destination and mission support Sources.
 - `validate-package.mjs` and `validate-package.test.mjs`: Project/static-package
-  inventory, task-context continuity/routing, installation, mode separation, and
-  executable bridge request/command contract checks with focused safety-negative
-  fixtures.
+  inventory, routed-versus-support Source relationships, task-context
+  continuity/routing, installation, mode separation, and executable bridge
+  request/command contract checks with focused safety-negative fixtures.
 
 Anything written here or in a bridge-control issue, including hidden command markers and projected results, is public disclosure. Do not store secrets, private chat details, personal data, raw sensitive values, connector credentials, absolute host-local paths, or unsupported allegations.
 
