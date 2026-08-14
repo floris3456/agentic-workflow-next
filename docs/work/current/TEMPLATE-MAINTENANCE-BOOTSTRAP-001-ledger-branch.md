@@ -16,13 +16,9 @@ Completed
 
 8ee1064ea8ee32713215cba0cecbf5852d09a935
 
-## Original task brief
+## Public-safe task brief
 
-Yes that's a good idea. Implement this. Immediately after that, identify the
-problems the web orchestrator's response contained and fix them. I have put the
-response in a folder so you can use it when the time comes.
-`/home/bliss/Projects/Active/web-orchestrator-response-smoke-test.md`. Make sure
-to start using this new branch when working on the second task I asked of you.
+Build a self-contained `template-development` maintenance ledger, then use it for a separate smoke-response diagnosis based on operator-provided external evidence without persisting host-local source details.
 
 ## Current objective
 
