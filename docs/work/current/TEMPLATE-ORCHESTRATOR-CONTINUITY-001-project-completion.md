@@ -16,9 +16,9 @@ e1c7db3ac1158370ffa35c249287722801f6e450
 
 28038cfc6a0da6f436cfb2365a7d3ba870d250c2
 
-## Original task brief
+## Public-safe task brief
 
-> Great incorporate all these things while keeping the same mindset as before: minimalism and effectiveness. Also use the system you just built for template development. While you are at it create the ADR in docs that I just stated 2 sentences before.
+Integrate the requested completion and connector-delivery continuity improvements with a minimal, effective design, use the template-development workflow, and add the requested architecture decision record.
 
 ## Current objective
 
