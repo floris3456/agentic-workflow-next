@@ -29,9 +29,12 @@ refs and the overall maintenance task without duplicating either tree.
 ## Normal maintenance flow
 
 1. Begin a task here and record exact source refs before changing source code.
-2. Work in isolated checkouts of the canonical template's real `developer`
-   and/or `web-orchestration` branches.
-3. Commit, push, and review each source branch under its existing rules.
+2. Work on the canonical template's real `developer` and/or `web-orchestration`
+   branches using the proportional source route: bounded direct connected-GitHub
+   edits when exact scope is already known and remotely provable, otherwise
+   isolated source checkouts when local context/tools materially help.
+3. Keep each source branch's normal records current and review its exact remote
+   range under the branch's existing rules.
 4. Create a portable change package from the reviewed exact ranges.
 5. Apply the package to the downstream project's corresponding branches as new,
    independently reviewed tasks.
