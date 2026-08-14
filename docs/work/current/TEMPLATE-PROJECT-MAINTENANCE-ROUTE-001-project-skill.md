@@ -16,9 +16,9 @@ dd1743d475d4fa98bda2dc533eeae776b7682538
 
 dd1743d475d4fa98bda2dc533eeae776b7682538
 
-## Original task brief
+## Public-safe task brief
 
-> Yeah fair. We'll do this at a later time though. Let's first create the missing template maintenance skill. You would also need to create the trigger in the developer instructions
+Create the missing template-maintenance Project Source and permanent routing trigger so reusable-template work uses the template-development ledger, while deferring unrelated later work.
 
 ## Current objective
 
