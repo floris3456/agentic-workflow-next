@@ -53,7 +53,7 @@ if (existsSync(join(root, "docs/work/templates/maintainer-response-template.md")
 
 const headings = [
   "Task ID", "Status", "Task-start template-development SHA",
-  "Review-base template-development SHA", "Original task brief", "Current objective",
+  "Review-base template-development SHA", "Public-safe task brief", "Current objective",
   "Current position", "Source ranges", "Observed", "Interpretation", "Attempts",
   "Changed approach", "Checks", "Blockers / required decisions", "Remaining work",
   "Next action", "Relevant durable records", "Last handoff commit",
@@ -61,13 +61,17 @@ const headings = [
 if (existsSync(join(root, "docs/work/templates/task-progress-template.md"))) {
   const template = read("docs/work/templates/task-progress-template.md");
   for (const heading of headings) if (!template.includes(`## ${heading}\n`)) fail(`Task template missing ${heading}`);
+  if (template.includes("## Original task brief\n")) fail("Task template must not request an original/private chat transcript");
 }
 
 for (const directory of ["docs/work/current", "docs/work/archive"]) {
   if (!existsSync(join(root, directory))) continue;
   for (const name of readdirSync(join(root, directory))) {
     if (name === "README.md" || name === ".gitkeep") continue;
-    if (!name.endsWith(".md")) fail(`${directory}/${name} must be Markdown`);
+    if (!name.endsWith(".md")) { fail(`${directory}/${name} must be Markdown`); continue; }
+    const task = read(`${directory}/${name}`);
+    if (!task.includes("## Public-safe task brief\n")) fail(`${directory}/${name} lacks Public-safe task brief`);
+    if (task.includes("## Original task brief\n")) fail(`${directory}/${name} still requests an original/private chat transcript`);
   }
 }
 
@@ -119,7 +123,6 @@ for (const file of files(root)) {
   if (bytes.includes(0)) continue;
   const path = relative(root, file);
   const text = bytes.toString("utf8");
-  if (path.startsWith("docs/work/current/") || path.startsWith("docs/work/archive/")) continue;
   if (/\/home\/[A-Za-z0-9._-]+\//.test(text)) fail(`${path} contains a host-local absolute path`);
 }
 
