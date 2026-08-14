@@ -76,6 +76,8 @@ their bytes and applicability.
 - Generated web patch dry-run: applies cleanly to a clean `web-orchestration` checkout at exact base `9f83a8eebc401c820acc8b7a2b0cc0733319950b`; developer patch is empty by design.
 - Staged ledger `git diff --check`: passed with generated patch artifacts handled by their dedicated integrity checks.
 - Local and remote template-development heads matched at `1f98389d33c49013eebb7797e6d56c080c2b7072` before this dedicated snapshot.
+- Exact Node 22.13.0 full repository validation against web handoff `b9814d5c7ae1cfb2f6068c19f08c03850e9b8874`: passed; bridge 72/72, branch initializer 8/8, Project package/integration, structure, agent-system, and research checks all passed.
+- Final live refs: `main` `6127611113dfdb66f93a0cfd2d355359aa370833`, `developer` `be315eec10030b3d4499a05b823739a2631cb897`, `web-orchestration` `b9814d5c7ae1cfb2f6068c19f08c03850e9b8874`, and template-development handoff `eabc3edd9c2eab87771031dfeefc79a75b06bd98` before this evidence snapshot.
 
 ## Blockers / required decisions
 
@@ -99,4 +101,4 @@ None. The human may review the exact source and ledger ranges or apply the valid
 
 ## Last handoff commit
 
-1f98389d33c49013eebb7797e6d56c080c2b7072
+eabc3edd9c2eab87771031dfeefc79a75b06bd98
