@@ -96,6 +96,12 @@ work and retry it at later natural checkpoints.
 | Public GitHub lookup, analysis, visible review, or bounded future task preparation | `skill-mcp-off-workflow.md` |
 | Likely implementation areas are unknown and public-web orientation is needed | `skill-mcp-off-scouting.md` |
 
+## Cross-mode
+
+| Trigger | Project Source |
+| --- | --- |
+| Human asks this web orchestrator to create a ready-to-use prompt for a new MCP-ON chat, MCP-OFF chat, or direct OpenCode session | `skill-prompt-creation.md` |
+
 At the start of every MCP-ON turn, map all open control issues by authenticated
 task ID before creating one. One task ID has one canonical issue: reuse it and
 never create a replacement. Treat open issues as continuity to reconcile, not
