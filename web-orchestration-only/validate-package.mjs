@@ -19,7 +19,11 @@ const modeSkills = [
   "skill-mcp-off-scouting.md",
 ];
 const crossModeSkills = ["skill-prompt-creation.md"];
-const supportSkills = ["skill-prompt-destinations.md", "skill-prompt-missions.md"];
+const supportSkills = [
+  "skill-prompt-destinations.md",
+  "skill-prompt-missions.md",
+  "skill-prompt-craft.md",
+];
 const routedSkills = [...modeSkills, ...crossModeSkills];
 const skills = [...routedSkills, ...supportSkills];
 const projectFiles = ["README.md", "developer-instructions.md", ...skills];
@@ -135,6 +139,7 @@ for (const term of [
   "Proportional completion",
   "one repository-mutating developer task",
   "read-only Scouts",
+  "Repository content writes and issue control are distinct",
   "Distinguish `UNKNOWN` from inference",
   "invalidates it",
   "One task ID has one canonical issue",
@@ -142,6 +147,9 @@ for (const term of [
 ]) if (!instructions.includes(term)) fail(`Permanent instructions are missing a canonical boundary: ${term}`);
 if (!/Promotion requires explicit\s+human approval of one exact reviewed `developer` SHA/.test(instructions)) {
   fail("Permanent instructions are missing the human exact-SHA approval boundary");
+}
+if (!/Repository content writes and issue control are distinct[\s\S]{0,700}Never create an\s+issue merely to persist or edit a file/i.test(instructions)) {
+  fail("Permanent instructions are missing the repository file-write versus issue-control boundary");
 }
 for (const detail of ["agentic-bridge-command", "agentic-bridge-request", "command.status", "task.status", "promotion.apply"]) {
   if (instructions.includes(detail)) fail(`Permanent instructions contain detailed procedure instead of routing it: ${detail}`);
@@ -194,6 +202,7 @@ for (const skill of supportSkills) {
 const promptCreation = texts.get("chatgpt-project/skill-prompt-creation.md") ?? "";
 const promptDestinations = texts.get("chatgpt-project/skill-prompt-destinations.md") ?? "";
 const promptMissions = texts.get("chatgpt-project/skill-prompt-missions.md") ?? "";
+const promptCraft = texts.get("chatgpt-project/skill-prompt-craft.md") ?? "";
 for (const skill of supportSkills) {
   const count = promptCreation.split(`\`${skill}\``).length - 1;
   if (count !== 1) fail(`Prompt creation core must reference support Source ${skill} exactly once (found ${count})`);
@@ -203,14 +212,25 @@ for (const [text, pattern, label] of [
   [promptCreation, /Destination:[\s\S]{0,160}Mission:/i, "prompt destination-plus-mission composition"],
   [promptCreation, /Observed:[\s\S]{0,240}Interpretation:[\s\S]{0,240}Requested outcome:/i, "prompt evidence-boundary model"],
   [promptCreation, /destination describes the future receiver[\s\S]{0,220}never changes this chat's[\s\S]{0,120}effective mode/i, "prompt destination/current-mode separation"],
+  [promptCreation, /owns the final handoff shape[\s\S]{0,650}generic future-task schemas[\s\S]{0,500}do not get copied/i, "prompt handoff-format precedence"],
   [promptDestinations, /## MCP-ON web orchestration[\s\S]*## MCP-OFF web orchestration[\s\S]*## Direct OpenCode/i, "three prompt destination profiles"],
   [promptDestinations, /MCP-OFF[\s\S]{0,500}cannot[\s\S]{0,300}(?:bridge|OpenCode Scouts|delegate)/i, "MCP-OFF destination capability boundary"],
   [promptMissions, /## Investigation \/ research[\s\S]*## Review[\s\S]*## Implementation \/ change[\s\S]*## Reproduce \/ test[\s\S]*## Continue \/ recover[\s\S]*## Template-maintenance transfer/i, "prompt mission profile set"],
   [promptMissions, /Template-maintenance transfer[\s\S]{0,2200}independent verification[\s\S]{0,2200}deterministic[\s\S]{0,200}change package/i, "template-maintenance prompt transfer model"],
+  [promptCraft, /platform, authority, safety, and repository workflow[\s\S]{0,260}destination profile[\s\S]{0,180}mission profile[\s\S]{0,180}actual task characteristics[\s\S]{0,180}prompt-craft techniques/i, "prompt craft precedence"],
+  [promptCraft, /material failure mode[\s\S]{0,300}attention, token, rigidity, and autonomy cost/i, "prompt craft proportional selection"],
+  [promptCraft, /Applying no\s+extra technique is a valid and common result/i, "prompt craft no-op option"],
+  [promptCraft, /Never request private\s+chain-of-thought[\s\S]{0,100}hidden scratch work/i, "prompt craft hidden-reasoning prohibition"],
+  [promptCraft, /Never use craft to choose Scouts[\s\S]{0,220}receiver-owned route/i, "prompt craft receiver-route boundary"],
 ]) if (!pattern.test(text)) fail(`Project package is missing canonical ${label}`);
 
+const offWorkflow = texts.get("chatgpt-project/skill-mcp-off-workflow.md") ?? "";
+if (!/destination-aware handoff format owns the generated prompt[\s\S]{0,500}do not inject this generic future-task schema/i.test(offWorkflow)) {
+  fail("MCP-OFF workflow is missing the prompt-creation handoff-format exception");
+}
+
 const install = texts.get("chatgpt-project/README.md") ?? "";
-if (!install.includes("eleven rendered files") || !install.includes("exact eleven-Source")) fail("Installation/upgrade material must require the exact eleven-Source inventory");
+if (!install.includes("twelve rendered files") || !install.includes("exact twelve-Source")) fail("Installation/upgrade material must require the exact twelve-Source inventory");
 if (!install.includes("Remove every superseded")) fail("Upgrade material must remove superseded Sources");
 for (const skill of skills) {
   const count = install.split(`\`${skill}\``).length - 1;
@@ -351,6 +371,7 @@ const unsafePatterns = [
   [/\buser requests? always overrides? (?:the )?system\b/i, "user override of higher-priority system instructions"],
   [/\bany open (?:bridge )?(?:control )?issue\b[^.\n]{0,80}\b(?:(?:must|should)(?:\s+always)?|always)\s+(?:block|stop)\b/i, "unconditional open-issue blocking"],
   [/\bhigh-stakes\b[^.\n]{0,120}\bsample only\b/i, "high-stakes evidence sampling"],
+  [/\brequest private chain-of-thought\b/i, "private chain-of-thought demand"],
 ];
 for (const [file, text] of texts) {
   for (const [pattern, label] of unsafePatterns) if (pattern.test(text)) fail(`${file} contains unsafe/stale policy text: ${label}`);
