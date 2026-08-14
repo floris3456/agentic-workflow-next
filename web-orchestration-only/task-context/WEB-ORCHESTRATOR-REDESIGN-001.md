@@ -448,6 +448,9 @@ Routine scouting, delegation, review, and correction proceed without repeated hu
   shortened once without changing authorization, identity, scope, refs, or
   effect. Smoke-only parser, guard, PTY, routing, and cleanup probes remain
   outside normal Project instructions.
+- The scheduling correction is implemented at web-orchestration
+  `2aa997ebed8ff211406833440492ad0f8a1f13b5`; exact Node 22.13.0 Project
+  validation, 21 package tests, and developer cross-branch integration passed.
 
 - The present package is safety-oriented but repeats procedure across permanent instructions and 19 Sources.
 - The current bridge already persists and recovers OpenCode streams, so task handoff should reuse that path.
