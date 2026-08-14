@@ -8,7 +8,7 @@ These public-safe files configure a ChatGPT Project as the web reasoning, orches
 2. Render that revision in an external, untracked staging directory. Replace `<owner>/<repository>` and `https://github.com/<owner>/<repository>` throughout the staged `chatgpt-project/` with the target public repository identity.
 3. Replace `<bridge-control-label>` and `<bridge-bot-login>` throughout the staged directory with the locally configured bridge label and GitHub App bot login. Never commit the rendered copy or connector configuration.
 4. Set the rendered `developer-instructions.md` as the Project developer instructions.
-5. Add these eight rendered files as individual Project Sources, retaining each
+5. Add these eleven rendered files as individual Project Sources, retaining each
    exact filename:
 
    - `skill-mcp-on-template-maintenance.md`
@@ -19,16 +19,25 @@ These public-safe files configure a ChatGPT Project as the web reasoning, orches
    - `skill-mcp-on-promotion.md`
    - `skill-mcp-off-workflow.md`
    - `skill-mcp-off-scouting.md`
+   - `skill-prompt-creation.md`
+   - `skill-prompt-destinations.md`
+   - `skill-prompt-missions.md`
 6. Configure connected/native GitHub access for exact repository reads and comparisons; issue list/search, create/read/update/comment/close/reopen, label read/write, and comment-author metadata; narrowly scoped ordinary continuity writes under `web-orchestration-only/task-context/**` on `web-orchestration`; and narrowly scoped template-maintenance continuity writes under `docs/work/current/**` on `template-development`.
 7. Have the local operator configure and run the repository's outbound GitHub Issues bridge. The connected GitHub identity must be in the bridge author allowlist and have GitHub association `OWNER`, `MEMBER`, or `COLLABORATOR`.
 8. Do not configure a direct OpenCode tool in the Project. MCP-ON launches the
    repository's read-only OpenCode Scout and controls implementation through
-   GitHub Issues; MCP-OFF has neither capability.
+   GitHub Issues when delegation is selected; MCP-OFF has neither capability.
+   Prompt creation may produce text for a separate direct OpenCode session, but
+   generating that text does not configure or invoke OpenCode from the Project.
 9. Verify exact read/compare, issue-control, expected bridge-bot identity, and narrow orchestration-state write capabilities separately before treating MCP-ON as active. On a disposable issue, test exact comment readback, author metadata, close/reopen, and a harmless non-control label; remove the label and close the issue afterward. Never apply the bridge control label unless a real bounded task is intended.
 
-Project Sources are treated as a flat list. Filename prefixes identify MCP-ON or
-MCP-OFF scope, and the permanent router names every Source exactly. Shared
-authority and public-safety boundaries stay permanently visible in the router.
+Project Sources are treated as a flat list. The permanent router names every
+user-facing routed Source exactly once: the MCP-ON and MCP-OFF procedure Sources
+plus the cross-mode prompt-creation core. `skill-prompt-destinations.md` and
+`skill-prompt-missions.md` are support Sources loaded only by
+`skill-prompt-creation.md`; they are intentionally not standalone router entries.
+Shared authority and public-safety boundaries stay permanently visible in the
+router.
 
 ## Boundary
 
@@ -40,7 +49,7 @@ The implementation branches must not depend on this branch for code or implement
 
 1. Stop consequential delegation and reconcile any in-flight direct implementation before enabling the bridge. Do not create a bridge task that could duplicate work already running through a former transport.
 2. Follow the same validation and external untracked rendering sequence as a fresh install.
-3. Replace the Project developer instructions and install the exact eight-Source
+3. Replace the Project developer instructions and install the exact eleven-Source
    inventory above from that one rendered revision. Remove every superseded
    `skill-*.md` Source, including `skill-shared-safety-and-authority.md`, rather
    than retaining stale or duplicate instructions.
