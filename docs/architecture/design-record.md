@@ -34,10 +34,12 @@ This routing rule is an orchestration policy, not a permanent validator rule abo
 
 Task-progress preserves procedural context and the public-safe delegated brief. AS-BUILT preserves current implementation truth and is also live developer memory. Deviations preserve material intended-versus-actual differences. AS-BUILT and deviations change atomically with implementation commits.
 
-The web orchestrator keeps one per-task context record with compact routing
-continuity on the independent branch when MCP-ON GitHub write capability is
-available. The branch also provides a public-safe Project installation package;
-installed private Project state remains outside Git.
+For ordinary work, the web orchestrator keeps one per-task context record with
+compact routing continuity on the independent branch when MCP-ON GitHub write
+capability is available. Explicit reusable-template evaluation or maintenance
+uses one canonical task record on `template-development` instead of duplicating
+the ordinary record. The web branch also provides a public-safe Project
+installation package; installed private Project state remains outside Git.
 
 The Project keeps genuinely distinct operating modes. MCP-ON/Sol uses connected
 GitHub for quick exact evidence, authenticated bridge control and continuity
@@ -48,8 +50,9 @@ state writes. Scouting and verification scale with size, complexity, uncertainty
 risk, blast radius, reversibility, and stakes; high-stakes manageable changes
 receive direct inspection of all relevant GitHub files/diffs even if Scouts help.
 The permanent Project instructions retain universally triggered safety/authority
-boundaries and route detailed mechanics to seven narrowly triggered Sources
-instead of loading them on every turn.
+boundaries and route detailed mechanics to the exact narrowly triggered Source
+inventory owned by the independent package, including one exceptional
+template-maintenance route instead of loading it during ordinary work.
 
 GitHub mutating commands use durable UUID/sequence semantics rather than direct-MCP delivery assumptions: sequence starts at exactly `1`, stays contiguous, and cannot advance while a prior command is accepted or applying. A separate UUID-idempotent, sequence-free request lane exposes `command.status` and `task.status` from durable local state without repeating work. The bridge stores private OpenCode mappings and raw recovery data locally, while only a bounded redacted projection enters public issues. Task-bound aliases, including workspaces, are stored per task. Capability parity comes from the pinned OpenCode operation manifest; consequential generic web operations remain locally allowlisted.
 

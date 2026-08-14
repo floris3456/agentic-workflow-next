@@ -28,8 +28,10 @@ derived inventory count.
 
 ## Current position
 
-The bounded documentation task is initialized before editing implemented-fact
-records.
+The independent Project package is pushed at
+`279631a3e14c6293933852baec98dd662f575277`. Developer architecture records now
+describe its alternative template-maintenance continuity owner without copying
+the web-owned derived Source count; the atomic documentation commit is ready.
 
 ## Observed
 
@@ -38,6 +40,11 @@ records.
 - The commissioned web-orchestration change will add one exceptional
   template-maintenance Source and retain the web validator as the exact inventory
   owner.
+- The pushed Source makes `docs/work/current/**` on `template-development` the
+  canonical record for explicit template evaluation or maintenance and forbids
+  a duplicate ordinary web task-context record.
+- Permanent instructions now distinguish user control over template defaults
+  from non-overridable platform and hard authority/safety boundaries.
 
 ## Interpretation
 
@@ -57,6 +64,10 @@ None.
 - Local `developer` equals `origin/developer` at the task-start SHA.
 - Tracked developer worktree is clean.
 - Tracked Git hooks are active.
+- Exact Node 22.13.0 Project validation passed with eight exact Sources.
+- Project package tests passed 23/23.
+- Developer cross-branch integration validation passed against the pushed web
+  source content.
 
 ## Blockers / required decisions
 
@@ -64,13 +75,13 @@ None.
 
 ## Remaining work
 
-- Commit and push this task-start record.
-- Update the three affected architecture records atomically.
-- Run focused and repository validation, then push a completed handoff snapshot.
+- Commit and push the three architecture updates with this current task state.
+- Run full repository validation against the exact pushed Project package.
+- Push the dedicated completed handoff snapshot.
 
 ## Next action
 
-Commit the task-start record, then edit the exact architecture statements.
+Commit and push the architecture reconciliation.
 
 ## Relevant durable records
 

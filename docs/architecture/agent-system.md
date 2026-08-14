@@ -15,11 +15,14 @@ The system separates human acceptance, web orchestration, remote evidence, and l
 
 ## Web orchestrator
 
-The web orchestrator is the primary reasoning, task-design, routing, steering, and review layer. Generalized installation instructions and seven audited conditional Sources live under `web-orchestration-only/chatgpt-project/` on the independent branch. Its short permanent instructions keep universal safety/authority visible and route genuinely separate MCP-ON and MCP-OFF workflows and scouting procedures. The installed Project configuration, private conversations, connector credentials, and runtime service configuration remain outside Git.
+The web orchestrator is the primary reasoning, task-design, routing, steering, and review layer. Generalized installation instructions and the audited conditional Source inventory live under `web-orchestration-only/chatgpt-project/` on the independent branch. Its short permanent instructions keep universal safety/authority visible and route genuinely separate MCP-ON and MCP-OFF workflows, scouting procedures, and an exceptional template-maintenance procedure. The installed Project configuration, private conversations, connector credentials, and runtime service configuration remain outside Git.
 
 In MCP-ON mode it uses:
 
-- an authenticated native GitHub integration for exact remote evidence, writes limited to `task-context/**` (including routing continuity), and public-safe bridge-control issue actions;
+- an authenticated native GitHub integration for exact remote evidence,
+  public-safe bridge-control actions, ordinary continuity writes limited to
+  `task-context/**`, and explicit template-maintenance continuity under
+  `docs/work/current/**` on `template-development`;
 - direct GitHub inspection for exact evidence, with targeted concurrent OpenCode
   Scouts when broader local exploration saves time; and
 - the outbound local GitHub App bridge to reach OpenCode indirectly for implementation delegation, steering, recovery, finalization, and guarded promotion.
@@ -62,6 +65,9 @@ Routing policy is web-side and intentionally is not frozen through a validator t
 - `developer`: active implementation and task-progress.
 - `main`: exact implementation deliberately accepted by the human.
 - `web-orchestration`: independent orphan-style tree containing only `web-orchestration-only/**`, including public-safe continuity and Project installation sources.
+- `template-development`: independent reusable-template maintenance ledger with
+  exact source locks, public-safe task/architecture/deviation records, and
+  deterministic cross-branch change packages.
 
 No normal merge crosses between `web-orchestration` and implementation branches.
 

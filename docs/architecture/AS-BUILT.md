@@ -12,15 +12,16 @@ This repository is a reusable workflow template rather than a product implementa
 - `main` is advanced only by the guarded exact-SHA promotion script after human approval.
 - `web-orchestration` is an independent root history containing only `web-orchestration-only/**`.
 - `web-orchestration-only/chatgpt-project/` on the independent branch contains
-  a short permanent router and exactly seven public-safe Sources selected by a
-  concrete co-trigger/dependency audit. MCP-ON/Sol and MCP-OFF/Pro have separate
-  workflows and separate scouting procedures; shared safety/authority policy is
-  permanently visible because it applies on every turn. MCP-ON reaches local OpenCode indirectly
-  through authenticated GitHub issue commands and the outbound bridge, not a
-  direct Project OpenCode tool. It is an installation source, not private live
-  Project state.
-- Normal web-orchestrator writes are limited to public-safe runtime continuity under `web-orchestration-only/task-context/**`, whose compact routing section owns Luna/Sol continuity; Project instructions, skills, templates, and validation remain read-only unless the human commissions agent-system maintenance.
-- The web finalization reviewer requires remote Git proof that the current task path existed and the same-name archive target did not at substantive approval, then that finalization removed the current path and retained the identical Git blob under `docs/work/archive/`. The orchestration branch validator pins bridge protocol `agentic-bridge/1` and checks exact seven-Source/static-package inventory, task-context routing, trigger/mode separation, installation/upgrade consistency, executable request/command examples, six-field handoff shape, and a small canonical safety core. Its Node test suite uses focused negative drift fixtures instead of treating editorial wording or scenario counts as protocol.
+  a short permanent router and an exact public-safe Source inventory selected by
+  a concrete co-trigger/dependency audit. MCP-ON/Sol and MCP-OFF/Pro have separate
+  workflows and scouting; an exceptional MCP-ON template-maintenance Source uses
+  `template-development` as its continuity owner. Shared safety/authority policy
+  remains permanently visible because it applies on every turn. MCP-ON reaches
+  local OpenCode indirectly through authenticated GitHub issue commands and the
+  outbound bridge, not a direct Project OpenCode tool. The package is an
+  installation source, not private live Project state.
+- Ordinary web-orchestrator writes are limited to public-safe runtime continuity under `web-orchestration-only/task-context/**`; explicitly commissioned template maintenance instead uses `docs/work/current/**` on `template-development`. Project instructions, skills, templates, and validation remain read-only unless the human commissions template or agent-system maintenance.
+- The web finalization reviewer requires remote Git proof that the current task path existed and the same-name archive target did not at substantive approval, then that finalization removed the current path and retained the identical Git blob under `docs/work/archive/`. The orchestration branch validator pins bridge protocol `agentic-bridge/1` and checks the exact web-owned Source/static-package inventory, ordinary and template-maintenance continuity routing, trigger/mode separation, installation/upgrade consistency, executable request/command examples, six-field handoff shape, and a small canonical safety core. Its Node test suite uses focused negative drift fixtures instead of treating editorial wording or scenario counts as protocol.
 - `small-developer` is the default Luna route; `large-developer` is the exceptional Sol route selected by the web orchestrator. Both use the explicit six-field status/exact-pushed-SHA response contract and explicitly allow structured OpenCode questions so the bridge can publish a task-owned alias for `question.reply`; plain assistant text is not treated as an interaction event.
 - `repository-scout` is a separate Luna/high read-only primary agent. Its deny-by-default resolved tool/permission contract and exact-ref detached workspaces prevent repository mutation, shell/Git use, delegation, external access, and cross-task/session/result leakage; lightweight UUID requests allow concurrent Scouts beside one mutating task.
 - Local agents deny subagent/task launches and do not perform orchestration, acceptance, or independent review.
