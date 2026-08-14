@@ -25,9 +25,23 @@ Transfer:
 - observations already established and their exact useful starting evidence;
 - interpretations or hypotheses to test, clearly labeled as such;
 - bounded scope and known exclusions;
+- the intended research-source strategy when material: whether the receiver
+  should inspect relevant target-repository files before looking outward,
+  whether external sources or other repositories should also be researched, and
+  what each source class is meant to contribute;
 - important unknowns or conflicting evidence;
 - the evidence expected back: exact paths, refs, symbols, behavior, source links,
   reproduction evidence, comparisons, or explicit unknowns as appropriate.
+
+When the question concerns behavior or design in a target repository, state
+whether repository evidence should ground the investigation before external
+research. External research may also be requested for comparison, alternative
+patterns, prior art, or inspiration, including research into other people's
+repositories. Keep those roles distinct: another repository can demonstrate an
+approach or suggest a hypothesis, but it is not proof of facts about the target
+repository. Do not force repository-first ordering when the human's mission is
+specifically exploratory or comparative; make the intended evidence order and
+purpose explicit instead.
 
 Do not tell the receiver to confirm the originating hypothesis. Ask it to test or
 resolve the question independently. Research output is evidence for a later
@@ -160,6 +174,8 @@ Before returning a generated prompt, verify that:
 - observations, interpretations, and requested outcome remain distinguishable;
 - the prompt contains enough task payload for the chosen mission but not an
   unrelated history dump;
+- research-source ordering and the role of target-repository versus external
+  evidence are explicit when that distinction could change the investigation;
 - implementation is not prescribed where the mission is only research/review;
 - research or review is not added ceremonially when the requested change is
   already exact-known and directly executable;
