@@ -95,3 +95,11 @@ or merging source histories.
 use the system. It records an unchanged developer range and a Project-package
 range through `b9814d5c7ae1cfb2f6068c19f08c03850e9b8874`, adds ADR-0001, and
 packages the exact web change without materializing source in this branch.
+
+`TEMPLATE-CONNECTOR-SCHEDULING-001` records an unchanged developer range and a
+Project-package correction through
+`7c1a0094e77ce3fcf06515bf49b3c09b6696d9f8`. Connector delivery pending is now
+a scheduler state: only dependent work pauses, meaningful independent work
+continues, and the same required publication receives another bounded delivery
+window at a later checkpoint. Connector delivery alone cannot produce a
+`RESUME REQUIRED` checkpoint.

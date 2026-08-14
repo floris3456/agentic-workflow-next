@@ -27,7 +27,9 @@ Make connector-delivery-pending a nonterminal scheduling state: continue safe in
 ## Current position
 
 The isolated web-orchestration source range is implemented, validated, pushed,
-and remotely confirmed. The exact range is ready to package in this ledger.
+and remotely confirmed. Its exact two-branch change package is generated and
+applies cleanly in a disposable base checkout; ledger reconciliation is ready
+for commit.
 
 ## Source ranges
 
@@ -49,6 +51,12 @@ Treat connector delivery like a small schedulable queue: read back, attempt up t
 - The first focused-validation command referenced a temporary Node 22.13.0 path
   that no longer existed. An existing exact Node 22.13.0 binary was found in the
   npm cache and used for every reported exact-runtime check.
+- The tracked post-commit push inherited a blocked HTTPS proxy and recorded a
+  failed-push marker. A direct push with those proxy variables unset established
+  remote equality, but did not clear the hook's private marker. Before the next
+  commit, the package work was stashed, the prescribed synchronization recovery
+  verified the exact remote commit and cleared the marker, and the stash was
+  restored unchanged.
 
 ## Changed approach
 
@@ -64,6 +72,9 @@ None.
 - Developer cross-branch integration validation passed.
 - `git diff --check` passed for the web worktree and staged source commits.
 - The pre-existing untracked web `tools/` directory remains preserved and out of scope.
+- Change package contains 0 developer paths and 9 web-orchestration paths.
+- The web patch applies cleanly from its exact base in a disposable checkout;
+  the developer patch is empty by design.
 
 ## Blockers / required decisions
 
@@ -71,11 +82,13 @@ None.
 
 ## Remaining work
 
-- Generate and validate the exact change package, reconcile ledger records, and push the completed handoff.
+- Commit and push the change package, source lock, AS-BUILT, and current progress.
+- Run final integrated repository and ledger validation.
+- Push the dedicated completed task-progress snapshot.
 
 ## Next action
 
-Generate the exact two-branch change package and reconcile the source lock and durable ledger records.
+Commit and push the reconciled package and durable records.
 
 ## Relevant durable records
 
