@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "task_id": "TEMPLATE-ORCHESTRATOR-CONTINUITY-001",
+  "canonical_repository": "https://github.com/floris3456/agentic-workflow-template.git",
+  "created_at": "2026-08-14T01:12:48.471Z",
+  "ranges": {
+    "developer": {
+      "base": "be315eec10030b3d4499a05b823739a2631cb897",
+      "head": "be315eec10030b3d4499a05b823739a2631cb897",
+      "changed_paths": [],
+      "patch": "developer.patch",
+      "patch_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "web-orchestration": {
+      "base": "9f83a8eebc401c820acc8b7a2b0cc0733319950b",
+      "head": "b9814d5c7ae1cfb2f6068c19f08c03850e9b8874",
+      "changed_paths": [
+        "web-orchestration-only/chatgpt-project/README.md",
+        "web-orchestration-only/chatgpt-project/developer-instructions.md",
+        "web-orchestration-only/chatgpt-project/skill-mcp-on-finalization.md",
+        "web-orchestration-only/chatgpt-project/skill-mcp-on-recovery.md",
+        "web-orchestration-only/chatgpt-project/skill-mcp-on-scouting.md",
+        "web-orchestration-only/chatgpt-project/skill-mcp-on-workflow.md",
+        "web-orchestration-only/task-context/README.md",
+        "web-orchestration-only/task-context/TEMPLATE-ORCHESTRATOR-CONTINUITY-001.md",
+        "web-orchestration-only/task-context/TEMPLATE.md",
+        "web-orchestration-only/task-context/WEB-ORCHESTRATOR-REDESIGN-001.md",
+        "web-orchestration-only/validate-package.mjs",
+        "web-orchestration-only/validate-package.test.mjs"
+      ],
+      "patch": "web-orchestration.patch",
+      "patch_sha256": "fad92491bc5454566107e04da8912841df11fa906291b513aed5d92fe7db03ec"
+    }
+  }
+}

@@ -26,10 +26,10 @@ It solves four needs:
 
 ## Branch contents
 
-The tree contains only maintenance instructions, provenance, records, change
-packages, tests, validation, and local Git synchronization hooks. It contains no
-copy of `developer`, `main`, `web-orchestration-only/**`, bridge implementation,
-or downstream project source.
+The tree contains only maintenance instructions, provenance, decisions, records,
+change packages, tests, validation, and local Git synchronization hooks. It
+contains no copy of `developer`, `main`, `web-orchestration-only/**`, bridge
+implementation, or downstream project source.
 
 ## Workspaces
 
@@ -50,6 +50,9 @@ the correct repository, branch, cleanliness, and remote synchronization.
 
 The generator requires full 40-character commits, verifies objects and ancestry,
 and refuses a non-empty output directory. It never writes source branches.
+Generated `*.patch` files are excluded from source whitespace diagnostics because
+unified-diff syntax uses space-prefixed blank context lines; manifest SHA-256 and
+`git apply --check` validate their exact bytes and applicability instead.
 
 `scripts/apply-change-package.mjs` validates the manifest and selected patch,
 requires the downstream checkout's exact matching branch and a clean tree, and
@@ -87,3 +90,8 @@ produced `changes/TEMPLATE-SMOKE-RESPONSE-001/` from exact pushed ranges. Both
 patches dry-run apply from their recorded bases, demonstrating that the ledger
 provides compaction continuity and a portable downstream update without copying
 or merging source histories.
+
+`TEMPLATE-ORCHESTRATOR-CONTINUITY-001` is the first ordinary maintenance task to
+use the system. It records an unchanged developer range and a Project-package
+range through `b9814d5c7ae1cfb2f6068c19f08c03850e9b8874`, adds ADR-0001, and
+packages the exact web change without materializing source in this branch.

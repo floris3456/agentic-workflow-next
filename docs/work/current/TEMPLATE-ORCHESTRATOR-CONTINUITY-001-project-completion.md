@@ -26,12 +26,12 @@ Integrate the reusable completion barrier and connector-delivery recovery rules 
 
 ## Current position
 
-The ledger task is initialized before source-branch edits. Exact live source refs match `source-lock.json`; source implementation has not started.
+The Project-package implementation and record snapshot are pushed and reviewed. The exact change package and ADR are prepared in this ledger for validation and push.
 
 ## Source ranges
 
 - `developer`: `be315eec10030b3d4499a05b823739a2631cb897..be315eec10030b3d4499a05b823739a2631cb897` (expected unchanged)
-- `web-orchestration`: `9f83a8eebc401c820acc8b7a2b0cc0733319950b..pending`
+- `web-orchestration`: `9f83a8eebc401c820acc8b7a2b0cc0733319950b..b9814d5c7ae1cfb2f6068c19f08c03850e9b8874`
 
 ## Observed
 
@@ -39,24 +39,40 @@ The ledger task is initialized before source-branch edits. Exact live source ref
 - It lacks one explicit all-launched-work completion barrier, a durable active-work/absorption ledger, connector-refusal evidence, and continuation of an indispensable unpublished operation across bounded delivery windows.
 - The template-development design exists as a design record and AS-BUILT, but no numbered architecture decision record captures the accepted ledger-versus-combined-tree choice.
 - GitHub connector readback confirmed exact remote heads: `main` `6127611113dfdb66f93a0cfd2d355359aa370833`, `developer` `be315eec10030b3d4499a05b823739a2631cb897`, `web-orchestration` `9f83a8eebc401c820acc8b7a2b0cc0733319950b`, and `template-development` `e1c7db3ac1158370ffa35c249287722801f6e450`.
+- `web-orchestration` is pushed through `b9814d5c7ae1cfb2f6068c19f08c03850e9b8874`; its exact range changes 12 Project policy, continuity, validator, and task-record paths.
+- The generated package has an empty developer patch and one exact web patch for that reviewed range.
 
 ## Interpretation
 
 Keep the always-visible rule to one sentence, put operational detail in existing MCP-ON Sources, and add only the task-context fields needed to survive compaction. Smoke-only probes remain outside the installed package.
 
+The ADR owns the architectural choice; the existing design record remains the operational procedure, avoiding duplicate authority.
+
 ## Attempts
 
 - A shell `git fetch` was blocked before GitHub by the environment HTTPS tunnel (`CONNECT 403`). Read-only GitHub connector ref lookups provided live remote evidence without changing state.
+- Unsetting the environment proxy for Git commands restored direct GitHub transport; subsequent source commits and pushes succeeded normally.
 
 ## Changed approach
 
-None.
+Generated unified diffs contain space-prefixed blank context lines, which are
+valid patch syntax but appear as trailing whitespace when the patch is itself
+added to Git. The ledger now excludes `*.patch` artifacts from source whitespace
+diagnostics; manifest digests and `git apply --check` remain authoritative for
+their bytes and applicability.
 
 ## Checks
 
 - Pre-change tracked worktree: clean.
 - Local template-development HEAD equals live `origin/template-development`: observed.
 - Cached source refs equal live GitHub refs and `source-lock.json`: observed.
+- Exact Node 22.13.0 Project tests: 20/20 passed.
+- Exact Node 22.13.0 standalone package validation: passed.
+- Developer-owned cross-branch integration validation: passed against unchanged developer `be315eec10030b3d4499a05b823739a2631cb897`.
+- Exact web range `git diff --check`: passed.
+- Exact Node 22.13.0 template-development validation: structure passed and package tests 3/3 passed.
+- Generated web patch dry-run: applies cleanly to a clean `web-orchestration` checkout at exact base `9f83a8eebc401c820acc8b7a2b0cc0733319950b`; developer patch is empty by design.
+- Staged ledger `git diff --check`: passed with generated patch artifacts handled by their dedicated integrity checks.
 
 ## Blockers / required decisions
 
@@ -64,22 +80,21 @@ None.
 
 ## Remaining work
 
-- Commit and push this start record.
-- Implement and validate the Project package changes on `web-orchestration`.
-- Add and validate the template-development ADR.
-- Review exact source ranges, create the portable change package, reconcile source lock/AS-BUILT/progress, and push the final ledger handoff.
+- Validate, commit, and push the change package, ADR, source lock, and AS-BUILT.
+- Create and push the dedicated completed task-progress handoff snapshot.
 
 ## Next action
 
-Commit and remotely verify the start record, then edit the isolated `web-orchestration` worktree.
+Run full template-development validation, then commit and push the ledger implementation records.
 
 ## Relevant durable records
 
 - `docs/design/template-maintenance-workflow.md`
 - `docs/architecture/AS-BUILT.md`
 - `docs/deviations.md`
-- Planned `docs/architecture/decisions/0001-template-development-ledger.md`
+- `docs/architecture/decisions/0001-template-development-ledger.md`
+- `changes/TEMPLATE-ORCHESTRATOR-CONTINUITY-001/manifest.json`
 
 ## Last handoff commit
 
-None
+28038cfc6a0da6f436cfb2365a7d3ba870d250c2

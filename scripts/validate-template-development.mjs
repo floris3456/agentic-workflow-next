@@ -11,7 +11,8 @@ const read = (path) => readFileSync(join(root, path), "utf8");
 const required = [
   "README.md", "AGENTS.md", "source-lock.json", "opencode.json",
   ".opencode/agents/template-maintainer.md", ".opencode/skills/template-maintenance/SKILL.md",
-  "docs/architecture/AS-BUILT.md", "docs/design/template-maintenance-workflow.md", "docs/deviations.md",
+  "docs/architecture/AS-BUILT.md", "docs/architecture/decisions/0001-template-development-ledger.md",
+  "docs/design/template-maintenance-workflow.md", "docs/deviations.md",
   "docs/work/templates/task-progress-template.md", "docs/work/templates/maintainer-response-template.md",
   "scripts/create-change-package.mjs", "scripts/apply-change-package.mjs",
   "scripts/bootstrap-template-development.sh", "scripts/recover-template-development-sync.sh",

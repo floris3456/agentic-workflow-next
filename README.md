@@ -10,6 +10,8 @@ the ChatGPT Project package.
   `web-orchestration` refs last reconciled with this ledger.
 - `docs/architecture/AS-BUILT.md`: the current cross-branch template-maintenance
   system.
+- `docs/architecture/decisions/`: accepted architectural decisions and their
+  consequences.
 - `docs/design/`: accepted maintenance design and branch responsibilities.
 - `docs/deviations.md`: material design-versus-reality differences.
 - `docs/work/current/` and `docs/work/archive/`: compaction-safe active and

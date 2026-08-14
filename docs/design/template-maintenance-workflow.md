@@ -1,19 +1,10 @@
 # Template-maintenance workflow design
 
-## Decision
+## Decision authority
 
-Use an independent lightweight ledger branch plus exact source worktrees. Do not
-create a fourth combined implementation tree.
-
-## Why
-
-`main` and `developer` can hold different blobs at the same paths, so one working
-tree cannot be an exact copy of both. `web-orchestration` intentionally has an
-independent history. A combined branch would duplicate content, drift, blur
-authority, and require custom path splitting before every transfer.
-
-A ledger-only branch preserves the desired history and compaction recovery while
-letting every actual change remain in its normative source tree.
+[ADR-0001](../architecture/decisions/0001-template-development-ledger.md)
+owns the accepted ledger-versus-combined-tree decision. This record defines its
+operating workflow.
 
 ## Task sequence
 
