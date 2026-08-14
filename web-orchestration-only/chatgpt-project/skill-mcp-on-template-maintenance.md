@@ -24,8 +24,11 @@ path is unavailable.
    maintenance contract.
 2. Create or resume one
    `docs/work/current/<task-id>-<slug>.md` record on `template-development`
-   before consequential publication. Copy the exact public-safe request and
-   record exact live source refs.
+   before consequential publication. Record a concise public-safe task brief
+   that preserves the human's requested outcome, scope, constraints, and
+   material decisions without quoting or reproducing private chat, personal
+   data, secrets, absolute local paths, or raw OpenCode identifiers; record
+   exact live source refs.
 3. That maintenance record replaces the normal
    `web-orchestration-only/task-context/<task-id>.md` record for the entire
    template task. Never create both merely to satisfy the ordinary workflow.
