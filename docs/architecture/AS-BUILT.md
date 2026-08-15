@@ -15,7 +15,10 @@ It solves four needs:
 
 ## Authority model
 
-- `source-lock.json` is the ledger's last reconciled source snapshot.
+- `source-lock.json` is the ledger's last reconciled source snapshot. During an
+  active maintenance task its source SHAs remain the review-base lock through
+  package generation; reconciliation to new heads happens only after the package
+  has embedded the prior snapshot.
 - Remote source refs are authoritative implementation evidence.
 - Component AS-BUILT and deviations remain on the source branch beside the code
   they describe.
@@ -50,22 +53,50 @@ review state, and downstream application heads regardless of execution route.
 
 `scripts/create-change-package.mjs` produces one directory per task containing:
 
-- `manifest.json` with schema version, task ID, canonical repository, UTC
-  creation time, exact base/head refs, and sorted changed paths;
+- `manifest.json`;
 - `developer.patch`, an exact binary/full-index diff for the reviewed developer
   range; and
 - `web-orchestration.patch`, the equivalent independent web range.
 
-The generator requires full 40-character commits, verifies objects and ancestry,
-and refuses a non-empty output directory. It never writes source branches.
-Generated `*.patch` files are excluded from source whitespace diagnostics because
-unified-diff syntax uses space-prefixed blank context lines; manifest SHA-256 and
-`git apply --check` validate their exact bytes and applicability instead.
+New packages use manifest schema 2. Before any package output, the generator:
 
-`scripts/apply-change-package.mjs` validates the manifest and selected patch,
+1. validates `source-lock.json` and authenticates the supplied checkout's `origin`
+   as the same canonical GitHub repository;
+2. requires the requested developer/web bases to equal the source-lock review
+   bases;
+3. creates a sterile temporary bare Git repository with isolated HOME/XDG/global
+   Git configuration and no interactive credential prompt;
+4. fetches the canonical `developer` and `web-orchestration` branch tips directly
+   from `source-lock.json`'s canonical repository URL;
+5. requires the requested heads to equal those freshly fetched canonical tips and
+   the locked bases to be ancestors of those heads; and
+6. generates changed paths and patch bytes only from the fetched object database,
+   never from the caller-supplied repository's objects.
+
+The schema-2 manifest embeds the exact source-lock snapshot, a SHA-256 of its
+canonicalized JSON form, the fetched canonical heads, exact range metadata, sorted
+changed paths, and each patch SHA-256. `package_sha256` then binds the stable
+manifest core and both raw patch byte streams with a versioned domain separator.
+`scripts/change-package-lib.mjs` is the shared offline verifier used by generation,
+application, and ledger validation; it recomputes the source-lock, patch, range,
+and package bindings without network access.
+
+Historical schema-1 packages remain accepted for compatibility only after their
+original range shape and per-patch SHA-256 checks pass. Their validation result is
+explicitly integrity-only; they are not treated or reported as provenance-
+verified schema 2 packages.
+
+Full 40-character commits remain mandatory and a non-empty output directory is
+refused. The generator never writes source branches. Generated `*.patch` files are
+excluded from source whitespace diagnostics because unified-diff syntax uses
+space-prefixed blank context lines; manifest/package SHA-256 and `git apply
+--check` validate their exact bytes and applicability instead.
+
+`scripts/apply-change-package.mjs` first runs the shared package validator,
 requires the downstream checkout's exact matching branch and a clean tree, and
 runs `git apply --check`. Only an explicit `--apply` updates the working tree. It
-does not commit, push, merge, or promote.
+reports whether schema-2 provenance or only legacy schema-1 integrity was
+verified. It does not commit, push, merge, or promote.
 
 ## Synchronization
 
@@ -86,10 +117,13 @@ the ledger branch.
 
 ## Verification
 
-- `scripts/validate-template-development.mjs`: structure, contracts, provenance,
-  forbidden source-tree absence, executable bits, task/archive rules.
-- `tests/change-package.test.mjs`: exact package creation, ancestry rejection,
-  branch/cleanliness enforcement, dry-run non-mutation, and explicit application.
+- `scripts/validate-template-development.mjs`: structure, source lock, task/archive
+  rules, forbidden source-tree absence, executable bits, and every committed
+  schema-1/schema-2 package through the shared verifier.
+- `tests/change-package.test.mjs`: deterministic schema-2 generation from simulated
+  canonical fetched heads; deceptive-origin, wrong-base, stale/local-only-head,
+  provenance/patch/package-tamper rejection; legacy schema-1 compatibility; and
+  downstream dry-run/application boundaries.
 - `scripts/validate-template-development.sh`: both checks plus `git diff --check`.
 
 The first end-to-end maintenance exercise, `TEMPLATE-SMOKE-RESPONSE-001`, used
@@ -171,3 +205,13 @@ ordinary file/task-record/continuity writes use repository contents actions, and
 Issue creation is reserved for an actual MCP-ON control/Scout route after its
 required task-ID/open-issue reconciliation. The package validator and negative
 tests enforce both boundaries without phrase-locking the craft taxonomy.
+
+`TEMPLATE-TRUST-BOUNDARY-001` hardens the two reusable trust-transfer surfaces.
+Developer source now authenticates Git host plus owner/repository and runs
+read-only Scouts through a separate pinned runtime with bridge-owned prompt/tools
+and immutable exact-ref Git-object snapshots. On this ledger branch, package
+schema 2 closes the complementary provenance gap: locked review bases and freshly
+fetched canonical heads define the package range, canonical fetched objects define
+the patch bytes, and an offline package digest binds the embedded lock/provenance
+and both patches. Historical schema 1 remains compatibility-only rather than
+being silently upgraded in evidential meaning.
