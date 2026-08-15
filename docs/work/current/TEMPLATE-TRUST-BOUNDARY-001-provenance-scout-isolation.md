@@ -8,116 +8,78 @@ TEMPLATE-TRUST-BOUNDARY-001
 
 in progress
 
-## Task-start template-development SHA
+## Task-start / review-base refs
 
-7dde0897c4b0bc1df304bd43fe61f4eb99fd682f
+- main: `6127611113dfdb66f93a0cfd2d355359aa370833`
+- developer: `e2700f586fe8ab634053eb514bb9da487e881a21`
+- web-orchestration: `2b95a9803115b05283494fb3699b9d34c58a91a5`
+- template-development: `7dde0897c4b0bc1df304bd43fe61f4eb99fd682f`
 
-## Review-base template-development SHA
-
-7dde0897c4b0bc1df304bd43fe61f4eb99fd682f
+`source-lock.json` matched the three source refs at task start. `main` must remain unchanged and is not authorized for promotion.
 
 ## Public-safe task brief
 
-Harden reusable-template trust boundaries across package provenance, Git remote repository identity, and independent Scout isolation. Preserve portability, exact-ref review, recovery, deterministic packaging, public safety, normal developer OpenCode behavior, and the human-only `main` promotion boundary. Do not modify or promote `main`. Existing OpenCode Scouts are not accepted as review evidence until the requested isolation hardening is implemented and independently reviewed.
-
-## Current objective
-
-Implement and independently review the developer-owned bridge/Scout hardening first, then update the web-orchestration contract as required, then harden template-development package provenance/validation and generate the deterministic package.
+Harden reusable-template trust boundaries across package provenance, Git remote repository identity, and independent Scout isolation. Preserve portability, recovery, exact-ref review, deterministic packaging, public safety, normal developer OpenCode behavior, and human-only `main` promotion. Existing OpenCode Scouts are not evidence for this task until the isolation changes are independently reviewed.
 
 ## Current position
 
-Exact live task-start refs were independently re-established: `main` 6127611113dfdb66f93a0cfd2d355359aa370833, `developer` e2700f586fe8ab634053eb514bb9da487e881a21, `web-orchestration` 2b95a9803115b05283494fb3699b9d34c58a91a5, `template-development` 7dde0897c4b0bc1df304bd43fe61f4eb99fd682f. `source-lock.json` matches the three source refs. Control issue 26 is canonical for this task. Sequence-1 Sol start succeeded as session-start transport only. Sequence-2 rejected one unnecessary operator-local `.opencode/*` external-directory read. A second independently aliased request for the same surface was already queued before that rejection landed and must also be rejected. The developer route remains active. No Scout route has been launched.
+Control issue 26 is canonical. No other issue was open when the task started. The delegated Sol developer route is active. The first working cycle created and pushed the required developer task record at interim developer SHA `0b4813240c5ee2358789d01b66293ff9cf91efed` but then idled after permission interactions with an empty projected assistant response; that is not a valid developer handoff. Both requests to read operator-local `.opencode/*` state are now cleared as rejected. Sequence 3 arrived after the second permission had already been rejected upstream and therefore ended `indeterminate` with `PermissionNotFoundError`; it must not be retried. A sequence-4 steer to continue the same developer session is persisted below and is not yet published.
 
-## Source ranges
+## Independently established findings
 
-- developer review base: e2700f586fe8ab634053eb514bb9da487e881a21
-- web-orchestration review base: 2b95a9803115b05283494fb3699b9d34c58a91a5
-- main source lock: 6127611113dfdb66f93a0cfd2d355359aa370833
-- template-development review base: 7dde0897c4b0bc1df304bd43fe61f4eb99fd682f
+- Template package generation validates local commits and ancestry but can stamp `source-lock.json` canonical identity without proving the supplied repository/history is canonical.
+- Current package validation binds patch SHA-256 values but has no explicit package provenance/content-binding model.
+- Bridge repository validation accepts owner/repository by normalized suffix and does not authenticate Git host.
+- Scout worktree creation uses ordinary `git worktree add --detach`; repo-controlled hooks are not disabled.
+- Scout startup uses the ordinary OpenCode server, resolves agent/tools from the inspected workspace, and validates only after `app.agents` / `tool.ids` discovery.
+- The inspected ref currently controls `.opencode/agents/repository-scout.md`, and the Scout contract allows LSP.
+- Exact OpenCode 1.18.16 source confirms built-in `read` resolves repository instructions into a system reminder and asynchronously warms LSP after reads.
+- Exact OpenCode 1.18.16 source confirms tool discovery can dynamically import configured custom tools and plugin initialization can execute configured external plugins.
 
-## Observed
+## Implementation / review route
 
-- Template-development maintenance contract requires source edits to remain on canonical source branches and reviewed content to move through deterministic change packages.
-- Current source-lock canonical repository is `https://github.com/floris3456/agentic-workflow-template.git` and matches live source refs at task start.
-- `scripts/create-change-package.mjs` validates exact local commits and ancestry but does not prove the supplied repository or source histories are canonical before stamping `source-lock.json` repository identity into the manifest.
-- Template-development validation currently verifies manifest range shapes and patch SHA-256 values but not independently bound provenance evidence.
-- Developer `verifyRepositoryIdentity` normalizes `origin` text and accepts configured owner/repository by suffix, without authenticating the remote host.
-- `ScoutWorkspaceManager` uses ordinary `git worktree add --detach` from a repository configured for repo-controlled hooks.
-- Scout startup calls ordinary OpenCode compatibility, `app.agents`, and `tool.ids` for the inspected workspace before enforcing the post-discovery tool/permission contract.
-- The exact ref's `repository-scout` definition is currently the authority checked by the bridge, and the allowed Scout tool set includes `lsp`.
-- Scout clients use the same normal loopback OpenCode server with only a different directory, so directory selection alone is not a configuration/process trust boundary.
-- Exact OpenCode v1.18.16 source confirms the built-in `read` tool resolves repository instructions into a system reminder and asynchronously warms LSP after successful file reads.
-- Exact OpenCode v1.18.16 source confirms tool registry initialization dynamically imports project/global custom tool modules and materializes plugin-provided tools; plugin initialization loads external configured plugins and executes their server entrypoints.
-- Two projected `external_directory` permission requests targeted the same operator-local `.opencode/*` surface. The first has been rejected; the second remains unmatched until sequence 3 is published.
-
-## Interpretation
-
-The requested work is security-sensitive and cross-cutting. Existing Scout execution cannot be used as an independent evidence boundary because the task itself challenges its startup, configuration, instruction, process, and filesystem isolation. The developer branch requires local repository context, runtime tooling, adversarial tests, and coordinated documentation, so a delegated Sol developer route is proportional. Exact connected GitHub remains the independent review route. Unrelated operator-global OpenCode state should remain unread and uncontaminating; rejecting both external-directory requests preserves that boundary without blocking use of tracked repository or upstream public evidence.
-
-## Attempts
-
-- Sequence-1 Sol start was accepted and successfully created the developer session; implementation result is pending.
-- Sequence-2 rejected permission alias `permission-6` for unnecessary operator-local `.opencode/*` access.
-- A second permission alias, `permission-7`, for the same external surface must be rejected separately.
-
-## Changed approach
-
-- Selected delegated Sol developer implementation rather than direct GitHub editing because the developer work spans runtime isolation, Git behavior, tests, configuration, and durable architecture records.
-
-## Checks
-
-- Exact remote refs established by authenticated GitHub reads.
-- Maintenance contract, task template, and source-lock read at exact template-development base.
-- Open issue map checked before task creation: none.
-- Prior bridge issue confirms configured control label `agentic-bridge`.
-- AWT-001, AWT-002, and material Scout-boundary observations independently confirmed from exact source files.
-- OpenCode v1.18.16 `read.ts`, `tool/registry.ts`, and `plugin/index.ts` independently inspected as exact upstream source for instruction, LSP, custom-tool, and plugin execution behavior.
-- Sequence-2 command lifecycle independently read from issue 26: accepted -> applying -> succeeded with `permission-6` rejected.
-
-## Blockers / required decisions
-
-None currently. If the pinned OpenCode runtime cannot satisfy the required Scout isolation without a materially larger dependency, the developer must stop at the genuine architecture decision rather than weaken the contract.
-
-## Remaining work
-
-Publish and absorb the second permission rejection; read and absorb the developer handoff; independently review its exact source range and focused/adversarial checks; update web-orchestration scouting claims if required; harden package provenance and validation on template-development; generate and validate the deterministic change package; reconcile source-lock and durable records; produce a pushed maintenance handoff. Do not promote `main`.
-
-## Next action
-
-After this ledger commit is confirmed remotely, publish sequence-3 `permission.reply` rejection for `permission-7` on issue 26.
-
-## Relevant durable records
-
-Developer branch is expected to update the task-progress record plus AS-BUILT/design/deviation/setup/security records justified by implementation. Template-development AS-BUILT/design/deviations and source-lock will be reconciled after source review.
+- Developer: delegated Sol because runtime isolation, Git behavior, adversarial tests, and durable records require local tooling and coordinated edits.
+- Existing Scouts: prohibited as evidence for this task.
+- Independent review: connected GitHub exact files/ranges and proportional checks.
+- Web-orchestration and template-development source mutation will not begin until the developer mutating route is terminal and absorbed.
 
 ## Issue mapping / active work
 
-- Canonical control issue: https://github.com/floris3456/agentic-workflow-template/issues/26
+- Canonical control issue: `https://github.com/floris3456/agentic-workflow-template/issues/26`
 - Related issues: none.
-- Existing OpenCode Scouts: not used for this task.
 - Selected developer: Sol.
-- Active mutating source route: developer session active, currently waiting on second permission reply.
-- Highest accepted command sequence: 2.
+- Active source route: developer.
+- Highest accepted command sequence: 3.
+- Scouts launched: none.
 
-## Command / request journal
+## Command / interaction journal
 
-- Sequence 1 start `b2a4c9d1-4f64-4f64-8a2f-16b3d7e9c001`: accepted -> applying -> succeeded; expected developer e2700f586fe8ab634053eb514bb9da487e881a21/ref `developer`; agent `sol`; session-start transport only.
-- Sequence 2 `permission.reply` `c4a7f831-2d64-4a64-9d20-71e3b2c5a102`: accepted -> applying -> succeeded; `permission-6` -> `reject`.
-- Pending sequence 3 command, to be published byte-for-byte after this ledger commit is confirmed:
+- Sequence 1 `b2a4c9d1-4f64-4f64-8a2f-16b3d7e9c001`, `start`: accepted -> applying -> succeeded; session-start transport only; expected developer `e2700f586fe8ab634053eb514bb9da487e881a21`, ref `developer`.
+- Permission aliases `permission-6` and `permission-7`: both requested projected operator-local `.opencode/*` external-directory access. This access was judged unnecessary and outside the task evidence boundary.
+- Sequence 2 `c4a7f831-2d64-4a64-9d20-71e3b2c5a102`, `permission.reply`: accepted -> applying -> succeeded; `permission-6` rejected.
+- Public event evidence then showed `permission-7` already rejected upstream.
+- Sequence 3 `e8f0a6c2-6b95-4f28-8c73-0bd42f1aa103`, `permission.reply`: accepted -> applying -> `indeterminate`; upstream returned `PermissionNotFoundError` because `permission-7` no longer existed. Do not retry.
+- Developer then idled with an empty projected assistant response. Remote developer had advanced only to the task-record commit `0b4813240c5ee2358789d01b66293ff9cf91efed`; no six-field handoff was produced.
+- Pending sequence 4, to be published byte-for-byte after this ledger commit is confirmed:
 
 ```json
-{"protocol":"agentic-bridge/1","sequence":3,"command_id":"e8f0a6c2-6b95-4f28-8c73-0bd42f1aa103","task_id":"TEMPLATE-TRUST-BOUNDARY-001","kind":"permission.reply","arguments":{"permission":"permission-7","reply":"reject","message":"Same boundary as the prior reply: do not read unrelated operator-local .opencode state. Use tracked repository files and public/upstream source evidence; keep global customization isolated from this task."}}
+{"protocol":"agentic-bridge/1","sequence":4,"command_id":"4f34d2e8-2b65-4bd3-94ae-843a7b7ef104","task_id":"TEMPLATE-TRUST-BOUNDARY-001","kind":"steer","arguments":{"message":"Continue the same TEMPLATE-TRUST-BOUNDARY-001 developer task from the current session and repository state. Both operator-local .opencode external-directory requests are rejected and cleared; do not inspect unrelated global customization. Use tracked repository files plus public/upstream source evidence as needed. Complete the requested bridge repository-identity and Scout isolation implementation, adversarial tests, validators, and durable records; run proportional checks; push the exact developer handoff; then return exactly the six required fields. The remote developer branch currently contains the interim task-record commit 0b4813240c5ee2358789d01b66293ff9cf91efed. Do not modify main or web-orchestration, do not promote, and do not use existing Scouts as evidence."}}
 ```
 
-## Pending publication / connector refusals
+## Checks performed by orchestrator
 
-- Sequence-3 permission rejection is persisted above but not yet published.
+- Exact authenticated branch refs established at task start.
+- Maintenance contract, source-lock, package scripts/tests, bridge source/tests/contracts, Project scouting Source, and relevant durable records inspected at exact refs.
+- OpenCode 1.18.16 `read.ts`, tool registry, and plugin loader inspected at the pinned upstream tag for the material runtime behaviors.
+- Remote developer ref and interim task-record commit independently verified after the first developer cycle.
 
-## Findings / decisions
+## Blockers / decisions
 
-- Decision: use connected GitHub as the independent evidence boundary for this task until Scout hardening is implemented and reviewed.
-- Decision: use Sol immediately because the developer work has intrinsic security/runtime complexity and interacting changes that make two Luna attempts predictably wasteful.
-- Decision: reject both unnecessary external-directory requests targeting operator-local `.opencode/*` state.
+No human-owned decision is currently required. If a required Scout isolation property cannot be achieved without a materially larger dependency, stop at that genuine architecture boundary rather than weakening the property.
+
+## Remaining work
+
+Publish sequence 4; absorb the terminal developer handoff; independently review the exact developer range and checks; finalize the developer durable task if repository policy requires it; update the minimal web-orchestration scouting contract; harden and test package provenance on template-development; generate/validate the deterministic change package; reconcile source-lock and maintenance records; return exact source/package handoffs. Do not promote `main`.
 
 ## Last handoff commit
 
