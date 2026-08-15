@@ -1,9 +1,17 @@
 #!/usr/bin/env node
 import { execFileSync } from "node:child_process";
-import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
+import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
+import {
+  assertRemoteMatchesCanonical,
+  packageDigest,
+  sha256,
+  sourceLockDigest,
+  validateChangePackage,
+  validateSourceLock,
+} from "./change-package-lib.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -32,12 +40,13 @@ function required(values, name) {
   return value;
 }
 
-function git(repository, args, encoding = "utf8") {
+function runGit(repository, args, options = {}) {
   try {
     return execFileSync("git", ["-C", repository, ...args], {
-      encoding,
+      encoding: options.encoding ?? "utf8",
       stdio: ["ignore", "pipe", "pipe"],
       maxBuffer: 64 * 1024 * 1024,
+      ...(options.env ? { env: options.env } : {}),
     });
   } catch (error) {
     const detail = error.stderr?.toString().trim() || error.message;
@@ -45,23 +54,45 @@ function git(repository, args, encoding = "utf8") {
   }
 }
 
-function exactCommit(repository, value, label) {
+function exact(value, label) {
   if (!/^[0-9a-f]{40}$/.test(value)) fail(`${label} must be an exact lowercase 40-character commit`);
-  const resolved = git(repository, ["rev-parse", `${value}^{commit}`]).trim();
-  if (resolved !== value) fail(`${label} did not resolve exactly`);
   return value;
 }
 
-function range(repository, base, head, label) {
+function range(repository, base, head, label, env) {
+  const resolvedBase = runGit(repository, ["rev-parse", `${base}^{commit}`], { env }).trim();
+  const resolvedHead = runGit(repository, ["rev-parse", `${head}^{commit}`], { env }).trim();
+  if (resolvedBase !== base || resolvedHead !== head) fail(`${label} range did not resolve exactly from canonical fetch`);
   try {
-    execFileSync("git", ["-C", repository, "merge-base", "--is-ancestor", base, head], { stdio: "ignore" });
+    execFileSync("git", ["-C", repository, "merge-base", "--is-ancestor", base, head], {
+      stdio: "ignore",
+      ...(env ? { env } : {}),
+    });
   } catch {
-    fail(`${label} base is not an ancestor of its head`);
+    fail(`${label} locked base is not an ancestor of canonical head`);
   }
-  const patch = git(repository, ["diff", "--binary", "--full-index", "--no-renames", base, head, "--"]);
-  const rawNames = git(repository, ["diff", "--name-only", "-z", base, head, "--"], "buffer");
+  const patch = runGit(repository, ["diff", "--binary", "--full-index", "--no-renames", base, head, "--"], { env });
+  const rawNames = runGit(repository, ["diff", "--name-only", "-z", base, head, "--"], { encoding: "buffer", env });
   const paths = rawNames.toString("utf8").split("\0").filter(Boolean).sort();
   return { patch, paths };
+}
+
+function sterileGitEnvironment(directory) {
+  const home = join(directory, "home");
+  const xdg = join(directory, "xdg");
+  mkdirSync(home, { recursive: true, mode: 0o700 });
+  mkdirSync(xdg, { recursive: true, mode: 0o700 });
+  const globalConfig = join(directory, "empty-gitconfig");
+  writeFileSync(globalConfig, "", { mode: 0o600 });
+  return {
+    PATH: process.env.PATH ?? "",
+    HOME: home,
+    XDG_CONFIG_HOME: xdg,
+    GIT_CONFIG_NOSYSTEM: "1",
+    GIT_CONFIG_GLOBAL: globalConfig,
+    GIT_TERMINAL_PROMPT: "0",
+    LC_ALL: "C",
+  };
 }
 
 const values = argumentsMap(process.argv.slice(2));
@@ -71,53 +102,96 @@ for (const name of values.keys()) if (!known.has(name)) fail(`Unknown argument $
 const repository = resolve(required(values, "--repository"));
 const taskId = required(values, "--task-id");
 if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(taskId)) fail("task-id is invalid");
-git(repository, ["rev-parse", "--git-dir"]);
-
-const developerBase = exactCommit(repository, required(values, "--developer-base"), "developer-base");
-const developerHead = exactCommit(repository, required(values, "--developer-head"), "developer-head");
-const webBase = exactCommit(repository, required(values, "--web-base"), "web-base");
-const webHead = exactCommit(repository, required(values, "--web-head"), "web-head");
-const output = resolve(required(values, "--output"));
-if (existsSync(output)) {
-  if (!statSync(output).isDirectory() || readdirSync(output).length !== 0) fail("output must be a missing or empty directory");
-} else {
-  mkdirSync(output, { recursive: true });
-}
-
-const developer = range(repository, developerBase, developerHead, "developer");
-const web = range(repository, webBase, webHead, "web-orchestration");
-const developerPatch = Buffer.from(developer.patch);
-const webPatch = Buffer.from(web.patch);
-writeFileSync(resolve(output, "developer.patch"), developerPatch);
-writeFileSync(resolve(output, "web-orchestration.patch"), webPatch);
+runGit(repository, ["rev-parse", "--git-dir"]);
 
 const lock = JSON.parse(readFileSync(resolve(root, "source-lock.json"), "utf8"));
-const sourceDate = process.env.SOURCE_DATE_EPOCH;
-const createdAt = sourceDate && /^\d+$/.test(sourceDate)
-  ? new Date(Number(sourceDate) * 1000).toISOString()
-  : new Date().toISOString();
-const digest = (bytes) => createHash("sha256").update(bytes).digest("hex");
-const manifest = {
-  schema_version: 1,
-  task_id: taskId,
-  canonical_repository: lock.canonical_repository,
-  created_at: createdAt,
-  ranges: {
-    developer: {
-      base: developerBase,
-      head: developerHead,
-      changed_paths: developer.paths,
-      patch: "developer.patch",
-      patch_sha256: digest(developerPatch),
+try {
+  validateSourceLock(lock);
+} catch (error) {
+  fail(`source-lock.json is invalid: ${error.message}`);
+}
+const remote = runGit(repository, ["remote", "get-url", "origin"]).trim();
+try {
+  assertRemoteMatchesCanonical(remote, lock.canonical_repository);
+} catch (error) {
+  fail(error.message);
+}
+
+const developerBase = exact(required(values, "--developer-base"), "developer-base");
+const developerHead = exact(required(values, "--developer-head"), "developer-head");
+const webBase = exact(required(values, "--web-base"), "web-base");
+const webHead = exact(required(values, "--web-head"), "web-head");
+if (developerBase !== lock.sources.developer) fail("developer-base does not match source-lock review base");
+if (webBase !== lock.sources["web-orchestration"]) fail("web-base does not match source-lock review base");
+
+const output = resolve(required(values, "--output"));
+if (existsSync(output) && (!statSync(output).isDirectory() || readdirSync(output).length !== 0)) {
+  fail("output must be a missing or empty directory");
+}
+
+const temporary = mkdtempSync(join(tmpdir(), "template-package-canonical-"));
+try {
+  const canonicalRepo = join(temporary, "canonical.git");
+  mkdirSync(canonicalRepo);
+  const env = sterileGitEnvironment(temporary);
+  runGit(canonicalRepo, ["init", "--bare"], { env });
+  runGit(canonicalRepo, [
+    "fetch", "--no-tags", "--force", lock.canonical_repository,
+    "+refs/heads/developer:refs/remotes/canonical/developer",
+    "+refs/heads/web-orchestration:refs/remotes/canonical/web-orchestration",
+  ], { env });
+  const fetchedDeveloper = runGit(canonicalRepo, ["rev-parse", "refs/remotes/canonical/developer^{commit}"], { env }).trim();
+  const fetchedWeb = runGit(canonicalRepo, ["rev-parse", "refs/remotes/canonical/web-orchestration^{commit}"], { env }).trim();
+  if (developerHead !== fetchedDeveloper) fail("developer-head does not match current canonical developer tip");
+  if (webHead !== fetchedWeb) fail("web-head does not match current canonical web-orchestration tip");
+
+  const developer = range(canonicalRepo, developerBase, developerHead, "developer", env);
+  const web = range(canonicalRepo, webBase, webHead, "web-orchestration", env);
+  const developerPatch = Buffer.from(developer.patch);
+  const webPatch = Buffer.from(web.patch);
+  const sourceDate = process.env.SOURCE_DATE_EPOCH;
+  const createdAt = sourceDate && /^\d+$/.test(sourceDate)
+    ? new Date(Number(sourceDate) * 1000).toISOString()
+    : new Date().toISOString();
+  const core = {
+    schema_version: 2,
+    task_id: taskId,
+    canonical_repository: lock.canonical_repository,
+    created_at: createdAt,
+    provenance: {
+      mode: "canonical-remote-fetch-v1",
+      source_lock: lock,
+      source_lock_sha256: sourceLockDigest(lock),
+      fetched_heads: {
+        developer: fetchedDeveloper,
+        "web-orchestration": fetchedWeb,
+      },
     },
-    "web-orchestration": {
-      base: webBase,
-      head: webHead,
-      changed_paths: web.paths,
-      patch: "web-orchestration.patch",
-      patch_sha256: digest(webPatch),
+    ranges: {
+      developer: {
+        base: developerBase,
+        head: developerHead,
+        changed_paths: developer.paths,
+        patch: "developer.patch",
+        patch_sha256: sha256(developerPatch),
+      },
+      "web-orchestration": {
+        base: webBase,
+        head: webHead,
+        changed_paths: web.paths,
+        patch: "web-orchestration.patch",
+        patch_sha256: sha256(webPatch),
+      },
     },
-  },
-};
-writeFileSync(resolve(output, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
-console.log(`Created template change package ${taskId}: developer ${developer.paths.length} path(s), web-orchestration ${web.paths.length} path(s).`);
+  };
+  const manifest = { ...core, package_sha256: packageDigest(core, developerPatch, webPatch) };
+  if (!existsSync(output)) mkdirSync(output, { recursive: true });
+  writeFileSync(resolve(output, "developer.patch"), developerPatch);
+  writeFileSync(resolve(output, "web-orchestration.patch"), webPatch);
+  writeFileSync(resolve(output, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
+  const checked = validateChangePackage(output, taskId);
+  if (!checked.provenanceVerified) fail("newly generated package did not validate as provenance schema 2");
+  console.log(`Created provenance-verified template change package ${taskId}: developer ${developer.paths.length} path(s), web-orchestration ${web.paths.length} path(s).`);
+} finally {
+  rmSync(temporary, { recursive: true, force: true });
+}

@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-import { createHash } from "node:crypto";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { validateChangePackage, validateSourceLock } from "./change-package-lib.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const failures = [];
@@ -14,7 +14,7 @@ const required = [
   "docs/architecture/AS-BUILT.md", "docs/architecture/decisions/0001-template-development-ledger.md",
   "docs/design/template-maintenance-workflow.md", "docs/deviations.md",
   "docs/work/templates/task-progress-template.md", "docs/work/templates/maintainer-response-template.md",
-  "scripts/create-change-package.mjs", "scripts/apply-change-package.mjs",
+  "scripts/change-package-lib.mjs", "scripts/create-change-package.mjs", "scripts/apply-change-package.mjs",
   "scripts/bootstrap-template-development.sh", "scripts/recover-template-development-sync.sh",
   "scripts/validate-template-development.sh", "tests/change-package.test.mjs",
 ];
@@ -33,12 +33,7 @@ for (const forbidden of ["web-orchestration-only", "contracts", "src", "tools", 
   if (existsSync(join(root, forbidden))) fail(`Source implementation must not be materialized here: ${forbidden}`);
 
 try {
-  const lock = JSON.parse(read("source-lock.json"));
-  if (lock.schema_version !== 1) fail("source-lock schema_version must be 1");
-  if (!/^https:\/\/github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\.git$/.test(lock.canonical_repository ?? ""))
-    fail("source-lock canonical_repository must be an HTTPS GitHub Git URL");
-  for (const branch of ["main", "developer", "web-orchestration"])
-    if (!/^[0-9a-f]{40}$/.test(lock.sources?.[branch] ?? "")) fail(`source-lock ${branch} must be an exact SHA`);
+  validateSourceLock(JSON.parse(read("source-lock.json")));
 } catch (error) {
   fail(`source-lock.json is invalid: ${error.message}`);
 }
@@ -81,20 +76,7 @@ if (existsSync(join(root, "changes"))) {
     const directory = join(root, "changes", taskId);
     if (!statSync(directory).isDirectory()) { fail(`Unexpected changes entry: ${taskId}`); continue; }
     try {
-      const manifest = JSON.parse(readFileSync(join(directory, "manifest.json"), "utf8"));
-      if (manifest.schema_version !== 1 || manifest.task_id !== taskId) fail(`Invalid manifest identity for ${taskId}`);
-      for (const target of ["developer", "web-orchestration"]) {
-        const entry = manifest.ranges?.[target];
-        const expected = target === "developer" ? "developer.patch" : "web-orchestration.patch";
-        if (entry?.patch !== expected) fail(`${taskId} ${target} patch name is invalid`);
-        const bytes = readFileSync(join(directory, expected));
-        const digest = createHash("sha256").update(bytes).digest("hex");
-        if (digest !== entry?.patch_sha256) fail(`${taskId} ${target} patch digest is invalid`);
-        if (!/^[0-9a-f]{40}$/.test(entry?.base ?? "") || !/^[0-9a-f]{40}$/.test(entry?.head ?? ""))
-          fail(`${taskId} ${target} range is invalid`);
-        if (!Array.isArray(entry?.changed_paths) || [...entry.changed_paths].sort().join("\0") !== entry.changed_paths.join("\0"))
-          fail(`${taskId} ${target} changed paths must be sorted`);
-      }
+      validateChangePackage(directory, taskId);
     } catch (error) {
       fail(`Invalid change package ${taskId}: ${error.message}`);
     }
