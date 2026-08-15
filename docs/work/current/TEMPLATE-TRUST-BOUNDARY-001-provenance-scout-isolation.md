@@ -15,45 +15,142 @@ in progress
 - web-orchestration: `2b95a9803115b05283494fb3699b9d34c58a91a5`
 - template-development: `7dde0897c4b0bc1df304bd43fe61f4eb99fd682f`
 
-`source-lock.json` matched those refs at task start. `main` remains outside mutation/promotion scope.
+`source-lock.json` matched these three source refs at task start and remains the
+review-base lock until genuine package generation. `main` is not authorized for
+change or promotion.
 
 ## Public-safe task brief
 
-Harden reusable-template package provenance, exact Git repository identity, and the independent Scout trust boundary while preserving portability, recovery, exact-ref review, deterministic packaging, public safety, normal developer OpenCode behavior, and the human-only `main` boundary. Existing Scouts are not evidence for this task.
+Harden reusable-template change-package provenance, exact Git repository identity,
+and the independent Scout trust boundary while preserving portability, recovery,
+exact-ref review, deterministic packaging, public safety, normal developer
+OpenCode behavior, and the human-only `main` boundary. Existing pre-hardening
+Scouts are not evidence for this task.
 
 ## Current position
 
-Issue 26 is canonical. Sol source `9ab08b8d338c0764899bb553d50dbe491cdc09bc` plus snapshot `f8ed4a7e570ff173dc6c8dbbc533735916f8ed41` implemented AWT-002 and safe Scout fail-closed behavior. Its `needs decision` architecture question was independently resolved within the user's already-authorized scope. Two subsequent architecture steers (sequences 8 and 9) were each accepted/applied/succeeded as bridge delivery, but sequence-free status reads after each showed the mapped session idle, `latest_event_id` still `event-134`, and the same old `needs decision` response. No new OpenCode turn or remote developer SHA followed. The delegated continuation is therefore terminal/absorbed as an execution-path failure; there will be no more developer-agent prompt retries.
+Developer source is independently accepted at bookkeeping handoff
+`4d3aa8c340ab1503443b14e155b24c52e640194f`. The delegated implementation was
+reviewed directly through GitHub; review found and corrected one CI-only fixture
+bug and one per-start origin-authentication gap. The exact corrected substantive
+source SHA `8941c2f89a595b16835a5326e42d5a1ec9d7a32c` and the task-record-only
+bookkeeping handoff `4d3aa8c340ab1503443b14e155b24c52e640194f` both have successful full
+`Validate repository` GitHub Actions runs.
 
-Direct connected-GitHub implementation is selected from exact current developer head `f8ed4a7e570ff173dc6c8dbbc533735916f8ed41`. The earlier direct Git-object staging attempt moved no branch ref and was abandoned after unreachable-blob readback failed content-address verification; the direct route will use ordinary connected file writes with readback/CI rather than hand-built Git objects.
+The one-file `web-orchestration` source range from
+`2b95a9803115b05283494fb3699b9d34c58a91a5` to
+`6a7793738bcb12b92bc7a7bc43fde1fcebe61e35` has also been independently reviewed.
+It adds a fail-closed hardened-Scout readiness gate, forbids fallback to ordinary
+developer OpenCode/ref-owned instructions, and retains exact connected GitHub as
+the proof route.
 
-## Independent findings / design
+The remaining reusable source change is AWT-001 package provenance on
+`template-development`, followed by genuine package generation/validation and
+source-lock reconciliation.
 
-- Preserve current AWT-002 host+owner+repository validation and adversarial tests.
-- Hardened Scout architecture: separate mandatory loopback Scout OpenCode endpoint; runtime package/agent/tools are trusted bridge installation outside untrusted `repository_root`; sterile HOME/XDG/config/data; project config/default plugins/external skills/Claude instructions/LSP/downloads/experimental features disabled; both OpenCode config discovery directories read-only; built-in `read/glob/grep/lsp` denied; bridge-owned dependency-free `scout_read`/`scout_glob`/`scout_grep` only; exact `.git`-less commit snapshot materialized from canonical `origin/developer` objects with Git plumbing rather than checkout/worktree; realpath containment/no symlink-directory following; bootstrap/status fail closed if dedicated runtime is absent/misconfigured; historical pre-hardening Scout recovery rejected.
-- AWT-001 current generator can stamp canonical identity from an arbitrary local object database. Planned schema-2 provenance keeps source-lock source SHAs as review-base lock through generation, authenticates supplied origin, fetches canonical developer/web tips into a sterile temporary repository, requires locked bases and fetched canonical heads, generates patches only from those canonical objects, embeds/digests the source-lock snapshot, and deterministically binds provenance+manifest+patch bytes. Offline validation recomputes those bindings; schema-1 artifacts remain legacy/unverified.
-- Current Project scouting Source still describes detached worktrees/ref-owned Scout behavior and will need one minimal aligned update after developer review.
+## Independent findings / review
+
+- Repository identity now parses supported HTTPS, `ssh://`, and scp-style SSH
+  remotes and authenticates exact Git host plus owner/repository. Public GitHub
+  and standard GHES `/api/v3` derive the Git host; ambiguous custom API layouts
+  require explicit `github.git_host`.
+- Hardened Scouts run on a distinct authenticated loopback OpenCode `1.18.16`
+  endpoint installed outside `repository_root`, with bridge-owned prompt/model/
+  permissions/tools, sterile configuration roots, no ref-owned Scout agent, and
+  no normal developer endpoint fallback.
+- Exact Scout views are materialized from Git object plumbing, not checkout or
+  worktree; gitlinks/`.git` are rejected, regular files are non-writable and
+  non-executable, symlinks are inert evidence, and reuse re-hashes content.
+- Trusted `scout_read`/`scout_glob`/`scout_grep` use filesystem/path APIs only,
+  bound UTF-8 evidence, do not follow symlink directories, and enforce lexical
+  plus realpath containment.
+- Review correction: every new Scout start now calls
+  `synchronizedGitState(config)` before the Scout server/snapshot path, so a
+  changed, deceptive, or unsynchronized origin fails closed at consumption time.
+- The original implementation Actions failure was exactly one test fixture that
+  pre-created private snapshot state under ambient umask. The product check was
+  retained; the fixture now requests `0700`. The later full CI runs are green.
+- AWT-001 remains open: current package creation can trust arbitrary supplied Git
+  object databases while stamping canonical repository identity from
+  `source-lock.json`; schema-1 validation binds patch hashes but does not prove
+  canonical origin/base/head provenance.
 
 ## Route / active work
 
-- Canonical issue: `https://github.com/floris3456/agentic-workflow-template/issues/26`.
-- Delegated Sol continuation: terminal/absorbed; final status request `9bf876b1-eb67-40c4-b034-41db81675a09` succeeded with idle session, `event-134`, old response.
-- Active mutating source route after this ledger commit: direct connected-GitHub on `developer` from `f8ed4a7e570ff173dc6c8dbbc533735916f8ed41`.
-- Existing Scouts: none launched/accepted as evidence.
-- No web-orchestration or template-development source mutation overlaps the developer direct route.
+- Canonical control issue: `https://github.com/floris3456/agentic-workflow-template/issues/26`.
+- Developer delegated/direct source routes: terminal and absorbed.
+- Developer substantive approval/bookkeeping SHA:
+  `4d3aa8c340ab1503443b14e155b24c52e640194f`.
+- Developer current task path exists at that SHA with blob
+  `e9ce0154342cade46ca3a21299295ccd56f18bff`; same-basename archive target is
+  absent.
+- Web-orchestration source: reviewed at
+  `6a7793738bcb12b92bc7a7bc43fde1fcebe61e35`.
+- Existing Scouts: none launched or used as evidence.
+- Next mutating action: developer finalization only; template-development source
+  work waits until that finalization route is terminal/absorbed.
 
 ## Command journal
 
-Sequences 1-7 produced the current AWT-002/fail-closed Scout source. Sequence 8 `a73e1c51-1e10-47ae-b9bc-755f0a09c108` and sequence 9 `6b097d43-0dc3-46cc-a6a4-54c90e27a109` delivered the resolved hardened-runtime design but started no later OpenCode turn. Status requests `52fd0ef7-1884-43f6-b89f-373d23713209` and `9bf876b1-eb67-40c4-b034-41db81675a09` both confirmed the same idle/old-response state. Highest accepted command sequence is 9; no new developer bridge mutation is planned.
+Sequences 1-9 are historical and reconciled on issue #26; highest accepted
+sequence is 9. The delegated implementation eventually produced the hardened
+runtime, after which independent connected-GitHub review made two bounded direct
+corrections and reconciled the developer task record. No task-correlated question
+is pending; the only permissions were the earlier rejected operator-local
+`.opencode/*` requests.
+
+Pending sequence 10, to publish byte-for-byte only after this ledger commit is
+confirmed:
+
+```json
+{"protocol":"agentic-bridge/1","sequence":10,"command_id":"47ac6cf4-8d27-4d87-b4f1-b3d61cf6b10a","task_id":"TEMPLATE-TRUST-BOUNDARY-001","kind":"finalize","arguments":{"message":"Finalize the already reviewed developer source for TEMPLATE-TRUST-BOUNDARY-001. First synchronize safely to remote developer 4d3aa8c340ab1503443b14e155b24c52e640194f. Do not change product behavior or the approved task-record bytes. Move docs/work/current/TEMPLATE-TRUST-BOUNDARY-001-scout-trust-boundary.md to the same basename under docs/work/archive/ with git mv; the current approved blob is e9ce0154342cade46ca3a21299295ccd56f18bff and the archive target must not already exist. Preserve that blob exactly, run proportional repository checks, push the finalization commit, and return the normal six-field handoff. Do not modify main or web-orchestration and do not promote."}}
+```
 
 ## Checks performed by orchestrator
 
-Authenticated exact refs/source-lock; full task-start→`f8ed4a7e...` file map; current AWT-002/Scout source/tests/docs; pinned OpenCode 1.18.16 instruction/config/tool/runtime/npm/LSP/read behavior; package generator/validator/apply/tests; and Project scouting Source were independently inspected. No Scout result was used.
+- Exact current refs were re-established before continuation.
+- Full developer task-start range and high-risk trust boundaries were inspected
+  directly; no Scout output was accepted as proof.
+- GitHub Actions job logs for the failed implementation run were read exactly:
+  83/84 tests passed and the sole failure was the private-directory test fixture.
+- Direct correction `080dbf883cd6e567db7db934816b3f526ba17325`
+  changes only the fixture mode; direct correction
+  `8941c2f89a595b16835a5326e42d5a1ec9d7a32c` adds only the per-start
+  synchronization/origin gate.
+- GitHub Actions run `31902255588` for `8941c2f...` succeeded.
+- Task-record bookkeeping commit
+  `4d3aa8c340ab1503443b14e155b24c52e640194f` changes only the developer task
+  record and Actions run `31902314637` succeeded.
+- Web-orchestration changed-file range was independently reviewed and matches the
+  hardened runtime contract.
+- `main` remains exactly `6127611113dfdb66f93a0cfd2d355359aa370833`.
+
+## Blockers / decisions
+
+No developer/web source blocker remains. The tracked template-maintenance tree has
+validation CI but no remote workflow that performs package generation/commit; AWT-001
+and the final deterministic package still require the repository-owned maintainer
+execution route or an equivalent authorized local execution surface. A package
+will not be hand-built through GitHub API writes.
 
 ## Remaining work
 
-Implement and review the developer hardened runtime directly; run/read CI and focused adversarial checks; archive/finalize developer task record if required. Then make the minimal web-orchestration Source change; implement/review AWT-001 on template-development; genuinely run/validate `create-change-package.mjs`; reconcile source-lock/durable records; return exact remote handoffs. Never modify/promote `main`.
+Publish/reconcile developer sequence-10 finalization and prove the archive move
+preserved blob `e9ce0154342cade46ca3a21299295ccd56f18bff`. Then implement/review AWT-001
+package provenance on `template-development`; genuinely execute and validate
+`scripts/create-change-package.mjs` for developer/web review-base-to-final ranges;
+reconcile `source-lock.json`, maintenance AS-BUILT/deviations, exact source/package
+SHAs, and keep `main` unchanged.
+
+## Next action
+
+Confirm this ledger commit remotely, publish exact sequence 10 on issue #26, and
+absorb the finalization handoff before any new template-development source
+mutation.
 
 ## Last handoff commit
 
-Developer navigation snapshot `f8ed4a7e570ff173dc6c8dbbc533735916f8ed41` (`needs decision`, not accepted completion).
+- developer reviewed bookkeeping handoff:
+  `4d3aa8c340ab1503443b14e155b24c52e640194f`
+- web-orchestration reviewed source:
+  `6a7793738bcb12b92bc7a7bc43fde1fcebe61e35`
