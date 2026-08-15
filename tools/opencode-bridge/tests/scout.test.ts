@@ -277,7 +277,7 @@ test("Scout start fails before inspected-ref or unrelated runtime configuration 
 test("hardened Scout start uses the trusted agent and exact snapshot client", async (context) => {
   const { root, state, projection } = fixture(context);
   const workspace = join(root, "private", "scout-snapshots", refSha);
-  mkdirSync(workspace, { recursive: true });
+  mkdirSync(workspace, { recursive: true, mode: 0o700 });
   const workspaces = new ScoutWorkspaceManager(root, join(root, "private", "bridge.sqlite"), { fetchOrigin: false });
   workspaces.prepare = async (ref) => {
     assert.equal(ref, refSha);
