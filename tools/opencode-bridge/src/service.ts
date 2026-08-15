@@ -266,6 +266,7 @@ export class BridgeService {
       clientFor: (workspace) => scoutClient(config, manifest, workspace),
       state: this.state,
       assertReady: async () => {
+        await synchronizedGitState(config);
         await this.scoutServer.start();
         await probeScoutServer(scoutClient(config, manifest, config.opencode.scoutRuntimeRoot));
       },
