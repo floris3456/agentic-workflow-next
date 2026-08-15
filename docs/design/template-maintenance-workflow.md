@@ -38,11 +38,13 @@ operating workflow.
    explicitly not provenance-verified.
 8. Apply each patch to the downstream matching branch under a new normal task.
 9. Review downstream exact ranges and use ordinary human-only promotion.
-10. Reconcile `source-lock.json` to the intended reviewed source heads only after
-    the package has captured the prior review-base snapshot. A branch may already
-    contain later unrelated commits; those are not implied to belong to the task
-    merely because they are current canonical tips. Update integrated records and
-    archive the approved maintenance task.
+10. Only after the package has captured the prior review-base snapshot, reconcile
+    `source-lock.json` to the canonical branch tips observed during generation.
+    This makes the next maintenance task start from the actual current canonical
+    state without changing this package's exact reviewed range. Later unrelated
+    commits represented by those tips are provenance/baseline state, not implied
+    members of the packaged task. Update integrated records and archive the
+    approved maintenance task.
 
 ## One-request experience
 
