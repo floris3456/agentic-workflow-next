@@ -66,20 +66,24 @@ New packages use manifest schema 2. Before any package output, the generator:
    bases;
 3. creates a sterile temporary bare Git repository with isolated HOME/XDG/global
    Git configuration and no interactive credential prompt;
-4. fetches the canonical `developer` and `web-orchestration` branch tips directly
-   from `source-lock.json`'s canonical repository URL;
-5. requires the requested heads to equal those freshly fetched canonical tips and
-   the locked bases to be ancestors of those heads; and
-6. generates changed paths and patch bytes only from the fetched object database,
-   never from the caller-supplied repository's objects.
+4. fetches the current canonical `developer` and `web-orchestration` branch tips
+   directly from `source-lock.json`'s canonical repository URL;
+5. requires each exact reviewed package head to resolve from that fetched
+   canonical branch history and to be an ancestor of (or equal to) its observed
+   current tip; the locked base must be an ancestor of the reviewed head; and
+6. generates changed paths and patch bytes only from the fetched object database
+   for the exact locked-base-to-reviewed-head range, never from the caller-
+   supplied repository's objects and never by silently widening to later
+   unrelated branch commits.
 
 The schema-2 manifest embeds the exact source-lock snapshot, a SHA-256 of its
-canonicalized JSON form, the fetched canonical heads, exact range metadata, sorted
-changed paths, and each patch SHA-256. `package_sha256` then binds the stable
-manifest core and both raw patch byte streams with a versioned domain separator.
+canonicalized JSON form, the observed canonical tips, explicit reviewed-head-
+ancestor relationship markers, exact range metadata, sorted changed paths, and
+each patch SHA-256. `package_sha256` then binds the stable manifest core and both
+raw patch byte streams with a versioned domain separator.
 `scripts/change-package-lib.mjs` is the shared offline verifier used by generation,
 application, and ledger validation; it recomputes the source-lock, patch, range,
-and package bindings without network access.
+provenance-field, and package bindings without network access.
 
 Historical schema-1 packages remain accepted for compatibility only after their
 original range shape and per-patch SHA-256 checks pass. Their validation result is
@@ -121,9 +125,10 @@ the ledger branch.
   rules, forbidden source-tree absence, executable bits, and every committed
   schema-1/schema-2 package through the shared verifier.
 - `tests/change-package.test.mjs`: deterministic schema-2 generation from simulated
-  canonical fetched heads; deceptive-origin, wrong-base, stale/local-only-head,
-  provenance/patch/package-tamper rejection; legacy schema-1 compatibility; and
-  downstream dry-run/application boundaries.
+  canonical fetched history; deceptive-origin and wrong-base rejection;
+  preservation of a reviewed head when the canonical branch later advances;
+  local-only/forged-head rejection; provenance/patch/package-tamper rejection;
+  legacy schema-1 compatibility; and downstream dry-run/application boundaries.
 - `scripts/validate-template-development.sh`: both checks plus `git diff --check`.
 
 The first end-to-end maintenance exercise, `TEMPLATE-SMOKE-RESPONSE-001`, used
@@ -207,11 +212,13 @@ required task-ID/open-issue reconciliation. The package validator and negative
 tests enforce both boundaries without phrase-locking the craft taxonomy.
 
 `TEMPLATE-TRUST-BOUNDARY-001` hardens the two reusable trust-transfer surfaces.
-Developer source now authenticates Git host plus owner/repository and runs
-read-only Scouts through a separate pinned runtime with bridge-owned prompt/tools
-and immutable exact-ref Git-object snapshots. On this ledger branch, package
-schema 2 closes the complementary provenance gap: locked review bases and freshly
-fetched canonical heads define the package range, canonical fetched objects define
-the patch bytes, and an offline package digest binds the embedded lock/provenance
-and both patches. Historical schema 1 remains compatibility-only rather than
-being silently upgraded in evidential meaning.
+Developer source authenticates Git host plus owner/repository and runs read-only
+Scouts through a separate pinned runtime with bridge-owned prompt/tools and
+immutable exact-ref Git-object snapshots. On this ledger branch, package schema 2
+closes the complementary provenance gap: locked review bases and exact reviewed
+heads define the package range, freshly fetched current branch tips prove those
+heads still belong to canonical branch history without pulling in later unrelated
+commits, canonical fetched objects define the patch bytes, and an offline package
+digest binds the embedded lock/provenance and both patches. Historical schema 1
+remains compatibility-only rather than being silently upgraded in evidential
+meaning.
