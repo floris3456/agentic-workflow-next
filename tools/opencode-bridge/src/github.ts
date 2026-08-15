@@ -10,6 +10,7 @@ import {
 } from "./protocol.js";
 import { BridgeState } from "./state.js";
 import { asJson, asRecord, backoff, errorMessage, isRecord, sha256, sleep } from "./util.js";
+import { parseGitHubApiBase } from "./repository-identity.js";
 
 export interface GitHubClientOptions {
   owner: string;
@@ -46,12 +47,6 @@ export class GitHubHttpError extends Error {
     super(`GitHub REST request failed with HTTP ${status}: ${responseBody.slice(0, 500)}`);
     this.name = "GitHubHttpError";
   }
-}
-
-function apiBase(value: string): URL {
-  const url = new URL(value.endsWith("/") ? value : `${value}/`);
-  if (url.protocol !== "https:" || url.username || url.password) throw new Error("GitHub API base URL must be credential-free HTTPS");
-  return url;
 }
 
 function repositoryPart(value: string, label: string): string {
@@ -111,7 +106,7 @@ export class GitHubClient {
     this.tokens = options.tokens;
     this.state = options.state;
     this.fetchImpl = options.fetch ?? fetch;
-    this.apiBaseUrl = apiBase(options.apiBaseUrl ?? "https://api.github.com");
+    this.apiBaseUrl = parseGitHubApiBase(options.apiBaseUrl ?? "https://api.github.com");
     this.now = options.now ?? Date.now;
     this.timeoutMs = options.timeoutMs ?? 15_000;
   }

@@ -22,11 +22,14 @@ This repository uses a human-controlled web-orchestrated implementation system w
 
 The normal implementation route uses `small-developer` (GPT 5.6 Luna, maximum supported applicable reasoning tier). `large-developer` (GPT 5.6 Sol, high effort) is selected only by the web orchestrator after two substantive Luna failures or for exceptional intrinsic complexity. Environmental failures, external blockers, missing information, and poor task design do not consume attempts.
 
-`repository-scout` is a separate Luna/high primary agent selected directly for
-focused read-only fact finding. Its resolved runtime contract enables only
-repository read/search tools and denies shell, Git/file mutation, delegation,
-skills, web, interaction, todo, and external-directory access. It never replaces
-direct GitHub evidence or performs orchestration synthesis.
+The intended repository Scout remains a separate Luna/high focused fact finder,
+but it is not currently launchable. The ref-owned tracked agent was removed and
+the bridge fails before checkout or OpenCode contact because pinned OpenCode
+`1.18.16` cannot prove instruction independence and process-free reads: built-in
+read attaches repository instructions and warms LSP, while config startup may
+install packages. A bridge-owned in-process read/glob/grep runtime or separately
+audited isolation dependency requires human architecture approval. Direct GitHub
+evidence remains the available independent route.
 
 This routing rule is an orchestration policy, not a permanent validator rule about the number of files under `.opencode/agents/`.
 
@@ -42,13 +45,14 @@ the ordinary record. The web branch also provides a public-safe Project
 installation package; installed private Project state remains outside Git.
 
 The Project keeps genuinely distinct operating modes. MCP-ON/Sol uses connected
-GitHub for quick exact evidence, authenticated bridge control and continuity
-writes, one mutating developer task, and focused concurrent Luna/high read-only
-Scouts when broad local exploration saves time. MCP-OFF/Pro uses only public-web
-navigation and reasoning and cannot claim Scouts, delegation, bridge control, or
-state writes. Scouting and verification scale with size, complexity, uncertainty,
-risk, blast radius, reversibility, and stakes; high-stakes manageable changes
-receive direct inspection of all relevant GitHub files/diffs even if Scouts help.
+GitHub for exact evidence, authenticated bridge control and continuity writes,
+and one mutating developer task. Its intended concurrent Luna/high Scout route is
+currently unavailable and must not be claimed; connected GitHub is the independent
+evidence route until the runtime decision is resolved. MCP-OFF/Pro uses only
+public-web navigation and reasoning and cannot claim Scouts, delegation, bridge
+control, or state writes. Scouting and verification scale with size, complexity,
+uncertainty, risk, blast radius, reversibility, and stakes; high-stakes manageable
+changes receive direct inspection of all relevant GitHub files/diffs.
 The permanent Project instructions retain universally triggered safety/authority
 boundaries and route detailed mechanics to the exact narrowly triggered Source
 inventory owned by the independent package, including one exceptional
@@ -59,30 +63,26 @@ GitHub mutating commands use durable UUID/sequence semantics rather than direct-
 The accepted command ledger is the one active sequence authority; its maximum
 task sequence is derived within transactional admission instead of materialized
 in a second counter. Repository ambiguity freezes command dispatch but leaves
-task-bound recovery reads and read-only Scouts available to resolve it. Restart
-recomputes interrupted local status requests under the same UUID, while command
-mutations and `scout.start` retain their fail-closed no-replay behavior.
+task-bound recovery reads available. Restart recomputes interrupted local status
+requests under the same UUID, while command mutations retain fail-closed
+no-replay behavior and `scout.start` fails before unsafe side effects.
 
 When a mapped developer session idles or errors, the bridge atomically persists the event/cursor/session-state/delivery boundary, transports the structurally latest assistant message through the existing public-safety projection to the bound issue, and retains it for `task.status` recovery. The bridge does not interpret or semantically validate that response. The web orchestrator correlates it to the task, checks its explicit developer status/handoff information, and uses exact remote GitHub evidence to decide whether review can begin.
 
-Canonical reconciliation is focused on recoverable evidence: pending permission
-and question lists restore mapped interaction events, and the Scout-only
-status/message fallback restores terminal Scout lifecycle. The bridge does not
-materialize an unused whole-project reconciliation snapshot or infer workflow
-meaning from either path.
+Canonical reconciliation is focused on recoverable developer evidence: pending
+permission and question lists restore mapped interaction events. Historical
+Scout recovery logic remains state-compatible but is not invoked through an
+unsafe inspected-ref/normal-runtime client. The bridge does not materialize an
+unused whole-project reconciliation snapshot or infer workflow meaning.
 
-Scout starts extend the sequence-free request lane rather than the mutating task
-lifecycle. Each request carries a focused question, exact remote developer SHA,
-scope, and expected evidence; a clean detached worktree and independent
-task/request/session mapping isolate it. Scout work can run concurrently without
-an orchestration-policy cap and can coexist with the one mutating developer task.
-Recovery monitoring begins as soon as the mapping is durable, before prompt
-delivery can become ambiguous, and never replays the prompt. Because the pinned
-runtime exposes empty v2 history for legacy-created sessions, monitoring also
-uses the exact Scout workspace's legacy stream and a canonical status/message
-fallback that requires terminal lifecycle metadata without reading response
-meaning. Idle/error results reuse public projection and durable delivery, while
-synthesis stays in the web orchestrator.
+Scout requests retain the sequence-free lane, exact request shape, concurrent
+admission, durable status, and no-replay behavior. Launch fails immediately with
+the hardened-runtime reason, before workspace preparation or OpenCode contact.
+The future workspace primitive is hook-disabled, detached, clean, exact-ref, and
+realpath-contained, but it is not sufficient by itself. A replacement runtime
+must own the model/instructions/permissions/evidence contract, provide in-process
+contained read/glob/grep without LSP, package installation, ref-controlled
+processes, or downloads, and preserve the existing durable correlation contract.
 
 ## Synchronization and handoff
 

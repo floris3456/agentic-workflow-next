@@ -167,12 +167,19 @@ for (const file of ["small-developer.md", "large-developer.md"]) {
   }
 }
 
-const scoutAgent = read(
-  path.join(repositoryRoot, ".opencode/agents/repository-scout.md"),
-  "repository Scout agent",
+if (fs.existsSync(path.join(repositoryRoot, ".opencode/agents/repository-scout.md"))) {
+  fail("Developer Scout trust contract must not be owned by the inspected repository ref");
+}
+const scoutSource = read(
+  path.join(repositoryRoot, "tools/opencode-bridge/src/scout.ts"),
+  "developer Scout boundary",
 );
-for (const term of ["model: openai/gpt-5.6-luna", "reasoningEffort: high", '"*": false', "external_directory: deny"]) {
-  if (!scoutAgent.includes(term)) fail(`Developer Scout contract is missing ${term}`);
+for (const term of ["Hardened Scout runtime is unavailable", "repository instructions", "package"] ) {
+  if (!scoutSource.includes(term)) fail(`Developer Scout fail-closed boundary is missing ${term}`);
+}
+if (!scoutSource.includes('allowedTools = new Set(["read", "glob", "grep"])')
+  || scoutSource.includes('"read", "glob", "grep", "lsp"')) {
+  fail("Developer Scout boundary must exclude LSP");
 }
 
 const bridgeProtocol = read(

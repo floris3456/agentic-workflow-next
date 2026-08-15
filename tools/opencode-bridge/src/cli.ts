@@ -98,7 +98,7 @@ async function main(): Promise<void> {
   if (command === "bootstrap") {
     const result = await checkBridge(config, !checkOnly);
     json(result);
-    if (!result.opencodeCompatible || Object.values(result.labels).includes("missing") || !result.stateReady) process.exitCode = 1;
+    if (!result.opencodeCompatible || !result.scoutRuntimeReady || Object.values(result.labels).includes("missing") || !result.stateReady) process.exitCode = 1;
     return;
   }
   if (command === "attach") {

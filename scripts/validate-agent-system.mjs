@@ -58,7 +58,6 @@ try {
 for (const [file, model, effort] of [
   [".opencode/agents/small-developer.md", "openai/gpt-5.6-luna", "max"],
   [".opencode/agents/large-developer.md", "openai/gpt-5.6-sol", "high"],
-  [".opencode/agents/repository-scout.md", "openai/gpt-5.6-luna", "high"],
 ]) {
   assert(exists(file), `Missing approved developer definition: ${file}`);
   if (!exists(file)) continue;
@@ -70,18 +69,13 @@ for (const [file, model, effort] of [
   assert(/\n\s*task:\s*deny\s*\n/.test(text), `${file} must deny task launches`);
 }
 
-const scout = read(".opencode/agents/repository-scout.md");
-for (const tool of ["bash", "edit", "task", "skill", "webfetch", "websearch", "question", "todowrite", "external_directory"]) {
-  assert(new RegExp(`\\n\\s*${tool}:\\s*deny\\s*\\n`).test(scout), `repository-scout must enforce ${tool}: deny`);
-}
-for (const tool of ["read", "glob", "grep", "lsp"]) {
-  assert(new RegExp(`\\n\\s*${tool}:\\s*(?:true|allow)\\s*\\n`).test(scout), `repository-scout must expose read-only ${tool}`);
-}
-assert(/\ntools:\n\s+"\*": false\n/.test(scout), "repository-scout must disable undeclared tools");
-assert(scout.includes("exact paths, symbols, and line references") && scout.includes("explicit unknowns"),
-  "repository-scout prompt must require focused factual evidence and unknowns");
-assert(scout.includes("Do not synthesize an") && scout.includes("orchestration decision"),
-  "repository-scout prompt must retain synthesis in the web orchestrator");
+assert(!exists(".opencode/agents/repository-scout.md"),
+  "repository-scout must not be ref-owned; the bridge must fail closed until a hardened runtime exists");
+const scoutSource = read("tools/opencode-bridge/src/scout.ts");
+assert(scoutSource.includes("allowedTools = new Set([\"read\", \"glob\", \"grep\"])") && !scoutSource.includes("\"read\", \"glob\", \"grep\", \"lsp\""),
+  "Scout contract must exclude LSP");
+assert(scoutSource.includes("Hardened Scout runtime is unavailable") && scoutSource.includes("repository instructions") && scoutSource.includes("package"),
+  "Scout start must expose the pinned-runtime isolation blocker");
 
 const skills = new Set(listSkillNames());
 for (const requiredSkill of [

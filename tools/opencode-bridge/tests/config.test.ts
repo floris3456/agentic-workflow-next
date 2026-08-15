@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import test from "node:test";
 import { loadBridgeConfig } from "../src/config.js";
+import { bridgeStatus } from "../src/service.js";
 
 function setup(context: test.TestContext): { root: string; configFile: string; document: Record<string, unknown> } {
   const root = mkdtempSync(join(tmpdir(), "bridge-config-test-"));
@@ -54,10 +55,29 @@ test("configuration loads local secrets without exposing them in tracked setting
   assert.equal(config.instanceId, "example-repository");
   assert.equal(config.opencode.password, "local-password");
   assert.equal(config.github.privateKey.includes("PRIVATE KEY"), true);
+  assert.equal(config.github.apiBaseUrl, "https://api.github.com/");
+  assert.equal(config.github.gitHost, "github.com");
   assert.deepEqual(config.policy.allowedMutations, ["session.prompt_async"]);
   assert.equal(config.policy.resolveSecret("provider"), "provider-value");
   assert.throws(() => config.policy.resolveSecret("missing"), /Unknown local secret_ref/);
   assert.equal(config.manifestFile, resolve(join(config.repositoryRoot, "contracts", "opencode-bridge", "operation-manifest.json")));
+});
+
+test("configuration requires an unambiguous Git host for custom API bases", (context) => {
+  const { configFile, document } = setup(context);
+  const github = document.github as Record<string, unknown>;
+  github.api_base_url = "https://api.enterprise.example/custom/";
+  writeFileSync(configFile, `${JSON.stringify(document)}\n`, { mode: 0o600 });
+  assert.throws(() => loadBridgeConfig(configFile), /git_host is required/);
+
+  github.git_host = "git.enterprise.example";
+  writeFileSync(configFile, `${JSON.stringify(document)}\n`, { mode: 0o600 });
+  assert.equal(loadBridgeConfig(configFile).github.gitHost, "git.enterprise.example");
+
+  github.api_base_url = "https://git.enterprise.example/api/v3";
+  github.git_host = "other.enterprise.example";
+  writeFileSync(configFile, `${JSON.stringify(document)}\n`, { mode: 0o600 });
+  assert.throws(() => loadBridgeConfig(configFile), /conflicts/);
 });
 
 test("configuration rejects public permissions, tracked state, and unsafe polling", (context) => {
@@ -76,4 +96,13 @@ test("configuration rejects public permissions, tracked state, and unsafe pollin
   github.active_interval_ms = 1_000;
   writeFileSync(configFile, `${JSON.stringify(document)}\n`, { mode: 0o600 });
   assert.throws(() => loadBridgeConfig(configFile), /at least 5000ms/);
+});
+
+test("status reports the hardened Scout runtime blocker before state initialization", (context) => {
+  const { configFile } = setup(context);
+  const status = bridgeStatus(loadBridgeConfig(configFile)) as Record<string, unknown>;
+  assert.equal(status.initialized, false);
+  const boundary = status.scout_runtime as Record<string, unknown>;
+  assert.equal(boundary.ready, false);
+  assert.match(String(boundary.reason), /Hardened Scout runtime/);
 });

@@ -23,17 +23,16 @@ In MCP-ON mode it uses:
   public-safe bridge-control actions, ordinary continuity writes limited to
   `task-context/**`, and explicit template-maintenance continuity under
   `docs/work/current/**` on `template-development`;
-- direct GitHub inspection for exact evidence, with targeted concurrent OpenCode
-  Scouts when broader local exploration saves time; and
+- direct GitHub inspection for exact evidence; and
 - the outbound local GitHub App bridge to reach OpenCode indirectly for implementation delegation, steering, recovery, finalization, and guarded promotion.
 
 In MCP-OFF mode it uses the public GitHub website for repository inspection and cannot pretend delegation or direct orchestration writes occurred.
 
-For a quick exact lookup MCP-ON uses connected GitHub directly. It launches
-focused Scouts only when broad/local exploration or independent partitioning
-saves time. Review and verification are proportional to change size, complexity,
-uncertainty, risk, blast radius, reversibility, and stakes. High-stakes work keeps
-an independent direct-GitHub evidence boundary even when Scouts contribute.
+For exact lookup MCP-ON uses connected GitHub directly. The intended focused
+Scout route is unavailable until the hardened-runtime decision is resolved and
+must not be represented as having run. Review and verification are proportional
+to change size, complexity, uncertainty, risk, blast radius, reversibility, and
+stakes.
 
 ## Local implementation
 
@@ -42,19 +41,21 @@ The current approved implementation agents are:
 - `small-developer`: default, configured-provider GPT 5.6 Luna at `max` reasoning effort;
 - `large-developer`: exceptional path, configured-provider GPT 5.6 Sol at `high` reasoning effort.
 
-The separate `repository-scout` is a directly selected primary OpenCode agent
-using GPT 5.6 Luna at `high` reasoning effort. It is not an implementation agent:
-only repository read/search tools are enabled, mutations and delegation are
-denied by the resolved tool/permission surface, and it produces focused facts and
-unknowns rather than orchestration synthesis.
+No ref-owned `repository-scout` agent is tracked. The intended Scout remains a
+Luna/high non-implementation role, but bridge launch fails before checkout or
+OpenCode contact because pinned OpenCode `1.18.16` cannot provide the required
+independent read/search boundary. A future bridge/runtime-owned contract must
+provide only contained in-process read/glob/grep and focused facts/unknowns; LSP,
+shell, mutation, delegation, skills, web, interactions, package installation,
+ref-controlled processes, and downloads remain forbidden.
 
 The web orchestrator chooses the agent. Local developers do not launch subagents, review their own work, select escalation, or accept changes.
 
 Both implementation developers explicitly allow OpenCode's structured question
 tool when a human answer is required. This produces a task-correlated event and
 public alias that the web orchestrator can answer through `question.reply`;
-ordinary assistant prose is not a substitute. The read-only Scout continues to
-deny questions and cannot enter this interaction path.
+ordinary assistant prose is not a substitute. A future read-only Scout must deny
+questions and cannot enter this interaction path.
 
 The bridge is transport and local durability, not a new authority. It maps public task aliases to private OpenCode sessions, projects bounded status, and invokes Luna/Sol against the same loopback server a human can attach to with the normal TUI. Direct GitHub inspection remains the proof route.
 
@@ -73,12 +74,21 @@ No normal merge crosses between `web-orchestration` and implementation branches.
 
 ## Scouting boundary
 
-The OpenCode Scout transport is authorized through the GitHub issue lane but has
-its own request/session lifecycle rather than mutating task progress,
+The OpenCode Scout request lane remains separate from mutating task progress,
 finalization, or promotion. Each request names a focused question, exact remote
-developer SHA, scope, and expected evidence. Exact-ref detached worktrees and
-task/request-correlated aliases/results prevent developer-checkout or cross-task
-leakage. Any useful number may run concurrently with one mutating developer task.
+developer SHA, scope, and expected evidence, and concurrent request admission and
+task/request status remain durable. Launch currently fails closed before checkout
+or OpenCode contact. The retained workspace primitive disables Git hooks and
+global/system Git config, verifies exact detached cleanliness, enforces private
+realpath containment including symlink targets, and disposes invalid snapshots.
+It is not treated as a complete runtime boundary.
+
+The blocker is concrete in pinned upstream behavior: built-in read attaches
+nearby repository instruction files and warms LSP, while config initialization
+may install packages. Therefore project-config disablement, `--pure`, permissions,
+and isolated global paths cannot establish the required trust boundary. Bootstrap
+and status expose this unavailable state; no normal developer OpenCode behavior
+or TUI configuration is changed.
 
 The configured optional symbol scout is likewise non-authoritative context.
 `.jcodemunch.jsonc` uses strict freshness and excludes evidence, research,

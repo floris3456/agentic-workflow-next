@@ -22,6 +22,7 @@ const required = [
   "tools/opencode-bridge/config.example.json",
   "tools/opencode-bridge/README.md",
   "tools/opencode-bridge/AS-BUILT.md",
+  "tools/opencode-bridge/src/repository-identity.ts",
 ];
 for (const file of required) assert(fs.existsSync(path.join(root, file)), `Missing bridge file ${file}`);
 
@@ -65,6 +66,15 @@ try {
   assert(packageLock.packages?.[""]?.dependencies?.["@opencode-ai/sdk"] === "1.18.16", "Lockfile SDK version is not exact");
   assert(example.schema_version === 1 && example.policy?.pty_enabled === false && example.policy?.promotion_enabled === false, "Example config must default-deny PTY and promotion");
   assert(!/-----BEGIN (?:[A-Z]+ )?PRIVATE KEY-----/.test(read("tools/opencode-bridge/config.example.json")), "Example config appears to contain a private key");
+  const scout = read("tools/opencode-bridge/src/scout.ts");
+  assert(scout.includes('allowedTools = new Set(["read", "glob", "grep"])'), "Scout read/search contract changed without review");
+  assert(!scout.includes('"read", "glob", "grep", "lsp"'), "Scout contract must not allow LSP");
+  assert(scout.includes("Hardened Scout runtime is unavailable") && scout.includes("repository instructions") && scout.includes("install"), "Scout unavailable boundary is not explicit");
+  assert(!fs.existsSync(path.join(root, ".opencode/agents/repository-scout.md")), "Scout trusted contract must not be ref-owned");
+  const identity = read("tools/opencode-bridge/src/repository-identity.ts");
+  for (const term of ["api.github.com", "/api/v3", "git_host", "ssh://", "git@host", "userinfo"]) {
+    assert(identity.includes(term), `Repository identity boundary is missing ${term}`);
+  }
 } catch (error) {
   failures.push(`Bridge JSON validation failed: ${error.message}`);
 }

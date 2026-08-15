@@ -1,24 +1,57 @@
 import { execFile } from "node:child_process";
-import { existsSync, lstatSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
-import { OpenCodeClient } from "./opencode.js";
-import { IndeterminateRequestError } from "./requests.js";
-import { BridgeState } from "./state.js";
+import { existsSync, lstatSync, readdirSync, realpathSync, rmSync } from "node:fs";
+import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import type { JsonValue, StoredRequest } from "./types.js";
-import { asRecord, ensurePrivateDirectory, errorMessage, isRecord } from "./util.js";
+import { asRecord, ensurePrivateDirectory, isRecord } from "./util.js";
 
 const scoutAgent = "repository-scout";
 const exactSha = /^[0-9a-f]{40}$/;
-const allowedTools = new Set(["read", "glob", "grep", "lsp"]);
-const deniedMcpResourceTools = ["list_mcp_resources", "list_mcp_resource_templates", "read_mcp_resource"] as const;
+const allowedTools = new Set(["read", "glob", "grep"]);
 const deniedPermissions = [
   "edit", "bash", "task", "skill", "webfetch", "websearch", "question",
   "todowrite", "external_directory",
 ] as const;
 
+const hardenedRuntimeUnavailable = "Hardened Scout runtime is unavailable: pinned OpenCode 1.18.16 built-in read attaches repository instructions and starts LSP warm-up, while configuration startup may install packages; a separate bridge-owned in-process evidence tool/runtime is required";
+
+export function scoutRuntimeBoundary(): { ready: false; reason: string } {
+  return { ready: false, reason: hardenedRuntimeUnavailable };
+}
+
+function safeGitEnvironment(): NodeJS.ProcessEnv {
+  const env = { ...process.env };
+  for (const name of Object.keys(env)) {
+    if (name.startsWith("GIT_CONFIG_") || name === "GIT_DIR" || name === "GIT_WORK_TREE" || name === "GIT_INDEX_FILE"
+      || name === "GIT_SSH" || name === "GIT_SSH_COMMAND" || name === "GIT_ASKPASS" || name === "SSH_ASKPASS") {
+      delete env[name];
+    }
+  }
+  return {
+    ...env,
+    GIT_CONFIG_NOSYSTEM: "1",
+    GIT_CONFIG_GLOBAL: process.platform === "win32" ? "NUL" : "/dev/null",
+    GIT_ATTR_NOSYSTEM: "1",
+    GIT_TERMINAL_PROMPT: "0",
+  };
+}
+
 function execute(command: string, args: string[], cwd: string): Promise<string> {
+  const commandArgs = command === "git"
+    ? [
+        "-c", `core.hooksPath=${process.platform === "win32" ? "NUL" : "/dev/null"}`,
+        "-c", "core.fsmonitor=false",
+        "-c", "credential.helper=",
+        "-c", "protocol.file.allow=never",
+        ...args,
+      ]
+    : args;
   return new Promise((resolvePromise, reject) => {
-    execFile(command, args, { cwd, timeout: 60_000, maxBuffer: 2 * 1024 * 1024 }, (error, stdout, stderr) => {
+    execFile(command, commandArgs, {
+      cwd,
+      env: safeGitEnvironment(),
+      timeout: 60_000,
+      maxBuffer: 2 * 1024 * 1024,
+    }, (error, stdout, stderr) => {
       if (error) {
         const detail = String(stderr || stdout).trim();
         reject(new Error(detail ? `${error.message}: ${detail}` : error.message));
@@ -27,6 +60,33 @@ function execute(command: string, args: string[], cwd: string): Promise<string> 
       resolvePromise(String(stdout).trim());
     });
   });
+}
+
+function contained(root: string, candidate: string): boolean {
+  const fromRoot = relative(root, candidate);
+  return fromRoot === "" || (!fromRoot.startsWith("..") && !isAbsolute(fromRoot));
+}
+
+function assertRealpathContainment(workspace: string): void {
+  const root = realpathSync(workspace);
+  const visit = (directory: string): void => {
+    for (const entry of readdirSync(directory, { withFileTypes: true })) {
+      const path = join(directory, entry.name);
+      const stat = lstatSync(path);
+      if (stat.isSymbolicLink()) {
+        let target: string;
+        try {
+          target = realpathSync(path);
+        } catch {
+          throw new Error(`Scout workspace contains an unresolved symlink: ${relative(root, path)}`);
+        }
+        if (!contained(root, target)) throw new Error(`Scout workspace symlink escapes the exact-ref root: ${relative(root, path)}`);
+      } else if (stat.isDirectory()) {
+        visit(path);
+      }
+    }
+  };
+  visit(root);
 }
 
 function wildcard(pattern: string, value: string): boolean {
@@ -152,18 +212,34 @@ export function assertScoutAgentContract(agentValue: JsonValue | undefined, tool
 export class ScoutWorkspaceManager {
   readonly root: string;
   private readonly repositoryRoot: string;
+  private readonly fetchOrigin: boolean;
   private readonly pending = new Map<string, Promise<string>>();
   private management: Promise<void> = Promise.resolve();
 
-  constructor(repositoryRoot: string, stateFile: string) {
+  constructor(repositoryRoot: string, stateFile: string, options: { fetchOrigin?: boolean } = {}) {
     this.repositoryRoot = resolve(repositoryRoot);
     this.root = join(dirname(stateFile), "scout-worktrees");
+    this.fetchOrigin = options.fetchOrigin !== false;
+  }
+
+  private async dispose(workspace: string): Promise<void> {
+    try {
+      await execute("git", ["worktree", "remove", "--force", workspace], this.repositoryRoot);
+    } catch {
+      rmSync(workspace, { recursive: true, force: true });
+      try {
+        await execute("git", ["worktree", "prune", "--expire", "now"], this.repositoryRoot);
+      } catch {
+        // A failed cleanup never makes a workspace reusable; the original
+        // validation error remains the actionable boundary failure.
+      }
+    }
   }
 
   private async create(refSha: string): Promise<string> {
     if (!exactSha.test(refSha)) throw new TypeError("Scout ref must be an exact lowercase commit SHA");
     ensurePrivateDirectory(this.root);
-    await execute("git", ["fetch", "--no-tags", "origin", "developer"], this.repositoryRoot);
+    if (this.fetchOrigin) await execute("git", ["fetch", "--no-tags", "origin", "developer"], this.repositoryRoot);
     await execute("git", ["cat-file", "-e", `${refSha}^{commit}`], this.repositoryRoot);
     try {
       await execute("git", ["merge-base", "--is-ancestor", refSha, "refs/remotes/origin/developer"], this.repositoryRoot);
@@ -177,13 +253,24 @@ export class ScoutWorkspaceManager {
       const entry = lstatSync(workspace);
       if (!entry.isDirectory() || entry.isSymbolicLink()) throw new Error("Scout workspace path is not a regular directory");
     }
-    const [head, status] = await Promise.all([
-      execute("git", ["rev-parse", "HEAD"], workspace),
-      execute("git", ["status", "--porcelain", "--untracked-files=all"], workspace),
-    ]);
-    if (head !== refSha) throw new Error("Scout workspace does not match the requested exact ref");
-    if (status.length > 0) throw new Error("Scout workspace is not clean; it will not be reused");
-    return workspace;
+    try {
+      const canonicalRoot = realpathSync(this.root);
+      const canonicalWorkspace = realpathSync(workspace);
+      if (!contained(canonicalRoot, canonicalWorkspace)) throw new Error("Scout workspace realpath escapes the private workspace root");
+      const [head, status, ref] = await Promise.all([
+        execute("git", ["rev-parse", "HEAD"], workspace),
+        execute("git", ["status", "--porcelain", "--untracked-files=all"], workspace),
+        execute("git", ["branch", "--show-current"], workspace),
+      ]);
+      if (head !== refSha) throw new Error("Scout workspace does not match the requested exact ref");
+      if (ref.length > 0) throw new Error("Scout workspace is not detached at the requested exact ref");
+      if (status.length > 0) throw new Error("Scout workspace is not clean; it will not be reused");
+      assertRealpathContainment(canonicalWorkspace);
+      return canonicalWorkspace;
+    } catch (error) {
+      await this.dispose(workspace);
+      throw error;
+    }
   }
 
   prepare(refSha: string): Promise<string> {
@@ -197,101 +284,12 @@ export class ScoutWorkspaceManager {
   }
 }
 
-export interface ScoutRuntimeOptions {
-  state: BridgeState;
-  workspaces: ScoutWorkspaceManager;
-  clientFor: (workspace: string) => OpenCodeClient;
-  onSessionStarted?: (requestId: string) => void;
-}
-
-function text(input: Record<string, JsonValue>, name: string): string {
-  const value = input[name];
-  if (typeof value !== "string" || value.trim().length === 0) throw new TypeError(`Scout ${name} is required`);
-  return value.trim();
-}
-
-function sessionId(value: JsonValue | undefined): string {
-  if (!isRecord(value) || typeof value.id !== "string" || value.id.length === 0) {
-    throw new TypeError("OpenCode Scout session creation did not return an ID");
-  }
-  return value.id;
-}
-
-function prompt(request: StoredRequest, refSha: string): string {
-  const input = request.envelope.arguments;
-  return [
-    `Scout request: ${request.requestId}`,
-    `Task: ${request.taskId}`,
-    `Exact ref: ${refSha}`,
-    `Focused question: ${text(input, "question")}`,
-    `Bounded scope: ${text(input, "scope")}`,
-    `Expected evidence: ${text(input, "expected_evidence")}`,
-    "",
-    "Return only concise facts, exact paths/symbols/lines where useful, and explicit unknowns.",
-    "Do not make an orchestration decision or implementation recommendation.",
-  ].join("\n");
-}
-
 export class ScoutRuntime {
-  private readonly state: BridgeState;
-  private readonly workspaces: ScoutWorkspaceManager;
-  private readonly clientFor: (workspace: string) => OpenCodeClient;
-  private readonly onSessionStarted: ((requestId: string) => void) | undefined;
-
-  constructor(options: ScoutRuntimeOptions) {
-    this.state = options.state;
-    this.workspaces = options.workspaces;
-    this.clientFor = options.clientFor;
-    this.onSessionStarted = options.onSessionStarted;
-  }
-
-  async start(request: StoredRequest): Promise<JsonValue> {
-    const refSha = text(request.envelope.arguments, "ref");
-    const workspace = await this.workspaces.prepare(refSha);
-    const client = this.clientFor(workspace);
-    const compatibility = await client.compatibility();
-    if (!compatibility.compatible) throw new Error("OpenCode compatibility drift blocks Scout start");
-    const [agentInventory, availableTools] = await Promise.all([
-      client.request("app.agents"),
-      client.request("tool.ids"),
-    ]);
-    assertScoutAgentContract(agentInventory, availableTools);
-
-    const created = await client.request("session.create", {
-      body: { title: `Repository Scout ${request.requestId}`, agent: scoutAgent },
-    });
-    const internalSessionId = sessionId(created);
-    this.state.mapScoutSession({
-      requestId: request.requestId,
-      taskId: request.taskId,
-      sessionId: internalSessionId,
-      issueNumber: request.issueNumber,
-      refSha,
-      workspacePath: workspace,
-    });
-    // Monitoring begins from the durable mapping, before prompt delivery can
-    // become ambiguous. Recovery is read-only and never repeats the prompt.
-    this.onSessionStarted?.(request.requestId);
-    try {
-      await client.request("session.prompt_async", {
-        path: { sessionID: internalSessionId },
-        body: {
-          agent: scoutAgent,
-          tools: Object.fromEntries(deniedMcpResourceTools.map((name) => [name, false])),
-          parts: [{ type: "text", text: prompt(request, refSha) }],
-        },
-      });
-    } catch (error) {
-      throw new IndeterminateRequestError(
-        `Scout session was created, but prompt delivery was not proven: ${errorMessage(error)}`,
-      );
-    }
-    return {
-      status: "scout-started",
-      scout_request_id: request.requestId,
-      task_id: request.taskId,
-      ref: refSha,
-      session: internalSessionId,
-    };
+  async start(_request: StoredRequest): Promise<JsonValue> {
+    // OpenCode 1.18.16 cannot establish the required Scout boundary. Its
+    // built-in read tool resolves nearby repository instructions and warms LSP,
+    // and its config loader may run package installation. Do not fall back to
+    // the normal developer server or the inspected ref's tracked agent.
+    throw new Error(hardenedRuntimeUnavailable);
   }
 }

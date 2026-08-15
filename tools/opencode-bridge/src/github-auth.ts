@@ -1,5 +1,6 @@
 import { createSign } from "node:crypto";
 import { asRecord } from "./util.js";
+import { parseGitHubApiBase } from "./repository-identity.js";
 
 const githubApiVersion = "2026-03-10";
 
@@ -28,13 +29,6 @@ function base64url(value: string | Uint8Array): string {
   return Buffer.from(value).toString("base64url");
 }
 
-function assertApiBaseUrl(value: string): URL {
-  const url = new URL(value.endsWith("/") ? value : `${value}/`);
-  if (url.protocol !== "https:") throw new Error("GitHub API base URL must use HTTPS");
-  if (url.username || url.password) throw new Error("GitHub credentials must not be embedded in the API URL");
-  return url;
-}
-
 export class GitHubAppAuth implements InstallationTokenProvider {
   readonly apiBaseUrl: URL;
   private readonly appId: string;
@@ -57,7 +51,7 @@ export class GitHubAppAuth implements InstallationTokenProvider {
     this.repository = options.repository;
     this.privateKey = options.privateKey;
     this.fetchImpl = options.fetch ?? fetch;
-    this.apiBaseUrl = assertApiBaseUrl(options.apiBaseUrl ?? "https://api.github.com");
+    this.apiBaseUrl = parseGitHubApiBase(options.apiBaseUrl ?? "https://api.github.com");
     this.now = options.now ?? Date.now;
     this.timeoutMs = options.timeoutMs ?? 15_000;
   }

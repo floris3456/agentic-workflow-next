@@ -77,36 +77,36 @@ binding and unrelated poll work continue.
 | --- | --- | --- |
 | `command.status` | exact `command_id` UUID | matching task's exact ledger or pre-ledger-rejection state, known projected result/error, timestamps, applying age, and service heartbeat |
 | `task.status` | none | mapped session alias/agent/state and latest projected developer response plus event/update timestamps |
-| `scout.start` | exactly four fields: focused string `question`, exact lowercase 40-character SHA in `ref`, bounded string `scope`, and string `expected_evidence` | one request-correlated `repository-scout` session in a clean detached worktree at the fetched `origin/developer` commit |
+| `scout.start` | exactly four fields: focused string `question`, exact lowercase 40-character SHA in `ref`, bounded string `scope`, and string `expected_evidence` | currently an explicit hardened-runtime failure before checkout or OpenCode contact; UUID admission/no-replay semantics remain durable |
 | `scout.status` | exact `scout_request_id` UUID | matching task/request start state, exact ref, session state, and latest projected Scout response |
 
 `command.status`, `task.status`, and `scout.status` are local durable reads and
 never repeat work. A restart while one of these reads is applying requeues and
 recomputes it under the same request UUID from local state. `scout.start` creates
 and prompts at most one read-only session per request UUID; a restart while that
-request is applying marks it indeterminate and never repeats session creation or
-prompt delivery. As soon as session mapping
-is durable, recovery starts before prompt delivery and combines per-session v2
-history/SSE, workspace-scoped legacy SSE, and a canonical read-only
-`session.status` plus `session.messages` fallback. The fallback requires a
-completed assistant lifecycle with a terminal finish/error and a non-busy status;
-it does not inspect response text. Thus an accepted prompt with an ambiguous HTTP
-result or an empty upstream v2 history can still surface through `scout.status`
-without prompt replay. All results are navigation
+request is applying marks it indeterminate and never repeats a side effect.
+Current starts fail before workspace preparation, session creation, or prompt
+delivery because the pinned runtime cannot establish the required independent
+trust boundary. Historical mappings/results remain queryable locally but are not
+contacted through an inspected-ref client. All results are navigation
 and recovery evidence; they do not prove implementation completion, correctness,
 synchronization, review, or acceptance.
 
-The Scout runtime fetches `developer`, requires the exact requested commit to be
-in `origin/developer` history, creates or reuses a clean detached worktree outside
-the tracked tree, and binds the OpenCode client to that directory. Before session
-creation it verifies the resolved `repository-scout` contract: Luna, high
-reasoning effort, primary mode, only repository read/search tools enabled, and
-mutation, shell, delegation, skills, web, interaction, and external-directory
-permissions denied. The wildcard deny covers dynamic MCP tools that are absent
-from `tool.ids`; the three fixed MCP resource tool flags are also set false on
-the prompt because OpenCode maps them to the allowed native-read permission. The
-Scout prompt requires facts, exact paths/symbols/lines, and explicit unknowns and
-forbids orchestration synthesis.
+No ref-owned Scout agent is tracked. The retained future-runtime workspace
+primitive fetches `developer`, requires the exact requested commit in
+`origin/developer` history, and creates/reuses a clean detached view outside the
+tracked tree with hooks and inherited/global/system Git config disabled. Exact
+HEAD, detachment, cleanliness, private-root realpath containment, and every
+symlink target are verified; invalid views are disposed and never reused.
+
+Pinned OpenCode `1.18.16` built-in read attaches nearby repository instructions,
+initiates LSP warm-up, and config initialization may install packages. Therefore
+the bridge does not fall back to the normal developer server. A future trusted
+runtime must be bridge/runtime-owned, pin Luna/high and the factual evidence
+contract independently of the inspected ref, expose only contained in-process
+read/glob/grep, and deny LSP, mutation, shell, delegation, skills, web,
+interaction, external access, package installers, ref-controlled processes, and
+downloads.
 
 ## Machine markers
 

@@ -34,7 +34,11 @@ opencode serve --hostname 127.0.0.1 --port 44123
 
 7. Run `./scripts/bootstrap-opencode-bridge.sh --config <file>`. Normal bootstrap verifies the exact OpenCode contract, authenticated repository access, read round-trip, state location, and creates missing bridge labels. `--check` reports missing setup without creating labels or state.
 
-8. Start the bridge as a separate foreground process:
+8. Bootstrap currently reports `scoutRuntimeReady: false` and exits nonzero even
+   when developer operation is configured. This is intentional fail-closed
+   behavior pending the Scout runtime architecture decision below; do not bypass
+   or describe it as a working Scout check. The normal developer bridge may still
+   be started as a separate foreground process:
 
 ```bash
 node tools/opencode-bridge/dist/src/cli.js run --config ~/.config/agentic-workflow/opencode-bridge.json
@@ -60,32 +64,38 @@ On mapped developer session idle or error, the event, durable cursor, session st
 
 ## Read-only Scouts
 
-`scout.start` uses the sequence-free request marker and requires a focused
-question, exact lowercase 40-character developer SHA, bounded scope, and expected
-evidence. The bridge fetches `developer`, verifies the commit in
-`origin/developer`, creates/reuses a clean detached worktree under the private
-state parent, verifies the live `repository-scout` Luna/high read-only contract,
-then creates one request-correlated session. `scout.status` recovers that exact
-request's state and latest projected result.
+`scout.start` retains the sequence-free marker, focused question, exact lowercase
+40-character developer SHA, scope, expected evidence, concurrent admission, and
+durable status/no-replay semantics. It currently fails before workspace
+preparation or any OpenCode request with an explicit hardened-runtime diagnostic.
+`scout.status` remains a local read of historical correlated state.
 
-Recovery monitoring starts immediately after the Scout session mapping commits,
-before `session.prompt_async` can return an ambiguous transport result. If the
-prompt was accepted upstream but its response is lost, idle/error recovery and
-`scout.status` can still surface the result; the bridge never repeats the prompt.
-The monitor combines v2 session recovery, exact-workspace legacy events, and a
-read-only canonical status/message fallback for the pinned runtime's
-legacy-created sessions. Canonical recovery requires completed terminal lifecycle
-metadata and never interprets the Scout's response text.
+This fail-closed state is required because pinned OpenCode `1.18.16` built-in
+`read` attaches nearby repository instructions and unconditionally starts LSP
+warm-up, while configuration initialization may install packages in scanned
+config directories. A tracked agent, project-config disablement, `--pure`,
+permissions, or an isolated HOME cannot prove the required independent boundary.
+The tracked ref-owned Scout agent has therefore been removed and LSP is absent
+from every Scout contract.
 
-Scout worktree preparation may queue around Git's worktree lock, but independent
-sessions execute concurrently with no bridge policy cap and may coexist with one
-mutating developer task. A restart never repeats an applying Scout start. Scout
-idle/error responses use the normal durable event stream, public projection, and
-task/request/ref correlation. The Scout cannot edit, run Bash or Git, delegate,
-load skills, use web or MCP tools, answer interactions, or access external
-directories; the bridge fails closed if the live agent contract exposes a
-forbidden tool or permission, and the prompt request explicitly disables the
-three fixed MCP resource tool names that OpenCode maps to native read.
+The retained future-runtime workspace primitive fetches the exact SHA from
+`origin/developer` and creates/reuses a clean detached private worktree with Git
+hooks, inherited/global/system Git config, file transport, and credential prompts
+disabled. It checks private-root realpaths and every symlink target and disposes
+any invalid workspace without hooks. Enabling Scout execution requires a
+bridge-owned in-process, realpath-contained read/glob/grep runtime (or a separately
+audited sandbox/runtime) that cannot load ref/global extensions or run package,
+LSP, ref-controlled process, or download side effects.
+
+## Repository identity
+
+Bootstrap accepts only exact credential-free HTTPS, `ssh://git@`, and scp-style
+`git@host:` origins with exactly `owner/repository[.git]`. Public
+`https://api.github.com` derives `github.com`; an Enterprise `/api/v3` API base
+derives the same host. For another supported custom API layout, set
+`github.git_host` to the exact lowercase Git host (and optional port). Omission,
+conflict, userinfo, deceptive suffix hosts, encoded/malformed paths, or extra path
+segments fail closed.
 
 ## Policy
 

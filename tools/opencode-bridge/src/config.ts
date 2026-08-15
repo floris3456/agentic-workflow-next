@@ -2,6 +2,7 @@ import { existsSync, readFileSync, statSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { asRecord, assertPrivateFile } from "./util.js";
+import { githubRepositoryIdentity } from "./repository-identity.js";
 
 export interface BridgeConfig {
   configFile: string;
@@ -26,6 +27,7 @@ export interface BridgeConfig {
     commentAuthor: string;
     controlLabel: string;
     apiBaseUrl: string;
+    gitHost: string;
     activeIntervalMs: number;
     idleIntervalMs: number;
   };
@@ -124,7 +126,7 @@ export function loadBridgeConfig(inputPath = defaultConfigPath()): BridgeConfig 
   if (/[\r\n:]/.test(username)) throw new TypeError("OpenCode username is invalid");
 
   const github = asRecord(root.github, "github configuration");
-  only(github, ["app_id", "installation_id", "private_key_file", "owner", "repository", "allowed_authors", "comment_author", "control_label", "api_base_url", "active_interval_ms", "idle_interval_ms"], "github configuration");
+  only(github, ["app_id", "installation_id", "private_key_file", "owner", "repository", "allowed_authors", "comment_author", "control_label", "api_base_url", "git_host", "active_interval_ms", "idle_interval_ms"], "github configuration");
   const rawAppId = github.app_id;
   const appId = typeof rawAppId === "number" || typeof rawAppId === "string" ? String(rawAppId) : "";
   if (!/^\d+$/.test(appId)) throw new TypeError("github.app_id must be numeric");
@@ -134,6 +136,13 @@ export function loadBridgeConfig(inputPath = defaultConfigPath()): BridgeConfig 
   const owner = requiredString(github, "owner", "github configuration");
   const repository = requiredString(github, "repository", "github configuration");
   if (!/^[A-Za-z0-9_.-]+$/.test(owner) || !/^[A-Za-z0-9_.-]+$/.test(repository)) throw new TypeError("GitHub owner or repository is invalid");
+  const apiBaseUrl = optionalString(github, "api_base_url", "https://api.github.com");
+  const identity = githubRepositoryIdentity({
+    apiBaseUrl,
+    owner,
+    repository,
+    ...(github.git_host === undefined ? {} : { gitHost: requiredString(github, "git_host", "github configuration") }),
+  });
   const allowedAuthors = stringArray(github, "allowed_authors");
   if (allowedAuthors.length === 0) throw new Error("github.allowed_authors must not be empty");
   const commentAuthor = requiredString(github, "comment_author", "github configuration");
@@ -175,7 +184,8 @@ export function loadBridgeConfig(inputPath = defaultConfigPath()): BridgeConfig 
       allowedAuthors,
       commentAuthor,
       controlLabel: optionalString(github, "control_label", "agentic-bridge"),
-      apiBaseUrl: optionalString(github, "api_base_url", "https://api.github.com"),
+      apiBaseUrl: identity.apiBaseUrl.href,
+      gitHost: identity.gitHost,
       activeIntervalMs,
       idleIntervalMs,
     },

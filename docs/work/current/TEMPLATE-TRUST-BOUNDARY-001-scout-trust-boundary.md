@@ -6,7 +6,9 @@ TEMPLATE-TRUST-BOUNDARY-001
 
 ## Status
 
-In progress.
+Needs decision. Safe independent implementation is complete; pinned OpenCode
+cannot satisfy the required Scout isolation properties without a materially
+larger bridge-owned tool/runtime or separately audited sandbox dependency.
 
 ## Task-start developer SHA
 
@@ -26,46 +28,99 @@ Replace the origin and Scout boundaries with fail-closed, bridge-owned identity 
 
 ## Current position
 
-Task record created after confirming the clean synchronized `developer` checkout at the delegated exact SHA. Initial independent source inspection found suffix-based origin matching and a ref-owned Scout agent/runtime contract with LSP enabled.
+Source implementation, adversarial tests, validators, AS-BUILT/design/security/
+setup/architecture records, and the active deviation are reconciled. The exact
+repository identity boundary is implemented. Every safe independent Scout fix is
+implemented, unsafe new starts and historical inspected-ref recovery fail before
+OpenCode contact, and normal developer OpenCode remains unchanged. Proportional
+bridge, agent-system, and full repository checks pass; the source commit remains
+before the handoff snapshot.
 
 ## Observed
 
 - `tools/opencode-bridge/src/service.ts` normalizes the origin text and accepts owner/repository suffixes without authenticating the remote host.
 - `tools/opencode-bridge/src/scout.ts` creates a Git worktree with default Git behavior, resolves the Scout agent from the exact-ref workspace, and allows LSP.
 - The existing Scout contract and documentation describe the agent as tracked in the inspected repository.
+- Pinned public upstream OpenCode `1.18.16` source at release commit
+  `a3647eb025c7615159d417dcc49fc39fdaeba65b` shows built-in `read` calling
+  `Instruction.resolve` for nearby repository instructions and unconditionally
+  warming LSP. Its config initialization schedules package dependency
+  installation for scanned configuration directories.
+- Public upstream config/runtime flags disable project config, external plugins,
+  and external skills, but they do not remove the read-time instruction resolver,
+  LSP warm-up call, or config-directory package installation.
+- The operator-local customization paths were not inspected; continuation
+  steering explicitly restricted evidence to tracked repository files and public
+  upstream source.
+- OpenCode available on this host reports `1.18.15`, not the pinned `1.18.16`, so
+  it was not used as positive isolation evidence.
 
 ## Interpretation
 
-The current Scout startup is not independent of inspected-ref OpenCode configuration, and the current remote check permits deceptive-host forms. Both require architectural changes rather than validator-only tightening.
+Exact remote identity and Git workspace safety are independently fixable. A
+genuine Scout runtime is not fixable through configuration/permissions alone:
+using built-in read would weaken explicit instruction, process, and download
+properties. Fail-closed unavailability is safer than preserving an unsafe Scout
+claim; a bridge-owned in-process evidence tool/runtime or audited sandbox is a
+material architecture dependency requiring human selection.
 
 ## Attempts
 
-None.
+- Evaluated an isolated bridge-managed OpenCode process using project-config
+  disablement, isolated global paths, `--pure`, external-skill disablement, and a
+  bridge-owned inline agent. Public pinned source showed that built-in `read`
+  still resolves nearby instructions and warms LSP, and config startup still
+  schedules package installation. This route was abandoned because it cannot
+  prove the delegated isolation contract.
+- Considered retaining the existing exact-ref server with stricter live agent
+  permissions. Abandoned because permissions do not establish configuration or
+  prompt provenance and do not suppress the read-time side effects above.
 
 ## Changed approach
 
-None.
+- Continuation steering required using only tracked files and public/upstream
+  evidence; no operator-local global customization was inspected.
+- The implementation route changed from launching a configured isolated OpenCode
+  Scout to removing the ref-owned agent and making Scout startup/recovery fail
+  closed. This follows the delegated brief's explicit instruction to implement
+  every safe independent fix and return `needs decision` rather than weaken a
+  property when the pinned runtime requires a materially larger dependency.
 
 ## Checks
 
 - `git status --short --branch`, `git rev-parse HEAD`, and `git rev-parse origin/developer`: clean synchronized `developer` at the delegated SHA.
 - `./scripts/bootstrap-agent-workflow.sh --check`: tracked hooks active.
+- `npm test` in `tools/opencode-bridge`: 79 tests passed, including exact public/
+  Enterprise/custom API-to-Git identity, legitimate HTTPS/SSH forms, deceptive
+  host/userinfo/path cases, fail-before-ref/runtime contamination, hook/fsmonitor
+  suppression, exact detached cleanliness, symlink escape disposal, concurrent
+  request admission, recovery compatibility, and status unavailability.
+- `node scripts/validate-agent-system.mjs`: passed.
+- `node scripts/validate-opencode-bridge.mjs`: passed.
+- `./scripts/validate-repository.sh`: passed pre-implementation/link,
+  agent-system, research/manifest, hooks, bridge contracts, all 79 bridge tests,
+  all 8 template-branch tests, and the repository aggregate.
 
 ## Blockers / required decisions
 
-None identified yet.
+- Human architecture decision required: approve a bridge-owned in-process
+  realpath-contained read/glob/grep tool/runtime, approve a separately audited
+  OS/container sandbox/runtime protocol, or select an upstream OpenCode release
+  that proves no repository/global instruction or extension loading, no LSP,
+  package installer, ref-controlled process, or download side effects.
+- Until that decision, new Scout starts fail before checkout/OpenCode contact and
+  historical Scout sessions are not contacted or advanced. Direct GitHub evidence
+  and normal developer OpenCode remain available.
 
 ## Remaining work
 
-- Inspect bridge startup/configuration, runtime launch, validators, and records in detail.
-- Implement and test fail-closed repository identity.
-- Implement and test a hardened bridge-owned Scout runtime/workspace boundary.
-- Reconcile documentation and implementation records.
-- Run proportional checks and prepare the handoff snapshot.
+- Commit and push the reconciled source work.
+- Create and push the dedicated task-progress handoff snapshot.
 
 ## Next action
 
-Inspect bridge service/bootstrap/runtime launch and all Scout configuration/validator surfaces before selecting the bounded implementation route.
+Commit/push the source work, then prepare the dedicated `needs decision` handoff
+snapshot.
 
 ## Relevant durable records
 
@@ -74,6 +129,9 @@ Inspect bridge service/bootstrap/runtime launch and all Scout configuration/vali
 - `docs/architecture/design-record.md`
 - `docs/architecture/deviations.md`
 - `docs/architecture/agent-system.md`
+- `docs/architecture/opencode-bridge.md`
+- `docs/architecture/deviations.md` (`TEMPLATE-TRUST-BOUNDARY-001`)
+- `SECURITY.md`
 
 ## Last handoff commit
 
