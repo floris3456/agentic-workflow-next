@@ -23,16 +23,16 @@ Harden reusable-template trust boundaries across package provenance, Git remote 
 
 ## Current position
 
-Issue 26 is canonical. The delegated Sol developer route is the only active source mutation. It pushed only its required task record at interim `developer` SHA `0b4813240c5ee2358789d01b66293ff9cf91efed`, then idled after two unnecessary operator-local `.opencode/*` permission requests were rejected. Two later same-session continuation prompts (seq 4 and 5) were accepted by the bridge but produced no new OpenCode message/event or remote Git change. A sequence-free status read proved the mapped session idle with a live bridge heartbeat and the same empty projected tool-call response. The bridge abort operation does not revert files/Git; because the mapped session is already idle, one bounded abort is now pending as a state-clear recovery before a final continuation attempt.
+Issue 26 is canonical. The delegated Sol developer route is the only active source mutation. It pushed only its required task record at interim `developer` SHA `0b4813240c5ee2358789d01b66293ff9cf91efed`, then idled after two unnecessary operator-local `.opencode/*` permission requests were rejected. Two same-session continuation prompts were accepted by the bridge but produced no new OpenCode message/event or remote Git change. A sequence-free status read proved the mapped session idle with a live bridge heartbeat and the same empty projected tool-call response. Sequence 6 then called the mapped session abort operation as a bounded state-clear recovery and succeeded with `result: true`; this does not revert files or Git. One final same-session continuation prompt is now persisted below.
 
 ## Independently established findings
 
 - Package generation validates local commits/ancestry but can stamp `source-lock.json` canonical identity without proving the supplied repository/history is canonical.
 - Package validation binds per-patch SHA-256 but has no explicit provenance/content-binding model.
-- Source-lock was pinned to the task-start source refs; the smallest wrong-base contract is to keep those refs as review-base lock through package generation, then reconcile source-lock to reviewed heads afterward.
-- Bridge repository validation accepts owner/repository by normalized suffix without authenticating Git host; config supports custom `github.api_base_url`, so the acceptable Git host must be derived fail-closed from API/repository identity rather than hard-coded.
+- Source-lock was pinned to the task-start source refs; keep those refs as review-base lock through package generation, then reconcile source-lock to reviewed heads afterward.
+- Bridge repository validation accepts owner/repository by normalized suffix without authenticating Git host; custom `github.api_base_url` means the acceptable Git host must be derived fail-closed from API/repository identity rather than hard-coded.
 - Scout worktree creation does not disable hooks; startup shares ordinary OpenCode, discovers inspected-workspace agents/tools before validation, lets the ref own `repository-scout`, and allows LSP.
-- OpenCode 1.18.16 built-in `read` injects repository instructions and warms LSP; custom tool/plugin discovery can execute extensions. Project config can be disabled and external plugins suppressed, but a trusted read layer is still required to avoid built-in `read` side effects and symlink escape.
+- OpenCode 1.18.16 built-in `read` injects repository instructions and warms LSP; custom tool/plugin discovery can execute extensions. Project config can be disabled and external plugins suppressed, but a trusted read/search layer is still required for no-side-effect reads and realpath containment.
 - Bridge bootstrap currently has no Scout-specific readiness gate.
 - Legacy package manifests are schema 1; new provenance validation needs explicit legacy compatibility without treating old packages as newly provenance-valid.
 
@@ -42,7 +42,7 @@ Issue 26 is canonical. The delegated Sol developer route is the only active sour
 - Existing Scouts: none launched/prohibited as evidence.
 - Web-orchestration/template-development source edits wait until developer mutation is terminal and absorbed.
 - Canonical issue: `https://github.com/floris3456/agentic-workflow-template/issues/26`
-- Highest accepted command sequence: 5.
+- Highest accepted command sequence: 6.
 
 ## Command / interaction journal
 
@@ -53,10 +53,11 @@ Issue 26 is canonical. The delegated Sol developer route is the only active sour
 - Seq 4 `4f34d2e8-2b65-4bd3-94ae-843a7b7ef104` steer: succeeded, no new OpenCode turn observed.
 - Sequence-free status `a59300e4-22af-4d94-9805-b63d48e5f201`: succeeded; mapped session idle, latest projected response unchanged/empty, live bridge heartbeat.
 - Seq 5 `7c0c9751-c2d3-4c47-a610-9b1723ecf105` steer: accepted -> applying -> succeeded, again with no new OpenCode event or developer SHA change observed.
-- Pending sequence 6, to publish byte-for-byte after this ledger commit is confirmed:
+- Seq 6 `d5fe7280-c92d-4370-b6be-acde4da9e106` abort: accepted -> applying -> succeeded; OpenCode returned `result: true`, status `aborted`. No Git content was reverted or changed by the bridge operation.
+- Pending sequence 7, to publish byte-for-byte after this ledger commit is confirmed:
 
 ```json
-{"protocol":"agentic-bridge/1","sequence":6,"command_id":"d5fe7280-c92d-4370-b6be-acde4da9e106","task_id":"TEMPLATE-TRUST-BOUNDARY-001","kind":"abort","arguments":{}}
+{"protocol":"agentic-bridge/1","sequence":7,"command_id":"1edcb408-5db7-4bde-898f-51cfb8f56d07","task_id":"TEMPLATE-TRUST-BOUNDARY-001","kind":"steer","arguments":{"message":"The stale mapped OpenCode turn was successfully aborted. Resume TEMPLATE-TRUST-BOUNDARY-001 now in this same Sol session from the existing developer task-record commit. Do not inspect operator-local .opencode or unrelated global customization. Implement the full requested repository-identity and Scout trust-boundary hardening, focused adversarial tests, validators, and truthful durable records; run proportional checks; push the exact developer handoff; then return exactly the required six fields. If the session still cannot execute the task, return a valid blocked or needs decision six-field response naming the concrete execution blocker rather than idling silently."}}
 ```
 
 ## Checks performed by orchestrator
@@ -65,11 +66,11 @@ Exact refs; maintenance/source-lock/package contracts; bridge source/tests/contr
 
 ## Blockers / decisions
 
-No human-owned architecture decision yet. Current blocker is developer execution-state recovery, not source implementation evidence. If the abort/re-prompt path also cannot produce a valid terminal developer response, reconcile that operator boundary explicitly rather than claiming implementation.
+No human-owned architecture decision yet. Current risk is developer execution-state recovery rather than source evidence. If this final post-abort continuation also cannot produce a valid terminal developer response, stop repeating prompts and reconcile the local OpenCode/operator boundary explicitly.
 
 ## Remaining work
 
-Publish/reconcile seq 6, then one final same-session continuation prompt if abort succeeds; absorb/review the terminal developer range; finalize its durable task if required; make the minimal reviewed web-orchestration contract change; harden/test package provenance on template-development; genuinely generate/validate the deterministic package; reconcile source-lock/durable records; return exact source/package handoffs. Do not modify/promote `main`.
+Publish/reconcile seq 7; absorb/review the terminal developer range; finalize its durable task if required; make the minimal reviewed web-orchestration contract change; harden/test package provenance on template-development; genuinely generate/validate the deterministic package; reconcile source-lock/durable records; return exact source/package handoffs. Do not modify/promote `main`.
 
 ## Last handoff commit
 
