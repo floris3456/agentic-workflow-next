@@ -5,9 +5,15 @@ This package is the outbound-only local control plane between GitHub Issues and 
 ## Requirements
 
 - Node `22.13.0` or newer.
-- OpenCode `1.18.16` listening on a project-unique loopback port with Basic Auth.
+- OpenCode `1.18.16` listening on a project-unique developer loopback port with
+  Basic Auth. Bootstrap installs a second exact-version Scout runtime outside the
+  repository and the bridge launches it on a distinct configured loopback port.
 - A private GitHub App installed only on intended repositories with Metadata read, Issues read/write, and Contents read. Webhooks are disabled.
-- A mode `0600` operator config, OpenCode password file, and GitHub App private key under a private directory such as `~/.config/agentic-workflow/<instance>/`.
+- A mode `0600` operator config, developer and Scout OpenCode password files,
+  Scout OpenAI API-key file, and GitHub App private key under a private directory
+  such as `~/.config/agentic-workflow/<instance>/`.
+- A non-root Linux operator. Unsupported platforms and root execution fail closed
+  rather than weakening read-only runtime/config semantics.
 - A synchronized local `developer` checkout. The bridge never serves OpenCode publicly and requires no tunnel, webhook, custom ChatGPT MCP, or self-hosted runner.
 
 ## Setup
@@ -32,13 +38,21 @@ OPENCODE_SERVER_PASSWORD="$(<~/.config/agentic-workflow/owner-repository/opencod
 opencode serve --hostname 127.0.0.1 --port 44123
 ```
 
-7. Run `./scripts/bootstrap-opencode-bridge.sh --config <file>`. Normal bootstrap verifies the exact OpenCode contract, authenticated repository access, read round-trip, state location, and creates missing bridge labels. `--check` reports missing setup without creating labels or state.
-
-8. Bootstrap currently reports `scoutRuntimeReady: false` and exits nonzero even
-   when developer operation is configured. This is intentional fail-closed
-   behavior pending the Scout runtime architecture decision below; do not bypass
-   or describe it as a working Scout check. The normal developer bridge may still
-   be started as a separate foreground process:
+7. Add the mandatory `opencode.scout_base_url`, `scout_password_file`,
+   `scout_runtime_root`, and `scout_provider_api_key_file` settings shown in the
+   example. The runtime root must be absolute and outside `repository_root`; its
+   port must differ from the normal developer port.
+8. Run `./scripts/bootstrap-opencode-bridge.sh --config <file>`. Apply mode installs
+   exact locked `opencode-ai` and plugin `1.18.16` packages outside the repository,
+   makes the trusted config/package/tool tree read-only, then launches a temporary
+   sterile Scout endpoint and actively verifies its version, OpenAPI hash, Luna/
+   high agent, bridge-owned prompt, wildcard-deny permissions, and trusted tool
+   inventory. It also verifies the normal endpoint, repository access, state, and
+   labels. `--check` does not install or create labels/state, but it does launch
+   the already-installed runtime temporarily to perform the same active probe.
+9. Start the bridge. It independently starts/probes the Scout endpoint; a missing
+   or invalid Scout installation leaves Scout requests fail closed without
+   stopping normal developer operation:
 
 ```bash
 node tools/opencode-bridge/dist/src/cli.js run --config ~/.config/agentic-workflow/opencode-bridge.json
@@ -65,27 +79,29 @@ On mapped developer session idle or error, the event, durable cursor, session st
 ## Read-only Scouts
 
 `scout.start` retains the sequence-free marker, focused question, exact lowercase
-40-character developer SHA, scope, expected evidence, concurrent admission, and
-durable status/no-replay semantics. It currently fails before workspace
-preparation or any OpenCode request with an explicit hardened-runtime diagnostic.
-`scout.status` remains a local read of historical correlated state.
+40-character canonical `origin/developer` SHA, scope, expected evidence,
+concurrent admission, and durable status/no-replay semantics. It creates/reuses a
+private exact Git-object snapshot with `git ls-tree`/`cat-file`, never checkout or
+worktree. Gitlinks and `.git` entries are rejected; regular files lose executable
+and write bits; directories are read-only; symlinks are preserved as inert
+evidence. Every reuse re-hashes the full tree. Historical `scout-worktrees`
+mappings are rejected rather than contacted.
 
-This fail-closed state is required because pinned OpenCode `1.18.16` built-in
-`read` attaches nearby repository instructions and unconditionally starts LSP
-warm-up, while configuration initialization may install packages in scanned
-config directories. A tracked agent, project-config disablement, `--pure`,
-permissions, or an isolated HOME cannot prove the required independent boundary.
-The tracked ref-owned Scout agent has therefore been removed and LSP is absent
-from every Scout contract.
+The separate server executes only from the installed runtime root. Its HOME/XDG/
+temp/config paths and environment are sterile, provider auth is one explicit
+file, project configuration/default plugins/external skills/watchers/LSP/
+formatters are disabled, managed configuration is redirected to a nonexistent
+path under the immutable runtime, and its config directory is read-only so OpenCode's
+config dependency check cannot invoke a package installer. The ref-owned Scout
+agent remains absent. The bridge-owned Luna/high prompt treats every repository
+instruction as untrusted evidence and permits only `scout_read`, `scout_glob`,
+and `scout_grep`; all built-in/dynamic tools and interactions are denied.
 
-The retained future-runtime workspace primitive fetches the exact SHA from
-`origin/developer` and creates/reuses a clean detached private worktree with Git
-hooks, inherited/global/system Git config, file transport, and credential prompts
-disabled. It checks private-root realpaths and every symlink target and disposes
-any invalid workspace without hooks. Enabling Scout execution requires a
-bridge-owned in-process, realpath-contained read/glob/grep runtime (or a separately
-audited sandbox/runtime) that cannot load ref/global extensions or run package,
-LSP, ref-controlled process, or download side effects.
+The trusted tools import only filesystem/path APIs, never follow repository
+symlinks, enforce lexical plus realpath containment, accept bounded relative
+paths, process bounded UTF-8 files/results, and expose no process, package-manager,
+network, LSP, mutation, delegation, or download primitive. The model provider's
+own API traffic is the only intentional outbound runtime network use.
 
 ## Repository identity
 
@@ -108,7 +124,12 @@ See [`../../contracts/opencode-bridge/protocol.md`](../../contracts/opencode-bri
 ```bash
 npm ci
 npm test
+npm run test:scout-runtime-smoke
 ../../scripts/validate-opencode-bridge.sh
 ```
 
-Tests use deterministic GitHub/OpenCode doubles. Live App registration, native ChatGPT GitHub write actions, and human acceptance remain operator-owned external checks.
+The ordinary suite uses deterministic GitHub/OpenCode doubles. The Scout runtime
+smoke performs a temporary locked install outside the repository and starts/probes
+real OpenCode `1.18.16` without sending a model request. Live App registration,
+native ChatGPT GitHub write actions, and human acceptance remain operator-owned
+external checks.

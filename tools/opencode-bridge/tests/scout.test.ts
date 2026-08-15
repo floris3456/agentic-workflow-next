@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, readlinkSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import test, { type TestContext } from "node:test";
@@ -9,7 +9,8 @@ import { Manifest } from "../src/manifest.js";
 import { OpenCodeClient } from "../src/opencode.js";
 import { PublicProjection } from "../src/projection.js";
 import { RequestExecutor } from "../src/requests.js";
-import { assertScoutAgentContract, ScoutRuntime, ScoutWorkspaceManager, scoutRuntimeBoundary } from "../src/scout.js";
+import { assertScoutAgentContract, scoutAgentPrompt, ScoutRuntime, ScoutWorkspaceManager, scoutRuntimeBoundary } from "../src/scout.js";
+import { probeScoutServer } from "../src/scout-server.js";
 import { BridgeState } from "../src/state.js";
 import type { CommandEnvelope, JsonValue, RequestEnvelope, StoredRequest } from "../src/types.js";
 
@@ -25,6 +26,20 @@ function fixture(context: TestContext) {
     rmSync(root, { recursive: true, force: true });
   });
   return { root, state, projection };
+}
+
+function removeFixture(root: string): void {
+  if (!existsSync(root)) return;
+  const unlock = (path: string): void => {
+    const stat = lstatSync(path);
+    if (stat.isSymbolicLink()) return;
+    if (stat.isDirectory()) {
+      chmodSync(path, 0o700);
+      for (const name of readdirSync(path)) unlock(join(path, name));
+    } else chmodSync(path, 0o600);
+  };
+  unlock(root);
+  rmSync(root, { recursive: true, force: true });
 }
 
 function request(
@@ -56,10 +71,11 @@ const agentContract: JsonValue = [{
   mode: "primary",
   model: { providerID: "openai", modelID: "gpt-5.6-luna" },
   options: { reasoningEffort: "high" },
+  prompt: scoutAgentPrompt,
   tools: {
-    read: true,
-    glob: true,
-    grep: true,
+    scout_read: true,
+    scout_glob: true,
+    scout_grep: true,
     lsp: false,
     bash: false,
     apply_patch: false,
@@ -69,9 +85,9 @@ const agentContract: JsonValue = [{
   },
   permission: {
     "*": "deny",
-    read: "allow",
-    glob: "allow",
-    grep: "allow",
+    scout_read: "allow",
+    scout_glob: "allow",
+    scout_grep: "allow",
     lsp: "deny",
     edit: "deny",
     bash: "deny",
@@ -85,7 +101,7 @@ const agentContract: JsonValue = [{
   },
 }];
 const scoutTools: JsonValue = [
-  "read", "glob", "grep", "lsp", "bash", "edit", "write",
+  "scout_read", "scout_glob", "scout_grep", "read", "glob", "grep", "lsp", "bash", "edit", "write",
   "apply_patch", "task", "skill", "webfetch", "websearch", "question",
   "todowrite", "mcp_mutate",
 ];
@@ -98,10 +114,9 @@ test("hypothetical hardened Scout contract pins Luna high and rejects LSP or mut
     { permission: "*", action: "allow", pattern: "*" },
     { permission: "external_directory", action: "allow", pattern: "/private/tool-output/*" },
     { permission: "*", action: "deny", pattern: "*" },
-    { permission: "read", action: "allow", pattern: "*" },
-    { permission: "read", action: "deny", pattern: "/private/tool-output/*" },
-    { permission: "glob", action: "allow", pattern: "*" },
-    { permission: "grep", action: "allow", pattern: "*" },
+    { permission: "scout_read", action: "allow", pattern: "*" },
+    { permission: "scout_glob", action: "allow", pattern: "*" },
+    { permission: "scout_grep", action: "allow", pattern: "*" },
     { permission: "external_directory", action: "deny", pattern: "*" },
     { permission: "external_directory", action: "allow", pattern: "/private/tool-output/*" },
   ];
@@ -130,18 +145,19 @@ test("hypothetical hardened Scout contract pins Luna high and rejects LSP or mut
 
   const noWildcard = structuredClone(agentContract) as JsonValue[];
   delete ((noWildcard[0] as Record<string, JsonValue>).permission as Record<string, JsonValue>)["*"];
-  assert.throws(() => assertScoutAgentContract(noWildcard, ["read", "glob", "grep"]), /wildcard deny/);
+  assert.throws(() => assertScoutAgentContract(noWildcard, ["scout_read", "scout_glob", "scout_grep"]), /wildcard deny/);
 
   const exposedTruncation = structuredClone(agentContract) as JsonValue[];
   (exposedTruncation[0] as Record<string, JsonValue>).permission = [
     { permission: "*", action: "deny", pattern: "*" },
+    { permission: "scout_read", action: "allow", pattern: "*" },
+    { permission: "scout_glob", action: "allow", pattern: "*" },
+    { permission: "scout_grep", action: "allow", pattern: "*" },
     { permission: "read", action: "allow", pattern: "*" },
-    { permission: "glob", action: "allow", pattern: "*" },
-    { permission: "grep", action: "allow", pattern: "*" },
     { permission: "external_directory", action: "deny", pattern: "*" },
     { permission: "external_directory", action: "allow", pattern: "/private/tool-output/*" },
   ];
-  assert.throws(() => assertScoutAgentContract(exposedTruncation, ["read", "glob", "grep"]), /allowed external path/);
+  assert.throws(() => assertScoutAgentContract(exposedTruncation, ["scout_read", "scout_glob", "scout_grep"]), /allowed external path/);
 });
 
 test("an interrupted Scout start becomes indeterminate and is never relaunched", (context) => {
@@ -255,16 +271,67 @@ test("Scout start fails before inspected-ref or unrelated runtime configuration 
   assert.equal(state.getScoutSession(accepted.requestId), undefined);
   assert.equal(existsSync(sideEffect), false);
   assert.match(result.error ?? "", /Hardened Scout runtime is unavailable/);
-  assert.match(result.error ?? "", /repository instructions|LSP|package/i);
+  assert.match(result.error ?? "", /installation|endpoint|trusted-tool/i);
+});
+
+test("hardened Scout start uses the trusted agent and exact snapshot client", async (context) => {
+  const { root, state, projection } = fixture(context);
+  const workspace = join(root, "private", "scout-snapshots", refSha);
+  mkdirSync(workspace, { recursive: true });
+  const workspaces = new ScoutWorkspaceManager(root, join(root, "private", "bridge.sqlite"), { fetchOrigin: false });
+  workspaces.prepare = async (ref) => {
+    assert.equal(ref, refSha);
+    return workspace;
+  };
+  const calls: Array<{ operation: string; args: unknown }> = [];
+  const client = {
+    request: async (operation: string, args: unknown) => {
+      calls.push({ operation, args });
+      return operation === "session.create" ? { id: "ses_hardened_scout" } : undefined;
+    },
+  } as unknown as OpenCodeClient;
+  let probes = 0;
+  const scout = new ScoutRuntime({
+    workspaces,
+    clientFor: (path) => {
+      assert.equal(path, workspace);
+      return client;
+    },
+    state,
+    assertReady: async () => { probes++; },
+  });
+  const accepted = state.acceptRequest(scoutStart("51000000-0000-4000-8000-000000000001"), 51).request;
+  const result = await new RequestExecutor({ state, projection, scout }).execute(accepted);
+  assert.equal(result.state, "succeeded");
+  assert.equal(probes, 1);
+  assert.deepEqual(calls.map((call) => call.operation), ["session.create", "session.prompt_async"]);
+  assert.match(JSON.stringify(calls), /repository-scout/);
+  assert.match(JSON.stringify(calls), /untrusted evidence/);
+  assert.equal(state.getScoutSession(accepted.requestId)?.workspacePath, workspace);
 });
 
 test("Scout runtime status exposes the hard blocker for bootstrap and status", () => {
   const boundary = scoutRuntimeBoundary();
   assert.deepEqual(Object.keys(boundary), ["ready", "reason"]);
   assert.equal(boundary.ready, false);
-  assert.match(boundary.reason, /OpenCode 1\.18\.16/);
-  assert.match(boundary.reason, /LSP/);
-  assert.match(boundary.reason, /install packages/);
+  assert.match(boundary.reason, /installation/);
+  assert.match(boundary.reason, /endpoint/);
+  assert.match(boundary.reason, /trusted-tool/);
+});
+
+test("active Scout endpoint probe requires exact runtime, prompt, permissions, and tools", async () => {
+  const client = {
+    compatibility: async () => ({ compatible: true, runningVersion: "1.18.16" }),
+    request: async (operation: string) => operation === "app.agents" ? agentContract : scoutTools,
+  } as unknown as OpenCodeClient;
+  assert.deepEqual(await probeScoutServer(client), { compatible: true, version: "1.18.16" });
+  client.request = async (operation: string) => {
+    if (operation !== "app.agents") return scoutTools;
+    const altered = structuredClone(agentContract) as JsonValue[];
+    (altered[0] as Record<string, JsonValue>).prompt = "ref-owned prompt";
+    return altered;
+  };
+  await assert.rejects(probeScoutServer(client), /instructions do not match/);
 });
 
 test("Scout results and status stay task and request correlated without leakage", async (context) => {
@@ -339,11 +406,11 @@ test("Scout results and status stay task and request correlated without leakage"
   assert.doesNotMatch(JSON.stringify(correct.publicResult), /ses_scout_a|msg_scout_a|prt_scout_a|\/snapshot/);
 });
 
-test("Scout workspace is a clean detached exact-origin snapshot independent of active changes", async (context) => {
+test("Scout workspace is an immutable non-executable exact Git-object snapshot independent of active changes", async (context) => {
   const root = mkdtempSync(join(tmpdir(), "bridge-scout-worktree-"));
   const bare = join(root, "remote.git");
   const repository = join(root, "repository");
-  context.after(() => rmSync(root, { recursive: true, force: true }));
+  context.after(() => removeFixture(root));
   execFileSync("git", ["init", "--bare", bare]);
   execFileSync("git", ["init", repository]);
   execFileSync("git", ["config", "user.name", "Scout Test"], { cwd: repository });
@@ -368,11 +435,21 @@ test("Scout workspace is a clean detached exact-origin snapshot independent of a
   const [first, second] = await Promise.all([manager.prepare(remoteSha), manager.prepare(remoteSha)]);
   assert.equal(first, second);
   assert.equal(existsSync(hookMarker), false);
-  assert.equal(execFileSync("git", ["rev-parse", "HEAD"], { cwd: first, encoding: "utf8" }).trim(), remoteSha);
-  assert.equal(execFileSync("git", ["branch", "--show-current"], { cwd: first, encoding: "utf8" }).trim(), "");
-  assert.equal(execFileSync("git", ["-c", "core.fsmonitor=false", "status", "--porcelain", "--untracked-files=all"], { cwd: first, encoding: "utf8" }).trim(), "");
+  assert.equal(existsSync(join(first, ".git")), false);
   assert.equal(readFileSync(join(first, "fact.txt"), "utf8"), "remote fact\n");
+  assert.equal(lstatSync(join(first, "fact.txt")).mode & 0o333, 0);
+  assert.equal(lstatSync(first).mode & 0o222, 0);
   assert.equal(readFileSync(join(repository, "fact.txt"), "utf8"), "active uncommitted change\n");
+
+  chmodSync(join(first, "fact.txt"), 0o644);
+  writeFileSync(join(first, "fact.txt"), "tampered snapshot\n");
+  const rebuilt = await manager.prepare(remoteSha);
+  assert.equal(rebuilt, first);
+  assert.equal(readFileSync(join(rebuilt, "fact.txt"), "utf8"), "remote fact\n");
+  await assert.rejects(
+    manager.reopen(remoteSha, join(root, "private", "scout-worktrees", remoteSha)),
+    /Historical Scout worktree mappings/,
+  );
 
   execFileSync("git", ["config", "--unset", "core.fsmonitor"], { cwd: repository });
   execFileSync("git", ["add", "fact.txt", "untracked.txt"], { cwd: repository });
@@ -381,13 +458,13 @@ test("Scout workspace is a clean detached exact-origin snapshot independent of a
   await assert.rejects(manager.prepare(localOnly), /not present in the locally synchronized origin\/developer history/);
 });
 
-test("Scout workspace rejects and disposes an exact-ref symlink escape without executing checkout hooks", async (context) => {
+test("Scout snapshot preserves an escaping symlink as inert evidence without executing checkout hooks", async (context) => {
   const root = mkdtempSync(join(tmpdir(), "bridge-scout-symlink-"));
   const bare = join(root, "remote.git");
   const repository = join(root, "repository");
   const outside = join(root, "outside.txt");
   const hookMarker = join(root, "checkout-hook-ran");
-  context.after(() => rmSync(root, { recursive: true, force: true }));
+  context.after(() => removeFixture(root));
   writeFileSync(outside, "outside evidence\n");
   execFileSync("git", ["init", "--bare", bare]);
   execFileSync("git", ["init", repository]);
@@ -406,7 +483,32 @@ test("Scout workspace rejects and disposes an exact-ref symlink escape without e
   const sha = execFileSync("git", ["rev-parse", "HEAD"], { cwd: repository, encoding: "utf8" }).trim();
   execFileSync("git", ["config", "core.fsmonitor", join(repository, ".githooks", "post-checkout")], { cwd: repository });
   const manager = new ScoutWorkspaceManager(repository, join(root, "private", "bridge.sqlite"), { fetchOrigin: false });
-  await assert.rejects(manager.prepare(sha), /symlink escapes/);
-  assert.equal(existsSync(join(manager.root, sha)), false);
+  const snapshot = await manager.prepare(sha);
+  assert.equal(lstatSync(join(snapshot, "escape")).isSymbolicLink(), true);
+  assert.equal(readlinkSync(join(snapshot, "escape")), outside);
   assert.equal(existsSync(hookMarker), false);
+});
+
+test("Scout snapshot rejects gitlinks before materialization", async (context) => {
+  const root = mkdtempSync(join(tmpdir(), "bridge-scout-gitlink-"));
+  const bare = join(root, "remote.git");
+  const repository = join(root, "repository");
+  context.after(() => removeFixture(root));
+  execFileSync("git", ["init", "--bare", bare]);
+  execFileSync("git", ["init", repository]);
+  execFileSync("git", ["config", "user.name", "Scout Test"], { cwd: repository });
+  execFileSync("git", ["config", "user.email", "scout@example.invalid"], { cwd: repository });
+  execFileSync("git", ["remote", "add", "origin", bare], { cwd: repository });
+  writeFileSync(join(repository, "base.txt"), "base\n");
+  execFileSync("git", ["add", "base.txt"], { cwd: repository });
+  execFileSync("git", ["commit", "-m", "base"], { cwd: repository });
+  const target = execFileSync("git", ["rev-parse", "HEAD"], { cwd: repository, encoding: "utf8" }).trim();
+  execFileSync("git", ["update-index", "--add", "--cacheinfo", `160000,${target},nested`], { cwd: repository });
+  execFileSync("git", ["commit", "-m", "gitlink"], { cwd: repository });
+  execFileSync("git", ["branch", "-M", "developer"], { cwd: repository });
+  execFileSync("git", ["push", "-u", "origin", "developer"], { cwd: repository });
+  const sha = execFileSync("git", ["rev-parse", "HEAD"], { cwd: repository, encoding: "utf8" }).trim();
+  const manager = new ScoutWorkspaceManager(repository, join(root, "private", "bridge.sqlite"), { fetchOrigin: false });
+  await assert.rejects(manager.prepare(sha), /gitlinks and submodules/);
+  assert.equal(existsSync(join(manager.root, sha)), false);
 });

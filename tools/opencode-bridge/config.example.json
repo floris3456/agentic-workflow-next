@@ -5,8 +5,12 @@
   "state_file": "/absolute/path/to/repository/.git/opencode-bridge/owner-repository/bridge.sqlite",
   "opencode": {
     "base_url": "http://127.0.0.1:44123",
+    "scout_base_url": "http://127.0.0.1:44124",
     "username": "opencode",
-    "password_file": "/home/operator/.config/agentic-workflow/owner-repository/opencode-password"
+    "password_file": "/home/operator/.config/agentic-workflow/owner-repository/opencode-password",
+    "scout_password_file": "/home/operator/.config/agentic-workflow/owner-repository/scout-password",
+    "scout_runtime_root": "/home/operator/.local/share/agentic-workflow/owner-repository/scout-runtime",
+    "scout_provider_api_key_file": "/home/operator/.config/agentic-workflow/owner-repository/scout-openai-api-key"
   },
   "github": {
     "app_id": "123456",

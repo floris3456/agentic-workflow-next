@@ -26,13 +26,25 @@ bases derive their Git host; other custom API layouts must set an unambiguous
 `github.git_host`. Credential-bearing origins, deceptive suffix hosts, malformed
 or encoded paths, and unsupported remote forms are rejected.
 
-Do not use the normal developer OpenCode server or a ref-owned agent as a Scout
-runtime. Scout launch currently fails closed because pinned OpenCode `1.18.16`
-built-in read can attach repository instructions and initiate LSP, while config
-startup can install packages. The retained detached-workspace code disables Git
-hooks and global/system config and rejects realpath/symlink escape, but is not a
-complete execution boundary. Enabling Scouts requires an approved bridge-owned
-in-process read/search runtime or separately audited isolation architecture.
+Never use the normal developer OpenCode server or a ref-owned agent/tool as a
+Scout runtime. The dedicated Scout endpoint runs exact pinned OpenCode `1.18.16`
+from a bridge-installed root outside the repository with sterile HOME/XDG/temp,
+explicit provider auth, read-only config/discovery files, project/default-plugin/
+external-skill/watcher/LSP/formatter disablement, and managed-config redirection
+into the immutable runtime. Bootstrap actively checks
+the installed source hashes, package/runtime versions, OpenAPI hash, agent prompt,
+model/effort, permissions, and tool inventory. Missing or mismatched controls fail
+Scout closed without disabling ordinary developer OpenCode.
+
+Scout snapshots come only from canonical `origin/developer` Git objects through
+`ls-tree` and `cat-file`, not checkout, worktree, archive filters, or hooks. They
+contain no `.git` entry or executable/writable regular file, reject gitlinks, and
+preserve symlinks only as inert evidence. The bridge-owned `scout_read`,
+`scout_glob`, and `scout_grep` tools never follow symlinks, enforce realpath
+containment and bounded UTF-8 input/output, and expose no process, package-manager,
+network, mutation, delegation, interaction, or download primitive. Run the Scout
+runtime only as a non-root Linux operator; other environments are unsupported and
+fail closed.
 
 ## Repository controls
 

@@ -16,9 +16,11 @@ function setup(context: test.TestContext): { root: string; configFile: string; d
   mkdirSync(privateDirectory, { mode: 0o700 });
   writeFileSync(join(repository, "contracts", "opencode-bridge", "operation-manifest.json"), "{}\n");
   const passwordFile = join(privateDirectory, "opencode-password");
+  const scoutPasswordFile = join(privateDirectory, "scout-password");
   const privateKeyFile = join(privateDirectory, "github.pem");
   const secretFile = join(privateDirectory, "provider-token");
   writeFileSync(passwordFile, "local-password\n", { mode: 0o600 });
+  writeFileSync(scoutPasswordFile, "scout-password\n", { mode: 0o600 });
   writeFileSync(privateKeyFile, "-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----\n", { mode: 0o600 });
   writeFileSync(secretFile, "provider-value\n", { mode: 0o600 });
   const document = {
@@ -26,7 +28,15 @@ function setup(context: test.TestContext): { root: string; configFile: string; d
     instance_id: "example-repository",
     repository_root: repository,
     state_file: join(repository, ".git", "bridge", "state.sqlite"),
-    opencode: { base_url: "http://127.0.0.1:44123", username: "opencode", password_file: passwordFile },
+    opencode: {
+      base_url: "http://127.0.0.1:44123",
+      scout_base_url: "http://127.0.0.1:44124",
+      username: "opencode",
+      password_file: passwordFile,
+      scout_password_file: scoutPasswordFile,
+      scout_runtime_root: join(privateDirectory, "scout-runtime"),
+      scout_provider_api_key_file: secretFile,
+    },
     github: {
       app_id: "123",
       installation_id: 456,
@@ -54,6 +64,8 @@ test("configuration loads local secrets without exposing them in tracked setting
   const config = loadBridgeConfig(configFile);
   assert.equal(config.instanceId, "example-repository");
   assert.equal(config.opencode.password, "local-password");
+  assert.equal(config.opencode.scoutPassword, "scout-password");
+  assert.equal(config.opencode.scoutBaseUrl, "http://127.0.0.1:44124");
   assert.equal(config.github.privateKey.includes("PRIVATE KEY"), true);
   assert.equal(config.github.apiBaseUrl, "https://api.github.com/");
   assert.equal(config.github.gitHost, "github.com");
@@ -61,6 +73,17 @@ test("configuration loads local secrets without exposing them in tracked setting
   assert.equal(config.policy.resolveSecret("provider"), "provider-value");
   assert.throws(() => config.policy.resolveSecret("missing"), /Unknown local secret_ref/);
   assert.equal(config.manifestFile, resolve(join(config.repositoryRoot, "contracts", "opencode-bridge", "operation-manifest.json")));
+});
+
+test("configuration requires distinct explicit developer and Scout loopback origins", (context) => {
+  const { configFile, document } = setup(context);
+  const opencode = document.opencode as Record<string, unknown>;
+  opencode.scout_base_url = opencode.base_url;
+  writeFileSync(configFile, `${JSON.stringify(document)}\n`, { mode: 0o600 });
+  assert.throws(() => loadBridgeConfig(configFile), /must be distinct/);
+  opencode.scout_base_url = "https://127.0.0.1:44124";
+  writeFileSync(configFile, `${JSON.stringify(document)}\n`, { mode: 0o600 });
+  assert.throws(() => loadBridgeConfig(configFile), /loopback HTTP origin/);
 });
 
 test("configuration requires an unambiguous Git host for custom API bases", (context) => {

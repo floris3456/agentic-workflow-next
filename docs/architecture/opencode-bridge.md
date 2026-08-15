@@ -16,7 +16,14 @@ GitHub remote inspection remains the independent repository-evidence route. A br
 
 ## Processes and isolation
 
-OpenCode and the bridge are separate foreground-capable processes. The normal developer OpenCode binds a unique loopback port with Basic Auth, and the ordinary TUI still attaches to that server and its developer sessions. The bridge does not use that process for Scouts while an independent hardened Scout runtime is unavailable. Each repository instance has a unique config identity, state database, OpenCode port/password, GitHub repository/App installation mapping, and process lock. No inbound webhook, public OpenCode listener, tunnel, custom ChatGPT MCP, self-hosted runner, or mandatory systemd unit exists.
+The bridge, normal developer OpenCode, and dedicated Scout OpenCode are separate
+foreground-capable processes. Developer and Scout servers bind distinct
+authenticated loopback ports; the ordinary TUI attaches only to the developer
+server. The bridge installs, launches, and probes Scout independently, and Scout
+failure does not stop developer operation. Each repository instance has unique
+config, state, ports/passwords, external Scout runtime root, GitHub mapping, and
+process lock. No inbound webhook, public listener, tunnel, custom ChatGPT MCP,
+self-hosted runner, or mandatory systemd unit exists.
 
 Operator configuration and secret files are mode `0600` outside Git. SQLite lives outside the tracked tree, normally under the Git directory, with a mode `0700` parent and mode `0600` database. GitHub App installation tokens stay in memory and are automatically refreshed. The App requests only Issues write and Contents read for one repository; Contents write is rejected.
 
@@ -30,40 +37,45 @@ Live version or exact raw OpenAPI-hash drift blocks consequential developer Open
 
 The hidden `agentic-bridge/1` command envelope carries a UUID, task ID, monotonic sequence, kind, arguments, and optional expected Git state. One task ID binds to one issue. A marker on a second issue that repeats an existing task binding receives a bounded rejection and cannot replace the binding, abort the poll cycle, or starve already accepted work. The first issue command must be `start` at sequence `1`; later accepted sequences are exactly contiguous, derived from the accepted command ledger inside the admission transaction. SQLite records accepted/applying/terminal states before and after side effects, and a task cannot admit another command while one is accepted or applying. Every authenticated parse-valid rejection is durable by UUID without consuming sequence, including issue/task/first-command gates, the one-open-mutating-issue gate, sequence/nonterminal checks, and a `start` or `promotion.apply` whose required Git guard is missing, misplaced under `arguments`, or does not name `developer`. A stale rejected marker can never become executable on a later scan. Duplicate UUIDs do not reapply. The bridge queues and attempts public `applying` publication before the handler starts. A restart while applying marks the command indeterminate and never guesses or retries the side effect. If more than one persisted mutating issue is open, command dispatch freezes—including a restart-recovered accepted command—while sequence-free local recovery reads continue.
 
-Sequence-free `agentic-bridge-request` envelopes provide task-bound durable recovery views and a Scout request lane. `command.status` reads exact command or pre-ledger-rejection state, known projected result, timing, applying age, and service heartbeat. `task.status` reads mapped developer-session state and latest projected response. `scout.status` remains a local read of one matching historical task/request/ref/session/result. These local reads never repeat work and, if interrupted in `applying`, are recomputed under the same UUID after restart. `scout.start` retains UUID-idempotent admission and no-replay semantics but currently returns an explicit hardened-runtime failure before checkout, session creation, or normal OpenCode contact. A genuinely stuck developer mutation receives one bounded reconciliation; uncertain mutation is never retried, and operator restart converts it to indeterminate before evidence-based recovery.
+Sequence-free `agentic-bridge-request` envelopes provide task-bound durable recovery views and a Scout request lane. `command.status` reads exact command or pre-ledger-rejection state, known projected result, timing, applying age, and service heartbeat. `task.status` reads mapped developer-session state and latest projected response. `scout.status` remains a local read of one matching task/request/ref/session/result. These local reads never repeat work and, if interrupted in `applying`, are recomputed under the same UUID after restart. `scout.start` retains UUID-idempotent admission and no-replay semantics, uses only the separately probed endpoint, and fails closed without normal-server fallback. A genuinely stuck developer mutation receives one bounded reconciliation; uncertain mutation is never retried, and operator restart converts it to indeterminate before evidence-based recovery.
 
-The tracked ref-owned `repository-scout` definition has been removed. OpenCode
-`1.18.16` built-in `read` attaches nearby repository instruction files and
-unconditionally initiates LSP warm-up; its config loader also schedules package
-installation for scanned config directories. Project-config disablement,
-permissions, `--pure`, and an isolated HOME do not remove all three effects.
-Accordingly, the bridge refuses Scout launch rather than letting inspected-ref or
-unrelated global config/plugins/tools/skills/instructions control startup or
-weakening the no-process/no-download requirement. LSP is absent from the
-hypothetical live contract, and bootstrap/status expose the exact boundary
-failure. A bridge-owned in-process read/glob/grep implementation or separately
-audited sandbox/runtime is a required architecture decision.
+The tracked ref-owned `repository-scout` remains removed. The bridge copies a
+locked trusted runtime package outside `repository_root`, installs exact OpenCode/
+plugin `1.18.16`, and makes config/dependencies read-only. Launch uses an allowlist
+environment with sterile HOME/XDG/temp, one explicit provider key, project config/
+default plugin/external skill/watcher disablement, managed-config redirection to a
+nonexistent immutable-runtime path, and LSP/formatter false. A
+read-only config directory makes OpenCode's dependency-install check return before
+invoking the package manager. Bootstrap verifies source hashes, package versions,
+executable version/OpenAPI, and the exact agent/tool contract.
 
-The retained future-runtime workspace primitive executes Git with inherited
-Git config stripped, system/global config disabled, hooks redirected to the null
-path, file transport denied, and prompts disabled. It proves remote ancestry,
-exact detached HEAD, cleanliness, private-root realpath containment, and every
-symlink target; invalid workspaces are hook-safely disposed and never reused.
+The snapshot manager fetches canonical `origin/developer`, proves requested-SHA
+ancestry, parses NUL-delimited `git ls-tree`, and reads verified blobs with
+`git cat-file`; checkout, worktree, hooks, filters, and `.git` are absent. Gitlinks
+and unsafe tree modes fail closed. Regular files are `0444`, directories `0555`,
+and symlinks preserve target text without being followed. Full path/type/mode/blob
+hashes are checked on every reuse and rebuilt after tampering.
+
+The Luna/high agent's bridge-owned prompt treats all repository instructions as
+untrusted evidence. Wildcard deny leaves only custom `scout_read`, `scout_glob`,
+and `scout_grep`; built-ins/dynamic tools and interaction paths remain denied.
+Trusted tools import filesystem/path APIs only, enforce relative-path and realpath
+containment, do not follow symlinks, and bound UTF-8 files/traversal/results. They
+cannot launch processes, package managers, LSP, or network/download operations.
 
 The GitHub client serially polls open labeled issues and their comments with persisted ETags, paginates with origin and loop guards, refreshes once after `401`, and follows primary/secondary rate-limit timing. Polling is faster while control issues are open and slower while idle. Only exact configured logins with trusted repository associations can command. Writes use a paced durable outbox. Comment dedupe markers count only when authored by the configured App bot, preventing another commenter from suppressing output. Bridge status labels are removed/replaced without overwriting unrelated labels.
 
 ## Recovery and projection
 
-Developer OpenCode events are committed before callbacks. Recovery combines legacy repository SSE, per-session durable v2 history/SSE, project sync history, event-ID deduplication, durable aggregate cursors, and canonical pending permission/question lists. Pending mapped interactions receive stable synthetic events and are re-presented to the idempotent publication path until their outbox entry exists. The bridge no longer stores an unused whole-project reconciliation snapshot. Historical Scout workspace/status recovery logic remains covered for state compatibility but the service does not invoke it while no hardened Scout runtime exists. It does not claim standard SSE `Last-Event-ID`; an upstream transient event can still be lost after complete outage when it is neither durable nor present in a pending canonical list.
+Developer OpenCode events are committed before callbacks. Recovery combines legacy repository SSE, per-session durable v2 history/SSE, project sync history, event-ID deduplication, durable aggregate cursors, and canonical pending permission/question lists. Pending mapped interactions receive stable synthetic events and are re-presented to the idempotent publication path until their outbox entry exists. Scout recovery gets a per-snapshot client for the dedicated endpoint only after full snapshot revalidation. Historical `scout-worktrees` mappings remain visible to status but are rejected and never contacted. It does not claim standard SSE `Last-Event-ID`; an upstream transient event can still be lost after complete outage when it is neither durable nor present in a pending canonical list.
 
 Raw events/results remain local. The public projection maps session/PTY/permission/question/message/workspace/event IDs, including embedded text and object-key occurrences, plus opaque semantic project IDs to globally unique durable aliases; every task-bound kind, including workspace, has per-task storage and cannot cross task ownership. For recognized OpenCode message parts it publishes only text parts and omits reasoning, tool, step, and unknown part classes. Provider metadata and reasoning/encrypted-content fields remain local. Projection also redacts sensitive keys and token-like text, replaces private filesystem paths, neutralizes Markdown mentions/HTML/fences, and bounds depth, fields, strings, arrays, and total output. Generic requests accept only well-shaped path/query/wildcard/body transport fields, cannot override local directory/workspace/location routing, and reject raw private IDs, absolute paths, and literal secret-like values. Local-secret operations use explicit `secret_ref` files and publish only a safe local-operator action; upstream failure detail remains local. Configured repository identity separately authenticates the exact Git host and owner/repository: public GitHub and Enterprise `/api/v3` derive unambiguous hosts, custom API layouts require explicit `github.git_host`, and HTTPS/SSH origin parsing rejects userinfo, suffix hosts, encoded or extra path segments, and unsupported syntax.
 
 Mapped developer `session.idle` and `session.error` events atomically commit the event, durable cursor, session state, and pending delivery before any callback. The bridge applies the existing public projection to the latest assistant message, stores the task-correlated projected response, and queues it to the bound issue; failures remain retryable. It performs only structural latest-message selection and transport. The web orchestrator, not the bridge, interprets response status and decides whether direct remote review can begin.
 
-Historical mapped Scout state and projected responses retain task, request, and
-exact-ref correlation for local status. The service does not contact old
-inspected-ref sessions or publish new Scout output until a hardened runtime is
-available.
+Mapped Scout state and projected responses retain task, request, and exact-ref
+correlation. Terminal recovery and response retrieval use only the dedicated
+endpoint and exact snapshot; incompatible historical mappings stay fail closed.
 
 ## Mechanical promotion
 

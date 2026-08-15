@@ -12,9 +12,15 @@ export interface BridgeConfig {
   stateFile: string;
   opencode: {
     baseUrl: string;
+    scoutBaseUrl: string;
     username: string;
     password: string;
     passwordFile: string;
+    scoutPassword: string;
+    scoutPasswordFile: string;
+    scoutRuntimeRoot: string;
+    scoutProviderApiKey: string;
+    scoutProviderApiKeyFile: string;
   };
   github: {
     appId: string;
@@ -99,6 +105,29 @@ function stateOutsideTrackedTree(repositoryRoot: string, stateFile: string): voi
   }
 }
 
+function loopbackOrigin(value: string, label: string): string {
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    throw new Error(`${label} must be a loopback HTTP URL`);
+  }
+  const hostname = url.hostname.replace(/^\[|\]$/g, "");
+  if (url.protocol !== "http:" || !["127.0.0.1", "localhost", "::1"].includes(hostname)
+    || url.username || url.password || url.pathname !== "/" || url.search || url.hash || !url.port) {
+    throw new Error(`${label} must be a credential-free loopback HTTP origin with an explicit port`);
+  }
+  return url.origin;
+}
+
+function runtimeOutsideRepository(repositoryRoot: string, runtimeRoot: string): void {
+  if (!isAbsolute(runtimeRoot)) throw new Error("opencode.scout_runtime_root must be absolute");
+  const fromRepository = relative(repositoryRoot, runtimeRoot);
+  if (fromRepository === "" || (!fromRepository.startsWith("..") && !isAbsolute(fromRepository))) {
+    throw new Error("opencode.scout_runtime_root must be outside repository_root");
+  }
+}
+
 export function defaultConfigPath(): string {
   return join(homedir(), ".config", "agentic-workflow", "opencode-bridge.json");
 }
@@ -119,9 +148,18 @@ export function loadBridgeConfig(inputPath = defaultConfigPath()): BridgeConfig 
   stateOutsideTrackedTree(repositoryRoot, stateFile);
 
   const opencode = asRecord(root.opencode, "opencode configuration");
-  only(opencode, ["base_url", "username", "password_file"], "opencode configuration");
+  only(opencode, ["base_url", "scout_base_url", "username", "password_file", "scout_password_file", "scout_runtime_root", "scout_provider_api_key_file"], "opencode configuration");
   const passwordFile = localPath(requiredString(opencode, "password_file", "opencode configuration"), base);
   const password = privateText(passwordFile, "OpenCode password file", 16_384);
+  const scoutPasswordFile = localPath(requiredString(opencode, "scout_password_file", "opencode configuration"), base);
+  const scoutPassword = privateText(scoutPasswordFile, "Scout OpenCode password file", 16_384);
+  const scoutProviderApiKeyFile = localPath(requiredString(opencode, "scout_provider_api_key_file", "opencode configuration"), base);
+  const scoutProviderApiKey = privateText(scoutProviderApiKeyFile, "Scout provider API key file", 16_384);
+  const scoutRuntimeRoot = localPath(requiredString(opencode, "scout_runtime_root", "opencode configuration"), base);
+  runtimeOutsideRepository(repositoryRoot, scoutRuntimeRoot);
+  const baseUrl = loopbackOrigin(requiredString(opencode, "base_url", "opencode configuration"), "opencode.base_url");
+  const scoutBaseUrl = loopbackOrigin(requiredString(opencode, "scout_base_url", "opencode configuration"), "opencode.scout_base_url");
+  if (baseUrl === scoutBaseUrl) throw new Error("opencode.scout_base_url must be distinct from opencode.base_url");
   const username = optionalString(opencode, "username", "opencode");
   if (/[\r\n:]/.test(username)) throw new TypeError("OpenCode username is invalid");
 
@@ -169,10 +207,16 @@ export function loadBridgeConfig(inputPath = defaultConfigPath()): BridgeConfig 
     manifestFile,
     stateFile,
     opencode: {
-      baseUrl: requiredString(opencode, "base_url", "opencode configuration"),
+      baseUrl,
+      scoutBaseUrl,
       username,
       password,
       passwordFile,
+      scoutPassword,
+      scoutPasswordFile,
+      scoutRuntimeRoot,
+      scoutProviderApiKey,
+      scoutProviderApiKeyFile,
     },
     github: {
       appId,
@@ -200,6 +244,6 @@ export function loadBridgeConfig(inputPath = defaultConfigPath()): BridgeConfig 
         return privateText(file, `Secret reference ${reference}`, 1_000_000);
       },
     },
-    privateRoots: [...new Set([repositoryRoot, base, homedir()])],
+    privateRoots: [...new Set([repositoryRoot, scoutRuntimeRoot, base, homedir()])],
   };
 }

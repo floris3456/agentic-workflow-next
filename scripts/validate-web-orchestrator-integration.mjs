@@ -174,11 +174,11 @@ const scoutSource = read(
   path.join(repositoryRoot, "tools/opencode-bridge/src/scout.ts"),
   "developer Scout boundary",
 );
-for (const term of ["Hardened Scout runtime is unavailable", "repository instructions", "package"] ) {
-  if (!scoutSource.includes(term)) fail(`Developer Scout fail-closed boundary is missing ${term}`);
+for (const term of ["scout-snapshots", "ls-tree", "Historical Scout worktree mappings"] ) {
+  if (!scoutSource.includes(term)) fail(`Developer Scout exact-tree boundary is missing ${term}`);
 }
-if (!scoutSource.includes('allowedTools = new Set(["read", "glob", "grep"])')
-  || scoutSource.includes('"read", "glob", "grep", "lsp"')) {
+if (!scoutSource.includes('allowedTools = new Set(["scout_read", "scout_glob", "scout_grep"])')
+  || scoutSource.includes('"scout_read", "scout_glob", "scout_grep", "lsp"')) {
   fail("Developer Scout boundary must exclude LSP");
 }
 

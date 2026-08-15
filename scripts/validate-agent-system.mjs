@@ -70,12 +70,12 @@ for (const [file, model, effort] of [
 }
 
 assert(!exists(".opencode/agents/repository-scout.md"),
-  "repository-scout must not be ref-owned; the bridge must fail closed until a hardened runtime exists");
+  "repository-scout must not be ref-owned; the hardened runtime owns its contract");
 const scoutSource = read("tools/opencode-bridge/src/scout.ts");
-assert(scoutSource.includes("allowedTools = new Set([\"read\", \"glob\", \"grep\"])") && !scoutSource.includes("\"read\", \"glob\", \"grep\", \"lsp\""),
+assert(scoutSource.includes("allowedTools = new Set([\"scout_read\", \"scout_glob\", \"scout_grep\"])") && !scoutSource.includes("\"scout_read\", \"scout_glob\", \"scout_grep\", \"lsp\""),
   "Scout contract must exclude LSP");
-assert(scoutSource.includes("Hardened Scout runtime is unavailable") && scoutSource.includes("repository instructions") && scoutSource.includes("package"),
-  "Scout start must expose the pinned-runtime isolation blocker");
+assert(exists("tools/opencode-bridge/scout-runtime/opencode.json") && exists("tools/opencode-bridge/scout-runtime/plugins/scout-tools.mjs"),
+  "Scout trusted runtime/config/tools must be bridge-owned");
 
 const skills = new Set(listSkillNames());
 for (const requiredSkill of [

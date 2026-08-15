@@ -8,13 +8,19 @@ import { GitHubClient, GitHubCommandPoller, GitHubControlLoop, GitHubOutbox } fr
 import {
   DeveloperResponseTransport,
   queueDeveloperResponseEvent,
+  queueScoutResponseEvent,
+  ScoutResponseTransport,
 } from "./handoff.js";
 import { Manifest } from "./manifest.js";
 import { OpenCodeClient } from "./opencode.js";
 import { OperationPolicy, PublicProjection } from "./projection.js";
 import { RecoveryCoordinator, type PersistedOpenCodeEvent } from "./recovery.js";
 import { RequestExecutor } from "./requests.js";
-import { ScoutRuntime, scoutRuntimeBoundary } from "./scout.js";
+import { ScoutRuntime, ScoutWorkspaceManager, scoutRuntimeBoundary } from "./scout.js";
+import {
+  assertScoutRuntimeInstallation, probeScoutServer, scoutClient,
+  ScoutServerProcess,
+} from "./scout-server.js";
 import { BridgeState } from "./state.js";
 import type { JsonValue, TaskSession } from "./types.js";
 import { ensurePrivateDirectory, errorMessage, sleep } from "./util.js";
@@ -184,6 +190,10 @@ export class BridgeService {
   private readonly executor: CommandExecutor;
   private readonly requests: RequestExecutor;
   private readonly responses: DeveloperResponseTransport;
+  private readonly scoutResponses: ScoutResponseTransport;
+  private readonly scoutWorkspaces: ScoutWorkspaceManager;
+  private readonly scoutServer: ScoutServerProcess;
+  private readonly manifest: Manifest;
   private readonly outbox: GitHubOutbox;
   private readonly control: GitHubControlLoop;
   private readonly sessionRuns = new Map<string, Promise<void>>();
@@ -194,6 +204,7 @@ export class BridgeService {
     this.lock = new ServiceLock(config.stateFile);
     this.state = new BridgeState(config.stateFile);
     const manifest = Manifest.load(config.manifestFile);
+    this.manifest = manifest;
     this.client = opencode(config, manifest);
     this.projection = new PublicProjection({ state: this.state, privateRoots: config.privateRoots });
     const githubClient = github(config, this.state);
@@ -212,6 +223,14 @@ export class BridgeService {
     });
     this.responses = new DeveloperResponseTransport({
       client: this.client,
+      state: this.state,
+      projection: this.projection,
+      onError: (message) => this.state.setMeta("service.last_error", message),
+    });
+    this.scoutWorkspaces = new ScoutWorkspaceManager(config.repositoryRoot, config.stateFile);
+    this.scoutServer = new ScoutServerProcess(config, manifest, this.scoutWorkspaces.root);
+    this.scoutResponses = new ScoutResponseTransport({
+      clientFor: (workspace) => scoutClient(config, manifest, workspace),
       state: this.state,
       projection: this.projection,
       onError: (message) => this.state.setMeta("service.last_error", message),
@@ -242,7 +261,15 @@ export class BridgeService {
         }
       },
     });
-    const scout = new ScoutRuntime();
+    const scout = new ScoutRuntime({
+      workspaces: this.scoutWorkspaces,
+      clientFor: (workspace) => scoutClient(config, manifest, workspace),
+      state: this.state,
+      assertReady: async () => {
+        await this.scoutServer.start();
+        await probeScoutServer(scoutClient(config, manifest, config.opencode.scoutRuntimeRoot));
+      },
+    });
     this.requests = new RequestExecutor({ state: this.state, projection: this.projection, scout });
     this.control = new GitHubControlLoop({
       poller,
@@ -260,7 +287,7 @@ export class BridgeService {
     if (issue === undefined) return;
     if (terminalSessionEvent(event) && event.sessionId) {
       if (event.requestId) {
-        this.state.setMeta("service.last_error", scoutRuntimeBoundary().reason);
+        await this.scoutResponses.deliver(queueScoutResponseEvent(this.state, event));
         return;
       }
       await this.responses.deliver(queueDeveloperResponseEvent(this.state, event));
@@ -276,7 +303,7 @@ export class BridgeService {
     while (!this.signal.aborted) {
       for (const delivery of this.state.pendingResponseDeliveries()) {
         if (delivery.deliveryKind === "scout") {
-          this.state.setMeta("service.last_error", scoutRuntimeBoundary().reason);
+          await this.scoutResponses.deliver(delivery);
           continue;
         }
         await this.responses.deliver(delivery);
@@ -299,7 +326,24 @@ export class BridgeService {
   }
 
   private startScoutRecovery(requestId: string): void {
-    if (this.state.getScoutSession(requestId)) this.state.setMeta("service.last_error", scoutRuntimeBoundary().reason);
+    const key = `scout:${requestId}`;
+    if (this.sessionRuns.has(key) || this.signal.aborted) return;
+    const session = this.state.getScoutSession(requestId);
+    if (!session) return;
+    const run = (async () => {
+      const workspace = await this.scoutWorkspaces.reopen(session.refSha, session.workspacePath);
+      await this.scoutServer.start();
+      const recovery = new RecoveryCoordinator({
+        client: scoutClient(this.config, this.manifest, workspace),
+        state: this.state,
+        onPersistedEvent: (event) => this.publishEvent(event),
+        onError: (error) => this.state.setMeta("service.last_error", this.projection.safeText(errorMessage(error))),
+      });
+      await recovery.runScoutSession(session, this.signal);
+    })().catch((error) => {
+      this.state.setMeta("service.last_error", this.projection.safeText(errorMessage(error)));
+    }).finally(() => this.sessionRuns.delete(key));
+    this.sessionRuns.set(key, run);
   }
 
   async run(): Promise<void> {
@@ -308,6 +352,14 @@ export class BridgeService {
     this.state.setMeta("service.instance", this.config.instanceId);
     const heartbeat = setInterval(() => this.state.setMeta("service.heartbeat_at", String(Date.now())), 5_000);
     try {
+      try {
+        await this.scoutServer.start();
+        this.state.setMeta("scout.runtime_ready", "true");
+        this.state.setMeta("scout.runtime_reason", `pinned OpenCode 1.18.16 endpoint and trusted Scout contract verified`);
+      } catch (error) {
+        this.state.setMeta("scout.runtime_ready", "false");
+        this.state.setMeta("scout.runtime_reason", this.projection.safeText(errorMessage(error)));
+      }
       try {
         const compatibility = await this.client.compatibility();
         this.state.recordCompatibility(this.config.instanceId, compatibility);
@@ -333,6 +385,7 @@ export class BridgeService {
       clearInterval(heartbeat);
       this.state.setMeta("service.stopped_at", String(Date.now()));
       await Promise.allSettled(this.sessionRuns.values());
+      await this.scoutServer.stop();
       this.state.close();
       this.lock.release();
     }
@@ -380,6 +433,21 @@ export async function checkBridge(config: BridgeConfig, mutate: boolean): Promis
     state.close();
     stateReady = true;
   }
+  let scoutRuntimeReady = false;
+  let scoutRuntimeReason = "Hardened Scout runtime probe did not run";
+  const workspaces = new ScoutWorkspaceManager(config.repositoryRoot, config.stateFile);
+  const server = new ScoutServerProcess(config, manifest, workspaces.root);
+  try {
+    assertScoutRuntimeInstallation(config);
+    await server.start();
+    await probeScoutServer(scoutClient(config, manifest, config.opencode.scoutRuntimeRoot));
+    scoutRuntimeReady = true;
+    scoutRuntimeReason = "pinned installation, OpenAPI manifest, agent, model, prompt, permissions, and trusted tools verified";
+  } catch (error) {
+    scoutRuntimeReason = errorMessage(error);
+  } finally {
+    await server.stop();
+  }
   return {
     instance: config.instanceId,
     repository: `${config.github.owner}/${config.github.repository}`,
@@ -388,17 +456,24 @@ export async function checkBridge(config: BridgeConfig, mutate: boolean): Promis
     githubAccessible: true,
     labels,
     stateReady,
-    scoutRuntimeReady: scoutRuntimeBoundary().ready,
-    scoutRuntimeReason: scoutRuntimeBoundary().reason,
+    scoutRuntimeReady,
+    scoutRuntimeReason,
   };
 }
 
 export function bridgeStatus(config: BridgeConfig): JsonValue {
+  let installed = scoutRuntimeBoundary();
+  try {
+    const result = assertScoutRuntimeInstallation(config);
+    installed = scoutRuntimeBoundary(true, result.reason);
+  } catch (error) {
+    installed = scoutRuntimeBoundary(false, errorMessage(error));
+  }
   if (!existsSync(config.stateFile)) return {
     instance: config.instanceId,
     running: false,
     initialized: false,
-    scout_runtime: scoutRuntimeBoundary(),
+    scout_runtime: installed,
   };
   const state = new BridgeState(config.stateFile);
   try {
@@ -425,7 +500,11 @@ export function bridgeStatus(config: BridgeConfig): JsonValue {
       pending_requests: state.listRequests(["accepted", "applying"]).length,
       pending_response_deliveries: state.pendingResponseDeliveries(100).length,
       scout_sessions: state.listScoutSessions().length,
-      scout_runtime: scoutRuntimeBoundary(),
+      scout_runtime: {
+        ...installed,
+        endpoint_ready: state.getMeta("scout.runtime_ready") === "true",
+        endpoint_reason: state.getMeta("scout.runtime_reason") ?? null,
+      },
       pending_outbox: state.pendingOutbox(Date.now() + 365 * 24 * 60 * 60 * 1_000, 10_000).length,
     };
   } finally {

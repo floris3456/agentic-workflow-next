@@ -22,14 +22,12 @@ This repository uses a human-controlled web-orchestrated implementation system w
 
 The normal implementation route uses `small-developer` (GPT 5.6 Luna, maximum supported applicable reasoning tier). `large-developer` (GPT 5.6 Sol, high effort) is selected only by the web orchestrator after two substantive Luna failures or for exceptional intrinsic complexity. Environmental failures, external blockers, missing information, and poor task design do not consume attempts.
 
-The intended repository Scout remains a separate Luna/high focused fact finder,
-but it is not currently launchable. The ref-owned tracked agent was removed and
-the bridge fails before checkout or OpenCode contact because pinned OpenCode
-`1.18.16` cannot prove instruction independence and process-free reads: built-in
-read attaches repository instructions and warms LSP, while config startup may
-install packages. A bridge-owned in-process read/glob/grep runtime or separately
-audited isolation dependency requires human architecture approval. Direct GitHub
-evidence remains the available independent route.
+The repository Scout is a separate Luna/high focused fact finder on a dedicated
+authenticated loopback OpenCode `1.18.16` endpoint. Its bridge-installed runtime,
+prompt, permissions, and `scout_read`/`scout_glob`/`scout_grep` tools live outside
+the repository and are actively probed. It reads immutable canonical Git-object
+snapshots and treats repository instructions as untrusted evidence. It remains
+non-authoritative context; direct GitHub inspection is repository proof.
 
 This routing rule is an orchestration policy, not a permanent validator rule about the number of files under `.opencode/agents/`.
 
@@ -46,9 +44,9 @@ installation package; installed private Project state remains outside Git.
 
 The Project keeps genuinely distinct operating modes. MCP-ON/Sol uses connected
 GitHub for exact evidence, authenticated bridge control and continuity writes,
-and one mutating developer task. Its intended concurrent Luna/high Scout route is
-currently unavailable and must not be claimed; connected GitHub is the independent
-evidence route until the runtime decision is resolved. MCP-OFF/Pro uses only
+and one mutating developer task. Its concurrent Luna/high Scout route uses the
+separate hardened runtime and exact-ref evidence contract; connected GitHub remains
+the independent exact-evidence route. MCP-OFF/Pro uses only
 public-web navigation and reasoning and cannot claim Scouts, delegation, bridge
 control, or state writes. Scouting and verification scale with size, complexity,
 uncertainty, risk, blast radius, reversibility, and stakes; high-stakes manageable
@@ -65,24 +63,27 @@ task sequence is derived within transactional admission instead of materialized
 in a second counter. Repository ambiguity freezes command dispatch but leaves
 task-bound recovery reads available. Restart recomputes interrupted local status
 requests under the same UUID, while command mutations retain fail-closed
-no-replay behavior and `scout.start` fails before unsafe side effects.
+no-replay behavior; `scout.start` fails closed before unsafe fallback whenever its
+installed runtime or active contract probe is unavailable.
 
 When a mapped developer session idles or errors, the bridge atomically persists the event/cursor/session-state/delivery boundary, transports the structurally latest assistant message through the existing public-safety projection to the bound issue, and retains it for `task.status` recovery. The bridge does not interpret or semantically validate that response. The web orchestrator correlates it to the task, checks its explicit developer status/handoff information, and uses exact remote GitHub evidence to decide whether review can begin.
 
 Canonical reconciliation is focused on recoverable developer evidence: pending
 permission and question lists restore mapped interaction events. Historical
-Scout recovery logic remains state-compatible but is not invoked through an
-unsafe inspected-ref/normal-runtime client. The bridge does not materialize an
-unused whole-project reconciliation snapshot or infer workflow meaning.
+Scout recovery uses only the dedicated endpoint and a revalidated exact-tree
+snapshot. Historical worktree mappings remain state-visible but are rejected and
+never contacted. The bridge does not infer workflow meaning.
 
 Scout requests retain the sequence-free lane, exact request shape, concurrent
-admission, durable status, and no-replay behavior. Launch fails immediately with
-the hardened-runtime reason, before workspace preparation or OpenCode contact.
-The future workspace primitive is hook-disabled, detached, clean, exact-ref, and
-realpath-contained, but it is not sufficient by itself. A replacement runtime
-must own the model/instructions/permissions/evidence contract, provide in-process
-contained read/glob/grep without LSP, package installation, ref-controlled
-processes, or downloads, and preserve the existing durable correlation contract.
+admission, durable status, and no-replay behavior. The bridge fetches canonical
+`origin/developer`, validates ancestry, and materializes the requested commit via
+Git object plumbing without checkout, hooks, filters, or `.git`; it rejects
+gitlinks, removes regular-file write/execute bits, preserves symlinks as inert
+evidence, and re-hashes every reuse. Trusted tools enforce lexical/realpath
+containment without following symlinks and bound UTF-8 input/output. The sterile
+runtime disables project/global contamination paths, LSP, formatters, watchers,
+default plugins, and external skills; its read-only config prevents startup
+package installation. Only explicit provider model traffic is intentional.
 
 ## Synchronization and handoff
 

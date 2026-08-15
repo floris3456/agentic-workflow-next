@@ -23,6 +23,10 @@ const required = [
   "tools/opencode-bridge/README.md",
   "tools/opencode-bridge/AS-BUILT.md",
   "tools/opencode-bridge/src/repository-identity.ts",
+  "tools/opencode-bridge/src/scout-server.ts",
+  "tools/opencode-bridge/scout-runtime/package-lock.json",
+  "tools/opencode-bridge/scout-runtime/opencode.json",
+  "tools/opencode-bridge/scout-runtime/plugins/scout-tools.mjs",
 ];
 for (const file of required) assert(fs.existsSync(path.join(root, file)), `Missing bridge file ${file}`);
 
@@ -65,12 +69,22 @@ try {
   assert(packageDocument.engines?.node === ">=22.13.0", "Bridge minimum Node version must be explicit");
   assert(packageLock.packages?.[""]?.dependencies?.["@opencode-ai/sdk"] === "1.18.16", "Lockfile SDK version is not exact");
   assert(example.schema_version === 1 && example.policy?.pty_enabled === false && example.policy?.promotion_enabled === false, "Example config must default-deny PTY and promotion");
+  assert(example.opencode?.scout_base_url && example.opencode.scout_base_url !== example.opencode.base_url, "Example config must use a distinct Scout endpoint");
   assert(!/-----BEGIN (?:[A-Z]+ )?PRIVATE KEY-----/.test(read("tools/opencode-bridge/config.example.json")), "Example config appears to contain a private key");
   const scout = read("tools/opencode-bridge/src/scout.ts");
-  assert(scout.includes('allowedTools = new Set(["read", "glob", "grep"])'), "Scout read/search contract changed without review");
-  assert(!scout.includes('"read", "glob", "grep", "lsp"'), "Scout contract must not allow LSP");
-  assert(scout.includes("Hardened Scout runtime is unavailable") && scout.includes("repository instructions") && scout.includes("install"), "Scout unavailable boundary is not explicit");
+  assert(scout.includes('allowedTools = new Set(["scout_read", "scout_glob", "scout_grep"])'), "Scout trusted read/search contract changed without review");
+  assert(!scout.includes('"scout_read", "scout_glob", "scout_grep", "lsp"'), "Scout contract must not allow LSP");
+  assert(scout.includes('"ls-tree", "-rz"') && scout.includes("reject gitlinks and submodules") && scout.includes("0o444"), "Scout exact-tree snapshot boundary is incomplete");
   assert(!fs.existsSync(path.join(root, ".opencode/agents/repository-scout.md")), "Scout trusted contract must not be ref-owned");
+  const runtimePackage = parse("tools/opencode-bridge/scout-runtime/package.json");
+  const runtimeLock = parse("tools/opencode-bridge/scout-runtime/package-lock.json");
+  const runtimeConfig = parse("tools/opencode-bridge/scout-runtime/opencode.json");
+  const tools = read("tools/opencode-bridge/scout-runtime/plugins/scout-tools.mjs");
+  assert(runtimePackage.dependencies?.["opencode-ai"] === "1.18.16" && runtimePackage.dependencies?.["@opencode-ai/plugin"] === "1.18.16", "Scout runtime packages must be exactly pinned");
+  assert(runtimeLock.packages?.[""]?.dependencies?.["opencode-ai"] === "1.18.16", "Scout runtime lock must pin OpenCode");
+  assert(runtimeConfig.model === "openai/gpt-5.6-luna" && runtimeConfig.lsp === false && runtimeConfig.formatter === false, "Scout runtime model and process-adjacent features are not pinned");
+  assert(runtimeConfig.agent?.["repository-scout"]?.options?.reasoningEffort === "high", "Scout runtime reasoning effort must be high");
+  assert(!/node:child_process|node:(?:http|https|net)|\bfetch\s*\(|\bBun\./.test(tools), "Scout trusted tools must not expose process, package, or network primitives");
   const identity = read("tools/opencode-bridge/src/repository-identity.ts");
   for (const term of ["api.github.com", "/api/v3", "git_host", "ssh://", "git@host", "userinfo"]) {
     assert(identity.includes(term), `Repository identity boundary is missing ${term}`);

@@ -1,0 +1,10 @@
+{
+  "name": "@agentic-workflow/hardened-scout-runtime",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@opencode-ai/plugin": "1.18.16",
+    "opencode-ai": "1.18.16"
+  }
+}

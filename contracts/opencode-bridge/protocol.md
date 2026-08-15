@@ -77,7 +77,7 @@ binding and unrelated poll work continue.
 | --- | --- | --- |
 | `command.status` | exact `command_id` UUID | matching task's exact ledger or pre-ledger-rejection state, known projected result/error, timestamps, applying age, and service heartbeat |
 | `task.status` | none | mapped session alias/agent/state and latest projected developer response plus event/update timestamps |
-| `scout.start` | exactly four fields: focused string `question`, exact lowercase 40-character SHA in `ref`, bounded string `scope`, and string `expected_evidence` | currently an explicit hardened-runtime failure before checkout or OpenCode contact; UUID admission/no-replay semantics remain durable |
+| `scout.start` | exactly four fields: focused string `question`, exact lowercase 40-character SHA in `ref`, bounded string `scope`, and string `expected_evidence` | one dedicated-runtime Luna/high session over the immutable exact-tree snapshot, or an explicit fail-closed runtime/probe error; UUID admission/no-replay semantics remain durable |
 | `scout.status` | exact `scout_request_id` UUID | matching task/request start state, exact ref, session state, and latest projected Scout response |
 
 `command.status`, `task.status`, and `scout.status` are local durable reads and
@@ -85,28 +85,29 @@ never repeat work. A restart while one of these reads is applying requeues and
 recomputes it under the same request UUID from local state. `scout.start` creates
 and prompts at most one read-only session per request UUID; a restart while that
 request is applying marks it indeterminate and never repeats a side effect.
-Current starts fail before workspace preparation, session creation, or prompt
-delivery because the pinned runtime cannot establish the required independent
-trust boundary. Historical mappings/results remain queryable locally but are not
-contacted through an inspected-ref client. All results are navigation
+Runtime absence or probe failure stops before session creation or normal-server
+contact. Historical worktree mappings/results remain queryable locally but are
+not contacted. All results are navigation
 and recovery evidence; they do not prove implementation completion, correctness,
 synchronization, review, or acceptance.
 
-No ref-owned Scout agent is tracked. The retained future-runtime workspace
-primitive fetches `developer`, requires the exact requested commit in
-`origin/developer` history, and creates/reuses a clean detached view outside the
-tracked tree with hooks and inherited/global/system Git config disabled. Exact
-HEAD, detachment, cleanliness, private-root realpath containment, and every
-symlink target are verified; invalid views are disposed and never reused.
+No ref-owned Scout agent is tracked. Snapshot preparation fetches `developer`,
+requires the exact requested commit in canonical `origin/developer` history, and
+uses `git ls-tree` plus `git cat-file` rather than checkout/worktree. Gitlinks and
+`.git` entries are rejected, regular files are non-writable/non-executable,
+directories are read-only, and symlinks are preserved as inert target text. Every
+reuse verifies all paths, types, modes, and Git blob hashes; historical worktree
+mappings fail recovery.
 
-Pinned OpenCode `1.18.16` built-in read attaches nearby repository instructions,
-initiates LSP warm-up, and config initialization may install packages. Therefore
-the bridge does not fall back to the normal developer server. A future trusted
-runtime must be bridge/runtime-owned, pin Luna/high and the factual evidence
-contract independently of the inspected ref, expose only contained in-process
-read/glob/grep, and deny LSP, mutation, shell, delegation, skills, web,
-interaction, external access, package installers, ref-controlled processes, and
-downloads.
+The distinct loopback runtime is bridge-installed outside `repository_root` with
+exact OpenCode/plugin `1.18.16`, sterile HOME/XDG/temp/environment, read-only
+config/dependencies, explicit provider auth, and project/default-plugin/external-
+skill/watcher/LSP/formatter disablement. Its bridge-owned Luna/high prompt and
+wildcard-deny policy expose only `scout_read`, `scout_glob`, and `scout_grep`.
+These tools never follow symlinks, enforce lexical/realpath containment and bounds,
+and have no process, package, LSP, mutation, delegation, web, interaction, or
+network primitive. Bootstrap probes installation, version/OpenAPI, agent, prompt,
+permissions, and tool inventory; no normal developer endpoint fallback exists.
 
 ## Machine markers
 

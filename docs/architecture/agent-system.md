@@ -28,9 +28,9 @@ In MCP-ON mode it uses:
 
 In MCP-OFF mode it uses the public GitHub website for repository inspection and cannot pretend delegation or direct orchestration writes occurred.
 
-For exact lookup MCP-ON uses connected GitHub directly. The intended focused
-Scout route is unavailable until the hardened-runtime decision is resolved and
-must not be represented as having run. Review and verification are proportional
+For exact lookup MCP-ON uses connected GitHub directly. Focused Scout requests may
+run concurrently through the dedicated hardened local runtime but remain context,
+not exact remote proof. Review and verification are proportional
 to change size, complexity, uncertainty, risk, blast radius, reversibility, and
 stakes.
 
@@ -41,21 +41,19 @@ The current approved implementation agents are:
 - `small-developer`: default, configured-provider GPT 5.6 Luna at `max` reasoning effort;
 - `large-developer`: exceptional path, configured-provider GPT 5.6 Sol at `high` reasoning effort.
 
-No ref-owned `repository-scout` agent is tracked. The intended Scout remains a
-Luna/high non-implementation role, but bridge launch fails before checkout or
-OpenCode contact because pinned OpenCode `1.18.16` cannot provide the required
-independent read/search boundary. A future bridge/runtime-owned contract must
-provide only contained in-process read/glob/grep and focused facts/unknowns; LSP,
-shell, mutation, delegation, skills, web, interactions, package installation,
-ref-controlled processes, and downloads remain forbidden.
+No ref-owned `repository-scout` agent is tracked. The Luna/high non-implementation
+role is owned by an externally installed bridge runtime and exposes only contained
+`scout_read`, `scout_glob`, and `scout_grep` plus focused facts/unknowns. LSP,
+shell, mutation, delegation, skills, web, interactions, runtime package
+installation, ref-controlled processes, and tool-driven downloads are forbidden.
 
 The web orchestrator chooses the agent. Local developers do not launch subagents, review their own work, select escalation, or accept changes.
 
 Both implementation developers explicitly allow OpenCode's structured question
 tool when a human answer is required. This produces a task-correlated event and
 public alias that the web orchestrator can answer through `question.reply`;
-ordinary assistant prose is not a substitute. A future read-only Scout must deny
-questions and cannot enter this interaction path.
+ordinary assistant prose is not a substitute. The read-only Scout denies questions
+and cannot enter this interaction path.
 
 The bridge is transport and local durability, not a new authority. It maps public task aliases to private OpenCode sessions, projects bounded status, and invokes Luna/Sol against the same loopback server a human can attach to with the normal TUI. Direct GitHub inspection remains the proof route.
 
@@ -77,18 +75,22 @@ No normal merge crosses between `web-orchestration` and implementation branches.
 The OpenCode Scout request lane remains separate from mutating task progress,
 finalization, or promotion. Each request names a focused question, exact remote
 developer SHA, scope, and expected evidence, and concurrent request admission and
-task/request status remain durable. Launch currently fails closed before checkout
-or OpenCode contact. The retained workspace primitive disables Git hooks and
-global/system Git config, verifies exact detached cleanliness, enforces private
-realpath containment including symlink targets, and disposes invalid snapshots.
-It is not treated as a complete runtime boundary.
+task/request status remain durable. Snapshot preparation uses `ls-tree` and
+`cat-file` against canonical `origin/developer`, not checkout/worktree, rejects
+gitlinks and `.git`, strips write/execute bits, and preserves symlinks only as
+evidence. Every reuse is fully revalidated; historical worktree mappings fail
+closed.
 
-The blocker is concrete in pinned upstream behavior: built-in read attaches
-nearby repository instruction files and warms LSP, while config initialization
-may install packages. Therefore project-config disablement, `--pure`, permissions,
-and isolated global paths cannot establish the required trust boundary. Bootstrap
-and status expose this unavailable state; no normal developer OpenCode behavior
-or TUI configuration is changed.
+The separate pinned `1.18.16` endpoint executes outside `repository_root` with
+sterile HOME/XDG/temp/environment, explicit provider auth, read-only trusted
+config, project/default-plugin/external-skill/watcher/LSP/formatter disablement,
+managed-config redirection into the immutable runtime, and no normal-server
+fallback. Bootstrap actively probes installation
+hashes, exact OpenAPI/version, Luna/high prompt/permissions, and tool inventory.
+Trusted tools never follow symlinks, enforce realpath containment and bounded
+UTF-8 operations, and expose no process/package/network API. Runtime absence or
+misconfiguration fails only Scout operation closed; normal developer OpenCode and
+TUI behavior remain unchanged.
 
 The configured optional symbol scout is likewise non-authoritative context.
 `.jcodemunch.jsonc` uses strict freshness and excludes evidence, research,

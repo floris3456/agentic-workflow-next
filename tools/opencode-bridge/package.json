@@ -12,6 +12,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "npm run build && node --test --test-concurrency=1 dist/tests/*.test.js",
+    "test:scout-runtime-smoke": "npm run build && node scripts/smoke-scout-runtime.mjs",
     "check": "npm run build && node --test --test-concurrency=1 dist/tests/*.test.js",
     "generate-manifest": "node scripts/generate-manifest.mjs",
     "start": "node dist/src/cli.js run"
@@ -20,6 +21,7 @@
     "@opencode-ai/sdk": "1.18.16"
   },
   "devDependencies": {
+    "@opencode-ai/plugin": "1.18.16",
     "@types/node": "22.20.1",
     "typescript": "7.0.2"
   }

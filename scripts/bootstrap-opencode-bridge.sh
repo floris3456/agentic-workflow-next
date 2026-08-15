@@ -29,6 +29,11 @@ else
 fi
 
 args=(bootstrap)
+if [[ "$mode" == "apply" ]]; then
+  install_args=(install-scout-runtime)
+  [[ -n "$config" ]] && install_args+=(--config "$config")
+  node "$package/dist/src/cli.js" "${install_args[@]}"
+fi
 [[ "$mode" == "check" ]] && args+=(--check)
 [[ -n "$config" ]] && args+=(--config "$config")
 node "$package/dist/src/cli.js" "${args[@]}"
