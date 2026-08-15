@@ -1,43 +1,40 @@
 # Task-context files
 
-Create one file per active or completed orchestration task using `TEMPLATE.md`.
+Create one concise public-safe file per ordinary orchestration task that actually
+needs durable continuity, using `TEMPLATE.md`. Quick lookups and self-contained
+non-mutating answers do not need a task-context record.
 
-This directory owns ordinary MCP-ON task continuity. When the human explicitly
-commissions template evaluation or maintenance, the canonical record under
-`docs/work/current/**` on `template-development` replaces this record; do not
-duplicate it here merely to satisfy the normal path.
+When the human explicitly commissions reusable-template evaluation or
+maintenance, the canonical record under `docs/work/current/**` on
+`template-development` replaces this record; do not duplicate it here merely to
+satisfy the ordinary workflow.
 
-For an ordinary task, the task ID must match the delegated developer task and
-bridge envelope. Keep the file concise. Before any GitHub publication, persist
-its exact public-safe arguments as `prepared`; after exact readback, add its ref
-and mark it `posted`.
-Use `connector-delivery-pending` when a required effect is definitely absent
-after one bounded delivery window. It is a scheduling state: pause only dependent
-work, continue meaningful independent work, then retry the same logical
-publication at a later natural checkpoint. Journal every refusal immediately
-even if a later attempt succeeds. Journal every resolved command with
-command/result refs and lifecycle state. Clear ordinary terminal pending state
-only after journaling; retain an exact envelope as `pre-ledger-rejected` or
-`terminal-unresolved` until reconciled, and use `cancelled` only for a definitely
-unpublished superseded request.
+For a delegated task, the task ID must match the developer task and bridge
+envelope. For a direct mutation route, use the same stable task identity and
+record `Selected developer: none` with `direct GitHub` as the selection route.
 
-Record the canonical bound issue, every related/duplicate issue and disposition,
-control-issue state, latest command UUID/kind/lifecycle, highest accepted
-sequence derived from trusted lifecycle, distinct finalization and human-approval
-SHAs, and verified promotion refs. Keep one `Active work` entry per launched
-Scout/developer route through its correlated terminal result and record whether
-the orchestrator absorbed it. Update after consequential delegation, review,
-steering, synchronization recovery, mode-transition reconciliation, and before
-human acceptance. One task ID never receives a replacement issue; resume by
-reconstructing and reusing its canonical issue.
+Before any protected GitHub publication, persist its exact public-safe arguments
+as `prepared`; after exact readback, add its ref and mark it `posted`. Use
+`connector-delivery-pending` when a required effect is definitely absent after
+one bounded delivery window. That state pauses only dependent work: continue
+meaningful independent work and retry the same logical publication at a later
+natural checkpoint. Journal every refusal even if a later attempt succeeds.
 
-The same file owns Luna/Sol selection, substantive-attempt classification, route
-changes, result, and retrospective. Do not create a separate routing record for
-new work. During upgrade, copy any active legacy routing facts into `## Routing`
-before retiring the old record; historical Git revisions remain readable.
+Record the canonical bound issue, related/duplicate issue dispositions,
+control-issue state, latest command UUID/kind/lifecycle, highest accepted sequence
+derived from trusted lifecycle, distinct finalization and human-approval SHAs,
+and verified promotion refs when they exist. Keep one `Active work` entry per
+launched Scout/developer route until its correlated terminal result is read and
+absorbed. One task ID never receives a replacement issue; recovery reconstructs
+and reuses the canonical issue.
 
-During upgrade, migrate any active prepared command into `## Pending
-publication`, reconstruct `## Active work` from trusted task-correlated issue
-history, and use `none` for refusal history that was not durably recorded.
+The same file owns developer-route selection, substantive-attempt classification,
+route changes, result, and retrospective. Do not create a separate routing
+record. Record a capability limitation only when an unavailable action or evidence
+source materially affects the task; do not snapshot the Project's transient tool
+surface or create mode metadata.
 
-`Last orchestration mode` is continuity metadata only; current-turn mode determination always wins.
+Historical records remain truthful history. During upgrade, do not rewrite old
+MCP-ON/MCP-OFF terminology merely to match the current architecture. Remove
+obsolete mode fields only when an active record is otherwise being updated, and
+preserve any decision-relevant historical meaning in `Migration notes`.
