@@ -47,6 +47,7 @@ function fixture(context) {
   git(source, ["init", "-b", "developer"]);
   const developerBase = commit(source, "shared.txt", "base\n", "developer base");
   const developerHead = commit(source, "developer-only.txt", "developer change\n", "developer change");
+  const developerTip = commit(source, "later-unrelated.txt", "later unrelated canonical work\n", "later canonical work");
   git(source, ["remote", "add", "fixture", remote]);
   git(source, ["push", "fixture", "developer"]);
   git(source, ["checkout", "--orphan", "web-orchestration"]);
@@ -77,7 +78,7 @@ function fixture(context) {
   writeFileSync(wrapper, `#!/usr/bin/env node\nimport { spawnSync } from "node:child_process";\nconst args=process.argv.slice(2).map((v)=>v===${JSON.stringify(canonicalUrl)}?${JSON.stringify(remote)}:v);\nconst r=spawnSync(${JSON.stringify(realGit)},args,{stdio:"inherit",env:process.env});\nprocess.exit(r.status ?? 1);\n`);
   chmodSync(wrapper, 0o755);
   const environment = { ...baseEnvironment, PATH: `${wrapperDir}:${baseEnvironment.PATH}` };
-  return { directory, source, template, developerBase, developerHead, webBase, webHead, environment };
+  return { directory, remote, source, template, lock, developerBase, developerHead, developerTip, webBase, webHead, environment };
 }
 
 function createPackage(input, output, overrides = {}, expected = 0) {
@@ -102,7 +103,9 @@ test("creates deterministic provenance schema 2 from canonical fetched branch ti
   assert.equal(checked.schemaVersion, 2);
   assert.equal(checked.provenanceVerified, true);
   assert.equal(checked.manifest.provenance.source_lock.sources.developer, input.developerBase);
-  assert.equal(checked.manifest.provenance.fetched_heads.developer, input.developerHead);
+  assert.equal(checked.manifest.provenance.canonical_tips.developer, input.developerTip);
+  assert.equal(checked.manifest.ranges.developer.head, input.developerHead);
+  assert.equal(checked.manifest.provenance.head_relations.developer, "reviewed-head-ancestor-of-canonical-tip");
   assert.equal(checked.manifest.created_at, "2026-01-01T00:00:00.000Z");
   assert.deepEqual(checked.manifest.ranges.developer.changed_paths, ["developer-only.txt"]);
   assert.deepEqual(checked.manifest.ranges["web-orchestration"].changed_paths, ["web-orchestration-only/change.md"]);
@@ -112,7 +115,7 @@ test("creates deterministic provenance schema 2 from canonical fetched branch ti
   assert.equal(readFileSync(join(output, "developer.patch"), "utf8"), readFileSync(join(second, "developer.patch"), "utf8"));
 });
 
-test("rejects deceptive local origin, wrong review base, and stale or forged local head", (context) => {
+test("rejects deceptive local origin, wrong review base, and forged local head", (context) => {
   const input = fixture(context);
   git(input.source, ["remote", "set-url", "origin", "https://github.com.evil.invalid/floris3456/agentic-workflow-template.git"]);
   let result = spawnSync("node", [join(input.template, "scripts", "create-change-package.mjs"), "--repository", input.source, "--task-id", "TASK-BAD", "--developer-base", input.developerBase, "--developer-head", input.developerHead, "--web-base", input.webBase, "--web-head", input.webHead, "--output", join(input.directory, "bad-origin")], { cwd: root, env: input.environment, encoding: "utf8" });
@@ -126,10 +129,7 @@ test("rejects deceptive local origin, wrong review base, and stale or forged loc
   git(input.source, ["checkout", "developer"]);
   const forged = commit(input.source, "forged.txt", "local only\n", "forged local head");
   result = createPackage(input, join(input.directory, "forged-head"), { developerHead: forged }, 1);
-  assert.match(result.stderr, /does not match current canonical developer tip/);
-
-  result = createPackage(input, join(input.directory, "stale-head"), { developerHead: input.developerBase }, 1);
-  assert.match(result.stderr, /does not match current canonical developer tip/);
+  assert.match(result.stderr, /did not resolve exactly from canonical fetch|not an ancestor of the current canonical tip/);
 });
 
 test("schema 2 validation detects source-lock, patch, and package-binding tampering", (context) => {

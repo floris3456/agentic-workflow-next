@@ -142,8 +142,30 @@ try {
   ], { env });
   const fetchedDeveloper = runGit(canonicalRepo, ["rev-parse", "refs/remotes/canonical/developer^{commit}"], { env }).trim();
   const fetchedWeb = runGit(canonicalRepo, ["rev-parse", "refs/remotes/canonical/web-orchestration^{commit}"], { env }).trim();
-  if (developerHead !== fetchedDeveloper) fail("developer-head does not match current canonical developer tip");
-  if (webHead !== fetchedWeb) fail("web-head does not match current canonical web-orchestration tip");
+  for (const [reviewedHead, canonicalTip, label] of [
+    [developerHead, fetchedDeveloper, "developer"],
+    [webHead, fetchedWeb, "web-orchestration"],
+  ]) {
+    let resolved;
+    try {
+      resolved = execFileSync("git", ["-C", canonicalRepo, "rev-parse", `${reviewedHead}^{commit}`], {
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "pipe"],
+        env,
+      }).trim();
+    } catch {
+      fail(`${label} reviewed head did not resolve exactly from canonical fetch`);
+    }
+    if (resolved !== reviewedHead) fail(`${label} reviewed head did not resolve exactly from canonical fetch`);
+    try {
+      execFileSync("git", ["-C", canonicalRepo, "merge-base", "--is-ancestor", reviewedHead, canonicalTip], {
+        stdio: "ignore",
+        env,
+      });
+    } catch {
+      fail(`${label} reviewed head is not an ancestor of the current canonical tip`);
+    }
+  }
 
   const developer = range(canonicalRepo, developerBase, developerHead, "developer", env);
   const web = range(canonicalRepo, webBase, webHead, "web-orchestration", env);
@@ -162,9 +184,13 @@ try {
       mode: "canonical-remote-fetch-v1",
       source_lock: lock,
       source_lock_sha256: sourceLockDigest(lock),
-      fetched_heads: {
+      canonical_tips: {
         developer: fetchedDeveloper,
         "web-orchestration": fetchedWeb,
+      },
+      head_relations: {
+        developer: "reviewed-head-ancestor-of-canonical-tip",
+        "web-orchestration": "reviewed-head-ancestor-of-canonical-tip",
       },
     },
     ranges: {

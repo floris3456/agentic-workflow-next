@@ -143,10 +143,10 @@ export function validateChangePackage(directory, expectedTaskId) {
   for (const target of targets) {
     const entry = manifest.ranges[target];
     if (entry.base !== lock.sources[target]) throw new Error(`${target} base does not match embedded source-lock`);
-    if (provenance.fetched_heads?.[target] !== entry.head) throw new Error(`${target} fetched head does not match package range`);
-  }
-  if (!exactSha.test(provenance.fetched_heads?.developer ?? "") || !exactSha.test(provenance.fetched_heads?.["web-orchestration"] ?? "")) {
-    throw new Error("Package fetched heads are invalid");
+    if (!exactSha.test(provenance.canonical_tips?.[target] ?? "")) throw new Error(`${target} canonical tip is invalid`);
+    if (provenance.head_relations?.[target] !== "reviewed-head-ancestor-of-canonical-tip") {
+      throw new Error(`${target} reviewed-head relation is invalid`);
+    }
   }
   if (!/^[0-9a-f]{64}$/.test(manifest.package_sha256 ?? "")) throw new Error("Package binding digest is invalid");
   const core = { ...manifest };
