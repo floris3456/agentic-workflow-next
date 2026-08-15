@@ -23,7 +23,7 @@ Harden reusable-template trust boundaries across package provenance, Git remote 
 
 ## Current position
 
-Issue 26 is canonical. The delegated Sol developer route has produced only the required task-record commit at interim `developer` SHA `0b4813240c5ee2358789d01b66293ff9cf91efed`. Two unnecessary operator-local `.opencode/*` permission requests were rejected. Two continuation prompts, a successful mapped-session abort, and a final post-abort continuation prompt were all delivered, but no new OpenCode task event, six-field handoff, or remote developer commit followed. One final sequence-free status read is persisted below to prove current mapped-session state before the delegated route is classified and absorbed.
+Issue 26 is canonical. The delegated Sol route is now terminal and absorbed as an execution failure, not an implementation handoff. Exact comparison proves its sole Git effect was the required developer task record at `0b4813240c5ee2358789d01b66293ff9cf91efed`. The final bridge status showed the same mapped session idle with live heartbeat and latest response `MessageAbortedError: Aborted`; no six-field handoff or product/source change exists. `start` cannot replace an existing mapped session, while `steer`/`route` reuse that session, so the bridge exposes no supported task-preserving session replacement. No further delegated prompt will be sent. The next justified developer route is direct connected GitHub from exact current head `0b4813240c5ee2358789d01b66293ff9cf91efed`, with atomic source commits, remote CI, and exact connected-GitHub review.
 
 ## Independently established findings
 
@@ -38,39 +38,40 @@ Issue 26 is canonical. The delegated Sol developer route has produced only the r
 
 ## Route / active work
 
-- Developer: delegated Sol; exact GitHub is the independent review boundary.
+- Delegated developer route: terminal/absorbed; no implementation handoff; exact effect only the task-record commit.
+- Direct developer route: selected next, not yet mutated; current exact base `0b4813240c5ee2358789d01b66293ff9cf91efed`.
 - Existing Scouts: none launched/prohibited as evidence.
-- Web-orchestration/template-development source edits wait until the developer route is terminal and absorbed.
+- Web-orchestration/template-development source edits wait until the direct developer mutation is reviewed and terminal.
 - Canonical issue: `https://github.com/floris3456/agentic-workflow-template/issues/26`
-- Highest accepted command sequence: 7.
+- Highest accepted command sequence: 7; no further developer bridge command is planned.
 
 ## Command / interaction journal
 
-- Seq 1 `b2a4c9d1-4f64-4f64-8a2f-16b3d7e9c001` start: succeeded; mapped Sol session created with exact developer guard.
-- Seq 2 `c4a7f831-2d64-4a64-9d20-71e3b2c5a102`: permission-6 reject succeeded.
-- Seq 3 `e8f0a6c2-6b95-4f28-8c73-0bd42f1aa103`: permission-7 reject ended `indeterminate` because upstream had already rejected/removed it; never retry.
-- Seq 4 `4f34d2e8-2b65-4bd3-94ae-843a7b7ef104` steer: succeeded; no new OpenCode turn observed.
-- Status `a59300e4-22af-4d94-9805-b63d48e5f201`: succeeded; mapped session idle, latest projected response unchanged/empty, bridge heartbeat live.
-- Seq 5 `7c0c9751-c2d3-4c47-a610-9b1723ecf105` steer: succeeded; no new OpenCode turn or developer SHA change.
-- Seq 6 `d5fe7280-c92d-4370-b6be-acde4da9e106` abort: succeeded with `result: true`; no Git revert/change.
-- Seq 7 `1edcb408-5db7-4bde-898f-51cfb8f56d07` steer: accepted -> applying -> succeeded; final post-abort continuation delivered. After an independent review interval, issue and remote developer state remained unchanged.
-- Pending sequence-free status request, to publish byte-for-byte after this ledger commit is confirmed:
-
-```json
-{"protocol":"agentic-bridge/1","request_id":"ed71b30a-613a-4d99-b010-cba5e630f208","task_id":"TEMPLATE-TRUST-BOUNDARY-001","kind":"task.status","arguments":{}}
-```
+- Seq 1 start succeeded and created the mapped Sol session.
+- Seq 2 permission-6 reject succeeded.
+- Seq 3 permission-7 reject ended `indeterminate` because upstream had already removed it; never retry.
+- Seq 4 steer succeeded; no new turn.
+- Status `a59300e4-22af-4d94-9805-b63d48e5f201` showed mapped idle session and unchanged empty response.
+- Seq 5 steer succeeded; no new turn.
+- Seq 6 abort succeeded with `result: true`.
+- Seq 7 post-abort steer succeeded as prompt delivery; the new OpenCode message immediately ended `MessageAbortedError` with no parts.
+- Final status `ed71b30a-613a-4d99-b010-cba5e630f208` succeeded: mapped session idle, live bridge heartbeat, latest projected response `MessageAbortedError: Aborted`, no handoff.
 
 ## Checks performed by orchestrator
 
-Exact refs; maintenance/source-lock/package contracts; bridge source/tests/contracts; Project scouting Source; durable records; and pinned OpenCode 1.18.16 read/config/tool/plugin behavior have been independently inspected. Remote `developer` is still `0b4813240c5ee2358789d01b66293ff9cf91efed`. The maintainer skill requires the final package to be genuinely generated by `scripts/create-change-package.mjs` after exact source review and then committed/validated; no hand-built substitute is permitted.
+- Exact refs and required maintenance/source-lock/package/bridge/Project contracts read from authenticated GitHub.
+- Pinned OpenCode 1.18.16 read/config/tool/plugin source inspected for the material execution behaviors.
+- `developer` base-to-interim compare is exactly one commit and one added file: `docs/work/current/TEMPLATE-TRUST-BOUNDARY-001-scout-trust-boundary.md`; no product implementation was made by the delegated route.
+- Bridge command source proves mapped session replacement is unavailable: `start` refuses an existing mapping; `steer` and `route` reuse it.
+- The maintainer skill requires the final package to be genuinely generated by `scripts/create-change-package.mjs` after exact source review and then committed/validated; no hand-built substitute is permitted.
 
 ## Blockers / decisions
 
-No human-owned architecture decision yet. If the final status confirms the same idle/no-response state, stop retrying this developer session, record the delegated route as terminated/absorbed with only its task-record effect, and choose the shortest safe remaining implementation route without pretending the developer completed product work.
+No human-owned decision is currently required. The failed delegation is closed as a tool/runtime execution failure; continuing through direct connected GitHub avoids pretending it completed source work. If direct evidence later shows a required Scout isolation property cannot be implemented without a materially larger human-owned architecture dependency, stop at that genuine decision rather than weaken the property.
 
 ## Remaining work
 
-Publish/reconcile the final status read; classify/absorb the delegated route; complete/review developer source through the next justified route; update the minimal web-orchestration contract; harden/test package provenance on template-development; genuinely generate/validate the deterministic package; reconcile source-lock/durable records; return exact source/package handoffs. Do not modify/promote `main`.
+Implement/review developer repository identity and Scout isolation directly; update/validate durable records and archive the developer task record if required; then make the minimal reviewed web-orchestration contract change; harden/test package provenance on template-development; genuinely generate/validate the deterministic package; reconcile source-lock/durable records; return exact source/package handoffs. Do not modify/promote `main`.
 
 ## Last handoff commit
 
