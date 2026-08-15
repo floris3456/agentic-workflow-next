@@ -14,7 +14,7 @@
 - Verified post-promotion main SHA: <sha or none>
 - Verified post-promotion developer SHA: <sha or none>
 - Relevant repository refs: <refs>
-- Last orchestration mode: MCP-ON | MCP-OFF
+- Material capability limits: <task-relevant unavailable action/evidence or none>
 - Bridge control issue: <canonical bound url/number or none>
 - Related control issues: <url/number and disposition, or none>
 - Bridge control issue state: open | closed | none
@@ -25,7 +25,7 @@
 
 - Selected developer: none | Luna | Sol
 - Luna substantive-attempt count: 0 | 1 | 2
-- Selection route: none | default Luna | immediate Sol | Sol after two substantive Luna failures
+- Selection route: none | direct GitHub | default Luna | immediate Sol | Sol after two substantive Luna failures
 - Reason: <concise orchestrator reasoning or none>
 - Attempt classifications: <attempt/ref and basis, or none>
 - Route changes: <date, issue/command ref, old -> new, and reason, or none>
@@ -81,7 +81,7 @@
 
 ## Migration notes
 
-- <non-authoritative legacy/unknown context or none>
+- <non-authoritative historical context or none>
 
 ## Current next action
 
