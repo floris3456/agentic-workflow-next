@@ -18,24 +18,31 @@ operating workflow.
    independent implementation materially improve confidence. Keep normal source
    task records and component AS-BUILT/deviations current in either route.
 5. Review the exact remote range for each changed source branch. Preserve the
-   task's source-lock SHAs as the review-base lock until package generation.
+   task's source-lock SHAs as the review-base lock until package generation and
+   record the exact reviewed package head independently from later branch work.
 6. Produce the portable package with `scripts/create-change-package.mjs`. For
    schema-2 generation the supplied checkout origin must match the canonical
-   repository, requested bases must equal the source-lock review bases, and
-   requested heads must equal freshly fetched canonical `developer` and
-   `web-orchestration` tips. The generator uses those fetched objects—not the
-   supplied checkout object database—to produce the patches, then binds the
-   embedded source-lock snapshot, fetched heads, manifest metadata, and both
-   patch byte streams into the package SHA-256.
+   repository and requested bases must equal the source-lock review bases. The
+   generator fetches the current canonical `developer` and `web-orchestration`
+   tips into a sterile temporary object database; each requested reviewed head
+   must resolve from that fetched canonical history and be an ancestor of (or
+   equal to) its current tip. Patch bytes are generated from the locked base to
+   that exact reviewed head using only fetched canonical objects, so later
+   unrelated branch commits are observed but not silently added to the package.
+   The generator binds the embedded source-lock snapshot, observed canonical tips,
+   reviewed-head relationships, manifest metadata, and both patch byte streams
+   into the package SHA-256.
 7. Validate the package offline. Schema 2 is provenance-verified only when the
-   embedded lock, range relationships, per-patch digests, and package binding all
-   recompute. Historical schema 1 remains integrity-compatible but is explicitly
-   not provenance-verified.
+   embedded lock, range/provenance fields, per-patch digests, and package binding
+   all recompute. Historical schema 1 remains integrity-compatible but is
+   explicitly not provenance-verified.
 8. Apply each patch to the downstream matching branch under a new normal task.
 9. Review downstream exact ranges and use ordinary human-only promotion.
-10. Reconcile `source-lock.json` to the reviewed source heads only after the
-    package has captured the prior review-base snapshot; update integrated records
-    and archive the approved maintenance task.
+10. Reconcile `source-lock.json` to the intended reviewed source heads only after
+    the package has captured the prior review-base snapshot. A branch may already
+    contain later unrelated commits; those are not implied to belong to the task
+    merely because they are current canonical tips. Update integrated records and
+    archive the approved maintenance task.
 
 ## One-request experience
 
@@ -48,12 +55,15 @@ scope/security decisions and every exact-SHA main promotion.
 
 ## Failure behavior
 
-- Unknown or moved source ref: stop source mutation and reconcile.
+- Unknown or moved source ref: inspect the intervening range. Do not silently
+  widen the package merely because the branch advanced.
 - Supplied package-generation checkout has the wrong canonical origin: fail before
   package output.
-- Requested package base differs from the locked review base, or requested head
-  differs from the freshly fetched canonical branch tip: fail closed and require
-  review/reconciliation; never package the stale or local-only range.
+- Requested package base differs from the locked review base: fail closed.
+- Requested reviewed head does not resolve from the freshly fetched canonical
+  branch history or is not an ancestor of its current tip: fail closed as
+  local-only/divergent evidence. A reviewed head that remains canonical but is
+  older than the tip is allowed so unrelated later work stays out of the package.
 - Failed/ambiguous source push: no package and no completion claim.
 - Patch or provenance binding does not validate: reject the package before
   application.
