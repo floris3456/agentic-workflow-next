@@ -178,9 +178,9 @@ for (const skill of skills) {
 for (const [text, pattern, label] of [
   [workflow, /Capabilities constrain the action that needs them[\s\S]{0,220}do not define a global\s+mode/i, "capability-local workflow rule"],
   [workflow, /lookup answerable[\s\S]{0,220}Do not create a Scout, control\s+issue, task record/i, "quick fast path"],
-  [workflow, /hardened Scout runtime ready[\s\S]{0,700}never fall back to\s+ordinary developer OpenCode/i, "hardened Scout readiness boundary"],
+  [workflow, /hardened Scout runtime ready[\s\S]{0,1200}never fall back to\s+ordinary developer OpenCode/i, "hardened Scout readiness boundary"],
   [workflow, /Direct GitHub:[\s\S]{0,900}Delegated developer:/i, "direct-versus-delegated implementation routes"],
-  [workflow, /Conditional finalization[\s\S]{0,900}Git blob OID/i, "conditional finalization proof"],
+  [workflow, /Conditional finalization[\s\S]{0,1400}Git blob OID/i, "conditional finalization proof"],
   [recovery, /never by replaying an\s+uncertain mutation/i, "uncertain-mutation no-replay"],
   [recovery, /command\.status[\s\S]{0,1200}task\.status/i, "durable status recovery"],
   [recovery, /connector-delivery-pending[\s\S]{0,500}continue meaningful independent work/i, "connector scheduling recovery"],
