@@ -28,13 +28,13 @@ Replace the origin and Scout boundaries with fail-closed, bridge-owned identity 
 
 ## Current position
 
-Source implementation, adversarial tests, validators, AS-BUILT/design/security/
-setup/architecture records, and the active deviation are reconciled. The exact
-repository identity boundary is implemented. Every safe independent Scout fix is
-implemented, unsafe new starts and historical inspected-ref recovery fail before
-OpenCode contact, and normal developer OpenCode remains unchanged. Proportional
-bridge, agent-system, and full repository checks pass; the source commit remains
-before the handoff snapshot.
+Source commit `9ab08b8d338c0764899bb553d50dbe491cdc09bc` is pushed and synchronized.
+It contains the exact repository identity boundary, every safe independent Scout
+fix, fail-before-OpenCode behavior for new starts and historical inspected-ref
+recovery, adversarial tests, validators, reconciled durable records, and the
+active deviation. Normal developer OpenCode remains unchanged. Proportional
+bridge, agent-system, and full repository checks pass. This record is ready for
+the dedicated `needs decision` handoff snapshot.
 
 ## Observed
 
@@ -100,6 +100,9 @@ material architecture dependency requiring human selection.
 - `./scripts/validate-repository.sh`: passed pre-implementation/link,
   agent-system, research/manifest, hooks, bridge contracts, all 79 bridge tests,
   all 8 template-branch tests, and the repository aggregate.
+- Source commit/push: `9ab08b8d338c0764899bb553d50dbe491cdc09bc`
+  is present at both local `developer` and `origin/developer`.
+- Final `./scripts/bootstrap-agent-workflow.sh --check`: tracked hooks active.
 
 ## Blockers / required decisions
 
@@ -114,13 +117,14 @@ material architecture dependency requiring human selection.
 
 ## Remaining work
 
-- Commit and push the reconciled source work.
-- Create and push the dedicated task-progress handoff snapshot.
+- Human architecture decision and exact-remote review.
+- After a selected runtime route is delegated, implement and prove that route
+  behind the preserved request/state boundary before re-enabling Scout launch.
 
 ## Next action
 
-Commit/push the source work, then prepare the dedicated `needs decision` handoff
-snapshot.
+Return control after the dedicated handoff snapshot so the web orchestrator can
+review exact remote evidence and obtain the required human architecture decision.
 
 ## Relevant durable records
 
