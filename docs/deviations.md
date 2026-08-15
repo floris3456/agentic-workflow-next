@@ -40,27 +40,37 @@
 ## TD-003 — Local object-database package proof replaced by canonical fetch
 
 - Planned behavior: a portable package represents the exact reviewed canonical
-  `developer` and `web-orchestration` source ranges.
+  `developer` and `web-orchestration` source ranges without absorbing unrelated
+  work that lands later on those branches.
 - Observed reality: schema-1 generation verified commit shape and ancestry only
   inside the caller-supplied local repository, then stamped the canonical
   repository value from `source-lock.json`. A different local object database
-  could therefore manufacture plausible range/patch evidence.
-- Reason the prior implementation could not remain the provenance authority:
-  local commit existence and ancestry do not prove that those objects or heads
-  came from the canonical remote.
-- Selected alternative: new packages use schema 2. The generator authenticates
-  the supplied checkout origin, requires bases to equal the source-lock review
-  bases, fetches canonical source heads into a sterile temporary Git object
-  database, requires requested heads to equal those fetched tips, produces patch
-  bytes only from fetched objects, embeds the source-lock snapshot plus digest,
-  and computes a package SHA-256 over provenance metadata and both patch byte
-  streams. Offline validation recomputes all bindings.
-- Evidence: focused tests cover deceptive origins, wrong bases, stale/local-only
-  heads, provenance/patch/package tampering, determinism, and downstream apply;
-  the template-development Actions workflow passes the schema-2 implementation.
+  could therefore manufacture plausible range/patch evidence. The first schema-2
+  draft over-corrected this by requiring each reviewed head to equal the current
+  branch tip; when `web-orchestration` later gained an unrelated Scout smoke-task
+  continuity record, that rule would have forced unrelated history into the
+  package.
+- Reason neither prior behavior could remain the provenance authority: local
+  commit existence does not prove canonical provenance, while current-tip
+  equality conflates canonicality with task membership.
+- Selected alternative: schema 2 authenticates the supplied checkout origin,
+  requires bases to equal the source-lock review bases, and fetches the current
+  canonical branch tips into a sterile temporary Git object database. Each exact
+  reviewed head must resolve from that fetched branch history and be an ancestor
+  of (or equal to) its current canonical tip. Patch bytes are generated only from
+  fetched canonical objects for the locked-base-to-reviewed-head range. The
+  manifest embeds the source-lock snapshot plus digest, observed canonical tips,
+  reviewed-head relationship markers, and a package SHA-256 over provenance
+  metadata and both patch byte streams. Offline validation recomputes all
+  byte-level bindings.
+- Evidence: focused tests cover deceptive origins, wrong bases, canonical branch
+  advance beyond the reviewed head, local-only/forged heads,
+  provenance/patch/package tampering, determinism, and downstream apply. Remote
+  template-development Actions passes the corrected schema-2 implementation.
 - Effect: newly generated packages are provenance-verified rather than merely
-  locally self-consistent. Historical schema-1 packages remain integrity-
-  compatible for downstream use but are explicitly not reclassified as
+  locally self-consistent, while exact reviewed task ranges remain stable even if
+  later unrelated canonical commits exist. Historical schema-1 packages remain
+  integrity-compatible for downstream use but are explicitly not reclassified as
   provenance-verified.
 - Remaining limitation: generation still needs legitimate network access to the
   canonical public Git remote. When that execution surface is unavailable, the
