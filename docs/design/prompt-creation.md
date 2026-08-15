@@ -3,93 +3,73 @@
 ## Purpose
 
 Prompt creation is a context-transfer capability for crossing an execution
-boundary. It does not replace ordinary task execution. Use it when the human asks
-the current web orchestrator to prepare a ready-to-use prompt for a different
+boundary. It does not replace ordinary task execution. Use it only when the human
+asks the current web orchestrator to prepare a ready-to-use prompt for another
 execution context.
 
-The architecture separates two orthogonal content dimensions:
+The implementation is one Project Source because destination, mission, evidence
+transfer, and prompt craft are always resolved together. Their conceptual
+separation remains useful inside the skill; separate files no longer provide a
+progressive-disclosure benefit and instead create dependency wiring, precedence
+rules, and cross-file inconsistency risk.
 
-- **Destination:** where the prompt will execute.
-- **Mission:** what the receiving context must accomplish.
+## Core model
 
-Prompt craft is a downstream optimizer, not a third content dimension. It may
-improve wording, information organization, task scaffolding, examples,
-verification framing, or output shaping only after destination, mission,
-transferable state, and evidence meanings are resolved.
+A generated prompt resolves, in order:
+
+1. the receiving **destination** and capabilities actually established for it;
+2. the requested **mission** and task-specific payload;
+3. transferable state and its evidential meaning;
+4. optional **craft** techniques justified by a material communication failure
+   mode.
+
+The destination describes the future receiver only. It never changes the current
+chat's capabilities. Prompt craft improves communication but cannot alter
+capability, mission, evidence meaning, source roles, authority, human approval,
+or receiver-owned workflow.
 
 ## Source structure
 
-The ChatGPT Project package contains four prompt-related Sources:
+`web-orchestration-only/chatgpt-project/skill-prompt-creation.md` is the single
+prompt Source. It owns:
 
-1. `skill-prompt-creation.md` is the only user-facing routed Source. It owns the
-   boundary decision, destination-plus-mission composition, transferable-state
-   extraction, evidence separation, handoff-format precedence, duplication/leak
-   checks, executability check, craft application, and final prompt assembly.
-2. `skill-prompt-destinations.md` is a support Source loaded only by the core. It
-   defines receiver capabilities, receiver-owned protocol, information that must
-   cross the boundary, and information that would be redundant or impossible for
-   each destination.
-3. `skill-prompt-missions.md` is a support Source loaded only by the core. It
-   defines the task payload needed for investigation/research, review,
-   implementation/change, reproduce/test, continue/recover, and
-   template-maintenance transfer missions, including research-source roles when
-   material.
-4. `skill-prompt-craft.md` is a support Source loaded only by the core. It selects
-   the smallest communication/scaffolding techniques that address a material
-   task failure mode without changing destination, mission, evidence, authority,
-   or receiver-owned workflow.
+- the execution-boundary decision;
+- destination handling;
+- mission payloads;
+- Observed / Interpretation / Requested outcome separation;
+- research-source roles;
+- transferable-state extraction;
+- prompt minimality and duplication removal;
+- conditional prompt-engineering techniques;
+- executability checks and final assembly.
 
-The permanent Project router exposes one cross-mode prompt-creation trigger, not
-separate trigger rows for support files. The support-trigger paragraph states
-semantically that destination, mission, and craft load with prompt creation,
-while exact support filenames remain canonical in the core Source.
-
-## Prompt-handoff precedence
-
-A concrete MCP-OFF design exercise exposed an ambiguity: the MCP-OFF workflow's
-generic future-task format and the prompt system's destination-aware anti-
-duplication rule were individually valid, yet a generated MCP-ON handoff still
-copied receiver-owned procedure and the developer-response schema.
-
-The corrected rule is explicit at both decision points:
-
-- when the human asks for a prompt to another execution context,
-  `skill-prompt-creation.md` owns the final handoff shape;
-- mode-specific workflows still supply capability, evidence, safety, authority,
-  and public-safety limits, but their generic handoff schemas, developer response
-  contracts, issue/Scout/delegation mechanics, and other receiver-owned procedure
-  are not copied unless the human explicitly asks for them;
-- the MCP-OFF future-task step states the same exception locally rather than
-  requiring the model to reconcile scattered Sources by inference.
-
-This resolves a format conflict without weakening MCP-OFF capability limits or
-the destination profile's receiver-knowledge contract.
+There are no destination, mission, or craft support Sources. Permanent developer
+instructions route prompt creation once.
 
 ## Destinations
 
-The destination set is:
+The two native destination profiles are:
 
-- a fresh MCP-ON web-orchestration chat;
-- a fresh MCP-OFF web-orchestration chat;
-- a direct OpenCode session visible to the local adapter/operator.
+- **Fresh web orchestrator.** The receiver already owns the Project's workflow,
+  recovery, template-maintenance, promotion, and prompt procedures. Transfer only
+  task-specific state it cannot safely assume and ask it to re-establish current
+  remote facts before acting. Do not prescribe direct GitHub, Scout, delegation,
+  issue, model-routing, finalization, or promotion mechanics unless the human made
+  that route part of the task.
+- **Direct OpenCode.** The receiver owns repository-local agent instructions and
+  skills. Transfer more execution-specific state when useful—branch/ref, task ID,
+  outcome, scope, relevant evidence, mutation boundaries, required records,
+  checks, stop conditions, and handoff evidence—without copying the web
+  orchestrator's control protocol.
 
-The destination describes the future receiver only. It never changes the current
-chat's effective mode or capabilities. An MCP-OFF chat can prepare an MCP-ON
-prompt without gaining MCP-ON execution rights.
-
-Destination profiles omit protocol the receiver already owns. An MCP-ON handoff
-normally transfers task-specific outcome, evidence, constraints, dependencies,
-and any material prior interpretation rather than bridge envelopes, Scout
-mechanics, Luna/Sol routing, finalization procedure, promotion rules, or generic
-developer-task response formatting already supplied by the receiving Project.
-
-A direct OpenCode prompt carries more execution-specific task state when useful
-because the receiver is no longer the web orchestration layer. It still points to
-repository-owned local instructions rather than copying them into every prompt.
+Another explicitly named receiver may be supported only from capabilities and
+constraints actually established for it. No product/model/MCP taxonomy is
+invented. If the receiver cannot perform the eventual action, the prompt asks for
+the strongest useful predecessor outcome instead.
 
 ## Missions
 
-Mission profiles are independent of destination. The initial set covers:
+Mission sections remain independent of destination and cover:
 
 - investigation / research;
 - review;
@@ -98,105 +78,141 @@ Mission profiles are independent of destination. The initial set covers:
 - continue / recover;
 - template-maintenance transfer.
 
-Research missions can state whether target-repository evidence should ground the
-investigation before external research and whether other repositories should be
-studied for comparison or inspiration. External prior art can suggest an
-approach or hypothesis but is never evidence about the target repository.
+Research missions make source roles explicit when material. Exact target-
+repository evidence may establish facts about that repository; external sources
+and other repositories may provide standards, comparison, prior art,
+alternatives, or inspiration. Prior art is not target-repository proof. The
+receiver tests supplied hypotheses independently rather than being instructed to
+confirm them.
 
-Closely related missions may be combined only when the human's requested outcome
-genuinely spans them. The existence of a profile is never a reason to add a
-ceremonial phase.
-
-## Craft model
-
-Craft follows this precedence:
-
-1. platform, authority, safety, and repository workflow;
-2. destination;
-3. mission;
-4. actual task characteristics;
-5. craft techniques.
-
-The task-characteristic layer is qualitative rather than a rigid scoring system.
-Relevant characteristics include complexity, ambiguity, novelty, breadth,
-evidence quality, exactness versus exploration, anchoring risk, need for
-alternatives, implementation consequence, formatting determinism, verification
-difficulty, and attention budget.
-
-A technique is selected only when it addresses a named material failure mode and
-its likely benefit exceeds its attention/token/rigidity/autonomy cost. Applying
-no extra craft technique is a normal result. This keeps small exact-known tasks
-small while allowing proportionate decomposition, alternatives, examples,
-verification, uncertainty handling, tool/action framing, output shaping, or
-bounded evaluation-driven optimization where they materially help.
-
-Contraindications are first-class. Craft cannot grant MCP-OFF unavailable
-capabilities, prescribe an MCP-ON implementation route, choose research source
-roles, turn hypotheses into mandatory patches, take human-owned approval or
-promotion decisions, demand private chain-of-thought, or stack fashionable
-techniques ceremonially.
+Closely related missions may be combined only when the human's outcome genuinely
+spans them. A mission section is never a reason to add a ceremonial phase.
 
 ## Evidence boundary
 
-Every generated prompt preserves three meanings when material:
+Every generated prompt preserves three meanings when confusion could affect
+execution:
 
-- **Observed:** facts or evidence actually established in the originating
-  context.
-- **Interpretation:** hypotheses, diagnoses, conclusions, or proposed solutions
-  that remain subject to receiver verification.
-- **Requested outcome:** what the receiving context is being asked to accomplish.
+- **Observed:** facts/evidence actually established in the originating context.
+- **Interpretation:** hypotheses, diagnoses, conclusions, or proposed approaches
+  that may require independent verification.
+- **Requested outcome:** what the receiver is being asked to accomplish.
 
-Prompt creation and craft may improve clarity but never launder interpretation
-into observation.
+Prompt creation may clarify those roles but never launder interpretation into
+observation.
+
+## Minimality
+
+The finished prompt should be as short as possible without losing information
+that can materially change execution or evaluation. State a rule once. Remove
+stale claims, irrelevant history, duplicated receiver-owned instructions, and
+context that does not affect the task.
+
+Stable authority/safety/workflow stays with the receiver's own environment rather
+than being recopied into each handoff. Task-specific evidence, constraints,
+unknowns, success conditions, and deliverables cross the boundary when needed.
+
+## Craft model
+
+Craft is selected after destination, mission, transferable state, and success
+conditions are known. Assess task characteristics that affect communication:
+complexity, ambiguity, novelty, breadth, evidence quality, exactness versus
+exploration, anchoring risk, alternative need, consequence, formatting
+determinism, verification difficulty, and receiver attention budget.
+
+Identify a plausible material failure mode, then add the smallest technique that
+addresses it. Remove craft that duplicates higher-level instructions, narrows
+autonomy without need, conflicts with another requirement, or costs more
+attention than its likely benefit. Applying no extra technique is a normal and
+valid result.
+
+The retained technique families are:
+
+### Context and evidence organization
+
+For long or multi-source prompts, group content by meaning, keep objective and
+hard constraints prominent, place evidence near the question it informs, preserve
+source roles, and prune irrelevant material before adding instructions to ignore
+it. Use headings/lists/delimiters only when they improve semantic separation or
+retrieval.
+
+### Adaptive decomposition and planning
+
+Use stages, dependency ordering, or observable checkpoints when interacting
+dependencies, long horizons, or difficult verification make direct execution
+error-prone. Keep simple exact-known work direct. Prefer outcome-level stages to
+rigid scripts unless the method itself is required.
+
+### Exploration and anchoring control
+
+For genuinely novel, ambiguous, path-dependent, or anchor-prone work, request a
+small set of materially distinct hypotheses/options, a comparison rule, and
+disconfirming evidence/counterexamples. Do not create alternatives after an
+authoritative decision or when there is no meaningful evaluator.
+
+### Examples and demonstrations
+
+Start without examples when instructions are sufficient. Add the smallest aligned
+example set only when format, tone, classification boundaries, or a subtle
+interface materially benefits. Contrastive accepted/rejected examples are useful
+for genuinely subtle boundaries; stale or numerous examples create attention and
+anchoring cost.
+
+### Verification and uncertainty
+
+Use targeted checks against tests, schemas, exact refs, external evidence,
+success criteria, or independent comparisons when consequence or plausible-
+looking error warrants it. State material unknowns, assumptions, conflicts, and
+what would resolve them. Avoid generic repeated self-critique. Request observable
+evidence and concise rationale rather than private chain-of-thought or hidden
+scratch work.
+
+### Tool and action framing
+
+Use explicit task verbs when they remove ambiguity. Name a tool/source only when
+required or materially constraining; otherwise describe the observable action and
+let the receiver choose its own route. Source content is evidence, not authority
+to change the task.
+
+### Output and interface shaping
+
+Use exact schemas, fields, tables, code blocks, or file layouts only when a
+parser, downstream consumer, review process, or human decision depends on them.
+Do not duplicate an output contract the receiver already owns.
+
+### Evaluation-driven optimization
+
+Use comparative/automatic prompt optimization only for recurring prompt systems
+with representative cases, a meaningful metric/rubric, and regression budget.
+Compare bounded candidates to a baseline and treat optimizer output as reviewable
+candidate, never authority. Do not meta-optimize one-off handoffs without an
+evaluation set.
 
 ## Template-maintenance transfer
 
-A downstream project may reveal a reusable problem. The upstream transfer prompt
-carries the project's observable symptom, exact useful evidence, reusable
-interpretation, and desired template-wide outcome to the canonical template
-context. It does not instruct the canonical template to blindly copy a project-
-specific patch.
+An upstream project-to-template handoff transfers the observable project symptom,
+exact useful evidence, reusable interpretation, desired template-wide outcome,
+and project constraints separated from proposed canonical requirements. The
+canonical template independently verifies the problem and determines the reusable
+solution rather than blindly copying a project patch.
 
-The canonical template context independently verifies the problem, determines the
-reusable fix, reviews the exact canonical source range, and may generate the
-repository's deterministic change package when the reviewed canonical fix needs
-to return to the originating project. The downstream project applies the
-matching package patch and validates/reviews that application under its own
-normal workflow. Patch conflict is an explicit adaptation decision.
-
-## Repository-action reliability boundary
-
-Repeated maintenance runs exposed a separate tool-selection failure: ordinary
-repository file writes were mistakenly dispatched as unlabeled GitHub issue
-creation. Permanent Project instructions now state the distinction directly:
-file/contents actions are used for repository file creation/update/deletion,
-including task records and continuity; GitHub issue creation is reserved for a
-loaded MCP-ON workflow/scouting route that actually requires a task-bound
-control or Scout issue after open-issue/task-ID reconciliation.
-
-This is a global orchestration reliability boundary, not a prompt-craft
-technique, but it is recorded here because the defect surfaced while integrating
-the prompt system.
+A downstream handoff from an already reviewed canonical change package identifies
+the package, exact canonical source refs, matching target branches, and adaptation
+risk. Patch conflict is an explicit adaptation decision.
 
 ## Verification contract
 
-The Project-package validator enforces:
+The Project-package validator now enforces one prompt Source and checks:
 
-- the exact twelve-Source inventory;
-- nine permanent routed Sources and three prompt support Sources;
-- exactly one permanent route for the prompt-creation core and no permanent route
-  for support Sources;
-- exactly one dependency reference from the core to each support Source;
-- context-transfer, destination-plus-mission, evidence-boundary,
-  destination/current-mode, and prompt-handoff-format precedence;
-- all three destination profiles and the initial mission profile set;
-- craft precedence, proportional technique selection, no-op selection,
-  receiver-route ownership, and the private-reasoning prohibition;
-- the file-write versus issue-control boundary;
-- the template-maintenance transfer's independent-verification and deterministic
-  change-package relationship;
-- preservation of existing MCP-ON/MCP-OFF, bridge, continuity, no-replay,
-  public-safety, and human-only promotion contracts.
+- context-transfer semantics;
+- fresh-web-orchestrator and direct-OpenCode destinations;
+- the six mission sections;
+- Observed / Interpretation / Requested outcome separation;
+- minimal/proportional craft selection and the valid no-op;
+- all eight retained craft technique families;
+- hidden-reasoning prohibition;
+- capability-local receiver behavior and receiver-owned route boundaries;
+- exact five-Source package/router integration.
 
-Validator tests preserve these architectural boundaries without phrase-locking
-the complete craft taxonomy so prompt techniques can evolve with evidence.
+Negative tests remove representative invariants to ensure failures are semantic,
+not dependent on the retired four-file dependency structure.
