@@ -6,9 +6,9 @@ TEMPLATE-TRUST-BOUNDARY-001
 
 ## Status
 
-In progress. The approved hardened runtime implementation, adversarial tests,
-validators, and durable records are complete and checked; source and handoff
-commits remain to be pushed.
+Completed implementation and checks. Source commit
+`a26cb7578fdc86a9514e72072a639caeea1c906e` is pushed and synchronized; this
+record is ready for the dedicated completed handoff snapshot.
 
 ## Task-start developer SHA
 
@@ -38,8 +38,9 @@ work is preserved. The separate external runtime, Git-object snapshot manager,
 trusted tools/config, sterile launcher, distinct endpoint client, Scout start/
 recovery/response paths, active probes, adversarial tests, validators, setup/
 security/architecture/AS-BUILT reconciliation, and deviation removal are present
-in the working tree. The 84-test suite, real pinned-runtime smoke, focused
-validators, full repository validator, diff check, and hooks check pass.
+in source commit `a26cb7578fdc86a9514e72072a639caeea1c906e` on both local and
+`origin/developer`. The 84-test suite, real pinned-runtime smoke, focused
+validators, full repository validator, diff check, and hooks check passed.
 
 ## Observed
 
@@ -140,6 +141,9 @@ while developer OpenCode remains independent.
   research/manifest, hooks, bridge contract, 84 bridge-test, 8 template-branch,
   and aggregate checks.
 - `git diff --check`: passed.
+- Source commit/push: `a26cb7578fdc86a9514e72072a639caeea1c906e`
+  is present at both local `developer` and `origin/developer`.
+- Post-push `./scripts/bootstrap-agent-workflow.sh --check`: tracked hooks active.
 
 ## Blockers / required decisions
 
@@ -147,14 +151,13 @@ None.
 
 ## Remaining work
 
-- Commit and push the checked implementation and records.
-- Update this record for the terminal boundary, then create and push the dedicated
-  handoff snapshot.
+- Create and push the dedicated handoff snapshot, then return control for exact
+  remote review.
 
 ## Next action
 
-Inspect the final intended diff/status, commit and push the source implementation,
-then prepare the terminal handoff record and snapshot.
+Create and push the dedicated task-progress handoff snapshot, then return the
+six-field response without further repository actions.
 
 ## Relevant durable records
 
@@ -164,7 +167,6 @@ then prepare the terminal handoff record and snapshot.
 - `docs/architecture/deviations.md`
 - `docs/architecture/agent-system.md`
 - `docs/architecture/opencode-bridge.md`
-- `docs/architecture/deviations.md` (`TEMPLATE-TRUST-BOUNDARY-001`)
 - `SECURITY.md`
 
 ## Last handoff commit
