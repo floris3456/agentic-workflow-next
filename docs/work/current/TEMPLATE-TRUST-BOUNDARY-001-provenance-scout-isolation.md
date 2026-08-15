@@ -25,7 +25,7 @@ Harden reusable-template package provenance, exact Git repository identity, and 
 
 Issue 26 is canonical. Sol pushed source `9ab08b8d338c0764899bb553d50dbe491cdc09bc` and snapshot `f8ed4a7e570ff173dc6c8dbbc533735916f8ed41`, then returned `needs decision` because Scout execution remained fail-closed. Independent upstream inspection resolved that decision inside the user's already-authorized scope: a separate pinned OpenCode 1.18.16 Scout process can use sterile HOME/XDG/config, project/global instruction isolation, read-only bridge-owned config/agent/tools, explicit LSP/plugin/skill/default-feature disablement, and dependency-free trusted contained read/search tools. Exact Scout workspace materialization can use canonical Git plumbing (`ls-tree`/`cat-file blob`) instead of checkout/worktree, eliminating checkout hooks and smudge/filter execution.
 
-A direct Git-object publication attempt was abandoned before moving any branch ref when readback of the first unreachable staged blob failed the local content-address check. No developer ref/content changed from that attempt. Sequence 8 then steered the same Sol session with the resolved dedicated-runtime design. Its bridge delivery succeeded; remote `developer` remains `f8ed4a7e570ff173dc6c8dbbc533735916f8ed41` at the latest read. One sequence-free `task.status` request is persisted below after an independent AWT-001 design interval.
+A direct Git-object publication attempt was abandoned before moving any branch ref when readback of the first unreachable staged blob failed the local content-address check. No developer ref/content changed from that attempt. Sequence 8 steered the same Sol session with the resolved dedicated-runtime design and its bridge delivery succeeded. The subsequent sequence-free status request `52fd0ef7-1884-43f6-b89f-373d23713209` also succeeded, but the mapped session was idle and still projected the pre-sequence-8 `needs decision` response; there was no new OpenCode event/turn and remote `developer` remained `f8ed4a7e570ff173dc6c8dbbc533735916f8ed41`. One concise same-session retry is therefore pending below after meaningful independent AWT-001 work.
 
 ## Key independent findings
 
@@ -42,7 +42,7 @@ A direct Git-object publication attempt was abandoned before moving any branch r
 
 - Delegated Sol range through `f8ed4a7e...`: terminal/absorbed as navigation, not accepted completion.
 - Direct publication attempt: canceled before any branch ref/content effect; one unreachable blob was discarded.
-- Active mutating route: same Sol session, sequence-8 hardened-runtime continuation.
+- Active mutating route: same Sol session; sequence 8 delivered but produced no new turn, sequence 9 retry pending publication.
 - Existing Scouts: none launched; none accepted as evidence.
 - Web-orchestration/template-development source mutation waits for developer terminal review.
 - Highest accepted command sequence: 8.
@@ -50,11 +50,12 @@ A direct Git-object publication attempt was abandoned before moving any branch r
 ## Command / request journal
 
 - Seq 1 start; seq 2 permission-6 reject; seq 3 permission-7 reply indeterminate after upstream removal; seq 4/5 steers; seq 6 abort; seq 7 steer/recovery produced `9ab08b8d...` / `f8ed4a7e...` and `needs decision`.
-- Seq 8 `a73e1c51-1e10-47ae-b9bc-755f0a09c108` steer: accepted -> applying -> succeeded as prompt delivery. It preserves AWT-002 and requires the separate installed Scout server, immutable Git-object snapshot, trusted tools, sterile/read-only config, runtime readiness checks, recovery migration guard, adversarial tests, validators/docs, and no Scout evidence for this task.
-- Pending sequence-free request, to publish byte-for-byte after this ledger commit is confirmed:
+- Seq 8 `a73e1c51-1e10-47ae-b9bc-755f0a09c108`: accepted -> applying -> succeeded as prompt delivery; no later OpenCode turn was observed.
+- Status request `52fd0ef7-1884-43f6-b89f-373d23713209`: accepted -> succeeded; mapped session idle, latest projected developer response still the old `needs decision` handoff, no new event after sequence 8.
+- Pending sequence 9, to publish byte-for-byte after this ledger commit is confirmed:
 
 ```json
-{"protocol":"agentic-bridge/1","request_id":"52fd0ef7-1884-43f6-b89f-373d23713209","task_id":"TEMPLATE-TRUST-BOUNDARY-001","kind":"task.status","arguments":{}}
+{"protocol":"agentic-bridge/1","sequence":9,"command_id":"6b097d43-0dc3-46cc-a6a4-54c90e27a109","task_id":"TEMPLATE-TRUST-BOUNDARY-001","kind":"steer","arguments":{"message":"Resume TEMPLATE-TRUST-BOUNDARY-001 in the same Sol session. Sequence 8 was delivered but produced no new OpenCode turn; the latest status still projects the earlier needs-decision response. The architecture decision is already resolved and authorized: implement the dedicated hardened Scout runtime exactly as specified in sequence 8, preserving the AWT-002 work at developer f8ed4a7e570ff173dc6c8dbbc533735916f8ed41. Complete the implementation, adversarial tests, validators and durable records, run the requested checks, push the exact developer handoff, and return the required six fields. Do not request unrelated operator-local .opencode access, do not use Scouts as evidence, and do not modify main or web-orchestration. If execution itself cannot start, return a valid blocked/needs-decision six-field response naming the concrete execution blocker rather than silently remaining on the old response."}}
 ```
 
 ## Checks performed by orchestrator
@@ -67,7 +68,7 @@ No human-owned decision currently remains. If the implemented dedicated runtime 
 
 ## Remaining work
 
-Reconcile the pending status; absorb and independently review the final developer range and CI; finalize/archive developer task record if required. Then update the minimal web-orchestration Scout Source; implement/test AWT-001 on template-development; genuinely run `create-change-package.mjs` for the reviewed source refs, validate the package, reconcile source-lock and durable records, and return exact remote source/package handoffs. Do not modify/promote `main`.
+Publish/reconcile sequence 9; absorb and independently review the final developer range and CI; finalize/archive developer task record if required. Then update the minimal web-orchestration Scout Source; implement/test AWT-001 on template-development; genuinely run `create-change-package.mjs` for the reviewed source refs, validate the package, reconcile source-lock and durable records, and return exact remote source/package handoffs. Do not modify/promote `main`.
 
 ## Last handoff commit
 
