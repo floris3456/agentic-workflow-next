@@ -3,222 +3,233 @@
 ## Purpose
 
 The `template-development` branch is the durable cross-branch ledger for work on
-the reusable agentic workflow template. It exists in both the canonical template
-and repositories generated with all branches included.
-
-It solves four needs:
-
-1. compaction-safe task continuity dedicated to template work;
-2. exact provenance across independent template source branches;
-3. portable upstream/downstream change transfer; and
-4. separation from project/product implementation history.
+the reusable agentic workflow template. It provides compaction-safe template-task
+continuity, exact provenance across independent source branches, portable
+upstream/downstream change transfer, and separation from project implementation
+history.
 
 ## Authority model
 
-- `source-lock.json` is the ledger's last reconciled source snapshot. During an
-  active maintenance task its source SHAs remain the review-base lock through
-  package generation; reconciliation to new heads happens only after the package
-  has embedded the prior snapshot.
 - Remote source refs are authoritative implementation evidence.
-- Component AS-BUILT and deviations remain on the source branch beside the code
-  they describe.
-- This integrated AS-BUILT describes the maintenance system and cross-branch
-  state; it does not reproduce component implementation details.
-- Task records are procedural memory, not proof or acceptance.
-- Human exact-SHA approval is still the only authority that advances `main`.
+- `source-lock.json` is the ledger's last reconciled source snapshot and package
+  review-base lock. It moves only through the tracked package/reconciliation
+  procedure after the prior snapshot has been embedded in the package.
+- Component AS-BUILT/deviation records stay on the source branch beside the code
+  they describe; this file records the cross-branch maintenance architecture.
+- Task records, developer/Scout/bridge reports, CI, and orchestration notes are
+  procedural memory or evidence, never human acceptance.
+- Human approval of one exact reviewed `developer` SHA is the only authority that
+  advances `main`.
 
 ## Branch contents
 
-The tree contains only maintenance instructions, provenance, decisions, records,
-change packages, tests, validation, and local Git synchronization hooks. It
-contains no copy of `developer`, `main`, `web-orchestration-only/**`, bridge
-implementation, or downstream project source.
+This branch contains maintenance instructions, provenance, design/decision
+records, task records, deterministic change packages, tests, validation, and Git
+synchronization hooks. It contains no copy of `developer`, `main`,
+`web-orchestration-only/**`, bridge implementation, or downstream project source.
+Source histories are never merged into this ledger.
 
 ## Source execution
 
-Actual edits stay on the authoritative source branches. The orchestrator selects
-the route proportionally: a bounded direct connected-GitHub edit is appropriate
-when exact paths and edits are already known and remote readback plus focused
-checks can prove the outcome more simply; isolated source worktrees are used when
-local repository context/tools, interacting implementation, generation/tests, or
-uncertainty materially improve confidence. Either route must keep the source
-branch's normal task/durable records current and produce an exact remote range for
-independent review. Existing source worktrees may be reused only after verifying
-the correct repository, branch, cleanliness, and remote synchronization.
+Actual edits stay on the authoritative `developer` and `web-orchestration`
+branches. The web orchestrator selects the route proportionally:
 
-The ledger records the exact canonical repository, source bases, candidate heads,
-review state, and downstream application heads regardless of execution route.
+- bounded direct connected-GitHub edits when exact paths/edits are known and
+  remote readback plus focused checks can prove the outcome more simply;
+- isolated/local or delegated source execution when repository context/tools,
+  interacting edits, generation/tests, uncertainty, or independent
+  implementation materially improves confidence.
+
+Only one mutating source route runs at a time. Read-only Scouts may overlap when
+the hardened Scout boundary is ready. Each source branch keeps its own task,
+AS-BUILT/deviation, synchronization, and validation contract. Every changed source
+range is independently reviewed against exact remote GitHub.
+
+## Template task continuity
+
+Explicit reusable-template work creates or resumes one public-safe
+`docs/work/current/<task-id>-<slug>.md` record before consequential source
+publication. It replaces ordinary web task-context continuity for the whole
+template task. The record keeps exact live refs, source ranges, material
+observations/interpretations, route/active-work state, publication/recovery state,
+checks, blockers, decisions, remaining work, and next action when applicable.
+
+A successful working-cycle handoff is not finalization. Finalization preserves the
+approved task-record Git blob unchanged when moving it to the same basename under
+`docs/work/archive/`; collision or blob mismatch is refused.
 
 ## Change packages
 
-`scripts/create-change-package.mjs` produces one directory per task containing:
+`scripts/create-change-package.mjs` produces one directory per task containing
+`manifest.json`, `developer.patch`, and `web-orchestration.patch`. New packages
+use manifest schema 2.
 
-- `manifest.json`;
-- `developer.patch`, an exact binary/full-index diff for the reviewed developer
-  range; and
-- `web-orchestration.patch`, the equivalent independent web range.
+Before output, the generator:
 
-New packages use manifest schema 2. Before any package output, the generator:
-
-1. validates `source-lock.json` and authenticates the supplied checkout's `origin`
+1. validates `source-lock.json` and authenticates the supplied checkout's origin
    as the same canonical GitHub repository;
-2. requires the requested developer/web bases to equal the source-lock review
-   bases;
-3. creates a sterile temporary bare Git repository with isolated HOME/XDG/global
-   Git configuration and no interactive credential prompt;
-4. fetches the current canonical `developer` and `web-orchestration` branch tips
-   directly from `source-lock.json`'s canonical repository URL;
-5. requires each exact reviewed package head to resolve from that fetched
-   canonical branch history and to be an ancestor of (or equal to) its observed
-   current tip; the locked base must be an ancestor of the reviewed head; and
-6. generates changed paths and patch bytes only from the fetched object database
-   for the exact locked-base-to-reviewed-head range, never from the caller-
-   supplied repository's objects and never by silently widening to later
-   unrelated branch commits.
+2. requires requested source bases to equal the locked review bases;
+3. creates a sterile temporary bare repository with isolated Git configuration
+   and no interactive credential prompt;
+4. fetches current canonical `developer` and `web-orchestration` tips;
+5. requires each exact reviewed package head to belong to the fetched canonical
+   branch history, with the locked base an ancestor of the reviewed head and the
+   reviewed head an ancestor of/equal to the current tip; and
+6. generates range metadata and patch bytes only from fetched canonical objects,
+   never caller-supplied objects and never by silently widening to unrelated later
+   commits.
 
-The schema-2 manifest embeds the exact source-lock snapshot, a SHA-256 of its
-canonicalized JSON form, the observed canonical tips, explicit reviewed-head-
-ancestor relationship markers, exact range metadata, sorted changed paths, and
-each patch SHA-256. `package_sha256` then binds the stable manifest core and both
-raw patch byte streams with a versioned domain separator.
+The schema-2 manifest embeds the exact old source-lock snapshot and digest,
+observed canonical tips, reviewed-head relationship markers, exact ranges, sorted
+changed paths, and per-patch SHA-256 values. `package_sha256` binds the stable
+manifest core plus both raw patch streams with a versioned domain separator.
 `scripts/change-package-lib.mjs` is the shared offline verifier used by generation,
-application, and ledger validation; it recomputes the source-lock, patch, range,
-provenance-field, and package bindings without network access.
+application, and ledger validation.
 
-Historical schema-1 packages remain accepted for compatibility only after their
-original range shape and per-patch SHA-256 checks pass. Their validation result is
-explicitly integrity-only; they are not treated or reported as provenance-
-verified schema 2 packages.
+Historical schema-1 packages remain integrity-compatible only after their
+original range/per-patch checks pass and are explicitly not provenance-verified.
+Full 40-character commits remain mandatory. A non-empty output directory is
+refused. The generator never writes source branches.
 
-Full 40-character commits remain mandatory and a non-empty output directory is
-refused. The generator never writes source branches. Generated `*.patch` files are
-excluded from source whitespace diagnostics because unified-diff syntax uses
-space-prefixed blank context lines; manifest/package SHA-256 and `git apply
---check` validate their exact bytes and applicability instead.
-
-`scripts/apply-change-package.mjs` first runs the shared package validator,
-requires the downstream checkout's exact matching branch and a clean tree, and
-runs `git apply --check`. Only an explicit `--apply` updates the working tree. It
-reports whether schema-2 provenance or only legacy schema-1 integrity was
-verified. It does not commit, push, merge, or promote.
+`scripts/apply-change-package.mjs` validates the package, requires the downstream
+checkout's exact matching branch and clean tree, and runs `git apply --check`.
+Only explicit `--apply` changes the working tree; it does not commit, push, merge,
+or promote. Patch conflict is an explicit adaptation task, never permission to
+silently alter canonical package contents.
 
 ## Synchronization
 
-The tracked ledger hooks allow commits only on `template-development`. The
-post-commit hook immediately pushes the same branch. A failed push writes a
-branch-and-SHA marker in private Git state and blocks further commits. The
-recovery script requires a clean checkout, verifies the marker and fetched remote
-state, preserves the failed commit, and permits only fast-forward or one
-conflict-free exact-head recovery merge. It never rewrites remote history.
+Tracked ledger hooks permit commits only on `template-development`. The
+post-commit hook immediately pushes the branch. A failed push records private Git
+recovery state and blocks further commits. The recovery script preserves the
+failed commit and allows only the repository's guarded fast-forward or one
+conflict-free exact-head recovery path; it never rewrites remote history.
 
 ## Generated repositories
 
-GitHub template creation must include all branches. Generated histories may be
-unrelated; this ledger does not depend on ancestry to the operational branches.
-The project's source lock provides the ongoing relationship to the canonical
-template. Template patches are reviewed and applied as content, never by merging
-the ledger branch.
+Template creation includes all branches. Generated histories may be unrelated;
+the project's source lock maintains the relationship to the canonical template.
+Reviewed template changes transfer as deterministic content patches, never by
+merging the ledger or independent source histories.
+
+## Current web-orchestrator Project package
+
+The `web-orchestration` source installs minimal permanent developer instructions
+plus **five conditionally routed Project Sources**:
+
+1. `skill-workflow.md` — ordinary lookup/research/review, proportional scouting,
+   direct-versus-delegated implementation, exact review/correction, and
+   conditional finalization.
+2. `skill-recovery.md` — exceptional issue/command/publication/agent/Git
+   reconciliation with strict ambiguous-mutation no-replay semantics.
+3. `skill-template-maintenance.md` — reusable-template continuity, source work,
+   source-lock/package provenance, downstream transfer, and template finalization.
+4. `skill-promotion.md` — human-triggered exact-SHA guarded `developer` to `main`
+   promotion only.
+5. `skill-prompt-creation.md` — one self-contained context-transfer and prompt-
+   engineering skill containing destinations, missions, evidence roles, and the
+   retained craft toolbox.
+
+The previous MCP-ON/MCP-OFF architecture and model-name mapping are retired.
+Capabilities constrain the action that needs them rather than defining a global
+mode. Connected GitHub, public web/GitHub, Scouts, direct mutation, delegation,
+and other specialized capabilities are selected locally only when they serve the
+human's outcome. If a capability is unavailable, only the dependent action is
+unavailable; safe independent work and the strongest justified predecessor
+outcome continue without simulating the missing effect.
+
+Permanent instructions retain only stable role/evidence, proportionality,
+authority/safety, capability-local execution, completion, and the five-row
+procedure router. Detailed bridge, Scout, recovery, finalization, promotion, and
+prompt craft mechanics live in their conditionally loaded skill owner.
+
+## Ordinary task continuity
+
+`web-orchestration-only/task-context/**` remains the public-safe continuity owner
+for consequential ordinary orchestration tasks. The new template records
+`Material capability limits` only when an unavailable action/evidence source
+actually affects the task. It does not snapshot the transient tool surface or
+persist a global orchestration mode. Existing historical records remain truthful
+history and may retain old mode terminology; they are not rewritten merely to
+match current architecture.
+
+## Prompt creation as built
+
+Prompt creation remains context transfer across an execution boundary, but its
+former core/destination/mission/craft Source split is collapsed into one skill
+because all four components always co-triggered.
+
+The skill retains:
+
+- fresh web-orchestrator, direct OpenCode, and evidence-bounded other explicit
+  receiver handling;
+- investigation/research, review, implementation/change, reproduce/test,
+  continue/recover, and template-maintenance-transfer missions;
+- Observed / Interpretation / Requested outcome separation;
+- target-repository versus external-prior-art source roles;
+- prompt minimality and receiver-owned protocol omission;
+- context/evidence organization;
+- adaptive decomposition/planning;
+- exploration/anchoring control;
+- examples/demonstrations;
+- targeted verification/uncertainty;
+- tool/action framing;
+- output/interface shaping; and
+- evaluation-driven optimization only for recurring prompt systems with
+  representative evaluations.
+
+Craft is applied only for a material failure mode when its likely benefit exceeds
+attention/token/rigidity/autonomy cost. Applying no extra craft technique is a
+normal result. Prompt craft never changes destination capability, mission,
+evidence meaning, source roles, human authority, or receiver-owned workflow and
+never requests private chain-of-thought/hidden scratch work.
+
+## Trust boundaries
+
+The independent read-only Scout runtime remains fail-closed. The inspected ref is
+untrusted evidence and may not control checkout hooks, executable extensions,
+system instructions, model/permission policy, repository-instruction injection,
+LSP/package-manager/process side effects, or filesystem access outside the exact
+requested view. If that hardened runtime is unavailable, the orchestrator uses
+exact direct inspection rather than falling back to ordinary developer OpenCode
+or ref-owned instructions.
+
+Package schema 2 closes the complementary cross-branch provenance boundary:
+locked bases plus exact reviewed heads define the package range; freshly fetched
+canonical history proves the reviewed heads belong to the source branches without
+including later unrelated commits; fetched objects define patch bytes; and the
+package digest binds lock/provenance plus both patches.
+
+## Current provenance dependency
+
+`TEMPLATE-TRUST-BOUNDARY-001` completed its reviewed source hardening but is still
+blocked on genuine networked schema-2 package generation. Therefore
+`source-lock.json` deliberately remains at that task's prior review bases until
+the tracked generator embeds the snapshot and reconciliation completes. Later
+source work, including `TEMPLATE-CAPABILITY-ORCHESTRATION-001`, records exact live
+ranges but must not silently move or widen that lock. This is an explicit package
+ordering dependency, not permission to fabricate package bytes.
 
 ## Verification
 
-- `scripts/validate-template-development.mjs`: structure, source lock, task/archive
-  rules, forbidden source-tree absence, executable bits, and every committed
-  schema-1/schema-2 package through the shared verifier.
-- `tests/change-package.test.mjs`: deterministic schema-2 generation from simulated
-  canonical fetched history; deceptive-origin and wrong-base rejection;
-  preservation of a reviewed head when the canonical branch later advances;
-  local-only/forged-head rejection; provenance/patch/package-tamper rejection;
-  legacy schema-1 compatibility; and downstream dry-run/application boundaries.
-- `scripts/validate-template-development.sh`: both checks plus `git diff --check`.
+- `web-orchestration-only/validate-package.mjs` enforces the exact five-Source
+  Project inventory, capability-local permanent semantics, routed triggers,
+  unified prompt destinations/missions/evidence/craft, hardened Scout boundary,
+  recovery no-replay, template-maintenance provenance, human exact-SHA
+  promotion, bridge-envelope shapes, public safety, and new task-context schema.
+- `web-orchestration-only/validate-package.test.mjs` provides focused negative
+  fixtures for those architectural boundaries rather than preserving the retired
+  mode/file topology.
+- `scripts/validate-template-development.mjs` validates ledger structure, source
+  lock, task/archive rules, forbidden source-tree absence, executable bits, and
+  committed change packages through the shared verifier.
+- `tests/change-package.test.mjs` covers deterministic schema-2 generation,
+  deceptive origin/wrong-base/forged-head rejection, later canonical branch
+  advance, provenance/patch/package tamper detection, schema-1 compatibility, and
+  downstream dry-run/application boundaries.
+- `scripts/validate-template-development.sh` runs the ledger/package checks plus
+  `git diff --check`.
 
-The first end-to-end maintenance exercise, `TEMPLATE-SMOKE-RESPONSE-001`, used
-the ledger before diagnosis, changed both independent source branches, and
-produced `changes/TEMPLATE-SMOKE-RESPONSE-001/` from exact pushed ranges. Both
-patches dry-run apply from their recorded bases, demonstrating that the ledger
-provides compaction continuity and a portable downstream update without copying
-or merging source histories.
-
-`TEMPLATE-ORCHESTRATOR-CONTINUITY-001` is the first ordinary maintenance task to
-use the system. It records an unchanged developer range and a Project-package
-range through `b9814d5c7ae1cfb2f6068c19f08c03850e9b8874`, adds ADR-0001, and
-packages the exact web change without materializing source in this branch.
-
-`TEMPLATE-CONNECTOR-SCHEDULING-001` records an unchanged developer range and a
-Project-package correction through
-`7c1a0094e77ce3fcf06515bf49b3c09b6696d9f8`. Connector delivery pending is now
-a scheduler state: only dependent work pauses, meaningful independent work
-continues, and the same required publication receives another bounded delivery
-window at a later checkpoint. Connector delivery alone cannot produce a
-`RESUME REQUIRED` checkpoint.
-
-`TEMPLATE-PROJECT-MAINTENANCE-ROUTE-001` adds the missing web-orchestrator route
-into the ledger that already owns reusable-template work. Explicit template
-evaluation or maintenance now uses one task record under `docs/work/current/**`
-on `template-development` instead of duplicating ordinary web task context. The
-Project package has one focused MCP-ON Source and permanent trigger; its current
-request may replace routine template defaults but not platform, public-safety,
-no-replay, authority, or human exact-SHA boundaries. The exact developer and web
-source ranges are packaged together without merging their histories.
-
-`TEMPLATE-DIRECT-DEVELOPER-001` makes source execution itself proportional. The
-web orchestrator may directly edit a bounded, exact-known `developer` change when
-connected GitHub and focused checks are the shortest route that proves it; work
-that benefits materially from local repository context/tools, broader
-exploration, interacting implementation, nontrivial generation/tests, or
-independent developer execution remains delegated. Direct and delegated mutation
-routes never overlap, and both retain exact remote review and human-only `main`
-promotion.
-
-`TEMPLATE-PROMPT-CREATION-001` adds context-transfer prompt creation to the
-Project package without coupling it to one orchestration mode. The initial
-package contained eleven Project Sources: nine user-facing routed Sources and two
-support Sources. `skill-prompt-creation.md` is the single cross-mode route; it
-composes a destination profile with a mission profile, transfers only receiver-
-needed task state, and preserves Observed versus Interpretation versus Requested
-outcome. `skill-prompt-destinations.md` and `skill-prompt-missions.md` are support
-Sources loaded by the core rather than independent router entries. Initial
-destinations are fresh MCP-ON, fresh MCP-OFF, and direct OpenCode; initial
-missions include research, review, implementation, reproduce/test,
-continuation/recovery, and template-maintenance transfer. The destination
-describes the future receiver and never changes the current chat's effective
-mode.
-
-`TEMPLATE-PROMPT-CRAFT-001` completes that extension seam. The Project package now
-contains twelve Sources: nine routed and three support. `skill-prompt-craft.md`
-is support-only and applies after destination and mission resolution. It selects
-only communication/scaffolding techniques that address a material task failure
-mode, with workflow/authority above destination, destination above mission,
-mission above task characteristics, and craft last; applying no additional
-technique is valid. Conditional techniques cover context organization,
-decomposition, alternatives/anchoring control, examples, targeted verification
-and uncertainty, action framing, output shaping, and evaluation-driven
-optimization for recurring prompts with representative evaluation cases.
-Contraindications prevent craft from granting capabilities, choosing receiver-
-owned routes, changing research-source roles or evidence meaning, taking human
-approval/promotion decisions, demanding private chain-of-thought, or adding
-ceremonial complexity.
-
-The same task resolves two observed reliability gaps. First, when an originating
-MCP-OFF chat creates a prompt for another execution context, prompt creation now
-owns the final handoff shape; MCP-OFF capability/evidence/safety limits carry
-forward, but its generic future-task schema and developer response contract do
-not leak into the destination prompt unless explicitly requested. The exception
-is stated both in the prompt core and at the MCP-OFF future-task decision point
-so it does not depend on fragile cross-file inference. Second, permanent Project
-instructions distinguish repository content writes from GitHub Issue control:
-ordinary file/task-record/continuity writes use repository contents actions, and
-Issue creation is reserved for an actual MCP-ON control/Scout route after its
-required task-ID/open-issue reconciliation. The package validator and negative
-tests enforce both boundaries without phrase-locking the craft taxonomy.
-
-`TEMPLATE-TRUST-BOUNDARY-001` hardens the two reusable trust-transfer surfaces.
-Developer source authenticates Git host plus owner/repository and runs read-only
-Scouts through a separate pinned runtime with bridge-owned prompt/tools and
-immutable exact-ref Git-object snapshots. On this ledger branch, package schema 2
-closes the complementary provenance gap: locked review bases and exact reviewed
-heads define the package range, freshly fetched current branch tips prove those
-heads still belong to canonical branch history without pulling in later unrelated
-commits, canonical fetched objects define the patch bytes, and an offline package
-digest binds the embedded lock/provenance and both patches. Historical schema 1
-remains compatibility-only rather than being silently upgraded in evidential
-meaning.
+Historical maintenance decisions and implementation exercises remain in their
+exact task records and Git history. This AS-BUILT describes the current system;
+it does not rewrite historical procedure into current truth.
