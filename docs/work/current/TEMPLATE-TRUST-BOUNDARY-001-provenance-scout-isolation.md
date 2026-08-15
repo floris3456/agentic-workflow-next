@@ -26,7 +26,7 @@ Implement and independently review the developer-owned bridge/Scout hardening fi
 
 ## Current position
 
-Exact live task-start refs were independently re-established: `main` 6127611113dfdb66f93a0cfd2d355359aa370833, `developer` e2700f586fe8ab634053eb514bb9da487e881a21, `web-orchestration` 2b95a9803115b05283494fb3699b9d34c58a91a5, `template-development` 7dde0897c4b0bc1df304bd43fe61f4eb99fd682f. `source-lock.json` matches the three source refs. Control issue 26 is canonical for this task. Its persisted sequence-1 Sol start was accepted, entered applying, and returned `succeeded` with a mapped developer session; that result proves prompt/session start only, not implementation completion. The developer route is active. No Scout route has been launched.
+Exact live task-start refs were independently re-established: `main` 6127611113dfdb66f93a0cfd2d355359aa370833, `developer` e2700f586fe8ab634053eb514bb9da487e881a21, `web-orchestration` 2b95a9803115b05283494fb3699b9d34c58a91a5, `template-development` 7dde0897c4b0bc1df304bd43fe61f4eb99fd682f. `source-lock.json` matches the three source refs. Control issue 26 is canonical for this task. Its persisted sequence-1 Sol start was accepted, entered applying, and returned `succeeded` with a mapped developer session; that result proves prompt/session start only, not implementation completion. The developer route is active. No Scout route has been launched. The active developer subsequently requested external-directory access to an operator-local `.opencode/*` path; that access is unnecessary and conflicts with the task's isolation/privacy boundary, so a sequence-2 rejection is pending publication.
 
 ## Source ranges
 
@@ -48,14 +48,16 @@ Exact live task-start refs were independently re-established: `main` 6127611113d
 - Scout clients use the same normal loopback OpenCode server with only a different directory, so directory selection alone is not a configuration/process trust boundary.
 - Exact OpenCode v1.18.16 source confirms the built-in `read` tool resolves repository instructions into a system reminder and asynchronously warms LSP after successful file reads.
 - Exact OpenCode v1.18.16 source confirms tool registry initialization dynamically imports project/global custom tool modules and materializes plugin-provided tools; plugin initialization loads external configured plugins and executes their server entrypoints.
+- The active developer requested `external_directory` access to a projected operator-local `.opencode/*` path; no such read is required by the human's requested outcome.
 
 ## Interpretation
 
-The requested work is security-sensitive and cross-cutting. Existing Scout execution cannot be used as an independent evidence boundary because the task itself challenges its startup, configuration, instruction, process, and filesystem isolation. The developer branch requires local repository context, runtime tooling, adversarial tests, and coordinated documentation, so a delegated Sol developer route is proportional. Exact connected GitHub remains the independent review route.
+The requested work is security-sensitive and cross-cutting. Existing Scout execution cannot be used as an independent evidence boundary because the task itself challenges its startup, configuration, instruction, process, and filesystem isolation. The developer branch requires local repository context, runtime tooling, adversarial tests, and coordinated documentation, so a delegated Sol developer route is proportional. Exact connected GitHub remains the independent review route. Unrelated operator-global OpenCode state should remain unread and uncontaminating; rejecting the current external-directory request preserves that boundary without blocking use of tracked repository or upstream public evidence.
 
 ## Attempts
 
 - Sequence-1 Sol start was accepted and successfully created the developer session; implementation result is pending.
+- One external-directory permission request is being rejected because the requested operator-local `.opencode/*` access is unnecessary to the task.
 
 ## Changed approach
 
@@ -76,11 +78,11 @@ None currently. If the pinned OpenCode runtime cannot satisfy the required Scout
 
 ## Remaining work
 
-Read and absorb the developer handoff; independently review its exact source range and focused/adversarial checks; update web-orchestration scouting claims if required; harden package provenance and validation on template-development; generate and validate the deterministic change package; reconcile source-lock and durable records; produce a pushed maintenance handoff. Do not promote `main`.
+Publish and absorb the permission rejection; read and absorb the developer handoff; independently review its exact source range and focused/adversarial checks; update web-orchestration scouting claims if required; harden package provenance and validation on template-development; generate and validate the deterministic change package; reconcile source-lock and durable records; produce a pushed maintenance handoff. Do not promote `main`.
 
 ## Next action
 
-Continue independent read-only review of affected contracts while waiting for the developer task's terminal six-field handoff; on issue refresh, resolve any task-correlated question/permission before other commands.
+After this ledger commit is confirmed remotely, publish sequence-2 `permission.reply` rejection on issue 26. Then wait for the developer to continue and return a terminal six-field handoff.
 
 ## Relevant durable records
 
@@ -92,21 +94,27 @@ Developer branch is expected to update the task-progress record plus AS-BUILT/de
 - Related issues: none.
 - Existing OpenCode Scouts: not used for this task.
 - Selected developer: Sol.
-- Active mutating source route: developer session active from sequence-1 start.
+- Active mutating source route: developer session active from sequence-1 start, currently waiting on permission reply.
 - Highest accepted command sequence: 1.
 
 ## Command / request journal
 
 - Sequence 1 start command `b2a4c9d1-4f64-4f64-8a2f-16b3d7e9c001` on issue 26: accepted -> applying -> succeeded; exact expected developer SHA e2700f586fe8ab634053eb514bb9da487e881a21/ref `developer`; agent `sol`. `succeeded` is session-start transport only.
+- Pending sequence 2 command, to be published byte-for-byte after this ledger commit is confirmed:
+
+```json
+{"protocol":"agentic-bridge/1","sequence":2,"command_id":"c4a7f831-2d64-4a64-9d20-71e3b2c5a102","task_id":"TEMPLATE-TRUST-BOUNDARY-001","kind":"permission.reply","arguments":{"permission":"permission-6","reply":"reject","message":"Do not read unrelated operator-local .opencode state. Use tracked repository files and public/upstream source evidence; the hardened Scout design must not depend on or inspect unrelated global customization."}}
+```
 
 ## Pending publication / connector refusals
 
-None.
+- Sequence-2 permission rejection is persisted above but not yet published.
 
 ## Findings / decisions
 
 - Decision: use connected GitHub as the independent evidence boundary for this task until Scout hardening is implemented and reviewed.
 - Decision: use Sol immediately because the developer work has intrinsic security/runtime complexity and interacting changes that make two Luna attempts predictably wasteful.
+- Decision: reject the current external-directory permission request because unrelated operator-global `.opencode/*` state is outside the necessary evidence surface and should remain isolated.
 
 ## Last handoff commit
 
