@@ -25,9 +25,9 @@ compatibility: template-development ledger branch
 
 - Keep edits on the canonical repository's real `developer` and
   `web-orchestration` branches. Use a bounded direct connected-GitHub route when
-  the normal MCP-ON proportional criteria select it; otherwise use isolated
-  source worktrees when local repository context/tools materially help. Never
-  materialize source trees in this ledger.
+  proportionality makes it the shortest safe remotely provable route; otherwise
+  use isolated source worktrees when local repository context/tools materially
+  help. Never materialize source trees in this ledger.
 - Follow each source branch's own agent instructions, task lifecycle, AS-BUILT,
   deviations, push recovery, and review boundaries regardless of execution
   route.
