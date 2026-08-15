@@ -99,12 +99,29 @@ corrections and reconciled the developer task record. No task-correlated questio
 is pending; the only permissions were the earlier rejected operator-local
 `.opencode/*` requests.
 
-Pending sequence 10, to publish byte-for-byte only after this ledger commit is
-confirmed:
+Pending sequence 10:
 
 ```json
 {"protocol":"agentic-bridge/1","sequence":10,"command_id":"47ac6cf4-8d27-4d87-b4f1-b3d61cf6b10a","task_id":"TEMPLATE-TRUST-BOUNDARY-001","kind":"finalize","arguments":{"message":"Finalize the already reviewed developer source for TEMPLATE-TRUST-BOUNDARY-001. First synchronize safely to remote developer 4d3aa8c340ab1503443b14e155b24c52e640194f. Do not change product behavior or the approved task-record bytes. Move docs/work/current/TEMPLATE-TRUST-BOUNDARY-001-scout-trust-boundary.md to the same basename under docs/work/archive/ with git mv; the current approved blob is e9ce0154342cade46ca3a21299295ccd56f18bff and the archive target must not already exist. Preserve that blob exactly, run proportional repository checks, push the finalization commit, and return the normal six-field handoff. Do not modify main or web-orchestration and do not promote."}}
 ```
+
+## Connector refusal journal
+
+- Phase: developer finalization publication.
+- Tool/target: connected GitHub issue-comment write, canonical issue #26.
+- Delivery window / attempt: first window, attempt 1.
+- Content class: persisted public-safe `agentic-bridge/1` finalize envelope above.
+- Connector arguments used: repository `floris3456/agentic-workflow-template`, issue
+  number 26, exact sequence-10 marker body.
+- Connector error: write was rejected before GitHub because the current connector
+  schema requires the issue number in its `pr_number` field rather than
+  `issue_number`.
+- Readback: issue #26 contains no occurrence of command UUID
+  `47ac6cf4-8d27-4d87-b4f1-b3d61cf6b10a`.
+- Confirmed external effect: none; sequence 10 is not yet bridge-admitted.
+- Resolution: retry publication only with the same byte-identical envelope and
+  same UUID/sequence, using connector field `pr_number: 26`. Do not alter or
+  repeat any underlying mutation.
 
 ## Checks performed by orchestrator
 
@@ -144,9 +161,9 @@ SHAs, and keep `main` unchanged.
 
 ## Next action
 
-Confirm this ledger commit remotely, publish exact sequence 10 on issue #26, and
-absorb the finalization handoff before any new template-development source
-mutation.
+Confirm this ledger commit remotely, then retry exact sequence 10 on issue #26
+using the connector's `pr_number` field and absorb the finalization handoff before
+any new template-development source mutation.
 
 ## Last handoff commit
 
