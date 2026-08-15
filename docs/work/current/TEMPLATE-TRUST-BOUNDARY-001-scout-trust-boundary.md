@@ -6,158 +6,141 @@ TEMPLATE-TRUST-BOUNDARY-001
 
 ## Status
 
-Completed implementation and checks. Source commit
-`a26cb7578fdc86a9514e72072a639caeea1c906e` is pushed and synchronized; this
-record is ready for the dedicated completed handoff snapshot.
+Substantive developer source is implemented, independently reviewed, corrected,
+and passing the repository's GitHub Actions validation at
+`8941c2f89a595b16835a5326e42d5a1ec9d7a32c`. This record reconciles the review
+findings and is ready for the repository's finalization/archive workflow.
 
 ## Task-start developer SHA
 
-e2700f586fe8ab634053eb514bb9da487e881a21
+`e2700f586fe8ab634053eb514bb9da487e881a21`
 
 ## Review-base developer SHA
 
-e2700f586fe8ab634053eb514bb9da487e881a21
+`e2700f586fe8ab634053eb514bb9da487e881a21`
 
 ## Original task brief
 
-Implement the developer-owned portion of TEMPLATE-TRUST-BOUNDARY-001 from exact developer SHA e2700f586fe8ab634053eb514bb9da487e881a21. Independently re-inspect current code before editing. Required outcome: (1) replace suffix-based origin acceptance with fail-closed repository identity that parses supported HTTPS, ssh://, and scp-style SSH remotes; authenticates host plus owner/repository; derives acceptable Git host unambiguously from configured GitHub API/repository identity including supported GitHub Enterprise/custom API bases; and rejects deceptive hosts, suffix tricks, malformed paths, misleading userinfo, or ambiguous configuration; (2) create a genuine independent Scout trust boundary in which inspected-ref checkout/reuse/disposal cannot execute Git hooks, inspected-ref or unrelated global OpenCode config/plugins/tools/skills/instructions cannot execute or control startup, trusted Scout instructions/model/permissions/evidence contract are bridge/runtime-owned rather than ref-owned, repository instructions are evidence only, normal read/search launches no LSP/package installer/ref-controlled process/network download, realpath containment blocks symlink escape, and absent/misconfigured hardened runtime fails clearly; (3) preserve exact requested SHA, clean detached view, concurrent read-only Scout requests, durable correlation/recovery/public-safe projection, concise evidence, and normal developer OpenCode behavior. Remove LSP from every Scout contract/validator/doc if it cannot be proven safe. Add focused positive/adversarial tests for legitimate/forged origins, malicious checkout hooks, repo/global extension contamination, trusted-prompt independence, repository instruction injection, no LSP/process side effects, symlink escape, concurrent/recovery behavior, normal developer behavior, and bootstrap/status misconfiguration. Update the task-progress record and all justified AS-BUILT/design/deviation/SECURITY/setup/architecture/agent-system/validator artifacts in the same source work. Do not use existing Scouts as evidence. Do not modify main or web-orchestration, do not promote, force-push, or rewrite shared history. If the pinned OpenCode runtime cannot meet a required isolation property without a materially larger architectural dependency, implement every safe independent fix and return needs decision with exact evidence rather than weakening the property. Run proportional bridge, agent-system, and repository checks. Return exactly: Status:; Handoff developer SHA:; Files changed:; Checks + perceived results:; Blockers/decisions:; Task record:. Status must be completed, blocked, failed, or needs decision; completed requires an exact pushed 40-character developer SHA.
+Harden the reusable template's Git repository identity and independent Scout trust
+boundary. Authenticate Git host plus owner/repository across supported HTTPS and
+SSH forms; make Scout checkout/runtime/prompt/tools independent of inspected-ref
+or unrelated global OpenCode state; exclude LSP/process/package/download side
+effects; preserve exact-ref, concurrency, recovery, projection, and normal
+developer behavior; add adversarial tests and reconcile durable records. Do not
+use existing Scouts as evidence for this task, change `main`, or promote.
 
 ## Current objective
 
-Implement the approved separate hardened OpenCode `1.18.16` Scout server using
-bridge-owned exact-tree snapshots, externally installed trusted tools/config,
-sterile launch environment, separate recovery/response clients, and active
-bootstrap proof while preserving the reviewed repository-identity boundary and
-ordinary developer behavior.
+Preserve the reviewed separate pinned OpenCode `1.18.16` Scout runtime, exact-tree
+Git-object snapshots, trusted contained read/search tools, canonical repository
+identity, and fail-closed readiness/recovery behavior through finalization and the
+template change-package workflow.
 
 ## Current position
 
-Prior source and handoff commits are pushed through
-`f8ed4a7e570ff173dc6c8dbbc533735916f8ed41`. The reviewed repository-identity
-work is preserved. The separate external runtime, Git-object snapshot manager,
-trusted tools/config, sterile launcher, distinct endpoint client, Scout start/
-recovery/response paths, active probes, adversarial tests, validators, setup/
-security/architecture/AS-BUILT reconciliation, and deviation removal are present
-in source commit `a26cb7578fdc86a9514e72072a639caeea1c906e` on both local and
-`origin/developer`. The 84-test suite, real pinned-runtime smoke, focused
-validators, full repository validator, diff check, and hooks check passed.
+The delegated Sol route first produced the task record and later implemented the
+repository-identity and hardened Scout runtime. Independent connected-GitHub review
+found two post-handoff corrections:
+
+1. GitHub Actions exposed one umask-sensitive test fixture: the test pre-created
+   `private/scout-snapshots` with ambient permissions, while the product correctly
+   requires private state directories. The fixture now creates that path with
+   mode `0700`.
+2. Bridge startup authenticated `origin`, but `scout.start` could later fetch
+   `origin/developer` without re-running that identity/synchronization check. The
+   Scout readiness gate now calls `synchronizedGitState(config)` immediately
+   before starting/probing the Scout runtime and preparing the requested snapshot,
+   so a changed or unsynchronized origin fails closed.
+
+The exact corrected substantive source SHA is
+`8941c2f89a595b16835a5326e42d5a1ec9d7a32c`.
 
 ## Observed
 
-- `tools/opencode-bridge/src/service.ts` normalizes the origin text and accepts owner/repository suffixes without authenticating the remote host.
-- `tools/opencode-bridge/src/scout.ts` creates a Git worktree with default Git behavior, resolves the Scout agent from the exact-ref workspace, and allows LSP.
-- The existing Scout contract and documentation describe the agent as tracked in the inspected repository.
-- Pinned public upstream OpenCode `1.18.16` source at release commit
-  `a3647eb025c7615159d417dcc49fc39fdaeba65b` shows built-in `read` calling
-  `Instruction.resolve` for nearby repository instructions and unconditionally
-  warming LSP. Its config initialization schedules package dependency
-  installation for scanned configuration directories.
-- Public upstream config/runtime flags disable project config, external plugins,
-  and external skills, but they do not remove the read-time instruction resolver,
-  LSP warm-up call, or config-directory package installation.
-- The operator-local customization paths were not inspected; continuation
-  steering explicitly restricted evidence to tracked repository files and public
-  upstream source.
-- OpenCode available on this host reports `1.18.15`, not the pinned `1.18.16`, so
-  it was not used as positive isolation evidence.
-- Human steering selected a bridge-owned, installable runtime package outside the
-  repository. It requires exact canonical `origin/developer` object-tree
-  snapshots, preserved symlinks as evidence, rejected gitlinks, non-executable
-  read-only materialization, a sterile environment, explicit provider auth,
-  bridge-owned `scout_read`/`scout_glob`/`scout_grep`, a distinct loopback
-  endpoint, active runtime/agent/tool probes, and fail-closed unsupported hosts.
-- The install smoke copied the locked runtime to a temporary path outside the
-  repository, ran the trusted package/postinstall phase, recursively removed
-  config-tree write bits, launched real OpenCode `1.18.16` under the sterile
-  environment, and passed exact OpenAPI plus agent/prompt/permission/tool probes.
-- The pinned runtime also discovers `/etc/opencode` on Linux unless redirected;
-  launch now redirects managed configuration to a nonexistent path beneath the
-  immutable runtime and does not inherit ambient proxy/token/config variables.
+- `repository-identity.ts` parses supported HTTPS, `ssh://`, and scp-style SSH
+  remotes and compares exact Git host, owner, and repository. Public GitHub and
+  standard GHES `/api/v3` derive their Git host; ambiguous custom API layouts
+  require explicit `github.git_host`.
+- The Scout runtime is installed outside `repository_root`, uses exact pinned
+  OpenCode/plugin `1.18.16`, a distinct authenticated loopback endpoint, sterile
+  HOME/XDG/temp/config paths, explicit provider auth, read-only trusted config,
+  project/default-plugin/external-skill disablement, and LSP/formatter disabled.
+- No ref-owned `repository-scout` agent remains. The trusted Luna/high prompt,
+  permission contract, and `scout_read`/`scout_glob`/`scout_grep` tools are
+  bridge/runtime-owned.
+- Scout snapshots are materialized from `ls-tree`/`cat-file` Git objects rather
+  than checkout/worktree, reject gitlinks and `.git`, strip regular-file
+  write/execute bits, preserve symlinks only as inert evidence, and re-hash every
+  reused path.
+- Trusted Scout tools use filesystem/path APIs only, bound UTF-8 evidence, never
+  follow symlink directories, and enforce lexical plus realpath containment.
+- Historical weaker worktree mappings fail recovery rather than being reused.
 
 ## Interpretation
 
-The selected external package avoids the unsafe built-in read path rather than
-claiming configuration alone repairs it. Exact-tree Git plumbing, immutable
-runtime config, source/package/contract probes, and bridge-owned tools establish
-separate controls; any absent or mismatched control leaves only Scout unavailable
-while developer OpenCode remains independent.
+The separate runtime removes inspected-ref configuration and built-in OpenCode
+`read` from the Scout evidence path instead of claiming permissions alone make
+those mechanisms safe. The added per-start synchronization check closes the
+reviewed gap between bootstrap-time origin authentication and later
+`origin/developer` consumption.
 
 ## Attempts
 
-- Evaluated an isolated bridge-managed OpenCode process using project-config
-  disablement, isolated global paths, `--pure`, external-skill disablement, and a
-  bridge-owned inline agent. Public pinned source showed that built-in `read`
-  still resolves nearby instructions and warms LSP, and config startup still
-  schedules package installation. This route was abandoned because it cannot
-  prove the delegated isolation contract.
-- Considered retaining the existing exact-ref server with stricter live agent
-  permissions. Abandoned because permissions do not establish configuration or
-  prompt provenance and do not suppress the read-time side effects above.
+- A configured isolated ordinary OpenCode Scout was rejected because pinned
+  upstream behavior showed built-in `read` can attach repository instructions and
+  warm LSP while configuration discovery can execute/install extensions.
+- The first separate-runtime handoff passed the developer's local checks but its
+  clean GitHub Actions run failed one test because the fixture depended on the
+  local umask. The Actions job log identified the exact failing assertion; the
+  product's private-directory check was retained and only the fixture was fixed.
 
 ## Changed approach
 
-- Continuation steering required using only tracked files and public/upstream
-  evidence; no operator-local global customization was inspected.
-- The implementation route changed from launching a configured isolated OpenCode
-  Scout to removing the ref-owned agent and making Scout startup/recovery fail
-  closed. This follows the delegated brief's explicit instruction to implement
-  every safe independent fix and return `needs decision` rather than weaken a
-  property when the pinned runtime requires a materially larger dependency.
-- Subsequent human architecture steering approved that larger dependency: an
-  externally installed OpenCode `1.18.16` runtime with bridge-owned custom tools
-  and immutable configuration. The fail-closed work is retained as the fallback;
-  unsafe worktrees and historical worktree mappings are not carried forward.
+- The runtime architecture changed from ordinary/ref-owned OpenCode to a separate
+  externally installed pinned Scout server with bridge-owned prompt/tools.
+- Review correction preserved the runtime design but added an immediate
+  `synchronizedGitState(config)` gate before every new Scout start.
+- The CI correction changed only test setup permissions and did not weaken the
+  product boundary.
 
 ## Checks
 
-- `git status --short --branch`, `git rev-parse HEAD`, and `git rev-parse origin/developer`: clean synchronized `developer` at the delegated SHA.
-- `./scripts/bootstrap-agent-workflow.sh --check`: tracked hooks active.
-- `npm test` in `tools/opencode-bridge`: 79 tests passed, including exact public/
-  Enterprise/custom API-to-Git identity, legitimate HTTPS/SSH forms, deceptive
-  host/userinfo/path cases, fail-before-ref/runtime contamination, hook/fsmonitor
-  suppression, exact detached cleanliness, symlink escape disposal, concurrent
-  request admission, recovery compatibility, and status unavailability.
-- `node scripts/validate-agent-system.mjs`: passed.
-- `node scripts/validate-opencode-bridge.mjs`: passed.
-- `./scripts/validate-repository.sh`: passed pre-implementation/link,
-  agent-system, research/manifest, hooks, bridge contracts, all 79 bridge tests,
-  all 8 template-branch tests, and the repository aggregate.
-- Source commit/push: `9ab08b8d338c0764899bb553d50dbe491cdc09bc`
-  is present at both local `developer` and `origin/developer`.
-- Final `./scripts/bootstrap-agent-workflow.sh --check`: tracked hooks active.
-- `npm test` in `tools/opencode-bridge`: 84 tests passed. New coverage includes
-  distinct endpoint configuration, trusted prompt/model/permission/tool probing,
-  exact-tree object materialization without checkout, no hook execution, stripped
-  write/execute bits, tamper rebuild, inert escaping symlinks, gitlink rejection,
-  bounded contained UTF-8 tools, historical-worktree recovery rejection, and
-  separate Scout start correlation.
-- `npm run test:scout-runtime-smoke` in `tools/opencode-bridge`: temporary external
-  locked install and real OpenCode `1.18.16` sterile launch passed exact version,
-  OpenAPI, agent, prompt, permissions, and trusted-tool probes without a model call.
-- `node scripts/validate-agent-system.mjs`: passed with runtime-owned Scout.
-- `node scripts/validate-opencode-bridge.mjs`: passed package/config/tool/snapshot
-  structural controls.
-- `./scripts/validate-repository.sh`: passed all structure/link, agent-system,
-  research/manifest, hooks, bridge contract, 84 bridge-test, 8 template-branch,
-  and aggregate checks.
-- `git diff --check`: passed.
-- Source commit/push: `a26cb7578fdc86a9514e72072a639caeea1c906e`
-  is present at both local `developer` and `origin/developer`.
-- Post-push `./scripts/bootstrap-agent-workflow.sh --check`: tracked hooks active.
+- Exact developer range from task start through the completed delegated handoff
+  was inspected through connected GitHub, including repository identity, config,
+  Scout server, snapshot manager, trusted tools, service wiring, tests, validators,
+  setup/security/architecture records, and pinned upstream OpenCode behavior.
+- GitHub Actions run `31884302516` for implementation SHA
+  `a26cb7578fdc86a9514e72072a639caeea1c906e` failed exactly one of 84 bridge
+  tests: the hardened Scout start fixture pre-created a group/world-accessible
+  private snapshot root under the runner's umask.
+- Direct correction commit `080dbf883cd6e567db7db934816b3f526ba17325`
+  changes only that fixture to request mode `0700`.
+- Direct correction commit `8941c2f89a595b16835a5326e42d5a1ec9d7a32c`
+  adds exactly one production line: re-run `synchronizedGitState(config)` in the
+  Scout readiness gate before runtime/snapshot start.
+- GitHub Actions run `31902255588` for
+  `8941c2f89a595b16835a5326e42d5a1ec9d7a32c` completed successfully under the
+  repository's full `Validate repository` workflow.
+- `main` remained `6127611113dfdb66f93a0cfd2d355359aa370833` throughout review.
 
 ## Blockers / required decisions
 
-None.
+None in developer source. Promotion remains human-only and is not requested.
 
 ## Remaining work
 
-- Create and push the dedicated handoff snapshot, then return control for exact
-  remote review.
+- Finalize/archive this developer task record under the repository's normal
+  finalization policy after the exact bookkeeping handoff is reviewed.
+- Complete independent review/reconciliation of the `web-orchestration` source.
+- Implement and validate template-development change-package provenance hardening,
+  reconcile `source-lock.json`, genuinely generate/validate the deterministic
+  package, and record exact source/package SHAs.
 
 ## Next action
 
-Create and push the dedicated task-progress handoff snapshot, then return the
-six-field response without further repository actions.
+Treat the resulting task-record-only commit as the developer bookkeeping handoff,
+confirm its GitHub Actions result, then proceed to source finalization and the
+remaining template-maintenance package work without changing `main`.
 
 ## Relevant durable records
 
@@ -171,4 +154,4 @@ six-field response without further repository actions.
 
 ## Last handoff commit
 
-f8ed4a7e570ff173dc6c8dbbc533735916f8ed41
+`8941c2f89a595b16835a5326e42d5a1ec9d7a32c`
