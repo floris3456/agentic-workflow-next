@@ -37,4 +37,33 @@
   developer, and web-orchestration correctness and authority are unaffected.
 - Remaining limitation: none after exact remote verification.
 
+## TD-003 — Local object-database package proof replaced by canonical fetch
+
+- Planned behavior: a portable package represents the exact reviewed canonical
+  `developer` and `web-orchestration` source ranges.
+- Observed reality: schema-1 generation verified commit shape and ancestry only
+  inside the caller-supplied local repository, then stamped the canonical
+  repository value from `source-lock.json`. A different local object database
+  could therefore manufacture plausible range/patch evidence.
+- Reason the prior implementation could not remain the provenance authority:
+  local commit existence and ancestry do not prove that those objects or heads
+  came from the canonical remote.
+- Selected alternative: new packages use schema 2. The generator authenticates
+  the supplied checkout origin, requires bases to equal the source-lock review
+  bases, fetches canonical source heads into a sterile temporary Git object
+  database, requires requested heads to equal those fetched tips, produces patch
+  bytes only from fetched objects, embeds the source-lock snapshot plus digest,
+  and computes a package SHA-256 over provenance metadata and both patch byte
+  streams. Offline validation recomputes all bindings.
+- Evidence: focused tests cover deceptive origins, wrong bases, stale/local-only
+  heads, provenance/patch/package tampering, determinism, and downstream apply;
+  the template-development Actions workflow passes the schema-2 implementation.
+- Effect: newly generated packages are provenance-verified rather than merely
+  locally self-consistent. Historical schema-1 packages remain integrity-
+  compatible for downstream use but are explicitly not reclassified as
+  provenance-verified.
+- Remaining limitation: generation still needs legitimate network access to the
+  canonical public Git remote. When that execution surface is unavailable, the
+  correct state is a packaging blocker, not a hand-built or downgraded package.
+
 No other current deviation is known.
