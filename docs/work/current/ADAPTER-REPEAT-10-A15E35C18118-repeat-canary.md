@@ -4,7 +4,7 @@
 ADAPTER-REPEAT-10-A15E35C18118
 
 ## Status
-In progress
+Ready for handoff
 
 ## Task-start developer SHA
 fce77a6de7fa062737439bca18be38e9d4b723a8
@@ -21,7 +21,7 @@ Run bounded adapter/OpenCode repeat-canary ADAPTER-REPEAT-10-A15E35C18118 for se
 Create the exact public-safe repeat-canary result for run 10 and hand it off from the guarded developer SHA without unrelated changes.
 
 ## Current position
-Task-start branch, cleanliness, synchronization, and guarded-SHA prerequisites were confirmed. The initial task-progress record was pushed in commit `4d57501c4652456f00bb5be679f998f65abfcdcd`. The requested result artifact was created and the proportional checks passed; the implementation commit remains to be created and pushed.
+Task-start branch, cleanliness, synchronization, and guarded-SHA prerequisites were confirmed. The initial task-progress record was pushed in commit `4d57501c4652456f00bb5be679f998f65abfcdcd`. The requested result artifact and progress update were pushed in implementation commit `e0cb3146fe5d82d897bbcafcca3384f1fb16a37d`. The implementation range contains only this task-progress record and the requested result artifact; the dedicated handoff snapshot remains.
 
 ## Observed
 - The current branch is `developer`.
@@ -32,6 +32,8 @@ Task-start branch, cleanliness, synchronization, and guarded-SHA prerequisites w
 - The requested six-line result artifact has been created at `testing/ADAPTER-REPEAT-10-A15E35C18118/result.md`.
 - The exact-content assertion passed, including the trailing newline.
 - `./scripts/validate-repository.sh` passed, including 85 bridge tests and 8 synchronization tests.
+- The implementation commit `e0cb3146fe5d82d897bbcafcca3384f1fb16a37d` is synchronized on `origin/developer`.
+- The task-start-to-implementation range contains only this task-progress record and the required result artifact.
 
 ## Interpretation
 The guarded starting point and local synchronization prerequisites are satisfied. The requested work is a bounded public-safe testing artifact with no expected implementation-record changes.
@@ -40,6 +42,7 @@ The guarded starting point and local synchronization prerequisites are satisfied
 1. Confirmed the requested developer branch, exact guarded SHA, clean synchronized worktree, and required record locations.
 2. Created the requested result artifact with the supplied task ID, series, run, nonce, and `ok` result.
 3. Ran the exact-content assertion and repository validation; both passed.
+4. Committed the result artifact and progress update as `e0cb3146fe5d82d897bbcafcca3384f1fb16a37d`; the commit was pushed successfully.
 
 ## Changed approach
 None.
@@ -49,15 +52,17 @@ None.
 - Exact six-line content and trailing-newline assertion: passed.
 - `./scripts/validate-repository.sh`: passed, including 85 bridge tests and 8 synchronization tests.
 - `git diff --check`: passed.
+- Implementation commit `e0cb3146fe5d82d897bbcafcca3384f1fb16a37d` is synchronized on `origin/developer`.
+- The task-start-to-implementation range contains only this task-progress record and the required result artifact.
 
 ## Blockers / required decisions
 None.
 
 ## Remaining work
-Commit and push the result artifact with this progress update, then create and push the dedicated handoff snapshot.
+Push the dedicated handoff snapshot.
 
 ## Next action
-Commit and immediately push the requested result artifact with this progress update.
+Create and push the dedicated handoff snapshot, then return the canonical six fields without further edits.
 
 ## Relevant durable records
 - `testing/README.md`
