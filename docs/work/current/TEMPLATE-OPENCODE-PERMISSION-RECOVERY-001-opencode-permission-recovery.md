@@ -19,13 +19,16 @@ Implement the developer-side source work for TEMPLATE-OPENCODE-PERMISSION-RECOVE
 Implement the bounded developer-side permission configuration, repository-scope guidance/validation, and same-session post-interaction recovery contract without weakening approval, isolation, replay, or promotion boundaries.
 
 ## Current position
-The bridge implementation, focused tests, developer scope guidance, and durable
-records are edited locally. The configured OpenCode contract was checked with
-the pinned `1.18.16` binary; proportional and full repository validation now
-pass and the implementation commit is ready to push.
+The bounded implementation, focused tests, developer scope guidance, and
+durable records are pushed in implementation commit
+`908d660755e00f3539dc2f7cbe2673c48664de92`. The configured OpenCode contract
+was checked with the pinned `1.18.16` binary; proportional and full repository
+validation pass. Only the dedicated handoff snapshot remains.
 
 ## Observed
-- `developer` and `origin/developer` both resolve to `29d59fb15bbdd31b59205c691deb4ddd167ade78`.
+- Task start was synchronized at `29d59fb15bbdd31b59205c691deb4ddd167ade78`;
+  after implementation push, `developer` and `origin/developer` both resolve to
+  `908d660755e00f3539dc2f7cbe2673c48664de92`.
 - Tracked workflow hooks pass `./scripts/bootstrap-agent-workflow.sh --check`.
 - Existing repeat-canary task records are present under `docs/work/current/`.
 - The pinned OpenCode `debug config` resolves root `external_directory` to
@@ -78,20 +81,19 @@ proof or delivery blocks without replay.
 - `./scripts/validate-repository.sh`: passed, including research, structure,
   agent-system, bridge, 92/92 bridge tests, and 8/8 branch tests.
 - `git diff --check`: passed.
+- Implementation commit `908d660755e00f3539dc2f7cbe2673c48664de92` was pushed
+  successfully; local `HEAD` and `origin/developer` match that SHA.
 
 ## Blockers / required decisions
-None currently. The remaining work is synchronization and the required handoff
-snapshot only.
+None currently. The remaining work is the required handoff snapshot only.
 
 ## Remaining work
-- Commit and push the implementation range with the task ID in the commit
-  message.
-- Create and push the dedicated handoff snapshot without
-  archiving/finalizing this task record.
+- Create and push the dedicated handoff snapshot without archiving/finalizing
+  this task record.
 
 ## Next action
-Commit the inspected implementation range, verify its push, then update only
-the task-progress boundary for the final handoff snapshot.
+Create the task-progress-only handoff snapshot commit and push it successfully,
+then return the six canonical fields without another tool action in this cycle.
 
 ## Relevant durable records
 - `tools/opencode-bridge/AS-BUILT.md`
