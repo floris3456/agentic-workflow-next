@@ -21,36 +21,38 @@ Run bounded interactive adapter/OpenCode acceptance test ADAPTER-QUESTION-2A40BF
 Run the bounded interactive adapter/OpenCode acceptance test and persist the exact success artifact only if the structured reply selects cobalt-river.
 
 ## Current position
-Confirmed branch `developer`, clean working tree, and local `HEAD`/`origin/developer` at the required task-start SHA. Created this task-progress record before substantive work.
+The required task-progress record was pushed first in `5c2a7f687ad6b8b43e79e77549b84f06a536f45d`. The required structured question was then used once, the task-correlated reply was `cobalt-river`, and the conditional result artifact is prepared for the implementation commit.
 
 ## Observed
 - `git branch --show-current` returned `developer`.
 - `git rev-parse HEAD` and `git rev-parse origin/developer` both returned `a4dcec9b4d84e0344eab1218f00d16a7b9407928`.
 - `git status --short --branch` showed only the `developer` branch header.
+- The task-progress start commit `5c2a7f687ad6b8b43e79e77549b84f06a536f45d` is pushed on `origin/developer`.
+- The structured question was used once with the prompt `Select one verification token.` and exactly the labels `amber-orbit` and `cobalt-river`; the task-correlated reply was `cobalt-river`.
+- `testing/ADAPTER-QUESTION-2A40BF87D11D/result.md` was created with the four requested key/value lines.
 
 ## Interpretation
-The required starting repository state is present and synchronized; no token outcome has been received.
+The required starting repository state was present and synchronized. The received token authorizes the requested success artifact, and no other substantive artifact was created.
 
 ## Attempts
-None.
+- Completed the required interactive question roundtrip; the received token matched the success condition.
 
 ## Changed approach
 None.
 
 ## Checks
-Initial branch, clean-tree, and synchronization checks passed as observed above.
+Initial branch, clean-tree, and synchronization checks passed as observed above. Hook activation passed; exact artifact content and diff checks are pending before the implementation commit.
 
 ## Blockers / required decisions
-The required structured question must be used exactly once and its task-correlated reply determines whether the result artifact may be created.
+None.
 
 ## Remaining work
-- Ask the required structured question exactly once.
-- Continue from the received token without inferring or fabricating an answer.
-- Conditionally create the exact result artifact.
-- Run proportional checks, commit and push each commit, then create and push the dedicated handoff snapshot.
+- Run proportional checks, including exact artifact-content verification and diff validation.
+- Commit and push the result artifact and this progress update.
+- Update this task record for the final handoff boundary, then create and push the dedicated handoff snapshot.
 
 ## Next action
-Use the structured question tool once with the required prompt and exactly the two required choices.
+Run exact artifact-content and diff checks, then commit and push the implementation/result record.
 
 ## Relevant durable records
 This task-progress record; conditional acceptance artifact at `testing/ADAPTER-QUESTION-2A40BF87D11D/result.md`.
