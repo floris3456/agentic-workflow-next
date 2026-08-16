@@ -6,7 +6,7 @@ ADAPTER-CANARY-3B8AF0E2C2E2
 
 ## Status
 
-In progress
+Ready for handoff
 
 ## Task-start developer SHA
 
@@ -26,21 +26,24 @@ Create the bounded canary result at the requested developer starting SHA while p
 
 ## Current position
 
-The `developer` branch is clean and exactly synchronized with `origin/developer` at the requested task-start SHA. The required task-progress record is being created before the canary result.
+The required task-progress record was pushed first at `a6b8bdeae8e4c6a451dafcb35f8246f6b061cfd1`. The exact canary result was created and verified; the result and this progress update are ready for their implementation commit.
 
 ## Observed
 
 - Current branch is `developer`.
-- `HEAD` and `origin/developer` are both `f20586df27c4cb15bcf1307a6583060d2abeb115`.
-- No pre-existing task-progress record matches this task ID.
+- The pushed task-progress start commit is `a6b8bdeae8e4c6a451dafcb35f8246f6b061cfd1` on both local `HEAD` and `origin/developer`.
+- No pre-existing task-progress record matched this task ID.
+- `testing/ADAPTER-CANARY-3B8AF0E2C2E2/result.md` contains exactly four requested lines and a trailing newline.
 
 ## Interpretation
 
-The requested canary can proceed without branch synchronization or scope ambiguity.
+The requested canary output is bounded to the requested testing path and can proceed to handoff without branch synchronization or scope ambiguity.
 
 ## Attempts
 
-None.
+- Created the required result file with the four requested lines.
+- Ran an exact-byte assertion against the required result content; it passed.
+- Ran `git diff --check`; it passed.
 
 ## Changed approach
 
@@ -49,6 +52,8 @@ None.
 ## Checks
 
 - `./scripts/bootstrap-agent-workflow.sh --check`: passed; tracked Git hooks are active.
+- Exact-byte assertion for `testing/ADAPTER-CANARY-3B8AF0E2C2E2/result.md`: passed.
+- `git diff --check`: passed.
 
 ## Blockers / required decisions
 
@@ -57,13 +62,12 @@ None.
 ## Remaining work
 
 - Commit and push this task-progress record.
-- Create the exact four-line canary result.
-- Run proportional checks, update this record, and push each commit.
+- Create and push the exact four-line canary result and this progress update.
 - Create and push the dedicated handoff snapshot.
 
 ## Next action
 
-Commit and push the task-progress start record, then create the requested canary result.
+Commit and push the canary result with this progress update, then create and push the dedicated handoff snapshot.
 
 ## Relevant durable records
 
