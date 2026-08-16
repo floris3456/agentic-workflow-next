@@ -6,7 +6,7 @@ TEMPLATE-OPENCODE-FAST-COMPLETION-001
 
 ## Status
 
-In progress; source correction is reviewed and the provenance package is generated and locally validated, with ledger publication, remote CI, and the dedicated handoff snapshot pending
+Completed working cycle; source correction is reviewed and the exact provenance package is pushed, remotely reconciled, and canonical-CI green; finalization remains separate
 
 ## Task-start template-development SHA
 
@@ -22,7 +22,7 @@ Correct the post-interaction continuation race where normal same-session work ca
 
 ## Current objective
 
-Publish the generated provenance package and updated ledger, observe canonical template-development validation, and create the dedicated task-progress handoff snapshot. Finalization, downstream application, and any later promotion review remain separate.
+Hand off the pushed provenance package and exact evidence for the separate downstream-application/finalization review boundary. No main promotion is authorized.
 
 ## Current position
 
@@ -35,6 +35,8 @@ Exact source refs were reread and `source-lock.json` was reconciled to developer
 The clean `template-development` worktree was synchronized from `f2da387fab23934044a79ede841516d9497e7003` to canonical `1cc1621ed34d2c9228544c0d8ff41d56c3cd5673`. Fresh canonical refs independently matched the transfer state: developer `326e9c402f571b82f6497c4da0f9d3722b553dba`, web-orchestration `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`, main `6127611113dfdb66f93a0cfd2d355359aa370833`, and template-development `1cc1621ed34d2c9228544c0d8ff41d56c3cd5673` before this cycle's ledger commits.
 
 The output directory was absent, so no partial package required reconciliation. The tracked generator then performed its fresh canonical fetch and created `changes/TEMPLATE-OPENCODE-FAST-COMPLETION-001/manifest.json` for only the exact reviewed ranges. Schema/provenance validation succeeds; package SHA-256 is `7900e6123d9d76d89b6c9e1232bc0e3c81795fdda1c8290fe4b31e533bf67ae7`; developer patch SHA-256 is `5b27828115663e78e9cdfed6f1092f9d0e70bf0210c62e521d69b4922ee40d58`; and the empty web patch SHA-256 is `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`.
+
+Package/ledger commit `4fc5b16d3a1df7e6a086553a65f5a45c49d9cd14` was pushed and independently read back from canonical `template-development`. Canonical Actions run `31975950098` completed successfully for that exact commit. Developer, web-orchestration, and main remained at their verified pre-cycle SHAs.
 
 ## Source ranges
 
@@ -58,6 +60,8 @@ The output directory was absent, so no partial package required reconciliation. 
 - The tracked generator's sterile canonical fetch succeeded and proved both reviewed heads are ancestors of/equal to the current canonical tips.
 - The generated manifest lists the same 11 developer paths as the exact reviewed Git range and no web-orchestration paths.
 - No developer, web-orchestration, or main mutation occurred during package generation.
+- Canonical `template-development` validation succeeded for exact package/ledger commit `4fc5b16d3a1df7e6a086553a65f5a45c49d9cd14`.
+- No template-maintenance AS-BUILT, design, or deviation update was required because generation and publication followed the documented mechanism without changing an implemented fact.
 
 ## Interpretation
 
@@ -78,6 +82,7 @@ The source defect is fixed and the developer route is terminal/absorbed. The rep
 11. Synchronized a clean template-development checkout, independently verified all four canonical refs, confirmed the output path was absent, and proved reviewed-range ancestry and changed paths.
 12. Ran the tracked generator successfully; it fetched canonical developer/web-orchestration history into its sterile temporary repository and created the schema-2 provenance package.
 13. Recomputed package and patch digests through the shared verifier and ran `./scripts/validate-template-development.sh`; all five package tests and full validation passed.
+14. Committed and pushed the package/ledger as `4fc5b16d3a1df7e6a086553a65f5a45c49d9cd14`, independently reconciled the canonical remote ref, and observed Actions run `31975950098` complete successfully.
 
 ## Changed approach
 
@@ -98,6 +103,8 @@ The rejected prior implementation used only post-reply evidence. This correction
 - Manifest range/path review: developer `80ad63319cd746d6205d67781b25e3c327b230bc..326e9c402f571b82f6497c4da0f9d3722b553dba` with 11 matching paths; web-orchestration `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17..7e29c07e6ac9fc65a2cb2a8957514bc03500cc17` with zero paths.
 - Package binding SHA-256 `7900e6123d9d76d89b6c9e1232bc0e3c81795fdda1c8290fe4b31e533bf67ae7`, developer patch SHA-256 `5b27828115663e78e9cdfed6f1092f9d0e70bf0210c62e521d69b4922ee40d58`, and empty web patch SHA-256 `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855` recomputed successfully.
 - `./scripts/validate-template-development.sh`: passed, including 5/5 change-package tests and `git diff --check`.
+- Canonical template-development Actions run `31975950098` for package/ledger commit `4fc5b16d3a1df7e6a086553a65f5a45c49d9cd14`: completed successfully.
+- Post-push canonical refs: template-development `4fc5b16d3a1df7e6a086553a65f5a45c49d9cd14`; developer `326e9c402f571b82f6497c4da0f9d3722b553dba`; web-orchestration `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`; main `6127611113dfdb66f93a0cfd2d355359aa370833`.
 
 ## Blockers / required decisions
 
@@ -105,14 +112,13 @@ None. No product/design decision is required.
 
 ## Remaining work
 
-1. Commit and push the generated package, source-lock pointer, and this ledger update.
-2. Observe canonical template-development validation and reconcile the exact pushed package commit.
-3. Create and push the dedicated template-development task-progress handoff snapshot.
-4. Finalization/archive, downstream application, and full `main -> developer` promotion review remain separate and later.
+1. Finalization/archive remains separate until source and downstream application review satisfy that boundary.
+2. Downstream application remains a separate normal task under the receiving repository's branch workflow.
+3. Full `main -> developer` promotion review remains separate and later; no promotion is authorized here.
 
 ## Next action
 
-Validate the complete ledger change, commit and push it, then observe canonical validation before the dedicated handoff snapshot.
+At the next authorized maintenance cycle, review/apply the pushed package downstream and archive this task record only when the separate finalization requirements are met.
 
 ## Relevant durable records
 
@@ -126,7 +132,9 @@ Validate the complete ledger change, commit and push it, then observe canonical 
 - Reconciled source lock: template-development commit `61da94440982422413df992ca31305998e16fa29`
 - Change package: `changes/TEMPLATE-OPENCODE-FAST-COMPLETION-001/manifest.json`
 - Package SHA-256: `7900e6123d9d76d89b6c9e1232bc0e3c81795fdda1c8290fe4b31e533bf67ae7`
+- Package/ledger commit: `4fc5b16d3a1df7e6a086553a65f5a45c49d9cd14`
+- Package/ledger CI: Actions run `31975950098` (successful)
 
 ## Last handoff commit
 
-None; this is the first template-development handoff cycle for the task.
+None; this dedicated snapshot is the first template-development handoff and does not record its own SHA.
