@@ -11,9 +11,10 @@ history.
 ## Authority model
 
 - Remote source refs are authoritative implementation evidence.
-- `source-lock.json` is the ledger's last reconciled source snapshot and package
-  review-base lock. It moves only through the tracked package/reconciliation
-  procedure after the prior snapshot has been embedded in the package.
+- `source-lock.json` is the ledger's latest reconciled canonical source snapshot.
+  It may advance directly from independently verified exact remote refs and is
+  not a package review-base lock. Package task records and manifests own their
+  exact reviewed base/head ranges independently.
 - Component AS-BUILT/deviation records stay on the source branch beside the code
   they describe; this file records the cross-branch maintenance architecture.
 - Task records, developer/Scout/bridge reports, CI, and orchestration notes are
@@ -88,6 +89,18 @@ A successful working-cycle handoff is not finalization. Finalization preserves t
 approved task-record Git blob unchanged when moving it to the same basename under
 `docs/work/archive/`; collision or blob mismatch is refused.
 
+## Source snapshot
+
+`source-lock.json` records the latest reconciled exact canonical refs for `main`,
+`developer`, and `web-orchestration`, plus the last actual package metadata. It is
+updated only from independently verified remote refs at meaningful maintenance
+checkpoints. A stale snapshot is an observation to reconcile; it does not define,
+freeze, widen, or block a task's reviewed package range.
+
+Package creation neither consumes nor advances the source snapshot. This removes
+the former old-lock-before-package ordering dependency while keeping task review
+bases explicit in task records and package manifests.
+
 ## Change packages
 
 `scripts/create-change-package.mjs` produces one directory per task containing
@@ -98,28 +111,31 @@ Before output, the generator:
 
 1. validates `source-lock.json` and authenticates the supplied checkout's origin
    as the same canonical GitHub repository;
-2. requires requested source bases to equal the locked review bases;
-3. creates a sterile temporary bare repository with isolated Git configuration
+2. creates a sterile temporary bare repository with isolated Git configuration
    and no interactive credential prompt;
-4. fetches current canonical `developer` and `web-orchestration` tips;
-5. requires each exact reviewed package head to belong to the fetched canonical
-   branch history, with the locked base an ancestor of the reviewed head and the
-   reviewed head an ancestor of/equal to the current tip; and
-6. generates range metadata and patch bytes only from fetched canonical objects,
+3. fetches current canonical `developer` and `web-orchestration` tips;
+4. requires each exact supplied range base and reviewed head to resolve from the
+   fetched canonical object database, requires the base to be an ancestor of the
+   reviewed head, and requires the reviewed head to be an ancestor of/equal to
+   the current branch tip; and
+5. generates range metadata and patch bytes only from fetched canonical objects,
    never caller-supplied objects and never by silently widening to unrelated later
    commits.
 
-The schema-2 manifest embeds the exact old source-lock snapshot and digest,
-observed canonical tips, reviewed-head relationship markers, exact ranges, sorted
-changed paths, and per-patch SHA-256 values. `package_sha256` binds the stable
-manifest core plus both raw patch streams with a versioned domain separator.
-`scripts/change-package-lib.mjs` is the shared offline verifier used by generation,
-application, and ledger validation.
+The schema-2 manifest embeds the generation-time `source-lock.json` snapshot and
+digest as provenance context, observed canonical tips, reviewed-head relationship
+markers, exact task ranges, sorted changed paths, and per-patch SHA-256 values.
+The embedded source snapshot does not have to equal either package range base.
+`package_sha256` binds the stable manifest core plus both raw patch streams with a
+versioned domain separator. `scripts/change-package-lib.mjs` is the shared offline
+verifier used by generation, application, and ledger validation.
 
 Historical schema-1 packages remain integrity-compatible only after their
 original range/per-patch checks pass and are explicitly not provenance-verified.
-Full 40-character commits remain mandatory. A non-empty output directory is
-refused. The generator never writes source branches.
+Existing schema-2 packages remain valid because packages that previously used the
+source snapshot as their range bases are a valid subset of the new independent-
+snapshot contract. Full 40-character commits remain mandatory. A non-empty output
+directory is refused. The generator never writes source branches.
 
 `scripts/apply-change-package.mjs` validates the package, requires the downstream
 checkout's exact matching branch and clean tree, and runs `git apply --check`.
@@ -153,7 +169,8 @@ plus **five conditionally routed Project Sources**:
 2. `skill-recovery.md` — exceptional issue/command/publication/agent/Git
    reconciliation with strict ambiguous-mutation no-replay semantics.
 3. `skill-template-maintenance.md` — reusable-template continuity, source work,
-   source-lock/package provenance, downstream transfer, and template finalization.
+   current source-snapshot/package provenance, downstream transfer, and template
+   finalization.
 4. `skill-promotion.md` — human-triggered exact-SHA guarded `developer` to `main`
    promotion only.
 5. `skill-prompt-creation.md` — one self-contained context-transfer and prompt-
@@ -225,21 +242,11 @@ exact direct inspection rather than falling back to ordinary developer OpenCode
 or ref-owned instructions.
 
 Package schema 2 closes the complementary cross-branch provenance boundary:
-locked bases plus exact reviewed heads define the package range; freshly fetched
-canonical history proves the reviewed heads belong to the source branches without
+exact task bases plus exact reviewed heads define the package range; freshly
+fetched canonical history proves those endpoints and their ancestry without
 including later unrelated commits; fetched objects define patch bytes; and the
-package digest binds lock/provenance plus both patches.
-
-## Current provenance dependency
-
-`TEMPLATE-TRUST-BOUNDARY-001` completed its reviewed source hardening but is still
-blocked on genuine networked schema-2 package generation. Therefore
-`source-lock.json` deliberately remains at that task's prior review bases until
-the tracked generator embeds the snapshot and reconciliation completes. Later
-source work, including `TEMPLATE-CAPABILITY-ORCHESTRATION-001` and
-`TEMPLATE-CI-REACHABILITY-001`, records exact live ranges but must not silently
-move or widen that lock. This is an explicit package ordering dependency, not
-permission to fabricate package bytes.
+package digest binds provenance context plus both patches. The source snapshot is
+useful generation-time context, not an authority that defines package membership.
 
 ## Verification
 
@@ -252,14 +259,14 @@ permission to fabricate package bytes.
   fixtures for those architectural boundaries and a CI-contract test for the
   branch-owned push workflow.
 - `web-orchestration` push Actions run `31917651395` succeeded at exact source SHA
-  `3891a17bd62b8e4871310766f2a05175aa42cf87`: the checkout used non-persisted
-  credentials under read-only contents permission, the canonical package
-  validator passed, and discovery-mode `node --test` passed all 16 tests.
+  `3891a17bd62b8e4871310766f2a05175aa42cf87`; later procedure-source updates run
+  through the same canonical push validation path.
 - `scripts/validate-template-development.mjs` validates ledger structure, source
-  lock, task/archive rules, forbidden source-tree absence, executable bits, and
-  committed change packages through the shared verifier.
-- `tests/change-package.test.mjs` covers deterministic schema-2 generation,
-  deceptive origin/wrong-base/forged-head rejection, later canonical branch
+  snapshot shape, task/archive rules, forbidden source-tree absence, executable
+  bits, and committed change packages through the shared verifier.
+- `tests/change-package.test.mjs` covers deterministic schema-2 generation with a
+  source snapshot intentionally newer than package range bases, deceptive origin,
+  non-ancestor base rejection, forged-head rejection, later canonical branch
   advance, provenance/patch/package tamper detection, schema-1 compatibility, and
   downstream dry-run/application boundaries.
 - `scripts/validate-template-development.sh` runs the ledger/package checks plus
