@@ -6,7 +6,7 @@ TEMPLATE-BRIDGE-LIFECYCLE-RECOVERY-002
 
 ## Status
 
-In progress
+Blocked on local bridge observation; same-session Sol route is published but unacknowledged
 
 ## Task-start template-development SHA
 
@@ -22,7 +22,7 @@ Correct bridge lifecycle defects found during full promotion review: recover mis
 
 ## Current objective
 
-Finish the confirmed second-terminal lifecycle correction: a successful follow-up prompt on an already-terminal mapped developer session must reactivate durable task state and ensure its recovery observer is enrolled/re-enrolled so a missed later terminal handoff is recoverable exactly once.
+Reconcile the already-published same-session Sol route without replay, then finish the confirmed second-terminal lifecycle correction: a successful follow-up prompt on an already-terminal mapped developer session must reactivate durable task state and ensure its recovery observer is enrolled/re-enrolled so a missed later terminal handoff is recoverable exactly once.
 
 ## Current position
 
@@ -30,11 +30,13 @@ Canonical issue #49 remains the single mutating source route. It is bound to one
 
 The initial lifecycle implementation is remote at `9c1ae8a445cbf53db7af3905aefd471470c6cac6`, followed by task-record-only handoff `305c72cd87bff6d9cccf91b97f78e87af241efd3`. Independent review found evidence-method metadata drift; same-session sequence 15 corrected it at source commit `0362e24a363d9f905234283666b3f840983a6ef1`, with focused assertions and repository CI success, followed by task-record-only handoff `a12855280dc35a10aded89cd3db2989fad84bcc4`.
 
-Independent review then confirmed a deeper continuation edge: after a recorded terminal handoff, normal `steer`/`finalize`/`route` prompts the same session but does not move persisted task state back to nonterminal or reliably re-enroll per-session recovery. `recoverDeveloperCanonical()` skips already-terminal mapped state and `runSession()` can already have exited, so a missed second terminal handoff is not recoverable. Sequence 17 (`34780ecf-8a40-47df-b4db-1fc69d4eb90f`) successfully delivered that exact correction brief to the same session.
+Independent review then confirmed a deeper continuation edge: after a recorded terminal handoff, normal `steer`/`finalize`/`route` prompts the same session but do not move persisted task state back to nonterminal or reliably re-enroll per-session recovery. `recoverDeveloperCanonical()` skips already-terminal mapped state and `runSession()` can already have exited, so a missed second terminal handoff is not recoverable. Sequence 17 (`34780ecf-8a40-47df-b4db-1fc69d4eb90f`) successfully delivered that exact correction brief to the same session.
 
-Luna did not implement the requested second-terminal fix. Instead it produced another task-record-only handoff `5dad89af63057545677e47d546783184b5e8c65d` whose record explicitly says there was no further implementation work. Live sequence 21 (`3b7b5141-22d5-41f1-943a-57e0f03d3fd9`) then returned `session.status = {}`, proving the same session inactive with the confirmed source defect still present. This justifies a same-session agent route recovery rather than replaying start or opening a replacement route.
+Luna did not implement the requested second-terminal fix. Instead it produced another task-record-only handoff `5dad89af63057545677e47d546783184b5e8c65d` whose record explicitly says there was no further implementation work. Live sequence 21 (`3b7b5141-22d5-41f1-943a-57e0f03d3fd9`) then returned `session.status = {}`, proving the same session inactive with the confirmed source defect still present.
 
-A pending sequence-22 route command will keep the same task/session but change the implementation agent to Sol/large-developer with a focused message to implement only the confirmed second-terminal reactivation/re-enrollment correction and tests.
+Sequence 22 route command `e9a777cb-8e35-4a33-985a-52e553bc05e2` was posted exactly once on #49 to keep the same task/session and switch the implementation agent to Sol/large-developer with the bounded second-terminal correction brief. The marker is valid OWNER-authored control input but remains unacknowledged: no bot `accepted`, `applying`, terminal, or rejected marker exists. It must not be replayed and no sequence 23 may be posted while its admission is unknown.
+
+The last remotely recoverable bridge heartbeat in the existing task-status evidence is `1786923580448` (`2026-08-16T23:39:40.448Z`). The sequence-22 route marker was created later at `2026-08-16T23:46:50Z`. Therefore remote GitHub cannot prove the local bridge process polled after the route was published. The latest issue `updated_at` remains the sequence-22 marker time, and remote `developer` remains `5dad89af63057545677e47d546783184b5e8c65d`. Local bridge status/log observation is now required before any restart or further command.
 
 The route earlier repeatedly synthesized an invalid sibling checkout basename despite repository-relative guidance. Initial `external_directory` aliases `permission-39`, `permission-40`, `permission-41` targeted that invalid sibling; sequence 2 rejected `permission-39`, and a later live `permission.list` proved the set cleared without replaying vanished aliases. After one bounded same-session continuation steer, `permission-42` repeated the invalid sibling path for `docs/architecture/*`; sequence 6 rejected it and continuation recovery returned clean. This recurring path-synthesis problem is a separate promotion blocker and is not being fixed by the current lifecycle patch.
 
@@ -45,7 +47,7 @@ Three read-only promotion-review Scouts (#46-#48) remain bound to their original
 - developer: `326e9c402f571b82f6497c4da0f9d3722b553dba..pending-final-handoff`
 - initial implementation: `326e9c402f571b82f6497c4da0f9d3722b553dba..9c1ae8a445cbf53db7af3905aefd471470c6cac6`
 - metadata correction: `305c72cd87bff6d9cccf91b97f78e87af241efd3..0362e24a363d9f905234283666b3f840983a6ef1`
-- current developer tip before route recovery: `5dad89af63057545677e47d546783184b5e8c65d`
+- current developer tip before Sol route admission: `5dad89af63057545677e47d546783184b5e8c65d`
 - web-orchestration: no source change
 - main: unchanged at `6127611113dfdb66f93a0cfd2d355359aa370833`
 
@@ -56,14 +58,15 @@ Three read-only promotion-review Scouts (#46-#48) remain bound to their original
 - New Scout enrollment is wired after successful Scout mapping/prompting while startup recovery remains for historical Scout sessions.
 - Evidence-method metadata is now truthful and assertion-pinned: Scout uses `session.status+session.messages`; developer uses `permission.list+question.list+session.status+session.messages`.
 - The remaining confirmed defect is post-terminal same-session continuation: `prompt()`/`changeRoute()` can successfully deliver later work while durable task state remains terminal and the old recovery promise may already be ending/ended.
-- Luna failed to implement that remaining defect after sequence 17 and instead pushed a no-op task handoff; live inactive status after that handoff proves ordinary waiting is no longer justified.
-- The current route also independently reproduced the wrong sibling path synthesis after the earlier prompt-only guidance change.
+- Luna failed to implement that remaining defect after sequence 17 and instead pushed a no-op task handoff; live inactive status after that handoff justified same-session route recovery to Sol.
+- Sequence 22 has not been consumed remotely; the last known service heartbeat predates the route marker, so local service state is now an evidence boundary rather than ordinary delay.
+- The current route independently reproduced the wrong sibling path synthesis after the earlier prompt-only guidance change.
 - The separate tracked Node 22.13.0 floor remains inconsistent with Scout runtime production dependency `ini@7.0.0` requiring Node `^22.22.2 || ^24.15.0 || >=26`; this remains a separate promotion blocker.
 - Two accidental placeholder issues (#50 and #51) were created during tool selection, immediately closed `not_planned`, and caused no branch/source mutation.
 
 ## Interpretation
 
-The lifecycle task is not complete despite several handoff snapshots. The source is materially improved, but second-terminal recoverability is still missing and is part of the same developer-terminal recovery authority. Replaying start or replacing the mapped session would violate continuity; routing the exact same session to Sol is the proportional recovery after Luna failed to implement an explicit confirmed correction and then became inactive.
+The lifecycle task is not complete despite several handoff snapshots. The source is materially improved, but second-terminal recoverability is still missing and is part of the same developer-terminal recovery authority. Replaying start, replaying sequence 22, or replacing the mapped session would violate continuity. The safest next action is to inspect the local bridge process/status/logs to determine whether it polled after the route marker. Only if local evidence proves the bridge stopped before consuming sequence 22 may a service restart be considered; the route marker itself remains the one mutation to consume after restart.
 
 The wrong-sibling path synthesis and Node runtime-floor mismatch are separate blockers that should be addressed only after this mutating lifecycle route becomes terminal and absorbed.
 
@@ -75,11 +78,13 @@ The wrong-sibling path synthesis and Node runtime-floor mismatch are separate bl
 4. Independent review corrected canonical recovery evidence metadata in the same session; source commit `0362e24a...` and CI passed.
 5. Independent review found the second-terminal-after-review-steer gap and delivered sequence 17 in the same session.
 6. Luna pushed only task-record handoff `5dad89af...` instead of source implementation. Live sequence 21 returned `{}` after that handoff, proving inactive/no-progress with the defect unresolved.
-7. Wrong-sibling permission bursts were rejected without widening scope or replaying vanished interactions.
+7. Sequence 22 routed the same session to Sol exactly once; it remains unacknowledged and has not been replayed.
+8. Remote heartbeat/issue timestamps were reconciled and show the latest recoverable heartbeat predates sequence 22, creating a local-operator observation boundary.
+9. Wrong-sibling permission bursts were rejected without widening scope or replaying vanished interactions.
 
 ## Changed approach
 
-Continue the same task/session but route from Luna to Sol only after exact live inactive proof. This is an agent-route recovery, not a new source route, start replay, replacement session, or scope change.
+The intended same-session Sol route remains correct, but execution is paused at its unacknowledged admission boundary. Continue the same task/session only after local bridge observation proves how to recover the control loop without replaying sequence 22.
 
 ## Checks
 
@@ -90,24 +95,30 @@ Continue the same task/session but route from Luna to Sol only after exact live 
 - Task-record-only nature of handoffs `305c72cd...`, `a1285528...`, and `5dad89af...` verified remotely.
 - Sequence 17 succeeded as same-session `steering-delivered`.
 - Sequence 21 succeeded with live `session.status = {}` after the no-op handoff, establishing the recovery condition for agent routing.
+- Sequence 22 marker was independently fetched with OWNER association and exact creation time `2026-08-16T23:46:50Z`; no bridge-authored status follows it.
+- Last known task-status heartbeat converts to `2026-08-16T23:39:40.448Z`, before sequence 22.
+- Developer `5dad89af...` repository validation workflow run `31979948854` succeeded.
 
 ## Blockers / required decisions
 
-None for routing the existing session to Sol and completing the bounded lifecycle correction. Promotion remains blocked independently by this unresolved lifecycle defect, recurring wrong-sibling path synthesis, Node runtime-floor mismatch, unresolved Scout reports, and developer/template finalization boundaries.
+Blocked only on fresh local bridge observation. No human product/design decision is needed, but the orchestrator cannot observe the host-local bridge process, SQLite state, or systemd logs through GitHub. Do not restart blindly and do not replay sequence 22.
+
+Promotion remains blocked independently by the unresolved lifecycle defect, recurring wrong-sibling path synthesis, Node runtime-floor mismatch, unresolved Scout reports, and developer/template finalization boundaries.
 
 ## Remaining work
 
-1. Route the existing mapped session to Sol with no new start/session and implement second-terminal reactivation/re-enrollment plus focused failure/idempotency tests.
-2. Receive a new pushed source correction and task-record-only developer handoff; independently review exact range and CI.
-3. Prove bridge synchronization/restart and reconcile the three original Scout sessions without replay; absorb/close Scout review issues.
-4. Close #49 only after the source route is terminal/absorbed and lifecycle review is clean.
-5. Generate/validate the exact lifecycle change package on template-development and reconcile source lock/handoff.
-6. Separately resolve wrong-sibling path synthesis and Node runtime-floor mismatch.
-7. Reconcile required developer/template finalization and repeat full `main -> developer` promotion review before any human exact-SHA approval request.
+1. Obtain fresh local bridge status after sequence-22 publication: current heartbeat, last_poll_at, last_error, pending commands/requests/outbox, PID, and repository-specific service state/logs if stale.
+2. If local evidence proves the bridge stopped before consuming sequence 22 and there is no pending/indeterminate mutation, restart only the repository-specific bridge service and allow the existing sequence-22 marker to be consumed; never repost it.
+3. Reconcile sequence 22 terminal state; receive Sol source correction and new task-record-only developer handoff; independently review exact range and CI.
+4. Prove bridge synchronization/restart and reconcile the three original Scout sessions without replay; absorb/close Scout review issues.
+5. Close #49 only after the source route is terminal/absorbed and lifecycle review is clean.
+6. Generate/validate the exact lifecycle change package on template-development and reconcile source lock/handoff.
+7. Separately resolve wrong-sibling path synthesis and Node runtime-floor mismatch.
+8. Reconcile required developer/template finalization and repeat full `main -> developer` promotion review before any human exact-SHA approval request.
 
 ## Next action
 
-Publish the persisted sequence-22 same-session `route` command to Sol and reconcile it without replay.
+Get one fresh host-local bridge status snapshot and compare `last_poll_at`/heartbeat with sequence-22 creation time `2026-08-16T23:46:50Z`; do not mutate the service until that comparison is known.
 
 ## Relevant durable records
 
@@ -121,6 +132,7 @@ Publish the persisted sequence-22 same-session `route` command to Sol and reconc
 - Metadata correction steer `b86c0094-4f11-4b48-b4a5-5bd7d5045b0c`
 - Second-terminal correction steer `34780ecf-8a40-47df-b4db-1fc69d4eb90f`
 - Live inactive proof after no-op handoff `3b7b5141-22d5-41f1-943a-57e0f03d3fd9`
+- Pending same-session Sol route `e9a777cb-8e35-4a33-985a-52e553bc05e2`
 - Initial implementation `9c1ae8a445cbf53db7af3905aefd471470c6cac6`
 - Metadata correction `0362e24a363d9f905234283666b3f840983a6ef1`
 - Current developer tip/handoff `5dad89af63057545677e47d546783184b5e8c65d`
