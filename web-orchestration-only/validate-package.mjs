@@ -154,6 +154,9 @@ if (!/Only the human accepts one exact reviewed `developer` SHA into\s+`main`/i.
 if (!/Repository file writes and GitHub Issue control\s+are distinct/i.test(instructions)) {
   fail("Permanent instructions are missing the file-write versus issue-control boundary");
 }
+if (!/Before emitting a final response[\s\S]{0,500}every route you launched must be\s+terminal and absorbed[\s\S]{0,500}active, unknown, indeterminate, or otherwise unresolved[\s\S]{0,500}continue reconciliation instead of ending[\s\S]{0,500}Elapsed time[\s\S]{0,300}never blockers or completion conditions/i.test(instructions)) {
+  fail("Permanent instructions are missing the hard final-response reconciliation gate");
+}
 for (const stale of ["MCP-ON", "MCP-OFF", "MCP-ON/Sol", "MCP-OFF/Pro", "skill-mcp-"]) {
   if (instructions.includes(stale)) fail(`Permanent instructions retain stale mode architecture: ${stale}`);
 }
