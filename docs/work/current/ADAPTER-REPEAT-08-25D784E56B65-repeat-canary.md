@@ -21,7 +21,7 @@ Run bounded adapter/OpenCode repeat-canary ADAPTER-REPEAT-08-25D784E56B65 for se
 Create the exact public-safe repeat-canary result for run 08 and hand it off from the guarded developer SHA without unrelated changes.
 
 ## Current position
-Task start was recorded and pushed at developer commit `352a628a46e6194b75d9271f3f321071e502ddab`. The requested result artifact is created in the working tree, and proportional checks passed; the implementation commit and dedicated handoff snapshot remain.
+Task start was recorded and pushed at developer commit `352a628a46e6194b75d9271f3f321071e502ddab`. The requested result artifact and progress update were pushed in implementation commit `3cce4223e5a62f0459ef2c899ee48f0eca1a27a1`. The implementation range contains only this task-progress record and the requested result artifact; the dedicated handoff snapshot remains.
 
 ## Observed
 - The current branch is `developer`.
@@ -31,6 +31,8 @@ Task start was recorded and pushed at developer commit `352a628a46e6194b75d9271f
 - Existing adapter repeat-canary artifacts use the requested six-line format.
 - The exact-content assertion for `testing/ADAPTER-REPEAT-08-25D784E56B65/result.md` passed, including the trailing newline.
 - `./scripts/validate-repository.sh` passed, including 85 bridge tests and 8 synchronization tests.
+- The implementation commit `3cce4223e5a62f0459ef2c899ee48f0eca1a27a1` is synchronized on `origin/developer`.
+- The task-start-to-implementation range contains only this task-progress record and the required result artifact.
 
 ## Interpretation
 The guarded starting point and synchronization prerequisites are satisfied. The requested work is a bounded public-safe testing artifact with no expected implementation-record changes.
@@ -38,6 +40,7 @@ The guarded starting point and synchronization prerequisites are satisfied. The 
 ## Attempts
 1. Confirmed the requested developer branch, exact guarded SHA, clean synchronized worktree, active hooks, and required record locations.
 2. Created the exact requested result artifact; the exact-content assertion and repository validation passed.
+3. Committed the result artifact and progress update as `3cce4223e5a62f0459ef2c899ee48f0eca1a27a1`; the commit was pushed successfully.
 
 ## Changed approach
 None.
@@ -47,15 +50,17 @@ None.
 - Exact-content assertion for `testing/ADAPTER-REPEAT-08-25D784E56B65/result.md`: passed, including the trailing newline.
 - `git diff --check`: passed.
 - `./scripts/validate-repository.sh`: passed, including 85 bridge tests and 8 synchronization tests.
+- Implementation commit `3cce4223e5a62f0459ef2c899ee48f0eca1a27a1` is synchronized on `origin/developer`.
+- The task-start-to-implementation range contains only this task-progress record and the required result artifact.
 
 ## Blockers / required decisions
 None. Do not finalize or archive the task record during this acceptance run.
 
 ## Remaining work
-Commit and push the implementation range, then create and push the dedicated handoff snapshot.
+Push the dedicated handoff snapshot.
 
 ## Next action
-Commit and push the requested result artifact and progress update, then create and push the dedicated handoff snapshot.
+Create and push the dedicated handoff snapshot, then return the canonical six fields without further edits.
 
 ## Relevant durable records
 - `testing/README.md`
