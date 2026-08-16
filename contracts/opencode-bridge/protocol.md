@@ -171,10 +171,14 @@ local state without claiming unsupported SSE `Last-Event-ID` replay.
 
 After a successful `permission.reply` or `question.reply`, the bridge records
 the resolved interaction in the private state database. It then validates both
-pending interaction lists and the exact mapped developer session status. If no
-interaction remains and that session is `idle`, one durable claim permits one
-fixed same-session continuation nudge using the existing agent and configured
-directory. The public command result includes `continuation_recovery.outcome`:
+pending interaction lists, the exact mapped developer session status, and the
+live session activity timestamp. An initial non-progressing observation waits a
+bounded one-second grace before all evidence is read again. Any `busy`/`retry`
+status or changed activity timestamp is clean continuation; only unchanged live
+session activity with no outstanding interaction can reach the durable claim for
+one fixed same-session continuation nudge using the existing agent and configured
+directory. Missing or malformed live session evidence fails closed. The public
+command result includes `continuation_recovery.outcome`:
 `recovered` means the nudge was sent, `clean` means the session was already
 progressing, `blocked` means safety proof or delivery was unavailable, and
 `already-recovered` means the persisted episode was already sent. A claim is

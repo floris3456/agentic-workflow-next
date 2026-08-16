@@ -199,6 +199,7 @@ export interface ContinuationRecoveryResult {
 }
 
 const continuationNudge = "Continue the existing task in the current repository scope after the resolved interaction. Do not restart the task, create a new session, or widen the scope.";
+const continuationGraceMs = 1_000;
 
 function pendingInteractionResponse(value: JsonValue | undefined, kind: InteractionKind, sessionId: string): boolean {
   if (!Array.isArray(value)) throw new TypeError(`OpenCode ${kind}.list recovery response is not an array`);
@@ -213,14 +214,31 @@ function pendingInteractionResponse(value: JsonValue | undefined, kind: Interact
   return pending;
 }
 
-function sessionStatusType(value: JsonValue | undefined, sessionId: string): string {
+function sessionStatusType(value: JsonValue | undefined, sessionId: string): "busy" | "idle" | "retry" | "inactive" {
   const statuses = asRecord(value ?? {}, "OpenCode session status");
   const current = statuses[sessionId];
-  if (current === undefined) throw new TypeError("OpenCode session status does not contain the mapped developer session");
+  if (current === undefined) return "inactive";
   const status = asRecord(current, "OpenCode mapped developer session status");
   const type = stringField(status, "type");
   if (!type || !["busy", "idle", "retry"].includes(type)) throw new TypeError("OpenCode mapped developer session status is invalid");
-  return type;
+  return type as "busy" | "idle" | "retry";
+}
+
+function sessionActivity(value: JsonValue | undefined, sessionId: string): number {
+  const session = asRecord(value, "OpenCode mapped developer session");
+  if (stringField(session, "id") !== sessionId) throw new TypeError("OpenCode mapped developer session identity is invalid");
+  const time = asRecord(session.time, "OpenCode mapped developer session time");
+  if (typeof time.updated !== "number" || !Number.isFinite(time.updated) || time.updated < 0) {
+    throw new TypeError("OpenCode mapped developer session activity is invalid");
+  }
+  return time.updated;
+}
+
+interface ContinuationProof {
+  permissionPending: boolean;
+  questionPending: boolean;
+  sessionStatus: "busy" | "idle" | "retry" | "inactive";
+  sessionActivity: number;
 }
 
 export class RecoveryCoordinator {
@@ -234,6 +252,21 @@ export class RecoveryCoordinator {
     this.state = options.state;
     this.onPersistedEvent = options.onPersistedEvent;
     this.onError = options.onError;
+  }
+
+  private async proveContinuationState(sessionId: string): Promise<ContinuationProof> {
+    const [permissions, questions, statuses, session] = await Promise.all([
+      this.client.request("permission.list"),
+      this.client.request("question.list"),
+      this.client.request("session.status"),
+      this.client.request("session.get", { path: { sessionID: sessionId } }),
+    ]);
+    return {
+      permissionPending: pendingInteractionResponse(permissions, "permission", sessionId),
+      questionPending: pendingInteractionResponse(questions, "question", sessionId),
+      sessionStatus: sessionStatusType(statuses, sessionId),
+      sessionActivity: sessionActivity(session, sessionId),
+    };
   }
 
   private async persist(event: PersistedOpenCodeEvent, notifyExisting = false): Promise<boolean> {
@@ -281,23 +314,34 @@ export class RecoveryCoordinator {
       return { outcome: "blocked", reason: "inconsistent-interaction-state" };
     }
 
-    let permissions: JsonValue | undefined;
-    let questions: JsonValue | undefined;
-    let statuses: JsonValue | undefined;
+    let initialProof: ContinuationProof;
     try {
-      [permissions, questions, statuses] = await Promise.all([
-        this.client.request("permission.list"),
-        this.client.request("question.list"),
-        this.client.request("session.status"),
-      ]);
-      const permissionPending = pendingInteractionResponse(permissions, "permission", session.sessionId);
-      const questionPending = pendingInteractionResponse(questions, "question", session.sessionId);
-      if (permissionPending || questionPending) return { outcome: "blocked", reason: "outstanding-interaction" };
-      const type = sessionStatusType(statuses, session.sessionId);
-      if (type !== "idle") return { outcome: "clean", reason: "session-progressing" };
+      initialProof = await this.proveContinuationState(session.sessionId);
     } catch {
       await this.onError?.(new Error("Post-interaction continuation proof was unavailable"));
       return { outcome: "blocked", reason: "continuation-proof-unavailable" };
+    }
+    if (initialProof.permissionPending || initialProof.questionPending) {
+      return { outcome: "blocked", reason: "outstanding-interaction" };
+    }
+    if (["busy", "retry"].includes(initialProof.sessionStatus)) return { outcome: "clean", reason: "session-progressing" };
+
+    // An immediate idle response can race the server's normal resumption after
+    // a reply. Require a bounded second proof before claiming the one-shot nudge.
+    await sleep(continuationGraceMs);
+    let recheck: ContinuationProof;
+    try {
+      recheck = await this.proveContinuationState(session.sessionId);
+    } catch {
+      await this.onError?.(new Error("Post-interaction continuation recheck was unavailable"));
+      return { outcome: "blocked", reason: "continuation-proof-unavailable" };
+    }
+    if (recheck.permissionPending || recheck.questionPending) {
+      return { outcome: "blocked", reason: "outstanding-interaction" };
+    }
+    if (["busy", "retry"].includes(recheck.sessionStatus)
+      || recheck.sessionActivity !== initialProof.sessionActivity) {
+      return { outcome: "clean", reason: "session-progressing" };
     }
 
     let claim: ReturnType<BridgeState["claimInteractionContinuation"]>;

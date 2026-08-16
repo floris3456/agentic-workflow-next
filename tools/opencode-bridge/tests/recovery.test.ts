@@ -46,6 +46,10 @@ function durable(id: string, sessionId: string, sequence: number, type = "sessio
   };
 }
 
+function liveSession(id: string, updated = 1) {
+  return { id, time: { created: 0, updated } };
+}
+
 test("recovery combines sync/session history, deduplicates IDs, and advances cursors", async (context) => {
   const state = stateForTest(context);
   state.mapTaskSession("TASK-1", "ses_private", 17, "luna");
@@ -285,11 +289,16 @@ test("post-interaction continuation nudges one idle developer session once", asy
     sessionId: "ses_continue",
   });
   const calls: string[] = [];
+  let statusReads = 0;
   const api = client(asFetch(async (request) => {
     const path = new URL(request.url).pathname;
     calls.push(path);
     if (path === "/permission" || path === "/question") return Response.json([]);
-    if (path === "/session/status") return Response.json({ ses_continue: { type: "idle" } });
+    if (path === "/session/status") {
+      statusReads++;
+      return Response.json({ ses_continue: { type: "idle" } });
+    }
+    if (path === "/session/ses_continue") return Response.json(liveSession("ses_continue"));
     if (path === "/session/ses_continue/prompt_async") {
       const body = await request.json() as Record<string, JsonValue>;
       assert.deepEqual(body, {
@@ -309,12 +318,116 @@ test("post-interaction continuation nudges one idle developer session once", asy
     outcome: "recovered",
     reason: "same-session-continuation-nudge-sent",
   });
-  assert.deepEqual(await recovery.continueAfterInteraction("TASK-CONTINUE", "per_continue", "permission"), {
+  const restarted = new RecoveryCoordinator({ client: api, state });
+  assert.deepEqual(await restarted.continueAfterInteraction("TASK-CONTINUE", "per_continue", "permission"), {
     outcome: "already-recovered",
     reason: "continuation-already-attempted",
   });
   assert.equal(calls.filter((path) => path.endsWith("/prompt_async")).length, 1);
+  assert.equal(statusReads, 2);
   assert.equal(calls.includes("/session"), false);
+});
+
+test("post-interaction continuation treats transient idle as natural resumption and does not nudge", async (context) => {
+  const state = stateForTest(context);
+  state.mapTaskSession("TASK-TRANSIENT-IDLE", "ses_transient_idle", 25, "small-developer");
+  state.recordInteraction({
+    interactionId: "per_transient_idle",
+    kind: "permission",
+    taskId: "TASK-TRANSIENT-IDLE",
+    sessionId: "ses_transient_idle",
+  });
+  let statusReads = 0;
+  let prompts = 0;
+  const api = client(asFetch((request) => {
+    const path = new URL(request.url).pathname;
+    if (path === "/permission" || path === "/question") return Response.json([]);
+    if (path === "/session/status") {
+      statusReads++;
+      return Response.json({ ses_transient_idle: { type: statusReads === 1 ? "idle" : "busy" } });
+    }
+    if (path === "/session/ses_transient_idle") return Response.json(liveSession("ses_transient_idle"));
+    if (path.endsWith("/prompt_async")) {
+      prompts++;
+      return Response.json(null);
+    }
+    return new Response("not found", { status: 404 });
+  }));
+  const recovery = new RecoveryCoordinator({ client: api, state });
+
+  assert.deepEqual(await recovery.continueAfterInteraction("TASK-TRANSIENT-IDLE", "per_transient_idle", "permission"), {
+    outcome: "clean",
+    reason: "session-progressing",
+  });
+  assert.equal(statusReads, 2);
+  assert.equal(prompts, 0);
+  assert.equal(state.interaction("per_transient_idle")?.nudgeState, "not-attempted");
+});
+
+test("post-interaction continuation treats live activity during an idle grace as natural progress", async (context) => {
+  const state = stateForTest(context);
+  state.mapTaskSession("TASK-IDLE-ACTIVITY", "ses_idle_activity", 26, "small-developer");
+  state.recordInteraction({
+    interactionId: "per_idle_activity",
+    kind: "permission",
+    taskId: "TASK-IDLE-ACTIVITY",
+    sessionId: "ses_idle_activity",
+  });
+  let activityReads = 0;
+  let prompts = 0;
+  const api = client(asFetch((request) => {
+    const path = new URL(request.url).pathname;
+    if (path === "/permission" || path === "/question") return Response.json([]);
+    if (path === "/session/status") return Response.json({ ses_idle_activity: { type: "idle" } });
+    if (path === "/session/ses_idle_activity") {
+      activityReads++;
+      return Response.json(liveSession("ses_idle_activity", activityReads));
+    }
+    if (path.endsWith("/prompt_async")) {
+      prompts++;
+      return Response.json(null);
+    }
+    return new Response("not found", { status: 404 });
+  }));
+  const recovery = new RecoveryCoordinator({ client: api, state });
+
+  assert.deepEqual(await recovery.continueAfterInteraction("TASK-IDLE-ACTIVITY", "per_idle_activity", "permission"), {
+    outcome: "clean",
+    reason: "session-progressing",
+  });
+  assert.equal(activityReads, 2);
+  assert.equal(prompts, 0);
+  assert.equal(state.interaction("per_idle_activity")?.nudgeState, "not-attempted");
+});
+
+test("post-interaction continuation accepts stable inactive status only with unchanged live session activity", async (context) => {
+  const state = stateForTest(context);
+  state.mapTaskSession("TASK-INACTIVE", "ses_inactive", 27, "small-developer");
+  state.recordInteraction({
+    interactionId: "per_inactive",
+    kind: "permission",
+    taskId: "TASK-INACTIVE",
+    sessionId: "ses_inactive",
+  });
+  let prompts = 0;
+  const api = client(asFetch((request) => {
+    const path = new URL(request.url).pathname;
+    if (path === "/permission" || path === "/question") return Response.json([]);
+    if (path === "/session/status") return Response.json({});
+    if (path === "/session/ses_inactive") return Response.json(liveSession("ses_inactive", 10));
+    if (path.endsWith("/prompt_async")) {
+      prompts++;
+      return Response.json(null);
+    }
+    return new Response("not found", { status: 404 });
+  }));
+  const recovery = new RecoveryCoordinator({ client: api, state });
+
+  assert.deepEqual(await recovery.continueAfterInteraction("TASK-INACTIVE", "per_inactive", "permission"), {
+    outcome: "recovered",
+    reason: "same-session-continuation-nudge-sent",
+  });
+  assert.equal(prompts, 1);
 });
 
 test("post-interaction continuation fails closed while an interaction remains outstanding", async (context) => {
@@ -332,6 +445,7 @@ test("post-interaction continuation fails closed while an interaction remains ou
     if (path === "/permission") return Response.json([]);
     if (path === "/question") return Response.json([{ id: "que_other", sessionID: "ses_pending_continue", questions: [] }]);
     if (path === "/session/status") return Response.json({ ses_pending_continue: { type: "idle" } });
+    if (path === "/session/ses_pending_continue") return Response.json(liveSession("ses_pending_continue"));
     if (path.endsWith("/prompt_async")) {
       prompts++;
       return Response.json(null);
@@ -362,6 +476,7 @@ test("post-interaction continuation treats a progressing session as clean and do
     calls.push(path);
     if (path === "/permission" || path === "/question") return Response.json([]);
     if (path === "/session/status") return Response.json({ ses_busy_continue: { type: "busy" } });
+    if (path === "/session/ses_busy_continue") return Response.json(liveSession("ses_busy_continue"));
     return new Response("not found", { status: 404 });
   }));
   const recovery = new RecoveryCoordinator({ client: api, state });
@@ -387,6 +502,7 @@ test("post-interaction continuation fails closed when mapped session status is n
     const path = new URL(request.url).pathname;
     if (path === "/permission" || path === "/question") return Response.json([]);
     if (path === "/session/status") return Response.json({});
+    if (path === "/session/ses_unknown_status") return new Response("not found", { status: 404 });
     if (path.endsWith("/prompt_async")) prompts++;
     return new Response("not found", { status: 404 });
   }));

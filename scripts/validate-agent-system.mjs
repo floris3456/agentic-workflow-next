@@ -72,6 +72,9 @@ for (const [file, model, effort] of [
 
 const smallDeveloper = read(".opencode/agents/small-developer.md");
 assert(smallDeveloper.includes("repository-relative paths")
+  && smallDeveloper.includes("exact current `cwd`/repository root")
+  && smallDeveloper.includes("never reconstruct")
+  && smallDeveloper.includes("retype the checkout basename")
   && smallDeveloper.includes("parent or sibling directories")
   && smallDeveloper.includes("widen the task")
   && smallDeveloper.includes("external_directory"),

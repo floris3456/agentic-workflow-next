@@ -57,6 +57,10 @@ test("deterministic workflow covers routing, interaction, recovery, finalization
       ses_workflow_private: { type: "idle" },
       ses_other_private: { type: "busy" },
     };
+    if (operationId === "session.get") return {
+      id: "ses_workflow_private",
+      time: { created: 0, updated: 1 },
+    };
     if (operationId === "session.messages") return [{ info: { id: "msg_workflow_private", sessionID: "ses_workflow_private" }, parts: [] }];
     if (operationId === "permission.reply") {
       permissionPending = false;

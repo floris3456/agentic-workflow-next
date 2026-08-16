@@ -70,11 +70,15 @@ When a mapped developer session idles or errors, the bridge atomically persists 
 
 Canonical reconciliation is focused on recoverable developer evidence: pending
 permission and question lists restore mapped interaction events. After a reply,
-the bridge persists the interaction episode and performs one fail-closed,
-same-session continuation recovery only after proving that both lists are clear
-and the mapped developer session is idle. Historical Scout recovery uses only
-the dedicated endpoint and a revalidated exact-tree snapshot. Historical
-worktree mappings remain state-visible but are rejected and never contacted.
+the bridge persists the interaction episode, proves both lists are clear, and
+reads the mapped developer session's live status and activity timestamp. It then
+waits a bounded one second and repeats that proof. A `busy`/`retry` observation or
+changed activity timestamp yields clean without a nudge; only stable live
+non-progress with no interactions can reach one fail-closed, same-session
+continuation recovery.
+Historical Scout recovery uses only the dedicated endpoint and a revalidated
+exact-tree snapshot. Historical worktree mappings remain state-visible but are
+rejected and never contacted.
 The bridge does not infer workflow meaning.
 
 Scout requests retain the sequence-free lane, exact request shape, concurrent

@@ -19,8 +19,10 @@ so the bridge can publish a task-correlated alias. Do not substitute ordinary
 assistant prose for a required question-tool interaction.
 
 Use repository-relative paths and the configured current working directory for
-normal filesystem and shell work. Do not walk parent or sibling directories to
-rediscover the repository, synthesize an absolute path, or widen the task when a
+normal filesystem and shell work. When a tool requires an absolute path, copy
+the exact current `cwd`/repository root from live tool context; never reconstruct,
+abbreviate, or retype the checkout basename. Do not walk parent or sibling directories
+to rediscover the repository, synthesize an absolute path, or widen the task when a
 path is missing; stop and report the missing path instead. An
 `external_directory` request is outside the configured repository scope and
 must remain visible for approval rather than being broadly allowed.
