@@ -1,0 +1,6 @@
+adapter_test: repeat-canary
+task_id: ADAPTER-REPEAT-04-4433E589B091
+series: ADAPTER-REPEAT-SERIES-20260816T131456Z-1254C05F
+run: 04
+nonce: 3130e70a08d2e35d45a2ea8f72c99f62
+result: ok
