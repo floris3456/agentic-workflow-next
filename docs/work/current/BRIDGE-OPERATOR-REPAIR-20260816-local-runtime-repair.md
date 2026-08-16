@@ -6,7 +6,7 @@ BRIDGE-OPERATOR-REPAIR-20260816
 
 ## Status
 
-In progress
+Ready for completed handoff snapshot
 
 ## Task-start developer SHA
 
@@ -215,7 +215,7 @@ Repair and prove the private local bridge runtime and add a fail-closed supervis
 
 ## Current position
 
-Two tracked implementation commits are pushed. Private systemd bridge and synchronization units are enabled, and the synchronization watcher successfully exercised its drain/bootstrap/check/start path at both runtime-changing commits. The running follow-up records successful control-poll time and clears stale transient poll errors. The watcher is being refined to fingerprint runtime-relevant paths so a terminal task-record-only snapshot does not trigger an unnecessary rebuild/restart after the no-more-tools handoff boundary.
+All requested implementation and local operator repair work is complete at pushed developer SHA `d1114ddf515145b218b5e1a3fbda49fe39f56dcb`. Local and remote `developer` match, the worktree was clean at final proof, and the private developer OpenCode, bridge, and synchronization services are enabled and active under the lingering user manager. The bridge is running the validated runtime with fresh advancing heartbeats, current successful GitHub control polling, healthy Scout state, and no pending old canary work. Only the terminal task-progress handoff snapshot remains.
 
 ## Observed
 
@@ -230,6 +230,12 @@ Two tracked implementation commits are pushed. Private systemd bridge and synchr
 - Apply and check bootstrap report compatible OpenCode `1.18.16`, GitHub/App access, all required labels, state readiness, and the hardened Scout contract ready.
 - The Scout runtime's own `auth list` recognizes OpenAI OAuth and does not list the unrelated providers from normal OpenCode auth.
 - The synchronization watcher is active and reports `synchronized` with matching local and remote SHAs after draining the bridge, applying/checking bootstrap, and starting it again.
+- At final proof, both local and freshly fetched remote `developer` were `d1114ddf515145b218b5e1a3fbda49fe39f56dcb` and the worktree was clean.
+- The synchronization watcher uses outbound seven-second polling and a private runtime fingerprint. It exposed a dirty-worktree block without stopping the running bridge, then recovered to `synchronized` after each push. Runtime-changing commits drained, rebuilt, checked, and restarted; task-only commits do not require a runtime restart.
+- Developer OpenCode, bridge, and synchronization systemd user units are enabled and active; login lingering is enabled.
+- Final bridge PID `68198` existed in the process table. Heartbeats advanced from `1786879176436` to `1786879186438` after the final controlled restart and were fresh again at final proof.
+- The final controlled restart changed the bridge PID, returned to active, retained zero pending commands/requests, and produced healthy compatible developer and Scout status.
+- A successful control poll occurred after the final service start, `service.last_error` was empty, and recent bridge journal inspection contained zero `fetch failed` entries.
 
 ## Interpretation
 
@@ -256,20 +262,24 @@ After structured clarification, the operator selected filtered reuse of the exis
 - Scoped private config, password, OAuth, and runtime-parent permissions were checked and normalized to owner-only access.
 - The first tracked implementation commit was pushed successfully.
 - The control-poll observability follow-up was pushed, automatically rebuilt by the watcher, and is running with a successful poll timestamp and no current error.
+- Runtime fingerprinting was pushed and loaded by a controlled synchronization-service restart without restarting the already-current bridge.
+- Final `gh issue view 28` reported `CLOSED` with no labels.
+- Final durable-state inspection reported zero old command rows, zero old rejection rows, zero issue #28 bindings/sessions, and zero accepted/applying commands or requests.
+- Final bridge status reported compatible OpenCode `1.18.16`, installed/endpoint-ready hardened Scout runtime, live PID, fresh heartbeat, successful post-start poll, and no current error.
+- Final systemd inspection reported all three units enabled and active; `loginctl` reported `Linger=yes`.
+- Recent bridge journal inspection reported zero occurrences of the prior `fetch failed` condition.
 
 ## Blockers / required decisions
 
-None currently known.
+None. No operator action remains.
 
 ## Remaining work
 
-- Validate, commit, and push runtime-path fingerprinting for restart decisions.
-- Install/update supervised services, start them, and prove synchronization, bridge runtime, heartbeat, restart, GitHub reachability, and canary neutrality.
-- Update durable/task records and create/push the terminal handoff snapshot.
+- Create and push the terminal task-progress handoff snapshot.
 
 ## Next action
 
-Validate and push runtime fingerprinting, then let the synchronization service rebuild/restart once and prove the stable runtime before the task-only handoff snapshot.
+Create and push the terminal handoff snapshot, then return control without further repository or runtime actions.
 
 ## Relevant durable records
 
