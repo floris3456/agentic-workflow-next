@@ -6,9 +6,7 @@ TEMPLATE-CAPABILITY-ORCHESTRATION-001
 
 ## Status
 
-blocked only on deterministic change-package ordering/provenance. The requested
-web-orchestrator skills, developer instructions, package contracts, and durable
-current design records are implemented and remotely reviewed.
+source redesign is complete and remotely reviewed; portable package generation remains pending only on a legitimate networked maintainer execution surface, with no source-lock ordering dependency
 
 ## Task-start template-development SHA
 
@@ -32,9 +30,8 @@ coherent. Do not promote `main`.
 ## Current objective
 
 The requested source redesign is complete. Preserve its exact reviewed source
-range and current design truth while waiting for the predecessor provenance lock
-to be legitimately packaged/reconciled before generating this task's portable
-change package.
+range and current design truth; generate its portable package independently when
+a legitimate networked maintainer execution surface is available.
 
 ## Current position
 
@@ -48,6 +45,12 @@ global mode. Current prompt design and integrated AS-BUILT records describe the
 new architecture. The repository-owned local template-maintenance skill no longer
 refers to MCP-ON proportional criteria.
 
+`TEMPLATE-SOURCE-LOCK-SIMPLIFY-001` later changed the maintenance provenance
+contract so `source-lock.json` is the latest reconciled canonical source snapshot
+rather than a package review-base lock. That later decision removes this task's
+former predecessor package-ordering dependency without changing this task's exact
+reviewed range.
+
 ## Source ranges
 
 - `main`: `6127611113dfdb66f93a0cfd2d355359aa370833`
@@ -59,7 +62,7 @@ refers to MCP-ON proportional criteria.
 - `template-development`: task start
   `e69f8ba7f13d286205605682788c04141d65d31d`; durable design/contract state is
   current through `2ac07462ff73461a1e55697f0ddde9094205ce68`
-  before this dedicated task-progress snapshot.
+  before the original dedicated task-progress snapshot.
 
 ## Observed
 
@@ -92,10 +95,13 @@ refers to MCP-ON proportional criteria.
   rigidity/autonomy cost; applying no extra technique is valid. Private
   chain-of-thought/hidden scratch work is not requested.
 - The new ordinary task-context template records only material capability limits
-  when relevant; historical task records are intentionally not rewritten.
-- `source-lock.json` is still deliberately frozen at the prior
-  `TEMPLATE-TRUST-BOUNDARY-001` package review bases. This task did not move or
-  widen it.
+  when relevant; historical task records are intentionally not rewritten merely
+  to match current terminology.
+- At the original handoff, `source-lock.json` was deliberately frozen at the
+  prior `TEMPLATE-TRUST-BOUNDARY-001` package review bases under the then-current
+  provenance design. That historical choice was later superseded by the explicit
+  source-snapshot simplification task; the repository source snapshot is now
+  reconciled independently from package ranges.
 
 ## Interpretation
 
@@ -105,13 +111,18 @@ recovery, reusable-template maintenance, human-only promotion, and prompt
 context transfer. Always-co-triggered prompt concerns belong as sections of one
 skill; conditional procedures remain separate so ordinary context stays small.
 
+The later source-snapshot simplification changes only package/ledger ordering,
+not this task's reviewed source membership.
+
 ## Attempts
 
 - Exact connected-GitHub reads/writes were used for all source and ledger changes.
-- A local checkout/executable run of `web-orchestration-only/validate-package.mjs`
-  and its Node tests could not be established because the available local runtime
-  could not resolve/reach GitHub. The `web-orchestration` branch has no execution
-  workflow, so no executable web-package result is claimed.
+- At the time of the original work, a local checkout/executable run of
+  `web-orchestration-only/validate-package.mjs` and its Node tests could not be
+  established because the available local runtime could not resolve/reach GitHub,
+  and the `web-orchestration` branch had no execution workflow. That limitation
+  was later fixed by `TEMPLATE-CI-REACHABILITY-001`; the historical attempt remains
+  accurate.
 - Validator source and negative fixtures were therefore reviewed directly from
   the exact remote revision, with semantic checks made reflow-tolerant where
   prose distance—not policy—was the only issue.
@@ -126,9 +137,11 @@ skill; conditional procedures remain separate so ordinary context stays small.
 - Folded prompt destination, mission, and craft into prompt creation while
   retaining the substantive technique taxonomy rather than summarizing it away.
 - Preserved historical task records as history and changed only current
-  templates/design/AS-BUILT contracts.
-- Preserved the predecessor source-lock/package ordering instead of silently
-  reconciling the lock to current source heads.
+  templates/design/AS-BUILT contracts during the original redesign.
+- Under the original provenance contract, preserved the predecessor source-lock/
+  package ordering rather than silently moving the lock. The human later
+  explicitly replaced that contract with independent current source snapshots in
+  `TEMPLATE-SOURCE-LOCK-SIMPLIFY-001`, removing this task's ordering blocker.
 
 ## Checks
 
@@ -157,46 +170,35 @@ skill; conditional procedures remain separate so ordinary context stays small.
   five-Source inventory, capability-local permanent semantics, unified prompt
   contract, hardened Scout/no-replay/template-provenance/promotion boundaries,
   bridge-envelope shapes, public safety, and new task-context schema.
-- `web-orchestration-only/validate-package.test.mjs` contains focused baseline and
-  negative fixtures for retired mode structure, capability-local behavior,
-  routing, Scout hardening, no-replay, promotion, prompt evidence/craft,
-  bridge-command shape, task-context mode removal, historical-record semantics,
-  and exact install inventory. No executable web-package result is claimed in
-  this environment.
-- `template-development` push-triggered validation run `31916041464` succeeded for
-  unified prompt-design documentation at `3ff64c71ec4649a2c290a3b6a9285d97ecf58057`.
-- `template-development` push-triggered validation run `31916060450` succeeded for
-  reconciled current AS-BUILT at `8ebbae667be9c9b484ecffc2dfbfe3503218bea9`.
-- The repository-owned local template-maintenance skill was updated at
-  `2ac07462ff73461a1e55697f0ddde9094205ce68` to remove its last live MCP-ON
-  proportionality dependency; its push-triggered validation is part of the final
-  ledger validation sequence.
+- `template-development` push-triggered validation runs recorded during the task
+  succeeded for the integrated design/AS-BUILT work.
 - `main` and `developer` were not mutated by this task.
+- `TEMPLATE-SOURCE-LOCK-SIMPLIFY-001` later mechanically proved that package
+  ranges may be independent from the current source snapshot while retaining
+  canonical fetch/ancestry provenance.
 
 ## Blockers / required decisions
 
-No design or source-implementation decision remains.
+No design, source-implementation, review, or source-lock ordering decision remains.
 
-Portable package generation/reconciliation is blocked by the predecessor
-`TEMPLATE-TRUST-BOUNDARY-001` provenance state. `source-lock.json` deliberately
-holds that task's old review-base snapshot until its genuine schema-2 package is
-generated and embeds the lock. Generating this task's package first, silently
-moving the lock, widening the predecessor range, or hand-building package bytes
-would violate the tracked provenance contract.
+Portable package generation still requires a legitimate networked maintainer
+execution surface because packages must be produced by the tracked generator from
+fresh canonical Git objects rather than hand-built through repository API writes.
+That execution-surface limitation is isolated to producing this task's package;
+it no longer blocks later tasks or source-snapshot reconciliation.
 
 ## Remaining work
 
-On a legitimate networked maintainer execution surface, first complete the
-already-recorded `TEMPLATE-TRUST-BOUNDARY-001` schema-2 package and source-lock
-reconciliation. Then re-establish exact canonical source refs and generate this
-task's deterministic package from the preserved exact reviewed web range under
-the newly reconciled lock as permitted by the repository-owned package procedure.
-No `main` promotion is part of this task.
+When a legitimate networked maintainer execution surface is available, generate
+this task's deterministic package from the preserved exact reviewed web range,
+validate and review the generated bytes, and perform normal task finalization.
+No predecessor package or source-lock reconciliation is a prerequisite.
 
 ## Next action
 
-Wait only on the predecessor deterministic package/provenance ordering. Do not
-change the completed source redesign or reconcile `source-lock.json` out of order.
+Generate this task's exact reviewed package when a legitimate maintainer execution
+surface is available. Later maintenance work does not need to wait for it. Do not
+promote `main`.
 
 ## Relevant durable records
 
@@ -216,7 +218,8 @@ change the completed source redesign or reconcile `source-lock.json` out of orde
 - `docs/architecture/AS-BUILT.md`
 - `source-lock.json`
 - `docs/work/current/TEMPLATE-TRUST-BOUNDARY-001-provenance-scout-isolation.md`
+- `docs/work/current/TEMPLATE-SOURCE-LOCK-SIMPLIFY-001-current-source-snapshot.md`
 
 ## Last handoff commit
 
-None
+Original source handoff remained `f3caf6b61cf76ade806824d1c4485c6993bfb150`; later source-snapshot semantics are tracked separately.
