@@ -1,0 +1,59 @@
+{
+  "schema_version": 2,
+  "task_id": "TEMPLATE-OPENCODE-FAST-COMPLETION-001",
+  "canonical_repository": "https://github.com/floris3456/agentic-workflow-template.git",
+  "created_at": "2026-08-16T22:16:22.367Z",
+  "provenance": {
+    "mode": "canonical-remote-fetch-v1",
+    "source_lock": {
+      "schema_version": 1,
+      "canonical_repository": "https://github.com/floris3456/agentic-workflow-template.git",
+      "recorded_at": "2026-08-16T21:03:18Z",
+      "sources": {
+        "main": "6127611113dfdb66f93a0cfd2d355359aa370833",
+        "developer": "326e9c402f571b82f6497c4da0f9d3722b553dba",
+        "web-orchestration": "7e29c07e6ac9fc65a2cb2a8957514bc03500cc17"
+      },
+      "last_reconciled_task": "TEMPLATE-OPENCODE-FAST-COMPLETION-001",
+      "last_change_package": "changes/TEMPLATE-OPENCODE-PERMISSION-RECOVERY-001/manifest.json"
+    },
+    "source_lock_sha256": "0c35355623adbee6bea1956d3ff4e54a8aa53e8eb575d143bc09cb3074a1d898",
+    "canonical_tips": {
+      "developer": "326e9c402f571b82f6497c4da0f9d3722b553dba",
+      "web-orchestration": "7e29c07e6ac9fc65a2cb2a8957514bc03500cc17"
+    },
+    "head_relations": {
+      "developer": "reviewed-head-ancestor-of-canonical-tip",
+      "web-orchestration": "reviewed-head-ancestor-of-canonical-tip"
+    }
+  },
+  "ranges": {
+    "developer": {
+      "base": "80ad63319cd746d6205d67781b25e3c327b230bc",
+      "head": "326e9c402f571b82f6497c4da0f9d3722b553dba",
+      "changed_paths": [
+        "contracts/opencode-bridge/protocol.md",
+        "docs/architecture/AS-BUILT.md",
+        "docs/architecture/design-record.md",
+        "docs/architecture/opencode-bridge.md",
+        "docs/work/current/TEMPLATE-OPENCODE-FAST-COMPLETION-001-opencode-fast-completion.md",
+        "tools/opencode-bridge/AS-BUILT.md",
+        "tools/opencode-bridge/README.md",
+        "tools/opencode-bridge/src/commands.ts",
+        "tools/opencode-bridge/src/recovery.ts",
+        "tools/opencode-bridge/tests/recovery.test.ts",
+        "tools/opencode-bridge/tests/workflow.test.ts"
+      ],
+      "patch": "developer.patch",
+      "patch_sha256": "5b27828115663e78e9cdfed6f1092f9d0e70bf0210c62e521d69b4922ee40d58"
+    },
+    "web-orchestration": {
+      "base": "7e29c07e6ac9fc65a2cb2a8957514bc03500cc17",
+      "head": "7e29c07e6ac9fc65a2cb2a8957514bc03500cc17",
+      "changed_paths": [],
+      "patch": "web-orchestration.patch",
+      "patch_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "package_sha256": "7900e6123d9d76d89b6c9e1232bc0e3c81795fdda1c8290fe4b31e533bf67ae7"
+}

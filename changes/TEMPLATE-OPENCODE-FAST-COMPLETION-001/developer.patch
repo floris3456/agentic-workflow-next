@@ -1,0 +1,560 @@
+diff --git a/contracts/opencode-bridge/protocol.md b/contracts/opencode-bridge/protocol.md
+index 4a9485fafec00a0e5ee40759c38c539eeb636ef9..be7ded1e133be04f48ae38fbb4ffcdd8360f18d1 100644
+--- a/contracts/opencode-bridge/protocol.md
++++ b/contracts/opencode-bridge/protocol.md
+@@ -170,14 +170,19 @@ interaction recovery, the Scout lifecycle fallback, and deduplication recover
+ local state without claiming unsupported SSE `Last-Event-ID` replay.
+ 
+ After a successful `permission.reply` or `question.reply`, the bridge records
+-the resolved interaction in the private state database. It then validates both
+-pending interaction lists, the exact mapped developer session status, and the
+-live session activity timestamp. An initial non-progressing observation waits a
++the resolved interaction in the private state database. Before sending that
++reply, it captures the exact mapped session's activity timestamp and latest
++assistant-message completion evidence. It then validates both pending
++interaction lists, the mapped developer session status/activity, and (when the
++baseline is available) the latest assistant-message evidence. A changed
++post-reply activity timestamp or changed terminal assistant message is clean
++continuation, including when the completed session is absent from
++`session.status`. Otherwise an initial non-progressing observation waits a
+ bounded one-second grace before all evidence is read again. Any `busy`/`retry`
+ status or changed activity timestamp is clean continuation; only unchanged live
+ session activity with no outstanding interaction can reach the durable claim for
+ one fixed same-session continuation nudge using the existing agent and configured
+-directory. Missing or malformed live session evidence fails closed. The public
++directory. Missing or malformed baseline/live session evidence fails closed. The public
+ command result includes `continuation_recovery.outcome`:
+ `recovered` means the nudge was sent, `clean` means the session was already
+ progressing, `blocked` means safety proof or delivery was unavailable, and
+diff --git a/docs/architecture/AS-BUILT.md b/docs/architecture/AS-BUILT.md
+index 7b73cc4c017627133eade7309641653cfd23dfaa..5409703d9413929322d1b29d9e426e734f16dad7 100644
+--- a/docs/architecture/AS-BUILT.md
++++ b/docs/architecture/AS-BUILT.md
+@@ -25,7 +25,7 @@ This repository is a reusable workflow template rather than a product implementa
+ - `small-developer` is the default Luna route; `large-developer` is the exceptional Sol route selected by the web orchestrator. Both use the explicit six-field status/exact-pushed-SHA response contract and explicitly allow structured OpenCode questions so the bridge can publish a task-owned alias for `question.reply`; plain assistant text is not treated as an interaction event. Small-developer normal work is guided through repository-relative paths in the configured working directory; a required absolute path must copy the exact live `cwd`/root rather than retype the checkout basename, and parent/sibling rediscovery or scope widening after missing paths is prohibited.
+ - No ref-owned `repository-scout` agent is tracked. Concurrent Scout requests use a bridge-installed external OpenCode `1.18.16` runtime on a distinct authenticated loopback endpoint. Canonical `origin/developer` snapshots use Git object plumbing without checkout/worktree, reject gitlinks, strip regular-file write/execute bits, preserve symlinks as inert evidence, and fully re-hash reuse. The Luna/high prompt and only allowed tools (`scout_read`, `scout_glob`, `scout_grep`) are bridge-owned; sterile launch, read-only config, realpath containment, active probes, and no normal-server fallback fail closed independently. LSP is excluded.
+ - Local agents deny subagent/task launches and do not perform orchestration, acceptance, or independent review.
+-- `tools/opencode-bridge/` implements pinned OpenCode `1.18.16` HTTP/SSE/PTY transports, durable recovery/state, GitHub App polling/outbox, strict command and sequence-free recovery/Scout protocols, public projection, developer/Scout response delivery, external Scout runtime installation/launch/probe, exact-tree snapshots, default-deny policy, and foreground CLI. It enforces ledger-derived contiguous sequence, one nonterminal mutation per task, ambiguity freeze with read recovery, durable rejections, task-scoped aliases, atomic terminal-event/cursor/delivery persistence, persisted one-shot post-interaction continuation claims reached only after a bounded live-activity recheck, separate endpoint recovery, restart-recomputed status, and no replay of uncertain work. The developer config retains in-worktree defaults and keeps `external_directory` at approval (`ask`) rather than broadly allowing outside paths. Repository bootstrap authenticates exact Git host plus owner/repository across supported HTTPS/SSH forms; public/Enterprise API hosts derive unambiguously and custom API layouts require explicit `github.git_host`. `contracts/opencode-bridge/` records its exact 188-operation compatibility boundary and public protocol.
++- `tools/opencode-bridge/` implements pinned OpenCode `1.18.16` HTTP/SSE/PTY transports, durable recovery/state, GitHub App polling/outbox, strict command and sequence-free recovery/Scout protocols, public projection, developer/Scout response delivery, external Scout runtime installation/launch/probe, exact-tree snapshots, default-deny policy, and foreground CLI. It enforces ledger-derived contiguous sequence, one nonterminal mutation per task, ambiguity freeze with read recovery, durable rejections, task-scoped aliases, atomic terminal-event/cursor/delivery persistence, pre-reply continuation evidence plus persisted one-shot post-interaction continuation claims reached only after post-reply progress/completion proof and a bounded live-activity recheck, separate endpoint recovery, restart-recomputed status, and no replay of uncertain work. The developer config retains in-worktree defaults and keeps `external_directory` at approval (`ask`) rather than broadly allowing outside paths. Repository bootstrap authenticates exact Git host plus owner/repository across supported HTTPS/SSH forms; public/Enterprise API hosts derive unambiguously and custom API layouts require explicit `github.git_host`. `contracts/opencode-bridge/` records its exact 188-operation compatibility boundary and public protocol.
+ - The bridge keeps normal developer OpenCode loopback-only and separately attachable by the normal TUI; its dedicated Scout process/port/root/auth do not alter normal developer configuration or availability. Hardened Scout hosts are currently non-root Linux only. No inbound webhook, tunnel, custom ChatGPT MCP, self-hosted runner, or mandatory OS service is required.
+ - `scripts/initialize-template-branches.sh` repairs only provably fresh unrelated generated `main`/`developer` roots with matching metadata/tree shape, records a local old-root backup, and uses a hook-validated tree-preserving `force-with-lease`; valid ancestry no-ops and established ambiguity is refused.
+ - Tracked hooks enforce checks against direct `main` changes, branch deletion, non-fast-forward pushes, and continued work after failed synchronization within a configured local checkout. They are advisory client-side defense in depth rather than a server-side boundary; operators should also restrict `main` through a GitHub ruleset.
+diff --git a/docs/architecture/design-record.md b/docs/architecture/design-record.md
+index 1aa4aac923c4e761e3fffec7f6e9f04d9ab7be65..af27c6ae4c9e71be04708a7572af3f4e5246d8c4 100644
+--- a/docs/architecture/design-record.md
++++ b/docs/architecture/design-record.md
+@@ -69,13 +69,16 @@ installed runtime or active contract probe is unavailable.
+ When a mapped developer session idles or errors, the bridge atomically persists the event/cursor/session-state/delivery boundary, transports the structurally latest assistant message through the existing public-safety projection to the bound issue, and retains it for `task.status` recovery. The bridge does not interpret or semantically validate that response. The web orchestrator correlates it to the task, checks its explicit developer status/handoff information, and uses exact remote GitHub evidence to decide whether review can begin.
+ 
+ Canonical reconciliation is focused on recoverable developer evidence: pending
+-permission and question lists restore mapped interaction events. After a reply,
+-the bridge persists the interaction episode, proves both lists are clear, and
+-reads the mapped developer session's live status and activity timestamp. It then
+-waits a bounded one second and repeats that proof. A `busy`/`retry` observation or
+-changed activity timestamp yields clean without a nudge; only stable live
+-non-progress with no interactions can reach one fail-closed, same-session
+-continuation recovery.
++permission and question lists restore mapped interaction events. Before a reply,
++the bridge captures the mapped developer session's activity timestamp and latest
++assistant-message completion evidence. After the reply, it persists the
++interaction episode and proves both lists are clear plus the mapped session's
++live status/activity. A changed post-reply activity timestamp or changed terminal
++assistant message yields clean without a nudge, even if a completed session is no
++longer present in `session.status`. Otherwise it waits a bounded one second and
++repeats that proof. Only stable live non-progress with no interactions can reach
++one fail-closed, same-session continuation recovery; malformed or unavailable
++baseline/post-reply evidence blocks recovery.
+ Historical Scout recovery uses only the dedicated endpoint and a revalidated
+ exact-tree snapshot. Historical worktree mappings remain state-visible but are
+ rejected and never contacted.
+diff --git a/docs/architecture/opencode-bridge.md b/docs/architecture/opencode-bridge.md
+index c18e053a25eb5442fb7bc8f14919003e088347a9..beead1831502c7d217f7c3854fe3ce4c39bc8a14 100644
+--- a/docs/architecture/opencode-bridge.md
++++ b/docs/architecture/opencode-bridge.md
+@@ -67,7 +67,7 @@ The GitHub client serially polls open labeled issues and their comments with per
+ 
+ ## Recovery and projection
+ 
+-Developer OpenCode events are committed before callbacks. Recovery combines legacy repository SSE, per-session durable v2 history/SSE, project sync history, event-ID deduplication, durable aggregate cursors, and canonical pending permission/question lists. Pending mapped interactions receive stable synthetic events and are re-presented to the idempotent publication path until their outbox entry exists. After a reply, each mapped interaction is durably resolved; the bridge proves both pending lists plus the exact developer session's live status and activity timestamp, then waits a bounded one second and repeats that proof for an initially non-progressing session. A `busy`/`retry` observation or changed activity timestamp returns clean without a nudge; only unchanged live non-progress with no interactions can reach the at-most-one same-session continuation claim. The claim precedes delivery, so uncertain delivery is blocked and never replayed. Scout recovery gets a per-snapshot client for the dedicated endpoint only after full snapshot revalidation. Historical `scout-worktrees` mappings remain visible to status but are rejected and never contacted. It does not claim standard SSE `Last-Event-ID`; an upstream transient event can still be lost after complete outage when it is neither durable nor present in a pending canonical list.
++Developer OpenCode events are committed before callbacks. Recovery combines legacy repository SSE, per-session durable v2 history/SSE, project sync history, event-ID deduplication, durable aggregate cursors, and canonical pending permission/question lists. Pending mapped interactions receive stable synthetic events and are re-presented to the idempotent publication path until their outbox entry exists. Before a reply, each mapped interaction captures the exact developer session's activity timestamp and latest assistant-message completion evidence. After the reply, the interaction is durably resolved and the bridge proves both pending lists plus the mapped session's live status/activity; changed post-reply activity or a changed terminal assistant message is clean continuation even if the completed session is absent from `session.status`. Otherwise it waits a bounded one second and repeats that proof. Only unchanged live non-progress with no interactions can reach the at-most-one same-session continuation claim; malformed or unavailable baseline/post-reply evidence fails closed. The claim precedes delivery, so uncertain delivery is blocked and never replayed. Scout recovery gets a per-snapshot client for the dedicated endpoint only after full snapshot revalidation. Historical `scout-worktrees` mappings remain visible to status but are rejected and never contacted. It does not claim standard SSE `Last-Event-ID`; an upstream transient event can still be lost after complete outage when it is neither durable nor present in a pending canonical list.
+ 
+ Raw events/results remain local. The public projection maps session/PTY/permission/question/message/workspace/event IDs, including embedded text and object-key occurrences, plus opaque semantic project IDs to globally unique durable aliases; every task-bound kind, including workspace, has per-task storage and cannot cross task ownership. For recognized OpenCode message parts it publishes only text parts and omits reasoning, tool, step, and unknown part classes. Provider metadata and reasoning/encrypted-content fields remain local. Projection also redacts sensitive keys and token-like text, replaces private filesystem paths, neutralizes Markdown mentions/HTML/fences, and bounds depth, fields, strings, arrays, and total output. Generic requests accept only well-shaped path/query/wildcard/body transport fields, cannot override local directory/workspace/location routing, and reject raw private IDs, absolute paths, and literal secret-like values. Local-secret operations use explicit `secret_ref` files and publish only a safe local-operator action; upstream failure detail remains local. Configured repository identity separately authenticates the exact Git host and owner/repository: public GitHub and Enterprise `/api/v3` derive unambiguous hosts, custom API layouts require explicit `github.git_host`, and HTTPS/SSH origin parsing rejects userinfo, suffix hosts, encoded or extra path segments, and unsupported syntax.
+ 
+diff --git a/docs/work/current/TEMPLATE-OPENCODE-FAST-COMPLETION-001-opencode-fast-completion.md b/docs/work/current/TEMPLATE-OPENCODE-FAST-COMPLETION-001-opencode-fast-completion.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..f89a3304c664c5ef6aa0cbc3bf02003f7c460a70
+--- /dev/null
++++ b/docs/work/current/TEMPLATE-OPENCODE-FAST-COMPLETION-001-opencode-fast-completion.md
+@@ -0,0 +1,74 @@
++# Task progress
++
++## Task ID
++TEMPLATE-OPENCODE-FAST-COMPLETION-001
++
++## Status
++Completed
++
++## Task-start developer SHA
++80ad63319cd746d6205d67781b25e3c327b230bc
++
++## Review-base developer SHA
++80ad63319cd746d6205d67781b25e3c327b230bc
++
++## Original task brief
++Implement the narrow developer correction for TEMPLATE-OPENCODE-FAST-COMPLETION-001 from exact guarded developer SHA 80ad63319cd746d6205d67781b25e3c327b230bc. Follow root AGENTS.md and all triggered repository skills. Current defect: after permission.reply/question.reply, a same-session continuation can resume and complete normally before the bridge takes its first post-reply proof; OpenCode removes idle sessions from session.status, so current inactive/unchanged-for-one-second logic can falsely nudge an already-completed task. Fix the logic with the smallest robust design: establish post-reply progress/completion relative to evidence captured before the reply or another exact terminal completion signal. Do not merely lengthen the grace interval. Preserve existing one-shot durable claim-before-delivery, same mapped session and agent, no start replay, no replacement session, no route/scope change, outstanding-interaction block, malformed/unavailable proof fail-closed, and clean/recovered public outcome semantics. Add focused regression coverage for reply -> normal same-session continuation starts and finishes before the first recovery observation -> clean/no nudge, plus keep existing transient-idle, live-activity, stable-stall, outstanding-interaction, duplicate/restart, and no-new-session coverage. Prefer changes only where required in bridge recovery/command/state/tests/docs/task records. Run focused recovery tests, full bridge tests, agent-system validation, bridge validation, repository validation, and git diff --check as proportional. Push every commit, create/push the required developer handoff snapshot, and return exactly the canonical six-field developer response. Do not modify main or web-orchestration.
++
++## Current objective
++Correct post-reply recovery proof so a normal same-session continuation that completes before the first recovery observation is recognized as clean, without weakening the existing durable one-shot recovery and safety boundaries.
++
++## Current position
++The bounded correction and its durable records are pushed in implementation commit `61c430590dc7008c845586373f27355847a4ac31`. Local `developer` and `origin/developer` are synchronized at that commit. All requested focused, bridge, agent-system, repository, and diff checks pass; only the dedicated task-progress handoff snapshot remains for this working cycle.
++
++## Observed
++- `developer` is checked out and matched `origin/developer` at `80ad63319cd746d6205d67781b25e3c327b230bc`.
++- The tracked workflow hooks are active.
++- The prior permission-recovery task records document the current bounded grace/recheck logic and its existing regression coverage.
++- The implementation calls a recovery baseline capture before forwarding `permission.reply` or `question.reply`; an unavailable baseline is carried as a blocked proof rather than falling back to an unbaselined nudge path.
++- The post-reply proof can read the latest assistant message and recognizes a changed terminal completion record even when the mapped session is absent from `session.status`.
++- The focused regression keeps the mapped session/activity unchanged, returns an inactive status, changes the assistant message from `tool-calls` to terminal `stop`, and observes no continuation nudge or new session.
++- The implementation commit `61c430590dc7008c845586373f27355847a4ac31` is pushed and resolves on both local `developer` and `origin/developer`.
++- The bridge command path exercises the pre-reply baseline for both permission and question reply commands; the recovery regression covers the fast terminal completion race.
++
++## Interpretation
++The prior proof could treat an inactive/unchanged-for-one-second observation as a stall after normal same-session completion. Capturing activity and assistant completion evidence before the reply provides a stable comparison point; post-reply changes are clean progress/completion, while malformed or unavailable evidence remains blocked.
++
++## Attempts
++1. Traced `RecoveryCoordinator.continueAfterInteraction`, the reply command path, interaction state claim methods, existing focused tests, and the pinned session/message operations.
++2. Added pre-reply activity/latest-assistant evidence capture, post-reply terminal-message comparison, command plumbing for both reply kinds, and a fast-completion regression. The existing one-shot claim/delivery path remains after the bounded recheck.
++3. Ran the focused recovery suite and the full bridge suite; both passed after the source/test/docs changes.
++
++## Changed approach
++The implementation does not lengthen the existing one-second grace. It adds an exact pre-reply baseline and terminal assistant-message proof so a completed continuation can be recognized on the first observation; the prior grace/recheck remains for stable-stall proof.
++
++## Checks
++- Initial branch synchronization and cleanliness: passed; local `developer` and `origin/developer` resolve to the guarded SHA.
++- `./scripts/bootstrap-agent-workflow.sh --check`: passed.
++- `npm run build` in `tools/opencode-bridge`: passed.
++- Focused recovery tests: passed, 19/19.
++- Full bridge tests: passed, 96/96.
++- `node scripts/validate-agent-system.mjs`: passed.
++- `./scripts/validate-opencode-bridge.sh`: passed, including 96/96 bridge tests.
++- `./scripts/validate-repository.sh`: passed, including research, structure, agent-system, bridge, 96/96 bridge tests, and 8/8 branch-initializer tests.
++- `git diff --check`: passed.
++
++## Blockers / required decisions
++None.
++
++## Remaining work
++- Create and push the dedicated task-progress-only handoff snapshot.
++
++## Next action
++Create and push the dedicated handoff snapshot, then return the canonical six fields without another tool action in this working cycle.
++
++## Relevant durable records
++- `tools/opencode-bridge/AS-BUILT.md`
++- `docs/architecture/AS-BUILT.md`
++- `docs/architecture/deviations.md`
++- `docs/work/current/TEMPLATE-OPENCODE-PERMISSION-RECOVERY-001-opencode-permission-recovery.md`
++- `contracts/opencode-bridge/protocol.md`
++- `docs/architecture/design-record.md`
++
++## Last handoff commit
++None
+diff --git a/tools/opencode-bridge/AS-BUILT.md b/tools/opencode-bridge/AS-BUILT.md
+index 9523351010aa1efed71e47fab739eb541deaf54b..dd8a0b77b5c3391635cc1331060c5a9a956ef893 100644
+--- a/tools/opencode-bridge/AS-BUILT.md
++++ b/tools/opencode-bridge/AS-BUILT.md
+@@ -14,7 +14,7 @@ Consequential OpenCode commands re-run live version/hash compatibility and fail
+ 
+ ## Durable recovery
+ 
+-`RecoveryCoordinator` combines legacy repository/workspace SSE, direct per-session v2 history/SSE, project sync history, event-ID deduplication, aggregate cursors, and focused canonical recovery. Pending `permission.list` and `question.list` entries for mapped developer sessions become stable task-correlated events; recovery republishes an existing entry through the idempotent outbox path so a crash after event persistence cannot strand the public interaction. A successful permission/question reply records a resolved interaction episode and proves both pending lists plus the exact mapped developer session's live status and activity timestamp. An initially non-progressing observation is followed by a bounded one-second grace and a second proof; `busy`/`retry` or a changed activity timestamp returns clean without a nudge. Only stable live non-progress with no interactions can reach the at-most-one persisted same-session continuation claim. The claim precedes delivery, so uncertain delivery is blocked and never replayed; public command results distinguish `clean`, `recovered`, `blocked`, and `already-recovered`. The nudge uses the existing agent and configured directory and never starts or replaces a session. Developer recovery uses only the normal client. Scout recovery first rejects historical `scout-worktrees` paths, then fully revalidates the mapped exact-tree snapshot and uses only a per-snapshot client for the distinct Scout endpoint. Events enter SQLite before callbacks. For mapped idle/error events, the event row, cursor, session state, and pending response delivery commit in the same transaction, so a stop before the callback cannot strand the handoff behind an advanced cursor. Reconnect loops use bounded exponential backoff and jitter. It does not send or claim standard SSE `Last-Event-ID`; an upstream transient event that is neither durable nor still pending in a canonical interaction list can remain unrecoverable after complete outage.
++`RecoveryCoordinator` combines legacy repository/workspace SSE, direct per-session v2 history/SSE, project sync history, event-ID deduplication, aggregate cursors, and focused canonical recovery. Pending `permission.list` and `question.list` entries for mapped developer sessions become stable task-correlated events; recovery republishes an existing entry through the idempotent outbox path so a crash after event persistence cannot strand the public interaction. Before a permission/question reply, it captures the exact mapped developer session's activity timestamp and latest assistant-message completion evidence. After the reply it records a resolved interaction episode and proves both pending lists plus the mapped session's live status and activity. A changed post-reply activity timestamp or changed terminal assistant message returns clean without a nudge, including when OpenCode has already removed the completed session from `session.status`. An otherwise non-progressing observation is followed by a bounded one-second grace and a second proof; only stable live non-progress with no interactions can reach the at-most-one persisted same-session continuation claim. Missing or malformed baseline/post-reply evidence blocks recovery rather than nudging. The claim precedes delivery, so uncertain delivery is blocked and never replayed; public command results distinguish `clean`, `recovered`, `blocked`, and `already-recovered`. The nudge uses the existing agent and configured directory and never starts or replaces a session. Developer recovery uses only the normal client. Scout recovery first rejects historical `scout-worktrees` paths, then fully revalidates the mapped exact-tree snapshot and uses only a per-snapshot client for the distinct Scout endpoint. Events enter SQLite before callbacks. For mapped idle/error events, the event row, cursor, session state, and pending response delivery commit in the same transaction, so a stop before the callback cannot strand the handoff behind an advanced cursor. Reconnect loops use bounded exponential backoff and jitter. It does not send or claim standard SSE `Last-Event-ID`; an upstream transient event that is neither durable nor still pending in a canonical interaction list can remain unrecoverable after complete outage.
+ 
+ SQLite uses Node's built-in `node:sqlite` and requires Node `22.13.0` or newer. Configuration lexically confines the state file outside the tracked working tree or beneath its Git directory. The state loader requires an owner-only parent, rejects an existing final path that is a symlink or non-regular file, creates a mode `0700` parent, and normalizes the database to mode `0600`; it does not claim to reject symlinks in every ancestor component. SQLite enables WAL, full synchronization, foreign keys, and a busy timeout. Schema 4 stores command state/results and pre-ledger admission rejections, sequence-free recovery/Scout requests, task/developer-session/Scout-session and issue mappings, resolved interaction episodes and one-shot continuation claims, latest projected responses, response-delivery retries, public aliases, events/cursors, GitHub outbox/cache, compatibility, legacy reconciliation/sequence tables retained for existing databases, PTY metadata/output, and service health. Accepted `(task_id, sequence)` rows are the sole active sequence authority; admission derives the next value with `MAX(sequence)` inside the same immediate transaction and no longer reads or updates `task_sequences`. Command UUID and accepted task-sequence uniqueness are fail-closed. The first command sequence is exactly `1`, every later accepted sequence is contiguous, and no task admits another command while one is `accepted` or `applying`. Every authenticated parse-valid poller/admission rejection is durable without consuming sequence, including unbound or task-mismatched commands, the first-command rule, the one-open-mutating-issue gate, sequence/nonterminal checks, and missing/misplaced mandatory guards. An interrupted command or Scout start in `applying` becomes `indeterminate` on restart and is never reissued; an interrupted `command.status`, `task.status`, or `scout.status` is recomputed from local durable state under the same request UUID.
+ 
+@@ -60,7 +60,7 @@ The template initializer repairs only complete-history, synchronized clean one-c
+ 
+ ## Verification
+ 
+-The supported bridge runtime is Node `22.13.0` or newer; hardened Scout host support is non-root Linux. Strict TypeScript build and `npm test` pass 92 deterministic tests at this task boundary. Coverage includes all-operation preparation, live version/hash drift, serialization, SSE, PTY, SQLite durability, command/request admission/recovery, developer/Scout response transport, exact repository identity, separate endpoint config, trusted Scout prompt/tool permissions, fail-before-unsafe fallback, Git-object exact snapshots, hook non-execution, write/execute stripping, tamper rebuild, inert escaping symlinks, gitlink rejection, historical-worktree recovery rejection, interaction continuation claims, repository-relative developer scope guidance, concurrency, and normal developer behavior.
++The supported bridge runtime is Node `22.13.0` or newer; hardened Scout host support is non-root Linux. Strict TypeScript build and `npm test` pass 96 deterministic tests at this task boundary. Coverage includes all-operation preparation, live version/hash drift, serialization, SSE, PTY, SQLite durability, command/request admission/recovery, developer/Scout response transport, exact repository identity, separate endpoint config, trusted Scout prompt/tool permissions, fail-before-unsafe fallback, Git-object exact snapshots, hook non-execution, write/execute stripping, tamper rebuild, inert escaping symlinks, gitlink rejection, historical-worktree recovery rejection, interaction continuation claims, pre-reply continuation evidence, fast same-session terminal completion, repository-relative developer scope guidance, concurrency, and normal developer behavior.
+ 
+ `npm run test:scout-runtime-smoke` performs a temporary external locked install,
+ starts the real pinned server with the sterile launcher, and actively passes exact
+diff --git a/tools/opencode-bridge/README.md b/tools/opencode-bridge/README.md
+index 45ae19720d0963b4cff9a67a72325dabddc0717d..b25b10de328d6a7862574c45632d6eff28494f74 100644
+--- a/tools/opencode-bridge/README.md
++++ b/tools/opencode-bridge/README.md
+@@ -94,13 +94,18 @@ For a genuinely stuck `applying` command, wait only for the operation's bounded
+ 
+ On mapped developer session idle or error, the event, durable cursor, session state, and pending response delivery commit atomically. The bridge then retrieves the latest assistant response, applies the normal public-safety projection, and queues it to the task issue. Retrieval failures retry without re-running the developer task. The bridge transports this response but does not validate its workflow meaning.
+ 
+-After a successful `permission.reply` or `question.reply`, the bridge persists the
+-resolved interaction and proves both canonical interaction lists plus the exact
+-mapped developer session's live status and activity timestamp. If the first proof
+-is non-progressing, it waits a bounded one-second grace period and repeats that
+-proof; only unchanged live non-progress with no interaction can claim and send one
+-fixed same-session continuation nudge. A `busy`/`retry` status or changed activity
+-timestamp returns clean without a nudge.
++Before a successful `permission.reply` or `question.reply`, the bridge captures
++the exact mapped session's activity timestamp and latest assistant-message
++completion evidence. After the reply it persists the resolved interaction and
++proves both canonical interaction lists plus the mapped session's live status and
++activity. A changed post-reply activity timestamp or a changed terminal assistant
++message is clean continuation, including when OpenCode has already removed the
++completed session from `session.status`. If the first proof is otherwise
++non-progressing, it waits a bounded one-second grace period and repeats that
++proof; only unchanged live non-progress with no interaction can claim and send
++one fixed same-session continuation nudge. A `busy`/`retry` status or changed
++activity timestamp returns clean without a nudge. Missing or malformed baseline
++or post-reply evidence blocks recovery rather than nudging.
+ The claim is durable before delivery, so a retry or restart cannot send a second
+ nudge; an unproven delivery remains blocked rather than replayed. A progressing
+ session is reported as clean, while a sent nudge is reported as recovered in the
+diff --git a/tools/opencode-bridge/src/commands.ts b/tools/opencode-bridge/src/commands.ts
+index 390caacca9aaf7d9b2d3e3d7947128cdf2c6a5a1..efb36fecaee1034e4006759d597d275aed9ba1b8 100644
+--- a/tools/opencode-bridge/src/commands.ts
++++ b/tools/opencode-bridge/src/commands.ts
+@@ -2,7 +2,7 @@ import { OpenCodeClient } from "./opencode.js";
+ import { PtyConnection } from "./pty.js";
+ import { commandStatusComment } from "./protocol.js";
+ import { OperationPolicy, PublicProjection } from "./projection.js";
+-import { RecoveryCoordinator } from "./recovery.js";
++import { RecoveryCoordinator, type ContinuationReplyBaseline } from "./recovery.js";
+ import { BridgeState } from "./state.js";
+ import type { CommandEnvelope, InteractionKind, JsonValue, OperationArguments, StoredCommand } from "./types.js";
+ import { asJson, asRecord, errorMessage, isRecord } from "./util.js";
+@@ -283,12 +283,13 @@ export class CommandExecutor {
+     if (reply !== "once" && reply !== "always" && reply !== "reject") throw new TypeError("reply must be once, always, or reject");
+     const message = optionalText(input, "message", 2_000);
+     const requestId = this.state.resolveAlias(alias, "permission", command.taskId);
++    const baseline = await this.captureContinuationBaseline(command.taskId, requestId, "permission");
+     markMutation();
+     await this.client.request("permission.reply", {
+       path: { requestID: requestId },
+       body: { reply, ...(message ? { message } : {}) },
+     });
+-    const continuation = await this.recoverAfterInteraction(command.taskId, requestId, "permission");
++    const continuation = await this.recoverAfterInteraction(command.taskId, requestId, "permission", baseline);
+     return { status: "permission-replied", permission: alias, reply, continuation_recovery: continuation };
+   }
+ 
+@@ -300,20 +301,39 @@ export class CommandExecutor {
+       throw new TypeError("answers must be an array of string arrays");
+     }
+     const requestId = this.state.resolveAlias(alias, "question", command.taskId);
++    const baseline = await this.captureContinuationBaseline(command.taskId, requestId, "question");
+     markMutation();
+     await this.client.request("question.reply", {
+       path: { requestID: requestId },
+       body: { answers: input.answers },
+     });
+-    const continuation = await this.recoverAfterInteraction(command.taskId, requestId, "question");
++    const continuation = await this.recoverAfterInteraction(command.taskId, requestId, "question", baseline);
+     return { status: "question-replied", question: alias, continuation_recovery: continuation };
+   }
+ 
+-  private async recoverAfterInteraction(taskId: string, interactionId: string, kind: InteractionKind): Promise<JsonValue> {
++  private async captureContinuationBaseline(
++    taskId: string,
++    interactionId: string,
++    kind: InteractionKind,
++  ): Promise<ContinuationReplyBaseline | null | undefined> {
++    if (typeof this.recovery.captureContinuationBaseline !== "function") return undefined;
++    try {
++      return await this.recovery.captureContinuationBaseline(taskId, interactionId, kind);
++    } catch {
++      return null;
++    }
++  }
++
++  private async recoverAfterInteraction(
++    taskId: string,
++    interactionId: string,
++    kind: InteractionKind,
++    baseline?: ContinuationReplyBaseline | null,
++  ): Promise<JsonValue> {
+     if (typeof this.recovery.continueAfterInteraction !== "function") {
+       return { outcome: "blocked", reason: "continuation-recovery-unavailable" };
+     }
+-    return asJson(await this.recovery.continueAfterInteraction(taskId, interactionId, kind));
++    return asJson(await this.recovery.continueAfterInteraction(taskId, interactionId, kind, baseline));
+   }
+ 
+   private events(command: StoredCommand): JsonValue {
+diff --git a/tools/opencode-bridge/src/recovery.ts b/tools/opencode-bridge/src/recovery.ts
+index 01e1d8304159825ca54f5810e4a97e8389b3c491..736658d2838867080b0441a1e619ba9f1a353c8d 100644
+--- a/tools/opencode-bridge/src/recovery.ts
++++ b/tools/opencode-bridge/src/recovery.ts
+@@ -201,6 +201,17 @@ export interface ContinuationRecoveryResult {
+ const continuationNudge = "Continue the existing task in the current repository scope after the resolved interaction. Do not restart the task, create a new session, or widen the scope.";
+ const continuationGraceMs = 1_000;
+ 
++export interface AssistantMessageProof {
++  fingerprint: string;
++  terminal: boolean;
++}
++
++export interface ContinuationReplyBaseline {
++  sessionId: string;
++  sessionActivity: number;
++  assistantMessage: AssistantMessageProof;
++}
++
+ function pendingInteractionResponse(value: JsonValue | undefined, kind: InteractionKind, sessionId: string): boolean {
+   if (!Array.isArray(value)) throw new TypeError(`OpenCode ${kind}.list recovery response is not an array`);
+   let pending = false;
+@@ -234,11 +245,51 @@ function sessionActivity(value: JsonValue | undefined, sessionId: string): numbe
+   return time.updated;
+ }
+ 
++function assistantMessageProof(value: JsonValue | undefined): AssistantMessageProof {
++  if (!Array.isArray(value) && !(isRecord(value) && Array.isArray(value.items))) {
++    throw new TypeError("OpenCode mapped developer session messages are invalid");
++  }
++  const latest = latestAssistantMessage(value);
++  if (!isRecord(latest)) return { fingerprint: "none", terminal: false };
++  const info = nestedRecord(latest, "info");
++  if (!info || info.role !== "assistant") throw new TypeError("OpenCode latest developer message is invalid");
++  const id = stringField(info, "id");
++  if (!id) throw new TypeError("OpenCode latest developer message is missing an ID");
++
++  let completed: number | undefined;
++  if (info.time !== undefined) {
++    const time = asRecord(info.time, "OpenCode latest developer message time");
++    if (time.completed !== undefined) {
++      if (typeof time.completed !== "number" || !Number.isSafeInteger(time.completed) || time.completed < 0) {
++        throw new TypeError("OpenCode latest developer message completion time is invalid");
++      }
++      completed = time.completed;
++    }
++  }
++  let finish: string | undefined;
++  if (info.finish !== undefined) {
++    if (typeof info.finish !== "string") throw new TypeError("OpenCode latest developer message finish is invalid");
++    finish = info.finish;
++  }
++  const errored = info.error !== undefined && info.error !== null;
++  return {
++    fingerprint: sha256(stableJson({ id, completed: completed ?? null, finish: finish ?? null, errored })),
++    terminal: completed !== undefined && completed > 0 && (errored || (finish !== undefined && finish !== "tool-calls")),
++  };
++}
++
+ interface ContinuationProof {
+   permissionPending: boolean;
+   questionPending: boolean;
+   sessionStatus: "busy" | "idle" | "retry" | "inactive";
+   sessionActivity: number;
++  assistantMessage?: AssistantMessageProof;
++}
++
++function postReplyProgress(proof: ContinuationProof, baseline: ContinuationReplyBaseline): boolean {
++  if (proof.sessionActivity !== baseline.sessionActivity) return true;
++  return proof.assistantMessage?.terminal === true
++    && proof.assistantMessage.fingerprint !== baseline.assistantMessage.fingerprint;
+ }
+ 
+ export class RecoveryCoordinator {
+@@ -254,19 +305,52 @@ export class RecoveryCoordinator {
+     this.onError = options.onError;
+   }
+ 
+-  private async proveContinuationState(sessionId: string): Promise<ContinuationProof> {
++  private async proveContinuationState(sessionId: string, includeAssistantMessage = false): Promise<ContinuationProof> {
+     const [permissions, questions, statuses, session] = await Promise.all([
+       this.client.request("permission.list"),
+       this.client.request("question.list"),
+       this.client.request("session.status"),
+       this.client.request("session.get", { path: { sessionID: sessionId } }),
+     ]);
+-    return {
++    const proof: ContinuationProof = {
+       permissionPending: pendingInteractionResponse(permissions, "permission", sessionId),
+       questionPending: pendingInteractionResponse(questions, "question", sessionId),
+       sessionStatus: sessionStatusType(statuses, sessionId),
+       sessionActivity: sessionActivity(session, sessionId),
+     };
++    if (includeAssistantMessage) {
++      proof.assistantMessage = assistantMessageProof(await this.client.request("session.messages", {
++        path: { sessionID: sessionId },
++        query: { limit: 20 },
++      }));
++    }
++    return proof;
++  }
++
++  async captureContinuationBaseline(
++    taskId: string,
++    interactionId: string,
++    kind: InteractionKind,
++  ): Promise<ContinuationReplyBaseline | null> {
++    const session = this.state.getTaskSession(taskId);
++    if (!session) return null;
++    try {
++      const interaction = this.state.interaction(interactionId, taskId, kind);
++      if (!interaction || interaction.sessionId !== session.sessionId
++        || interaction.state !== "pending" || interaction.nudgeState !== "not-attempted") return null;
++      const [sessionValue, messages] = await Promise.all([
++        this.client.request("session.get", { path: { sessionID: session.sessionId } }),
++        this.client.request("session.messages", { path: { sessionID: session.sessionId }, query: { limit: 20 } }),
++      ]);
++      return {
++        sessionId: session.sessionId,
++        sessionActivity: sessionActivity(sessionValue, session.sessionId),
++        assistantMessage: assistantMessageProof(messages),
++      };
++    } catch {
++      await this.onError?.(new Error("Pre-reply continuation proof was unavailable"));
++      return null;
++    }
+   }
+ 
+   private async persist(event: PersistedOpenCodeEvent, notifyExisting = false): Promise<boolean> {
+@@ -291,6 +375,7 @@ export class RecoveryCoordinator {
+     taskId: string,
+     interactionId: string,
+     kind: InteractionKind,
++    baseline?: ContinuationReplyBaseline | null,
+   ): Promise<ContinuationRecoveryResult> {
+     const session = this.state.getTaskSession(taskId);
+     if (!session) return { outcome: "blocked", reason: "missing-session-state" };
+@@ -313,10 +398,21 @@ export class RecoveryCoordinator {
+     if (interaction.nudgeState !== "not-attempted") {
+       return { outcome: "blocked", reason: "inconsistent-interaction-state" };
+     }
++    if (baseline === null) {
++      try {
++        this.state.resolveInteraction(interactionId, kind, taskId);
++      } catch {
++        return { outcome: "blocked", reason: "inconsistent-interaction-state" };
++      }
++      return { outcome: "blocked", reason: "continuation-proof-unavailable" };
++    }
++    if (baseline && baseline.sessionId !== session.sessionId) {
++      return { outcome: "blocked", reason: "inconsistent-interaction-state" };
++    }
+ 
+     let initialProof: ContinuationProof;
+     try {
+-      initialProof = await this.proveContinuationState(session.sessionId);
++      initialProof = await this.proveContinuationState(session.sessionId, baseline !== undefined);
+     } catch {
+       await this.onError?.(new Error("Post-interaction continuation proof was unavailable"));
+       return { outcome: "blocked", reason: "continuation-proof-unavailable" };
+@@ -325,13 +421,14 @@ export class RecoveryCoordinator {
+       return { outcome: "blocked", reason: "outstanding-interaction" };
+     }
+     if (["busy", "retry"].includes(initialProof.sessionStatus)) return { outcome: "clean", reason: "session-progressing" };
++    if (baseline && postReplyProgress(initialProof, baseline)) return { outcome: "clean", reason: "session-progressing" };
+ 
+     // An immediate idle response can race the server's normal resumption after
+     // a reply. Require a bounded second proof before claiming the one-shot nudge.
+     await sleep(continuationGraceMs);
+     let recheck: ContinuationProof;
+     try {
+-      recheck = await this.proveContinuationState(session.sessionId);
++      recheck = await this.proveContinuationState(session.sessionId, baseline !== undefined);
+     } catch {
+       await this.onError?.(new Error("Post-interaction continuation recheck was unavailable"));
+       return { outcome: "blocked", reason: "continuation-proof-unavailable" };
+@@ -340,7 +437,8 @@ export class RecoveryCoordinator {
+       return { outcome: "blocked", reason: "outstanding-interaction" };
+     }
+     if (["busy", "retry"].includes(recheck.sessionStatus)
+-      || recheck.sessionActivity !== initialProof.sessionActivity) {
++      || recheck.sessionActivity !== initialProof.sessionActivity
++      || (baseline && postReplyProgress(recheck, baseline))) {
+       return { outcome: "clean", reason: "session-progressing" };
+     }
+ 
+diff --git a/tools/opencode-bridge/tests/recovery.test.ts b/tools/opencode-bridge/tests/recovery.test.ts
+index 65d79285b702d72bdba2136f33f878673022f307..f2403d85bb135f5201b0a92d28b8cfa4757e50e8 100644
+--- a/tools/opencode-bridge/tests/recovery.test.ts
++++ b/tools/opencode-bridge/tests/recovery.test.ts
+@@ -328,6 +328,72 @@ test("post-interaction continuation nudges one idle developer session once", asy
+   assert.equal(calls.includes("/session"), false);
+ });
+ 
++test("post-interaction continuation recognizes a completed same-session reply before the first recovery proof", async (context) => {
++  const state = stateForTest(context);
++  state.mapTaskSession("TASK-FAST-COMPLETION", "ses_fast_completion", 28, "small-developer");
++  state.recordInteraction({
++    interactionId: "per_fast_completion",
++    kind: "permission",
++    taskId: "TASK-FAST-COMPLETION",
++    sessionId: "ses_fast_completion",
++  });
++  let replied = false;
++  let prompts = 0;
++  let statusReads = 0;
++  const api = client(asFetch(async (request) => {
++    const path = new URL(request.url).pathname;
++    if (path === "/session/ses_fast_completion") return Response.json(liveSession("ses_fast_completion", 10));
++    if (path === "/session/ses_fast_completion/message") {
++      return Response.json([{
++        info: {
++          id: "msg_fast_completion",
++          role: "assistant",
++          sessionID: "ses_fast_completion",
++          time: { created: 1, completed: replied ? 12 : 11 },
++          finish: replied ? "stop" : "tool-calls",
++        },
++        parts: [],
++      }]);
++    }
++    if (path === "/permission/per_fast_completion/reply") {
++      replied = true;
++      return Response.json(null);
++    }
++    if (path === "/permission" || path === "/question") return Response.json([]);
++    if (path === "/session/status") {
++      statusReads++;
++      return Response.json({});
++    }
++    if (path.endsWith("/prompt_async")) {
++      prompts++;
++      return Response.json(null);
++    }
++    return new Response("not found", { status: 404 });
++  }));
++  const recovery = new RecoveryCoordinator({ client: api, state });
++
++  const baseline = await recovery.captureContinuationBaseline("TASK-FAST-COMPLETION", "per_fast_completion", "permission");
++  assert.ok(baseline);
++  await api.request("permission.reply", {
++    path: { requestID: "per_fast_completion" },
++    body: { reply: "once" },
++  });
++  assert.equal(replied, true);
++
++  assert.deepEqual(await recovery.continueAfterInteraction(
++    "TASK-FAST-COMPLETION",
++    "per_fast_completion",
++    "permission",
++    baseline,
++  ), {
++    outcome: "clean",
++    reason: "session-progressing",
++  });
++  assert.equal(prompts, 0);
++  assert.equal(statusReads, 1);
++  assert.equal(state.interaction("per_fast_completion")?.nudgeState, "not-attempted");
++});
++
+ test("post-interaction continuation treats transient idle as natural resumption and does not nudge", async (context) => {
+   const state = stateForTest(context);
+   state.mapTaskSession("TASK-TRANSIENT-IDLE", "ses_transient_idle", 25, "small-developer");
+diff --git a/tools/opencode-bridge/tests/workflow.test.ts b/tools/opencode-bridge/tests/workflow.test.ts
+index 4db98f6335b0414834ab14a01915408e355d7f75..3cebc6f6247e962a1c30a64e78b4107f15dd3d31 100644
+--- a/tools/opencode-bridge/tests/workflow.test.ts
++++ b/tools/opencode-bridge/tests/workflow.test.ts
+@@ -82,6 +82,7 @@ test("deterministic workflow covers routing, interaction, recovery, finalization
+   const recoveryCoordinator = new RecoveryCoordinator({ client, state });
+   const recovery = {
+     recoverOnce: async () => { recoveries++; },
++    captureContinuationBaseline: recoveryCoordinator.captureContinuationBaseline.bind(recoveryCoordinator),
+     continueAfterInteraction: recoveryCoordinator.continueAfterInteraction.bind(recoveryCoordinator),
+   } as unknown as RecoveryCoordinator;
+   const promotions: string[] = [];
