@@ -6,7 +6,7 @@ TEMPLATE-OPENCODE-FAST-COMPLETION-001
 
 ## Status
 
-In progress
+In progress; developer source review underway
 
 ## Task-start template-development SHA
 
@@ -22,76 +22,78 @@ Correct the post-interaction continuation recovery race where a same-session con
 
 ## Current objective
 
-Make fast normal completion after permission/question reply classify as clean continuation rather than trigger a recovery nudge.
+Independently review and package the completed developer correction.
 
 ## Current position
 
-Canonical control issue #45 is bound. Sequence 1 start command `01c0ce88-6cca-4760-8562-71c34db3409b` succeeded and created the mapped Luna developer session. Developer pushed only the required task-start record at `afd5d48a6aafc5c6c8974c9f5398bd06cfcb8c81`; no implementation commit is remote yet. Sequence-free `task.status` retained stale projected `starting`. Read-only sequence 2 `4cfe0631-adf4-4146-93a4-1dfc540e25ab` succeeded with live `session.status` = `busy`, proving active work. No permission/question or terminal developer response is currently published. Pending read-only sequence 3 command `b02d69c5-2f61-4cd7-ae68-06265af443df` will read mapped live `session.messages`; it is diagnostic only and does not steer or mutate the session.
+Issue #45 is the canonical route. Luna sequence 1 started the mapped session; read-only sequence 2 proved it live-busy; diagnostic sequence 3 eventually succeeded with an oversized message result retained locally. Developer implementation is pushed at `61c430590dc7008c845586373f27355847a4ac31`; dedicated task-record-only handoff is pushed at `326e9c402f571b82f6497c4da0f9d3722b553dba`. Exact range review confirms the implementation captures mapped-session activity plus latest assistant completion evidence before permission/question reply, compares post-reply activity/terminal-message evidence, and preserves the existing bounded grace plus durable one-shot claim. The focused fast-completion regression simulates inactive status with unchanged session activity but a post-reply assistant message changing from `tool-calls` to terminal `stop`, and asserts clean/no nudge. No blocking source defect has been found so far. Pending sequence-free `task.status` request `9849d093-93e8-4414-9c01-f231e7a535c0` will reconcile the terminal mapped-session response before the developer route is marked absorbed.
 
 ## Source ranges
 
-- developer: 80ad63319cd746d6205d67781b25e3c327b230bc..pending
+- developer: `80ad63319cd746d6205d67781b25e3c327b230bc..326e9c402f571b82f6497c4da0f9d3722b553dba`
+- implementation: `afd5d48a6aafc5c6c8974c9f5398bd06cfcb8c81..61c430590dc7008c845586373f27355847a4ac31`
+- handoff snapshot: `61c430590dc7008c845586373f27355847a4ac31..326e9c402f571b82f6497c4da0f9d3722b553dba` (task record only)
 - web-orchestration: no source change expected
-- main: unchanged at 6127611113dfdb66f93a0cfd2d355359aa370833
+- main: unchanged at `6127611113dfdb66f93a0cfd2d355359aa370833`
 
 ## Observed
 
-- Current source lock exactly matched live main, developer, and web-orchestration refs at task start.
-- Pinned OpenCode idle state removes the session from the live status map.
-- Current bridge recovery treats absent status as inactive and can nudge after one unchanged grace interval.
-- Therefore a continuation that resumes and finishes before the first bridge proof can be indistinguishable from stable non-progress unless completion/progress is anchored to evidence from before the reply or another terminal signal.
-- Luna created and pushed its branch-required task-start record.
-- Live sequence-2 status proved the mapped session was `busy`; stale durable `starting` was not stall evidence.
-- Issue #45 exposes no permission/question interaction or terminal developer response as of the latest reconciliation.
+- Source lock exactly matched live source refs at task start.
+- The prior logical race was real because normal OpenCode idle removes the session from live status.
+- New recovery baseline is captured before forwarding the reply; unavailable baseline blocks recovery rather than falling back to an unbaselined nudge.
+- Post-reply changed session activity or changed terminal assistant-message fingerprint is clean progress/completion, including absent/inactive status.
+- Existing one-second grace remains; it was not lengthened as a substitute for proof.
+- Existing same-session claim-before-delivery path, no replacement/start/route behavior, outstanding-interaction block, and fail-closed proof errors remain in place.
+- The new regression covers completion before the first post-reply proof, not merely progress between first and second proof.
+- Luna reports focused recovery tests 19/19, full bridge tests 96/96, agent-system validation, bridge validation, repository validation (including 8/8 branch initializer tests), build, and `git diff --check` passing. These are execution evidence pending package/review reconciliation.
 
 ## Interpretation
 
-The fix should establish post-reply progress relative to pre-reply evidence or reliably recognize terminal normal completion before any nudge claim. Merely increasing the grace duration would not close the logical race. Stale durable state is not evidence that the live session is stalled.
+The source correction addresses the reviewed race by anchoring continuation evidence before the reply. It appears minimal and preserves the prior safety model. Developer execution is not considered absorbed until its terminal mapped response is reconciled and the exact remote range/package checks are complete.
 
 ## Attempts
 
-1. Created the maintenance ledger and independently confirmed it remotely.
-2. Created and bound canonical issue #45 after proving the task ID absent and no other open bridge-control task.
-3. Guarded Luna start sequence 1 succeeded without replay; the required developer task-start record is remote.
-4. Sequence-free `task.status` showed only stale projected `starting` state.
-5. Read-only sequence 2 live status succeeded and proved `session-54` was busy; no steer was sent.
+1. Created and bound issue #45 after proving no duplicate task/control route.
+2. Guarded Luna start from exact developer SHA `80ad63319cd746d6205d67781b25e3c327b230bc`.
+3. Ignored stale projected `starting` and proved live status `busy` before deciding not to steer.
+4. A diagnostic `session.messages` read was retained locally because its projected result exceeded GitHub limits; it was not replayed.
+5. Luna pushed implementation and a dedicated handoff snapshot without a second session or start.
+6. Independently inspected the exact changed path set, recovery baseline/proof logic, command reply ordering, and focused regression.
 
 ## Changed approach
 
-This task corrects the prior implementation after independent review; it does not reopen or replay the completed prior task.
+The rejected prior implementation used only post-reply evidence. This correction uses a pre-reply baseline and terminal assistant-message evidence without widening the grace interval or recovery authority.
 
 ## Checks
 
-- Exact remote refs read at task start.
-- Template-development maintenance contract, task template, source lock, AS-BUILT, and ledger ADR read.
-- New task ID absence and no pre-existing open bridge-control route confirmed before launch.
-- Developer start guard matched exact SHA `80ad63319cd746d6205d67781b25e3c327b230bc`.
-- Remote task-start commit inspected; it changes only the expected developer task record.
-- Latest issue scan shows no interaction or terminal response.
+- Exact remote developer range is three commits ahead of the reviewed base.
+- Handoff snapshot changes only the developer task record.
+- `captureContinuationBaseline` runs before `permission.reply` and `question.reply`.
+- Baseline failure maps to blocked continuation proof; the reply itself is still delivered once.
+- `postReplyProgress` accepts changed session activity or changed terminal assistant-message fingerprint.
+- Regression test proves inactive/unchanged-session fast completion returns `clean`, sends zero prompt nudges, and leaves nudge state `not-attempted`.
 
 ## Blockers / required decisions
 
-None.
+None currently.
 
 ## Remaining work
 
-Observe live developer state without interfering with active progress; implement the correction, add regression coverage, run focused/full required checks, independently review the exact source range, generate and validate the change package, reconcile source lock/ledger, and hand off.
+Reconcile terminal developer response, finish exact source review, generate and validate the tracked change package, reconcile source lock/ledger from exact current refs, independently read back final remote state, and close/handoff the maintenance task. Full `main -> developer` promotion review remains a later promotion-stage obligation.
 
 ## Next action
 
-Publish persisted read-only sequence 3 `opencode.request` for `session.messages` using task-owned session alias `session-54`; fresh tool/message progress means continue passive observation. Only genuine no-progress with no interaction justifies recovery/steering.
+Publish the persisted sequence-free `task.status` request `9849d093-93e8-4414-9c01-f231e7a535c0` on issue #45 and reconcile the terminal mapped response without replay.
 
 ## Relevant durable records
 
 - Canonical control issue: #45
 - Start command: `01c0ce88-6cca-4760-8562-71c34db3409b`
-- Task-status request: `bb8f68d3-1d45-426c-b7fd-26099b8893e6`
 - Live-status command: `4cfe0631-adf4-4146-93a4-1dfc540e25ab`
-- Pending live-messages command: `b02d69c5-2f61-4cd7-ae68-06265af443df`
-- Developer task-start commit: `afd5d48a6aafc5c6c8974c9f5398bd06cfcb8c81`
-- Prior maintenance package: changes/TEMPLATE-OPENCODE-PERMISSION-RECOVERY-001/manifest.json
-- Current recovery implementation: tools/opencode-bridge/src/recovery.ts
-- Current recovery tests: tools/opencode-bridge/tests/recovery.test.ts
+- Diagnostic messages command: `b02d69c5-2f61-4cd7-ae68-06265af443df`
+- Pending terminal status request: `9849d093-93e8-4414-9c01-f231e7a535c0`
+- Implementation commit: `61c430590dc7008c845586373f27355847a4ac31`
+- Developer handoff: `326e9c402f571b82f6497c4da0f9d3722b553dba`
 
 ## Last handoff commit
 
