@@ -2,7 +2,7 @@ import { OpenCodeClient } from "./opencode.js";
 import { PtyConnection } from "./pty.js";
 import { commandStatusComment } from "./protocol.js";
 import { OperationPolicy, PublicProjection } from "./projection.js";
-import { RecoveryCoordinator } from "./recovery.js";
+import { RecoveryCoordinator, type ContinuationReplyBaseline } from "./recovery.js";
 import { BridgeState } from "./state.js";
 import type { CommandEnvelope, InteractionKind, JsonValue, OperationArguments, StoredCommand } from "./types.js";
 import { asJson, asRecord, errorMessage, isRecord } from "./util.js";
@@ -283,12 +283,13 @@ export class CommandExecutor {
     if (reply !== "once" && reply !== "always" && reply !== "reject") throw new TypeError("reply must be once, always, or reject");
     const message = optionalText(input, "message", 2_000);
     const requestId = this.state.resolveAlias(alias, "permission", command.taskId);
+    const baseline = await this.captureContinuationBaseline(command.taskId, requestId, "permission");
     markMutation();
     await this.client.request("permission.reply", {
       path: { requestID: requestId },
       body: { reply, ...(message ? { message } : {}) },
     });
-    const continuation = await this.recoverAfterInteraction(command.taskId, requestId, "permission");
+    const continuation = await this.recoverAfterInteraction(command.taskId, requestId, "permission", baseline);
     return { status: "permission-replied", permission: alias, reply, continuation_recovery: continuation };
   }
 
@@ -300,20 +301,39 @@ export class CommandExecutor {
       throw new TypeError("answers must be an array of string arrays");
     }
     const requestId = this.state.resolveAlias(alias, "question", command.taskId);
+    const baseline = await this.captureContinuationBaseline(command.taskId, requestId, "question");
     markMutation();
     await this.client.request("question.reply", {
       path: { requestID: requestId },
       body: { answers: input.answers },
     });
-    const continuation = await this.recoverAfterInteraction(command.taskId, requestId, "question");
+    const continuation = await this.recoverAfterInteraction(command.taskId, requestId, "question", baseline);
     return { status: "question-replied", question: alias, continuation_recovery: continuation };
   }
 
-  private async recoverAfterInteraction(taskId: string, interactionId: string, kind: InteractionKind): Promise<JsonValue> {
+  private async captureContinuationBaseline(
+    taskId: string,
+    interactionId: string,
+    kind: InteractionKind,
+  ): Promise<ContinuationReplyBaseline | null | undefined> {
+    if (typeof this.recovery.captureContinuationBaseline !== "function") return undefined;
+    try {
+      return await this.recovery.captureContinuationBaseline(taskId, interactionId, kind);
+    } catch {
+      return null;
+    }
+  }
+
+  private async recoverAfterInteraction(
+    taskId: string,
+    interactionId: string,
+    kind: InteractionKind,
+    baseline?: ContinuationReplyBaseline | null,
+  ): Promise<JsonValue> {
     if (typeof this.recovery.continueAfterInteraction !== "function") {
       return { outcome: "blocked", reason: "continuation-recovery-unavailable" };
     }
-    return asJson(await this.recovery.continueAfterInteraction(taskId, interactionId, kind));
+    return asJson(await this.recovery.continueAfterInteraction(taskId, interactionId, kind, baseline));
   }
 
   private events(command: StoredCommand): JsonValue {

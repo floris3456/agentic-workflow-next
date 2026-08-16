@@ -170,14 +170,19 @@ interaction recovery, the Scout lifecycle fallback, and deduplication recover
 local state without claiming unsupported SSE `Last-Event-ID` replay.
 
 After a successful `permission.reply` or `question.reply`, the bridge records
-the resolved interaction in the private state database. It then validates both
-pending interaction lists, the exact mapped developer session status, and the
-live session activity timestamp. An initial non-progressing observation waits a
+the resolved interaction in the private state database. Before sending that
+reply, it captures the exact mapped session's activity timestamp and latest
+assistant-message completion evidence. It then validates both pending
+interaction lists, the mapped developer session status/activity, and (when the
+baseline is available) the latest assistant-message evidence. A changed
+post-reply activity timestamp or changed terminal assistant message is clean
+continuation, including when the completed session is absent from
+`session.status`. Otherwise an initial non-progressing observation waits a
 bounded one-second grace before all evidence is read again. Any `busy`/`retry`
 status or changed activity timestamp is clean continuation; only unchanged live
 session activity with no outstanding interaction can reach the durable claim for
 one fixed same-session continuation nudge using the existing agent and configured
-directory. Missing or malformed live session evidence fails closed. The public
+directory. Missing or malformed baseline/live session evidence fails closed. The public
 command result includes `continuation_recovery.outcome`:
 `recovered` means the nudge was sent, `clean` means the session was already
 progressing, `blocked` means safety proof or delivery was unavailable, and

@@ -19,37 +19,44 @@ Implement the narrow developer correction for TEMPLATE-OPENCODE-FAST-COMPLETION-
 Correct post-reply recovery proof so a normal same-session continuation that completes before the first recovery observation is recognized as clean, without weakening the existing durable one-shot recovery and safety boundaries.
 
 ## Current position
-Task record created at the guarded synchronized developer SHA. Existing bridge recovery implementation and its prior correction records are available for focused inspection; no implementation changes have been made yet.
+The bridge recovery/command path now captures pre-reply mapped-session evidence and compares it with post-reply activity/terminal-message evidence before the existing bounded recheck and durable nudge claim. Focused and full bridge tests pass locally; validation and the implementation commit remain.
 
 ## Observed
 - `developer` is checked out and matched `origin/developer` at `80ad63319cd746d6205d67781b25e3c327b230bc`.
 - The tracked workflow hooks are active.
 - The prior permission-recovery task records document the current bounded grace/recheck logic and its existing regression coverage.
+- The implementation calls a recovery baseline capture before forwarding `permission.reply` or `question.reply`; an unavailable baseline is carried as a blocked proof rather than falling back to an unbaselined nudge path.
+- The post-reply proof can read the latest assistant message and recognizes a changed terminal completion record even when the mapped session is absent from `session.status`.
+- The focused regression keeps the mapped session/activity unchanged, returns an inactive status, changes the assistant message from `tool-calls` to terminal `stop`, and observes no continuation nudge or new session.
 
 ## Interpretation
-The current proof likely treats a missing `session.status` entry or unchanged inactive observation as sufficient after the reply. The correction must compare against pre-reply evidence or use an exact terminal completion signal, while preserving the existing mapped-session, interaction, claim, and fail-closed boundaries.
+The prior proof could treat an inactive/unchanged-for-one-second observation as a stall after normal same-session completion. Capturing activity and assistant completion evidence before the reply provides a stable comparison point; post-reply changes are clean progress/completion, while malformed or unavailable evidence remains blocked.
 
 ## Attempts
-None yet.
+1. Traced `RecoveryCoordinator.continueAfterInteraction`, the reply command path, interaction state claim methods, existing focused tests, and the pinned session/message operations.
+2. Added pre-reply activity/latest-assistant evidence capture, post-reply terminal-message comparison, command plumbing for both reply kinds, and a fast-completion regression. The existing one-shot claim/delivery path remains after the bounded recheck.
+3. Ran the focused recovery suite and the full bridge suite; both passed after the source/test/docs changes.
 
 ## Changed approach
-None.
+The implementation does not lengthen the existing one-second grace. It adds an exact pre-reply baseline and terminal assistant-message proof so a completed continuation can be recognized on the first observation; the prior grace/recheck remains for stable-stall proof.
 
 ## Checks
 - Initial branch synchronization and cleanliness: passed; local `developer` and `origin/developer` resolve to the guarded SHA.
 - `./scripts/bootstrap-agent-workflow.sh --check`: passed.
+- `npm run build` in `tools/opencode-bridge`: passed.
+- Focused recovery tests: passed, 19/19.
+- Full bridge tests: passed, 96/96.
 
 ## Blockers / required decisions
 None.
 
 ## Remaining work
-- Inspect the bridge recovery, command, state, and focused tests.
-- Implement the smallest robust post-reply progress/completion proof and regression coverage.
-- Update AS-BUILT or applicable deviation records if implementation facts change.
-- Run the requested checks, push each commit immediately, and create the final handoff snapshot.
+- Review the complete diff and run `git diff --check`.
+- Run agent-system, bridge, and repository validation.
+- Commit and immediately push the implementation and durable-record update, then create and push the dedicated handoff snapshot.
 
 ## Next action
-Trace permission/question reply state and recovery observations, then design the pre-reply evidence comparison around the existing durable recovery claim.
+Inspect the implementation diff for scope and record accuracy, then commit/push the bounded correction before the remaining validation checks.
 
 ## Relevant durable records
 - `tools/opencode-bridge/AS-BUILT.md`

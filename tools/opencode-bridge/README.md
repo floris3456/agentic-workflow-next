@@ -94,13 +94,18 @@ For a genuinely stuck `applying` command, wait only for the operation's bounded 
 
 On mapped developer session idle or error, the event, durable cursor, session state, and pending response delivery commit atomically. The bridge then retrieves the latest assistant response, applies the normal public-safety projection, and queues it to the task issue. Retrieval failures retry without re-running the developer task. The bridge transports this response but does not validate its workflow meaning.
 
-After a successful `permission.reply` or `question.reply`, the bridge persists the
-resolved interaction and proves both canonical interaction lists plus the exact
-mapped developer session's live status and activity timestamp. If the first proof
-is non-progressing, it waits a bounded one-second grace period and repeats that
-proof; only unchanged live non-progress with no interaction can claim and send one
-fixed same-session continuation nudge. A `busy`/`retry` status or changed activity
-timestamp returns clean without a nudge.
+Before a successful `permission.reply` or `question.reply`, the bridge captures
+the exact mapped session's activity timestamp and latest assistant-message
+completion evidence. After the reply it persists the resolved interaction and
+proves both canonical interaction lists plus the mapped session's live status and
+activity. A changed post-reply activity timestamp or a changed terminal assistant
+message is clean continuation, including when OpenCode has already removed the
+completed session from `session.status`. If the first proof is otherwise
+non-progressing, it waits a bounded one-second grace period and repeats that
+proof; only unchanged live non-progress with no interaction can claim and send
+one fixed same-session continuation nudge. A `busy`/`retry` status or changed
+activity timestamp returns clean without a nudge. Missing or malformed baseline
+or post-reply evidence blocks recovery rather than nudging.
 The claim is durable before delivery, so a retry or restart cannot send a second
 nudge; an unproven delivery remains blocked rather than replayed. A progressing
 session is reported as clean, while a sent nudge is reported as recovered in the

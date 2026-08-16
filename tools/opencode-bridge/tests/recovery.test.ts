@@ -328,6 +328,72 @@ test("post-interaction continuation nudges one idle developer session once", asy
   assert.equal(calls.includes("/session"), false);
 });
 
+test("post-interaction continuation recognizes a completed same-session reply before the first recovery proof", async (context) => {
+  const state = stateForTest(context);
+  state.mapTaskSession("TASK-FAST-COMPLETION", "ses_fast_completion", 28, "small-developer");
+  state.recordInteraction({
+    interactionId: "per_fast_completion",
+    kind: "permission",
+    taskId: "TASK-FAST-COMPLETION",
+    sessionId: "ses_fast_completion",
+  });
+  let replied = false;
+  let prompts = 0;
+  let statusReads = 0;
+  const api = client(asFetch(async (request) => {
+    const path = new URL(request.url).pathname;
+    if (path === "/session/ses_fast_completion") return Response.json(liveSession("ses_fast_completion", 10));
+    if (path === "/session/ses_fast_completion/message") {
+      return Response.json([{
+        info: {
+          id: "msg_fast_completion",
+          role: "assistant",
+          sessionID: "ses_fast_completion",
+          time: { created: 1, completed: replied ? 12 : 11 },
+          finish: replied ? "stop" : "tool-calls",
+        },
+        parts: [],
+      }]);
+    }
+    if (path === "/permission/per_fast_completion/reply") {
+      replied = true;
+      return Response.json(null);
+    }
+    if (path === "/permission" || path === "/question") return Response.json([]);
+    if (path === "/session/status") {
+      statusReads++;
+      return Response.json({});
+    }
+    if (path.endsWith("/prompt_async")) {
+      prompts++;
+      return Response.json(null);
+    }
+    return new Response("not found", { status: 404 });
+  }));
+  const recovery = new RecoveryCoordinator({ client: api, state });
+
+  const baseline = await recovery.captureContinuationBaseline("TASK-FAST-COMPLETION", "per_fast_completion", "permission");
+  assert.ok(baseline);
+  await api.request("permission.reply", {
+    path: { requestID: "per_fast_completion" },
+    body: { reply: "once" },
+  });
+  assert.equal(replied, true);
+
+  assert.deepEqual(await recovery.continueAfterInteraction(
+    "TASK-FAST-COMPLETION",
+    "per_fast_completion",
+    "permission",
+    baseline,
+  ), {
+    outcome: "clean",
+    reason: "session-progressing",
+  });
+  assert.equal(prompts, 0);
+  assert.equal(statusReads, 1);
+  assert.equal(state.interaction("per_fast_completion")?.nudgeState, "not-attempted");
+});
+
 test("post-interaction continuation treats transient idle as natural resumption and does not nudge", async (context) => {
   const state = stateForTest(context);
   state.mapTaskSession("TASK-TRANSIENT-IDLE", "ses_transient_idle", 25, "small-developer");

@@ -82,6 +82,7 @@ test("deterministic workflow covers routing, interaction, recovery, finalization
   const recoveryCoordinator = new RecoveryCoordinator({ client, state });
   const recovery = {
     recoverOnce: async () => { recoveries++; },
+    captureContinuationBaseline: recoveryCoordinator.captureContinuationBaseline.bind(recoveryCoordinator),
     continueAfterInteraction: recoveryCoordinator.continueAfterInteraction.bind(recoveryCoordinator),
   } as unknown as RecoveryCoordinator;
   const promotions: string[] = [];
