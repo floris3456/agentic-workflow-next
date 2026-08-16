@@ -4,7 +4,7 @@
 ADAPTER-STEER-20260816-1402-A78D9D
 
 ## Status
-Needs decision
+In progress
 
 ## Task-start developer SHA
 d8ff7c45e37de1a8a3ebaace7ac1a19899741b6a
@@ -16,47 +16,50 @@ d8ff7c45e37de1a8a3ebaace7ac1a19899741b6a
 Run bounded steering/continuation acceptance task ADAPTER-STEER-20260816-1402-A78D9D on developer from exact guarded SHA d8ff7c45e37de1a8a3ebaace7ac1a19899741b6a. Follow repository-local developer instructions and triggered task-workflow/git-sync-and-handoff skills; create the required current task-progress record before substantive work. FIRST CYCLE ONLY: create testing/ADAPTER-STEER-20260816-1402-A78D9D/result.md with exactly these three lines and a trailing newline: adapter_test: steering; task_id: ADAPTER-STEER-20260816-1402-A78D9D; adjustment: pending. Push every required commit and the branch-required working-cycle/handoff snapshot state. Then deliberately return control using exactly the six canonical response fields with Status: needs decision and Handoff developer SHA: none, because an explicit continuation decision about adjustment is still required. Do not use OpenCode's structured question tool or any structured question. Do not infer, assume, pre-apply, or otherwise anticipate the later decision. Do not complete or finalize the task in this first cycle. No other substantive output is allowed; only normal branch-required current task-progress/handoff records are additionally allowed. Do not modify or promote main; do not read or modify web-orchestration; no force-push/history rewrite or unrelated changes.
 
 ## Current objective
-Create only the first-cycle steering result artifact and preserve the explicit decision boundary for continuation.
+Apply the explicit continuation adjustment and complete the bounded steering acceptance without archiving the task record.
 
 ## Current position
-The required task-progress start record was pushed at `a6a480e035e72d102d827388f971cce1ef9a0ac8`. The exact first-cycle result and this progress update were pushed in implementation commit `d7a5a6c8714d8dd4d21721db498964cb3254699e`. No adjustment has been applied; this update is the dedicated handoff snapshot boundary to push next.
+The first-cycle handoff snapshot was pushed at `16a33f464a6256f8bb1f849382b97074c4222e6d`. The explicit continuation instruction has been received; the result remains pending until the next substantive change.
 
 ## Observed
 - Current branch is `developer`.
-- Local `HEAD` and `origin/developer` both resolve to `d8ff7c45e37de1a8a3ebaace7ac1a19899741b6a`.
-- `git status --short --branch` showed only the `developer` branch header before this record was added.
+- Local `HEAD` and `origin/developer` both resolve to `16a33f464a6256f8bb1f849382b97074c4222e6d`.
+- `git status --short --branch` showed only the `developer` branch header before this continuation update.
 - `./scripts/bootstrap-agent-workflow.sh --check` reported that tracked Git hooks are active.
 - `testing/ADAPTER-STEER-20260816-1402-A78D9D/result.md` contains the three requested lines and a trailing newline.
-- The implementation commit `d7a5a6c8714d8dd4d21721db498964cb3254699e` is synchronized on `origin/developer`.
+- The prior handoff snapshot `16a33f464a6256f8bb1f849382b97074c4222e6d` is synchronized on `origin/developer`.
 
 ## Interpretation
-The required guarded starting state is present and synchronized. The first cycle has persisted only the pending adjustment marker and must stop at the explicit continuation decision boundary.
+The current developer state is synchronized, and the explicit continuation instruction resolves the prior adjustment decision. The same task record can continue with only the requested marker change.
 
 ## Attempts
 - Created `testing/ADAPTER-STEER-20260816-1402-A78D9D/result.md` with the requested pending adjustment marker.
 - Ran an exact-byte assertion for the result artifact; it passed.
+- Began the same task's continuation after receiving the explicit instruction to change only `adjustment: pending` to `adjustment: applied`; no result change has been made yet.
 
 ## Changed approach
-None.
+The first-cycle decision boundary is superseded by the explicit continuation instruction. Retain the existing task and current task-progress record, change only the requested result value, and do not archive the task record.
 
 ## Checks
 - `./scripts/bootstrap-agent-workflow.sh --check`: passed; tracked Git hooks are active.
-- Starting branch and SHA synchronization checks: passed against the guarded SHA.
+- Continuation branch and SHA synchronization checks: passed against the prior handoff snapshot.
 - Exact-byte assertion for `testing/ADAPTER-STEER-20260816-1402-A78D9D/result.md`: passed, including the trailing newline.
 - `git diff --check`: passed.
 
 ## Blockers / required decisions
-An explicit continuation decision about the adjustment is required after this first cycle. No decision is requested or inferred in this cycle.
+None; the explicit continuation instruction supplies the required adjustment decision.
 
 ## Remaining work
+- Change the result marker to `adjustment: applied` and verify its exact bytes.
+- Update this task-progress record with the applied result and pushed implementation state.
 - Push the dedicated handoff snapshot.
-- Return the canonical six fields with `Status: needs decision` and `Handoff developer SHA: none`.
+- Return the canonical six fields with `Status: completed` and the exact pushed handoff SHA.
 
 ## Next action
-Push this dedicated handoff snapshot, then return control without continuing or applying any adjustment.
+Change the result marker to `adjustment: applied`, update this record, and push the implementation commit.
 
 ## Relevant durable records
 This task-progress record and `testing/ADAPTER-STEER-20260816-1402-A78D9D/result.md`.
 
 ## Last handoff commit
-None
+16a33f464a6256f8bb1f849382b97074c4222e6d
