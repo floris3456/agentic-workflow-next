@@ -33,6 +33,7 @@ mkdir -p "$state_dir"
 chmod 700 "$state_dir"
 status_file="$state_dir/status"
 installed_sha_file="$state_dir/installed-sha"
+installed_runtime_file="$state_dir/installed-runtime-fingerprint"
 lock_file="$state_dir/lock"
 exec 9>"$lock_file"
 chmod 600 "$lock_file"
@@ -61,6 +62,16 @@ bridge_pending() {
     const pending = Number(status.pending_commands || 0) + Number(status.pending_requests || 0);
     process.stdout.write(String(pending));
   '
+}
+
+runtime_fingerprint() {
+  {
+    git -C "$repo_root" rev-parse "HEAD:contracts/opencode-bridge"
+    git -C "$repo_root" rev-parse "HEAD:tools/opencode-bridge"
+    git -C "$repo_root" rev-parse "HEAD:scripts/bootstrap-opencode-bridge.sh"
+    git -C "$repo_root" rev-parse "HEAD:scripts/opencode-bridge-status.sh"
+    git -C "$repo_root" rev-parse "HEAD:scripts/watch-developer-sync.sh"
+  } | sha256sum | cut -d' ' -f1
 }
 
 safe_relation() {
@@ -98,14 +109,18 @@ sync_once() {
   fi
   if ! safe_relation; then return; fi
 
-  local head installed pending
+  local head installed_runtime pending runtime
   head="$(git -C "$repo_root" rev-parse HEAD)"
-  if [[ -f "$installed_sha_file" ]]; then
-    installed="$(<"$installed_sha_file")"
+  runtime="$(runtime_fingerprint)" || {
+    record_status error "bridge runtime fingerprint could not be computed"
+    return
+  }
+  if [[ -f "$installed_runtime_file" ]]; then
+    installed_runtime="$(<"$installed_runtime_file")"
   else
-    installed=""
+    installed_runtime=""
   fi
-  if (( REMOTE_AHEAD == 0 )) && [[ "$installed" == "$head" ]]; then
+  if (( REMOTE_AHEAD == 0 )) && [[ "$installed_runtime" == "$runtime" ]]; then
     if systemctl --user is-active --quiet "$bridge_unit"; then
       record_status synchronized "developer is current and bridge runtime matches HEAD"
     else
@@ -154,6 +169,10 @@ sync_once() {
     return
   fi
   head="$(git -C "$repo_root" rev-parse HEAD)"
+  runtime="$(runtime_fingerprint)" || {
+    record_status error "updated bridge runtime fingerprint could not be computed"
+    return
+  }
   if ! "$repo_root/scripts/bootstrap-opencode-bridge.sh" --config "$config"; then
     record_status error "bridge apply bootstrap failed after source synchronization"
     return
@@ -172,6 +191,7 @@ sync_once() {
   fi
   umask 077
   printf '%s\n' "$head" > "$installed_sha_file"
+  printf '%s\n' "$runtime" > "$installed_runtime_file"
   record_status synchronized "developer, validated runtime, and active bridge match origin/developer"
 }
 

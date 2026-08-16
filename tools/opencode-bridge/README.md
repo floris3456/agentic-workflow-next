@@ -77,7 +77,9 @@ and a second unit may run `scripts/watch-developer-sync.sh` with the private
 config path and bridge unit name. The outbound-only watcher polls every 5-10
 seconds, advances only a clean, behind-only `developer` checkout with
 `merge --ff-only`, runs apply and check bootstrap, and restarts the bridge only
-after its control loop drains. Dirty, ahead, diverged, uninspectable, or invalid
+after its control loop drains when the bridge contracts, package, bootstrap, or
+watcher fingerprint changed. Task/document-only SHAs advance without an
+unnecessary runtime restart. Dirty, ahead, diverged, uninspectable, or invalid
 states are left unchanged and reported under the Git-private bridge state
 directory. Run one config/state/port/App installation mapping per repository so
 multiple projects can operate concurrently.

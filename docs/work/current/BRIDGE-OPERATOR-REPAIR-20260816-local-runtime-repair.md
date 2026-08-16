@@ -215,7 +215,7 @@ Repair and prove the private local bridge runtime and add a fail-closed supervis
 
 ## Current position
 
-The first tracked implementation commit is pushed. Private systemd bridge and synchronization units are enabled, and the synchronization watcher successfully exercised its drain/bootstrap/check/start path at that commit. A small follow-up now records successful control-poll time and clears stale transient poll errors so current GitHub-loop reachability can be proved directly rather than inferred from bootstrap.
+Two tracked implementation commits are pushed. Private systemd bridge and synchronization units are enabled, and the synchronization watcher successfully exercised its drain/bootstrap/check/start path at both runtime-changing commits. The running follow-up records successful control-poll time and clears stale transient poll errors. The watcher is being refined to fingerprint runtime-relevant paths so a terminal task-record-only snapshot does not trigger an unnecessary rebuild/restart after the no-more-tools handoff boundary.
 
 ## Observed
 
@@ -255,6 +255,7 @@ After structured clarification, the operator selected filtered reuse of the exis
 - Private apply bootstrap and subsequent check bootstrap both passed, including active developer and Scout compatibility probes.
 - Scoped private config, password, OAuth, and runtime-parent permissions were checked and normalized to owner-only access.
 - The first tracked implementation commit was pushed successfully.
+- The control-poll observability follow-up was pushed, automatically rebuilt by the watcher, and is running with a successful poll timestamp and no current error.
 
 ## Blockers / required decisions
 
@@ -262,13 +263,13 @@ None currently known.
 
 ## Remaining work
 
-- Validate, commit, and push the control-poll observability follow-up.
+- Validate, commit, and push runtime-path fingerprinting for restart decisions.
 - Install/update supervised services, start them, and prove synchronization, bridge runtime, heartbeat, restart, GitHub reachability, and canary neutrality.
 - Update durable/task records and create/push the terminal handoff snapshot.
 
 ## Next action
 
-Validate and push the small control-poll observability follow-up, then let the synchronization service rebuild/restart at that pushed SHA.
+Validate and push runtime fingerprinting, then let the synchronization service rebuild/restart once and prove the stable runtime before the task-only handoff snapshot.
 
 ## Relevant durable records
 
