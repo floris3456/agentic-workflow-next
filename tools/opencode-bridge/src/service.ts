@@ -286,6 +286,10 @@ export class BridgeService {
       state: this.state,
       activeIntervalMs: config.github.activeIntervalMs,
       idleIntervalMs: config.github.idleIntervalMs,
+      onSuccess: () => {
+        this.state.setMeta("service.last_poll_at", String(Date.now()));
+        this.state.setMeta("service.last_error", "");
+      },
       onError: (error) => this.state.setMeta("service.last_error", this.projection.safeText(errorMessage(error))),
     });
   }
@@ -515,6 +519,8 @@ export function bridgeStatus(config: BridgeConfig): JsonValue {
       running,
       pid: Number.isSafeInteger(pid) ? pid : null,
       heartbeat_at: Number(state.getMeta("service.heartbeat_at")) || null,
+      last_poll_at: Number(state.getMeta("service.last_poll_at")) || null,
+      last_error: state.getMeta("service.last_error") || null,
       compatibility: compatibility ? { compatible: compatibility.compatible, running_version: compatibility.runningVersion, checked_at: compatibility.checkedAt } : null,
       pending_commands: state.listCommands(["accepted", "applying"]).length,
       pending_requests: state.listRequests(["accepted", "applying"]).length,

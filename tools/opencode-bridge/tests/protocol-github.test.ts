@@ -538,12 +538,14 @@ test("duplicate task issues are rejected without starving already accepted work"
   const abort = new AbortController();
   const appliedCommands: string[] = [];
   const appliedRequests: string[] = [];
+  let successfulPolls = 0;
   const loop = new GitHubControlLoop({
     poller,
     outbox: { flush: async () => ({ delivered: 0, retried: 0 }) } as unknown as GitHubOutbox,
     state,
     activeIntervalMs: 1,
     idleIntervalMs: 1,
+    onSuccess: () => { successfulPolls++; },
   });
   await loop.run(
     abort.signal,
@@ -556,6 +558,7 @@ test("duplicate task issues are rejected without starving already accepted work"
 
   assert.deepEqual(appliedRequests, [pendingRequest.request_id]);
   assert.deepEqual(appliedCommands, [pendingCommand.command_id]);
+  assert.equal(successfulPolls, 1);
   assert.equal(state.issueForTask("TASK-GUARD"), 15);
   assert.equal(state.taskForIssue(16), undefined);
   assert.match(state.commandRejection(duplicateStart.command_id)?.reason ?? "", /already bound to issue 15/);

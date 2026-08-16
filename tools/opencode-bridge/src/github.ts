@@ -579,6 +579,7 @@ export interface GitHubControlLoopOptions {
   idleIntervalMs?: number;
   now?: () => number;
   random?: () => number;
+  onSuccess?: () => void | Promise<void>;
   onError?: (error: unknown) => void | Promise<void>;
 }
 
@@ -590,6 +591,7 @@ export class GitHubControlLoop {
   private readonly idleIntervalMs: number;
   private readonly now: () => number;
   private readonly random: () => number;
+  private readonly onSuccess?: GitHubControlLoopOptions["onSuccess"];
   private readonly onError?: GitHubControlLoopOptions["onError"];
 
   constructor(options: GitHubControlLoopOptions) {
@@ -600,6 +602,7 @@ export class GitHubControlLoop {
     this.idleIntervalMs = options.idleIntervalMs ?? 15_000;
     this.now = options.now ?? Date.now;
     this.random = options.random ?? Math.random;
+    this.onSuccess = options.onSuccess;
     this.onError = options.onError;
   }
 
@@ -622,6 +625,7 @@ export class GitHubControlLoop {
           if (acceptedCommands.length > 0) await applyCommands(acceptedCommands);
         }
         await this.outbox.flush();
+        await this.onSuccess?.();
         failures = 0;
         const active = hasOpenControlIssues || this.state.listCommands(["accepted", "applying"]).length > 0;
         await sleep(active ? this.activeIntervalMs : this.idleIntervalMs, signal);

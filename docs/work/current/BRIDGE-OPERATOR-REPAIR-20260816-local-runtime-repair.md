@@ -215,7 +215,7 @@ Repair and prove the private local bridge runtime and add a fail-closed supervis
 
 ## Current position
 
-The tracked synchronization helper, clean-start guard, graceful bridge drain, and filtered OpenAI OAuth Scout credential mode are implemented locally. The private configuration has been migrated to distinct Scout endpoint/password/runtime settings and the operator-selected filtered OAuth mode. Apply/check bootstrap and full repository validation pass. The coherent tracked implementation is ready to commit and push before supervised services are installed and proved against a clean synchronized worktree.
+The first tracked implementation commit is pushed. Private systemd bridge and synchronization units are enabled, and the synchronization watcher successfully exercised its drain/bootstrap/check/start path at that commit. A small follow-up now records successful control-poll time and clears stale transient poll errors so current GitHub-loop reachability can be proved directly rather than inferred from bootstrap.
 
 ## Observed
 
@@ -229,6 +229,7 @@ The tracked synchronization helper, clean-start guard, graceful bridge drain, an
 - The existing normal OpenCode auth store contains multiple providers; the private Scout copy contains only the strict OpenAI OAuth fields and is mode `0600`.
 - Apply and check bootstrap report compatible OpenCode `1.18.16`, GitHub/App access, all required labels, state readiness, and the hardened Scout contract ready.
 - The Scout runtime's own `auth list` recognizes OpenAI OAuth and does not list the unrelated providers from normal OpenCode auth.
+- The synchronization watcher is active and reports `synchronized` with matching local and remote SHAs after draining the bridge, applying/checking bootstrap, and starting it again.
 
 ## Interpretation
 
@@ -253,6 +254,7 @@ After structured clarification, the operator selected filtered reuse of the exis
 - `./scripts/validate-repository.sh` passed, including 85 bridge tests and eight branch-initialization tests.
 - Private apply bootstrap and subsequent check bootstrap both passed, including active developer and Scout compatibility probes.
 - Scoped private config, password, OAuth, and runtime-parent permissions were checked and normalized to owner-only access.
+- The first tracked implementation commit was pushed successfully.
 
 ## Blockers / required decisions
 
@@ -260,13 +262,13 @@ None currently known.
 
 ## Remaining work
 
-- Commit and push the validated tracked implementation records and code.
+- Validate, commit, and push the control-poll observability follow-up.
 - Install/update supervised services, start them, and prove synchronization, bridge runtime, heartbeat, restart, GitHub reachability, and canary neutrality.
 - Update durable/task records and create/push the terminal handoff snapshot.
 
 ## Next action
 
-Commit and push the coherent tracked implementation before installing the private services.
+Validate and push the small control-poll observability follow-up, then let the synchronization service rebuild/restart at that pushed SHA.
 
 ## Relevant durable records
 
