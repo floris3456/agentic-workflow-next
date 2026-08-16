@@ -34,8 +34,10 @@ use the smallest equivalent safe route that preserves those hard boundaries.
    record when those facts exist. Confirm each protective ledger write remotely
    before publishing the source effect it protects.
 5. Read exact live `main`, `developer`, and `web-orchestration` refs and compare
-   them with `source-lock.json`. A difference is an observation, not permission to
-   move the lock or change the task's review base.
+   them with `source-lock.json`. The lock is the latest reconciled canonical source
+   snapshot, not a package review-base lock. Reconcile it only from independently
+   verified exact remote refs; do not silently reconcile it from stale claims,
+   inferred refs, or package range endpoints.
 
 If the required maintenance contract is absent, malformed, or cannot be updated
 safely, inspect what can be proven and prepare the strongest safe predecessor
@@ -81,10 +83,12 @@ validator on an authorized maintainer execution surface. Never hand-build a
 change package, merge the ledger branch into a source branch, or widen a package
 range to absorb unrelated later commits.
 
-`source-lock.json` is the package review-base lock. When another not-yet-finalized
-task deliberately holds that lock pending a real package, do not silently
-reconcile it for newer work. Record the dependency and preserve exact source
-ranges until the repository-owned package/reconciliation order can be satisfied.
+`source-lock.json` records the latest reconciled canonical source snapshot. It
+may advance from independently verified exact live source refs without waiting
+for package generation. Package provenance remains defined by each package's
+exact reviewed base/head ranges, canonical fetch/ancestry proof, observed
+canonical tips, patch digests, and package binding. A package range base does not
+have to equal the repository source snapshot.
 
 A package is trustworthy only when the tracked generator produced it from the
 canonical repository under the current provenance contract, validation passed,
@@ -102,10 +106,9 @@ package state, remaining work, and next action current when the change materiall
 alters those truths. Historical task records remain historical evidence; do not
 rewrite them merely because current terminology or architecture changed.
 
-Keep `source-lock.json` accurate only through its repository-owned package
-reconciliation procedure. A source change can be complete and reviewed while its
-portable change package/reconciliation remains blocked; represent that state
-explicitly rather than fabricating atomicity.
+Keep `source-lock.json` current from independently verified exact canonical refs
+at meaningful maintenance checkpoints. Package creation does not consume, freeze,
+or advance the lock; it records its own exact reviewed ranges and provenance.
 
 ## Finalization
 
