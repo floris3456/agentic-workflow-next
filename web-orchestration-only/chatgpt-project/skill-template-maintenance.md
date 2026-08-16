@@ -60,6 +60,11 @@ the normal workflow's hardened Scout boundary is available and useful. Follow
 each source branch's own task/durable-record, AS-BUILT/deviation,
 synchronization, and validation rules regardless of execution route.
 
+Acceptance-critical executable tests owned by an authoritative branch must be
+reachable through that branch's canonical push-triggered CI path. A web
+orchestrator must not depend on its own local execution environment to obtain
+authoritative execution of those tests.
+
 Review every changed source range independently against exact remote GitHub.
 Agent reports, bridge results, task records, and checks are navigation/perceived
 results, not proof or human acceptance.
