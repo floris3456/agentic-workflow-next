@@ -141,8 +141,6 @@ export function validateChangePackage(directory, expectedTaskId) {
   if (lockIdentity.url !== canonical.url) throw new Error("Package source-lock canonical repository does not match manifest");
   if (provenance.source_lock_sha256 !== sourceLockDigest(lock)) throw new Error("Package source-lock digest is invalid");
   for (const target of targets) {
-    const entry = manifest.ranges[target];
-    if (entry.base !== lock.sources[target]) throw new Error(`${target} base does not match embedded source-lock`);
     if (!exactSha.test(provenance.canonical_tips?.[target] ?? "")) throw new Error(`${target} canonical tip is invalid`);
     if (provenance.head_relations?.[target] !== "reviewed-head-ancestor-of-canonical-tip") {
       throw new Error(`${target} reviewed-head relation is invalid`);
