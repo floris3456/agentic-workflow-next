@@ -19,17 +19,20 @@ Run the bounded OpenCode permission-roundtrip acceptance task ADAPTER-PERMISSION
 Complete the bounded permission-roundtrip acceptance task and create the required result file after the single approved external read attempt.
 
 ## Current position
-The clean, synchronized `developer` branch is at the delegated exact start SHA. Required repository skills are loaded, and this task-progress record is being created before substantive implementation.
+The required task-progress record was pushed, the single external read attempt completed, and the exact acceptance result file has been created. The implementation commit and checks remain before the handoff snapshot.
 
 ## Observed
 - `HEAD` and `origin/developer` both resolve to `e6f45b8adea14090d9afe2d939d19fc21e538a41`.
 - The tracked workflow hooks are active.
+- The exactly-once OpenCode read attempt against a private deliberately nonexistent sentinel outside the worktree resolved with the expected file-not-found result; the raw sentinel path was not retained.
+- `testing/ADAPTER-PERMISSION-0EA655E7AB11/result.md` contains the five required acceptance lines.
 
 ## Interpretation
-The delegated starting boundary and required local workflow prerequisites are satisfied.
+The delegated starting boundary and required local workflow prerequisites were satisfied, and the task continued after the one resolved permission-roundtrip read step.
 
 ## Attempts
-None.
+1. Created the task-progress record and pushed it as `8437b227afc39123bbb435d11cc97255e6160fb2`; completed and abandoned no route.
+2. Performed the required single external read attempt; it resolved as expected for a nonexistent file, so no retry or bypass was used.
 
 ## Changed approach
 None.
@@ -37,19 +40,17 @@ None.
 ## Checks
 - Repository status and exact branch/start SHA checked before work.
 - `./scripts/bootstrap-agent-workflow.sh --check` reported that tracked Git hooks are active.
+- The required result file was created with the exact five-line content; content and repository validation remain to be run before handoff.
 
 ## Blockers / required decisions
-The single external read attempt is pending. If a genuine permission request appears, stop for the permission decision and do not retry or continue until the read attempt resolves.
+None. The one required permission-roundtrip read attempt has resolved and was not retried.
 
 ## Remaining work
-- Push this initial task-progress record.
-- Perform exactly one OpenCode read attempt against a private, deliberately nonexistent sentinel outside the repository worktree and wait for any permission decision.
-- Create the exact required result file.
 - Run proportional checks, update this record, and push the implementation commit.
 - Create and push the dedicated handoff snapshot.
 
 ## Next action
-Push the initial task-progress record, then perform the one required OpenCode read attempt.
+Run the exact-file and repository checks, then commit and push the result plus current task-progress update.
 
 ## Relevant durable records
 - `AGENTS.md`
