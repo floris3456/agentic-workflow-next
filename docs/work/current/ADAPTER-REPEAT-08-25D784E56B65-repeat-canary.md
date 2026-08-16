@@ -4,7 +4,7 @@
 ADAPTER-REPEAT-08-25D784E56B65
 
 ## Status
-In progress
+Ready for handoff
 
 ## Task-start developer SHA
 6b35d5a3324e92fb6fe7ab1e84163ed2f61960c5
@@ -21,7 +21,7 @@ Run bounded adapter/OpenCode repeat-canary ADAPTER-REPEAT-08-25D784E56B65 for se
 Create the exact public-safe repeat-canary result for run 08 and hand it off from the guarded developer SHA without unrelated changes.
 
 ## Current position
-Task start was recorded against the exact guarded developer SHA; the task-progress record is ready to commit before creating the requested result artifact.
+Task start was recorded and pushed at developer commit `352a628a46e6194b75d9271f3f321071e502ddab`. The requested result artifact is created in the working tree, and proportional checks passed; the implementation commit and dedicated handoff snapshot remain.
 
 ## Observed
 - The current branch is `developer`.
@@ -29,27 +29,33 @@ Task start was recorded against the exact guarded developer SHA; the task-progre
 - `git rev-parse HEAD` and `git rev-parse origin/developer` both reported `6b35d5a3324e92fb6fe7ab1e84163ed2f61960c5`.
 - `./scripts/bootstrap-agent-workflow.sh --check` reported that tracked Git hooks are active.
 - Existing adapter repeat-canary artifacts use the requested six-line format.
+- The exact-content assertion for `testing/ADAPTER-REPEAT-08-25D784E56B65/result.md` passed, including the trailing newline.
+- `./scripts/validate-repository.sh` passed, including 85 bridge tests and 8 synchronization tests.
 
 ## Interpretation
 The guarded starting point and synchronization prerequisites are satisfied. The requested work is a bounded public-safe testing artifact with no expected implementation-record changes.
 
 ## Attempts
 1. Confirmed the requested developer branch, exact guarded SHA, clean synchronized worktree, active hooks, and required record locations.
+2. Created the exact requested result artifact; the exact-content assertion and repository validation passed.
 
 ## Changed approach
 None.
 
 ## Checks
 - Startup branch, guarded SHA, cleanliness, synchronization, and hook activation checks passed.
+- Exact-content assertion for `testing/ADAPTER-REPEAT-08-25D784E56B65/result.md`: passed, including the trailing newline.
+- `git diff --check`: passed.
+- `./scripts/validate-repository.sh`: passed, including 85 bridge tests and 8 synchronization tests.
 
 ## Blockers / required decisions
 None. Do not finalize or archive the task record during this acceptance run.
 
 ## Remaining work
-Create and verify the exact result artifact, commit and push the implementation range, then create and push the dedicated handoff snapshot.
+Commit and push the implementation range, then create and push the dedicated handoff snapshot.
 
 ## Next action
-Commit and push this task-start record, then create the requested result artifact.
+Commit and push the requested result artifact and progress update, then create and push the dedicated handoff snapshot.
 
 ## Relevant durable records
 - `testing/README.md`
