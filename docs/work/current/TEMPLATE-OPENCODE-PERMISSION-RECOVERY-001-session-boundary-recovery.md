@@ -6,7 +6,7 @@ TEMPLATE-OPENCODE-PERMISSION-RECOVERY-001
 
 ## Status
 
-Change package complete; closure reconciliation pending
+Completed; dedicated handoff snapshot pending
 
 ## Task-start template-development SHA
 
@@ -26,7 +26,7 @@ Finish and independently review the developer-side permission boundary and bound
 
 ## Current position
 
-The existing mapped developer route was reconciled, preserved, and absorbed without a replacement session or start replay. Its correction is pushed at `c857762c327ff9f86bd0f3afd055116ba650f23b` with handoff `80ad63319cd746d6205d67781b25e3c327b230bc`. The clean synchronized runtime passed focused real same-session and control-loop acceptance. The separate minimal web-orchestration final-response gate is pushed at `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17` and passes its exact package validation. The exact reviewed ranges are captured in the provenance-verified change package; final issue closure, runtime readback, and ledger handoff remain.
+The existing mapped developer route was reconciled, preserved, and absorbed without a replacement session or start replay. Its correction is pushed at `c857762c327ff9f86bd0f3afd055116ba650f23b` with handoff `80ad63319cd746d6205d67781b25e3c327b230bc`. The clean synchronized runtime passed focused real same-session and control-loop acceptance. The separate minimal web-orchestration final-response gate is pushed at `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17` and passes its exact package validation. The provenance-verified package is pushed in template-development checkpoint `a8b2a85744de1bbac9e408a99ea0da0c4d07b831`; issue #44 is closed as completed, final remote/runtime readback passed, and only this dedicated ledger handoff snapshot remains.
 
 ## Source ranges
 
@@ -76,10 +76,20 @@ The existing mapped developer route was reconciled, preserved, and absorbed with
   absorbed before final response, explicitly continue reconciliation for active,
   unknown, indeterminate, or unresolved routes, and reject time/length/usage as
   blockers or completion conditions. Existing package validation pins the rule.
+- Issue #44 was closed with reason `completed` only after both source handoffs and
+  the exact-range package checkpoint were pushed.
+- Public alias `session-35` is durably idle and live inactive with current
+  activity evidence and zero live permission/question entries. Sequence 23 and
+  the fresh sequence-free status request are succeeded; the resolved question's
+  recovery result is clean/session-progressing.
+- Historical rows for vanished permission requests 22 and 23 retain their
+  original pending interaction evidence, but neither exists in the canonical
+  OpenCode queue or any bridge execution/delivery/outbox queue. They are not
+  replayable work; the indeterminate permission-23 reply remains unretried.
 
 ## Interpretation
 
-The source work satisfies the bounded recovery, permission, control, and final-response boundaries without broad external access or new state-machine machinery. The prior polling symptom remains an unreproduced external retry episode, not evidence for a speculative poller change.
+The source work satisfies the bounded recovery, permission, control, and final-response boundaries without broad external access or new state-machine machinery. The prior polling symptom remains an unreproduced external retry episode, not evidence for a speculative poller change. Historical vanished-interaction rows preserve fail-closed evidence without representing a live interaction or an eligible mutation route.
 
 ## Attempts
 
@@ -127,6 +137,20 @@ The initial immediate-idle recovery design was rejected during independent revie
   `2a5cb0ef45c7af4658bb1c62817e1fa8589625299c533213cda44cf41f51c3a9`.
 - Full template-development validation and `git diff --check`: passed after
   package generation.
+- Independent final remote readback: developer
+  `af19f527390972c5f84dd2d82c40249feb2b3231` to
+  `80ad63319cd746d6205d67781b25e3c327b230bc`; template-development
+  `452c28be61f9c47183a92d75d2c0510df47512d4` to package checkpoint
+  `a8b2a85744de1bbac9e408a99ea0da0c4d07b831`; web-orchestration
+  `1f53ce62fba87ba9677b86d3837a008717aa4c24` to
+  `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`; main remained
+  `6127611113dfdb66f93a0cfd2d355359aa370833`.
+- Final runtime readback: all three repository user services active/running;
+  developer checkout clean at its remote head; bridge heartbeat and configured
+  idle-cadence poll time advanced; last error clear; command, request, response-
+  delivery, and outbox pending counts zero; pinned OpenCode `1.18.16` and Scout
+  endpoint compatible/ready.
+- Issue #44 independently read closed/completed after package publication.
 
 ## Blockers / required decisions
 
@@ -134,14 +158,12 @@ None.
 
 ## Remaining work
 
-- Close issue #44 after this package checkpoint is pushed.
-- Recheck exact remote refs and clean local runtime after closure.
-- Push the dedicated template-development handoff snapshot.
+None within the delegated maintenance scope. Human review and any exact-SHA
+promotion into `main` remain outside this task and were not performed.
 
 ## Next action
 
-Push the exact-range package checkpoint, then close and independently reconcile
-issue #44.
+Push this dedicated template-development task-progress handoff snapshot.
 
 ## Relevant durable records
 
@@ -154,4 +176,5 @@ issue #44.
 
 ## Last handoff commit
 
-None
+None. This task record update is the dedicated working-cycle handoff snapshot;
+its exact containing commit is returned rather than self-referenced recursively.
