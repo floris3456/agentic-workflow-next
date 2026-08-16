@@ -45,6 +45,36 @@ the hardened Scout boundary is ready. Each source branch keeps its own task,
 AS-BUILT/deviation, synchronization, and validation contract. Every changed source
 range is independently reviewed against exact remote GitHub.
 
+## Acceptance-test CI reachability
+
+Acceptance-critical executable tests owned by an authoritative branch are
+reachable through that branch's canonical push-triggered validation path. This
+lets a web orchestrator publish an exact source SHA and obtain authoritative
+remote execution even when its own local Git/HTTP/Node environment cannot reach
+GitHub.
+
+The current authoritative branches satisfy that invariant as follows:
+
+- `developer`: `.github/workflows/validate-repository.yml` runs on pushes to
+  `developer` and reaches the repository validator, bridge tests, and
+  `tests/template-branches.test.mjs` through the canonical validation scripts.
+- `web-orchestration`: `.github/workflows/validate-web-orchestration.yml` runs on
+  pushes to `web-orchestration`, executes
+  `web-orchestration-only/validate-package.mjs`, then uses bare `node --test` so
+  normal future Node test files are discovered without workflow edits. The
+  workflow has read-only contents permission and does not persist checkout
+  credentials.
+- `template-development`: `.github/workflows/validate-template-development.yml`
+  runs on pushes to `template-development` and reaches the ledger validator plus
+  `tests/change-package.test.mjs` through
+  `scripts/validate-template-development.sh`.
+
+The web-orchestrator template-maintenance Source carries the reusable invariant.
+Its executable Node acceptance suite mechanically checks the web workflow's push
+trigger, read-only permission/credential posture, canonical validator command,
+and discovery-mode test command without coupling the standalone package validator
+to repository-root layout.
+
 ## Template task continuity
 
 Explicit reusable-template work creates or resumes one public-safe
@@ -206,9 +236,10 @@ package digest binds lock/provenance plus both patches.
 blocked on genuine networked schema-2 package generation. Therefore
 `source-lock.json` deliberately remains at that task's prior review bases until
 the tracked generator embeds the snapshot and reconciliation completes. Later
-source work, including `TEMPLATE-CAPABILITY-ORCHESTRATION-001`, records exact live
-ranges but must not silently move or widen that lock. This is an explicit package
-ordering dependency, not permission to fabricate package bytes.
+source work, including `TEMPLATE-CAPABILITY-ORCHESTRATION-001` and
+`TEMPLATE-CI-REACHABILITY-001`, records exact live ranges but must not silently
+move or widen that lock. This is an explicit package ordering dependency, not
+permission to fabricate package bytes.
 
 ## Verification
 
@@ -218,8 +249,12 @@ ordering dependency, not permission to fabricate package bytes.
   recovery no-replay, template-maintenance provenance, human exact-SHA
   promotion, bridge-envelope shapes, public safety, and new task-context schema.
 - `web-orchestration-only/validate-package.test.mjs` provides focused negative
-  fixtures for those architectural boundaries rather than preserving the retired
-  mode/file topology.
+  fixtures for those architectural boundaries and a CI-contract test for the
+  branch-owned push workflow.
+- `web-orchestration` push Actions run `31917651395` succeeded at exact source SHA
+  `3891a17bd62b8e4871310766f2a05175aa42cf87`: the checkout used non-persisted
+  credentials under read-only contents permission, the canonical package
+  validator passed, and discovery-mode `node --test` passed all 16 tests.
 - `scripts/validate-template-development.mjs` validates ledger structure, source
   lock, task/archive rules, forbidden source-tree absence, executable bits, and
   committed change packages through the shared verifier.
