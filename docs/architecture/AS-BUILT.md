@@ -190,6 +190,13 @@ authority/safety, capability-local execution, completion, and the five-row
 procedure router. Detailed bridge, Scout, recovery, finalization, promotion, and
 prompt craft mechanics live in their conditionally loaded skill owner.
 
+The permanent completion boundary is a hard final-response gate: every launched
+route must be terminal and absorbed with publications, visible interactions, and
+claimed remote effects reconciled. Active, unknown, indeterminate, or otherwise
+unresolved work without a genuine human-owned decision keeps the orchestrator in
+reconciliation; elapsed time, routine delay, response length, and token/tool use
+are not blockers or completion conditions. Package validation pins that rule.
+
 ## Ordinary task continuity
 
 `web-orchestration-only/task-context/**` remains the public-safe continuity owner
