@@ -18,67 +18,74 @@ d5a8806c9113d27511d956a956fb5d2078e439ec
 
 ## Public-safe task brief
 
-Harden delegated developer sessions so normal work inside the exact configured developer repository root does not require unnecessary external-directory approval, while genuine access outside that worktree remains orchestrator-gated. Prevent repository tasks from walking parent directories to rediscover the repository. Add bounded automatic same-session continuation recovery when a resolved permission/question leaves a live task non-progressing, with durable/idempotent recovery evidence and no start replay or scope expansion. Preserve existing question/permission bridge behavior and human-owned promotion authority.
+Harden delegated developer sessions so normal work inside the exact configured developer repository root avoids unnecessary external-directory approval, genuine outside-worktree access remains orchestrator-gated, repository tasks do not wander through parent/sibling directories, and resolved interactions can recover a genuinely non-progressing same session without replay or scope expansion.
 
 ## Current objective
 
-Implement and independently review repository-root permission containment plus post-interaction continuation recovery on the canonical developer source branch, with focused tests and durable documentation.
+Finish and independently review the developer-side permission boundary and bounded post-interaction continuation recovery.
 
 ## Current position
 
-Maintenance ledger created before source publication. Live source refs were independently read: main `6127611113dfdb66f93a0cfd2d355359aa370833`, developer `ceb9e053c40bc586551069bff1fbfe8c051dcb55`, web-orchestration `1f53ce62fba87ba9677b86d3837a008717aa4c24`. Existing source-lock records an older developer ref and will be reconciled only after confirming no not-finalized task deliberately owns that boundary.
+The guarded Luna route on issue #44 produced implementation commit `908d660755e00f3539dc2f7cbe2673c48664de92` and handoff snapshot `af19f527390972c5f84dd2d82c40249feb2b3231`. Independent review found one defect: the first implementation could nudge immediately on a single post-reply `idle` observation, which did not prove the session remained non-progressing. Same-session correction command sequence 9 was delivered; Luna is actively correcting that finding. No second session or start replay was used.
 
 ## Source ranges
 
-- developer: pending from `ceb9e053c40bc586551069bff1fbfe8c051dcb55`
-- web-orchestration: no change currently expected
+- developer maintenance start: `ceb9e053c40bc586551069bff1fbfe8c051dcb55`
+- developer delegated implementation base after repaired bookkeeping mistake: `29d59fb15bbdd31b59205c691deb4ddd167ade78`
+- first reviewed handoff candidate: `af19f527390972c5f84dd2d82c40249feb2b3231`
+- corrected developer handoff: pending
+- web-orchestration: unchanged at `1f53ce62fba87ba9677b86d3837a008717aa4c24`
 
 ## Observed
 
-- Repeat adapter series produced 9/10 clean passes; one run completed only after explicit same-session steering following resolved external-directory interactions.
-- The failed run reached bridge admission and a live Luna developer session; there was no start replay, duplicate execution, or lost task correlation.
-- Current developer agent permits structured questions and denies subagent task delegation, but does not explicitly define repository-root filesystem permission containment.
+- Repeat adapter series produced 9/10 clean passes; run 03 required same-session steering after resolved external-directory interactions.
+- Pinned OpenCode behavior keeps ordinary in-working-directory operations normal while `external_directory` represents an outside-worktree boundary; the implementation keeps it at `ask` rather than broadly allowing it.
+- The first implementation added repository-relative guidance, durable one-shot interaction recovery state, focused tests, and architecture/protocol records; its reported repository validation passed 92 bridge tests and 8 branch tests.
+- Independent source review found `continueAfterInteraction` would nudge on the first `idle` status after a reply, without a grace/recheck proving continued non-progress.
+- Live OpenCode status can show fresh tool activity even when durable projected task state remains `starting`; stale projected state alone is not stall evidence.
 
 ## Interpretation
 
-The remaining reliability gap is post-interaction continuation and unnecessary external-directory prompting, not basic bridge admission or task correlation.
+The correct recovery boundary is: resolve interactions, allow normal resumption, observe a bounded period or equivalent positive no-progress proof, and only then claim one same-session continuation nudge. Any live progress means no recovery nudge.
 
 ## Attempts
 
-None yet.
+- Created an empty `__noop__` file accidentally on `developer`; the exact known effect was immediately removed by a normal follow-up commit, with no force/reset/history rewrite. The repaired SHA `29d59fb15bbdd31b59205c691deb4ddd167ade78` became the guarded developer base.
+- Initial Luna implementation reached `af19f527390972c5f84dd2d82c40249feb2b3231`.
+- Review correction was sent to the same mapped Luna session; no duplicate execution occurred.
 
 ## Changed approach
 
-None.
+The initial immediate-idle recovery design was rejected during independent review. Recovery now requires bounded evidence that the session remains non-progressing before any nudge.
 
 ## Checks
 
-- Exact live branch refs independently read from remote GitHub.
-- Template-maintenance contract, skill, task template, and source-lock read at exact template-development start SHA.
+- Exact live refs and issue lifecycle independently read from remote GitHub.
+- First implementation range `29d59fb15bbdd31b59205c691deb4ddd167ade78..af19f527390972c5f84dd2d82c40249feb2b3231` inspected; changed paths match the requested bridge/config/guidance/tests/docs scope.
+- First handoff commit exists remotely and is task-record-only.
+- Final corrected checks and exact range review remain pending.
 
 ## Blockers / required decisions
 
-None currently known.
+None.
 
 ## Remaining work
 
-- Inspect pinned OpenCode 1.18.16 permission configuration semantics and current developer/runtime implementation.
-- Implement exact repository-root normal-operation preauthorization while retaining orchestrator approval for genuine outside-worktree access.
-- Add no-parent-directory-wandering agent guidance.
-- Add bounded/idempotent automatic same-session recovery after resolved interactions leave the session non-progressing.
-- Add focused tests, validators, and durable architecture/AS-BUILT documentation as required.
-- Independently review exact remote source range and reconcile the maintenance ledger.
+- Receive the corrected same-session handoff.
+- Independently review the correction and exact final developer range.
+- Reconcile source-lock and close the control issue after the route is terminal and absorbed.
 
 ## Next action
 
-Inspect current developer branch permission/runtime/session-recovery implementation and select the smallest safe source change.
+Observe the existing Luna correction to terminal state; do not replay or create a replacement route.
 
 ## Relevant durable records
 
-- contracts/opencode-bridge/protocol.md
-- tools/opencode-bridge/README.md
-- tools/opencode-bridge/AS-BUILT.md
-- docs/architecture/deviations.md
+- Issue #44
+- `contracts/opencode-bridge/protocol.md`
+- `tools/opencode-bridge/README.md`
+- `tools/opencode-bridge/AS-BUILT.md`
+- `docs/architecture/deviations.md`
 
 ## Last handoff commit
 
