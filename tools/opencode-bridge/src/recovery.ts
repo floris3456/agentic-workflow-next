@@ -561,7 +561,7 @@ export class RecoveryCoordinator {
         id: eventId,
         type: terminal.eventType,
         properties: { sessionID: session.sessionId },
-        recovery: { method: "permission.list+question.list+session.status+session.messages", completedAt: terminal.completedAt },
+        recovery: { method: "session.status+session.messages", completedAt: terminal.completedAt },
       },
     });
   }
@@ -612,7 +612,7 @@ export class RecoveryCoordinator {
         id: eventId,
         type: terminal.eventType,
         properties: { sessionID: session.sessionId },
-        recovery: { method: "session.status+session.messages", completedAt: terminal.completedAt },
+        recovery: { method: "permission.list+question.list+session.status+session.messages", completedAt: terminal.completedAt },
       },
     });
   }

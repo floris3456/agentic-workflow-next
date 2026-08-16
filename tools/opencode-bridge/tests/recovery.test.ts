@@ -232,6 +232,10 @@ test("canonical developer recovery captures an inactive terminal response once t
   assert.match(persisted[0]!, /^canonical-/);
   assert.equal(state.getTaskSession("TASK-DEVELOPER-CANONICAL")?.sessionState, "session.idle");
   assert.equal(state.listEvents("TASK-DEVELOPER-CANONICAL").length, 1);
+  assert.equal(
+    asRecord(asRecord(state.listEvents("TASK-DEVELOPER-CANONICAL")[0]?.payload, "developer canonical event").recovery, "developer canonical proof").method,
+    "permission.list+question.list+session.status+session.messages",
+  );
   assert.equal(state.pendingResponseDeliveries().length, 1);
   assert.equal(paths.includes("/session/ses_developer_canonical/event"), false);
 
@@ -833,6 +837,14 @@ test("canonical Scout recovery requires terminal lifecycle metadata and is idemp
   assert.equal(state.getScoutSession(scouts[2][0])?.sessionState, "starting");
   assert.equal(await recovery.recoverScoutCanonical(state.getScoutSession(scouts[3][0])!), true);
   assert.equal(state.getScoutSession(scouts[3][0])?.sessionState, "session.error");
+  assert.equal(
+    asRecord(asRecord(state.listEvents("TASK-IDLE")[0]?.payload, "Scout canonical event").recovery, "Scout canonical proof").method,
+    "session.status+session.messages",
+  );
+  assert.equal(
+    asRecord(asRecord(state.listEvents("TASK-ERROR")[0]?.payload, "Scout error event").recovery, "Scout error proof").method,
+    "session.status+session.messages",
+  );
   assert.deepEqual(
     state.pendingResponseDeliveries().map((entry) => [entry.requestId, entry.eventType]).sort(),
     [[scouts[0][0], "session.idle"], [scouts[3][0], "session.error"]],
