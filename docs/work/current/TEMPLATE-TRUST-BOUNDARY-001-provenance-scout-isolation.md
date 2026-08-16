@@ -6,8 +6,7 @@ TEMPLATE-TRUST-BOUNDARY-001
 
 ## Status
 
-blocked only on genuine networked change-package generation. All reusable source
-hardening is implemented, independently reviewed, and passing remote validation.
+source hardening is complete and independently reviewed; deterministic package generation remains pending on a legitimate networked maintainer execution surface, but it no longer blocks `source-lock.json` reconciliation or later package work
 
 ## Task-start / package review bases
 
@@ -16,9 +15,12 @@ hardening is implemented, independently reviewed, and passing remote validation.
 - web-orchestration: `2b95a9803115b05283494fb3699b9d34c58a91a5`
 - template-development task start: `7dde0897c4b0bc1df304bd43fe61f4eb99fd682f`
 
-`source-lock.json` deliberately still contains these source SHAs. They remain the
-schema-2 package review-base lock until the real package embeds that snapshot.
-`main` is not authorized for change or promotion.
+These developer/web SHAs remain this task's exact package range bases. Under the
+current source-snapshot contract introduced by
+`TEMPLATE-SOURCE-LOCK-SIMPLIFY-001`, they are task evidence rather than values
+that must remain frozen in `source-lock.json`. The repository source snapshot has
+been reconciled independently to current canonical refs. `main` is not authorized
+for change or promotion.
 
 ## Public-safe task brief
 
@@ -49,10 +51,7 @@ Scouts are not evidence for this task.
 - the changed Project Source adds a fail-closed hardened-Scout readiness gate,
   forbids fallback to ordinary developer OpenCode/ref-owned instructions, and
   retains exact connected GitHub as proof;
-- the canonical branch later advanced to observed tip
-  `c20854fd566601cbff2cad9aab12af195fe1e5f0` through five commits that add only
-  `web-orchestration-only/task-context/SCOUT-SMOKE-20260815-001.md`, a separate
-  closed smoke-test continuity record. The reviewed Scout Source did not change.
+- the canonical branch later advanced through unrelated reviewed template work.
   Those later commits are canonical baseline/provenance state, not members of this
   task package.
 
@@ -69,7 +68,10 @@ Scouts are not evidence for this task.
   `02f3f85d9506a2b453dee3878aa508335094a593`, changing only
   `scripts/change-package-lib.mjs`, `scripts/create-change-package.mjs`, and
   `tests/change-package.test.mjs`; Actions run `31903434920` succeeded;
-- changes/design/deviation/AS-BUILT records are reconciled after that correction.
+- `TEMPLATE-SOURCE-LOCK-SIMPLIFY-001` later removed the unnecessary equality
+  between package range bases and the repository source snapshot while retaining
+  the canonical fetch, ancestry, exact-range, patch-digest, and package-binding
+  provenance guarantees.
 
 No `changes/TEMPLATE-TRUST-BOUNDARY-001/manifest.json` exists. The package has not
 been fabricated through API writes.
@@ -77,42 +79,46 @@ been fabricated through API writes.
 ## AWT-001 as built
 
 Schema-1 generation trusted the caller-supplied local Git object database, so
-local commit existence/ancestry did not prove canonical provenance. Schema 2 now:
+local commit existence/ancestry did not prove canonical provenance. Current
+schema 2 now:
 
 1. authenticates the supplied checkout `origin` against the canonical repository
-   in `source-lock.json`;
-2. requires requested bases to equal the locked review bases;
-3. creates a sterile temporary bare Git repository and fetches the current
+   recorded in `source-lock.json`;
+2. creates a sterile temporary bare Git repository and fetches the current
    canonical `developer` and `web-orchestration` tips from the canonical URL;
-4. requires each exact reviewed package head to resolve from that fetched
-   canonical branch history and be an ancestor of (or equal to) its current tip;
-   a local-only/divergent head fails closed;
-5. generates changed paths and patch bytes only from fetched canonical objects for
-   the exact locked-base-to-reviewed-head range, so later unrelated canonical
-   commits are observed but not silently included;
-6. embeds the exact old source-lock snapshot plus digest, observed canonical tips,
-   reviewed-head relationship markers, exact ranges, sorted changed paths, and
-   per-patch SHA-256 values; and
-7. binds the stable manifest core plus both raw patch streams into a versioned
+3. requires each exact package base and reviewed head to resolve from fetched
+   canonical objects, requires the base to be an ancestor of its reviewed head,
+   and requires the reviewed head to be an ancestor of (or equal to) its current
+   canonical tip; a local-only/divergent endpoint fails closed;
+4. generates changed paths and patch bytes only from fetched canonical objects for
+   the exact task-recorded base-to-reviewed-head range, so later unrelated
+   canonical commits are observed but not silently included;
+5. embeds the generation-time source snapshot plus digest, observed canonical
+   tips, reviewed-head relationship markers, exact ranges, sorted changed paths,
+   and per-patch SHA-256 values; the source snapshot is provenance context and
+   does not define the range bases; and
+6. binds the stable manifest core plus both raw patch streams into a versioned
    package SHA-256. Shared offline validation recomputes all byte-level bindings.
 
 Historical schema 1 remains integrity-compatible but explicitly returns
-`provenanceVerified: false`.
+`provenanceVerified: false`. Existing schema-2 packages whose range bases equal
+their embedded source snapshot remain valid.
 
-Focused tests cover deterministic schema 2, deceptive origin, wrong base,
-canonical branch advance beyond a reviewed head, forged/local-only head,
-source-lock/patch/package tampering, legacy schema-1 compatibility, and downstream
-dry-run/application boundaries. The corrected core passes both the local
-no-network fixture and remote template-development Actions.
+Focused tests cover deterministic schema 2 with source snapshots independent from
+package bases, deceptive origin, non-ancestor range bases, canonical branch
+advance beyond a reviewed head, forged/local-only heads, source-snapshot/patch/
+package tampering, legacy schema-1 compatibility, and downstream dry-run/
+application boundaries.
 
 ## Route / active work
 
 - Canonical bridge issue: `https://github.com/floris3456/agentic-workflow-template/issues/26`.
 - Developer source/finalization route: terminal and absorbed.
 - Web-orchestration source route: terminal and absorbed.
-- Template-development source route: terminal and independently validated.
+- Template-development source route: terminal and independently validated for the
+  original hardening; later source-snapshot simplification is tracked separately.
 - Scouts launched for this maintenance review: none.
-- Active repository mutation after this snapshot commit: none.
+- Active repository mutation for this task: none.
 - Highest accepted bridge command sequence: 10; no unmatched permission/question.
 
 ## Command / connector journal
@@ -137,70 +143,58 @@ succeeded, followed by the correlated completed developer response at
   succeeded after review corrections/finalization.
 - Finalization compare is rename-only; archive blob is exactly
   `e9ce0154342cade46ca3a21299295ccd56f18bff`; current developer task path absent.
-- Web exact Source range independently reviewed. Later range
-  `6a7793738bcb12b92bc7a7bc43fde1fcebe61e35..c20854fd566601cbff2cad9aab12af195fe1e5f0`
-  contains only the separate Scout smoke-test task-context file.
+- Web exact Source range independently reviewed; later source commits are not
+  silently members of this package.
 - Template-development initial schema-2 core and durable records passed Actions;
   corrected ancestor-of-tip core `02f3f85d9506a2b453dee3878aa508335094a593`
   passed Actions run `31903434920`.
 - Direct readback confirms the intended package path is absent.
 - `main` remained exactly `6127611113dfdb66f93a0cfd2d355359aa370833`.
+- `TEMPLATE-SOURCE-LOCK-SIMPLIFY-001` subsequently established that canonical
+  fetched range ancestry is sufficient for package provenance and reconciled the
+  repository source snapshot independently of this pending package.
 
 ## Blocker
 
-The only unresolved task requirement is executing the real schema-2 package
-step. This chat can write/read GitHub and inspect/retry/read Actions, but its local
-Git runtime cannot resolve/reach `github.com`; the repository has no existing
-workflow that generates/commits a package; and the connected GitHub action surface
-has no workflow-dispatch/start operation. An installable-plugin search found no
-separate GitHub Actions execution/dispatch capability.
+The only unresolved task requirement is executing the real schema-2 package step.
+That requires a legitimate maintainer execution surface with canonical Git network
+access. This is now an isolated package-production limitation: it does not freeze
+`source-lock.json`, serialize later template tasks, or require any package to be
+generated before another task's independently reviewed package.
 
-Adding a task-specific push-triggered workflow only to bypass this environment
-would expand the reusable maintenance system and is not the smallest equivalent
-route. Hand-building `manifest.json` or patch files through GitHub APIs is
-explicitly prohibited by the tracked maintainer contract and would invalidate the
-provenance claim.
-
-The required operator/configuration action is narrow: provide a legitimate
-synchronized `template-development` checkout with canonical Git network access (or
-an equivalent authorized maintainer execution surface) and run the tracked
-generator/validator. No source-design or risk-acceptance decision remains.
+Hand-building `manifest.json` or patch files through GitHub APIs remains
+prohibited by the tracked maintainer contract and would invalidate the provenance
+claim.
 
 ## Exact resume procedure
 
 On a legitimate maintainer execution surface:
 
 1. re-read exact canonical refs. The package endpoints remain developer
-   `980486182c0ed8a213842477b9b1754de360a430` and web-orchestration
-   `6a7793738bcb12b92bc7a7bc43fde1fcebe61e35` unless new review changes task
-   membership. Later canonical tips are allowed only when those reviewed heads
-   remain ancestors of the fetched tips;
-2. run `scripts/create-change-package.mjs` for task
-   `TEMPLATE-TRUST-BOUNDARY-001` with developer range
    `e2700f586fe8ab634053eb514bb9da487e881a21..980486182c0ed8a213842477b9b1754de360a430`
-   and web range
-   `2b95a9803115b05283494fb3699b9d34c58a91a5..6a7793738bcb12b92bc7a7bc43fde1fcebe61e35`;
+   and web-orchestration
+   `2b95a9803115b05283494fb3699b9d34c58a91a5..6a7793738bcb12b92bc7a7bc43fde1fcebe61e35`
+   unless independent review changes task membership. Later canonical tips are
+   allowed when the exact reviewed heads remain ancestors of those tips;
+2. run `scripts/create-change-package.mjs` for task
+   `TEMPLATE-TRUST-BOUNDARY-001` with those exact base/head ranges;
 3. validate and commit the generated
    `changes/TEMPLATE-TRUST-BOUNDARY-001/**` bytes unchanged;
-4. after the package has embedded the old source lock, reconcile
-   `source-lock.json` to the **canonical branch tips observed by the generated
-   schema-2 manifest**, not by widening the package range. Update
-   `last_reconciled_task` and `last_change_package`, validate again, and record
-   exact package/ledger SHAs;
-5. independently review the package and source-lock reconciliation, then archive
-   this maintenance record unchanged. Never modify/promote `main` as part of
+4. independently review the package. Reconcile `source-lock.json` separately only
+   if exact remote refs show the current snapshot is stale; package generation
+   itself neither consumes nor advances the snapshot; and
+5. archive this maintenance record unchanged after its package/finalization
+   requirements are actually satisfied. Never modify/promote `main` as part of
    these steps.
 
 ## Next action
 
-Resume only when a legitimate networked maintainer execution surface is
-available. Re-read current refs first, run the tracked schema-2 generator for the
-exact reviewed endpoints above, and do not hand-build the package.
+Generate this task's exact reviewed package when a legitimate networked maintainer
+execution surface is available. No later maintenance task needs to wait for that
+action, and no source-lock ordering step remains.
 
 ## Last handoff commit
 
 - developer finalization: `980486182c0ed8a213842477b9b1754de360a430`
 - web-orchestration reviewed package head: `6a7793738bcb12b92bc7a7bc43fde1fcebe61e35`
-- web-orchestration currently observed canonical tip:
-  `c20854fd566601cbff2cad9aab12af195fe1e5f0`
-- corrected schema-2 core: `02f3f85d9506a2b453dee3878aa508335094a593`
+- source-snapshot semantics superseded by `TEMPLATE-SOURCE-LOCK-SIMPLIFY-001`
