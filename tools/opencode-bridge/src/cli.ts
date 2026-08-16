@@ -120,11 +120,19 @@ async function main(): Promise<void> {
     if (checkOnly) usage();
     await synchronizedGitState(config);
     const controller = new AbortController();
-    const stop = () => controller.abort(new Error("Bridge service stopping"));
+    const service = new BridgeService(config, controller.signal);
+    let stopping = false;
+    const stop = () => {
+      if (stopping) return;
+      stopping = true;
+      void service.drainControl()
+        .catch(() => undefined)
+        .finally(() => controller.abort(new Error("Bridge service stopping")));
+    };
     process.once("SIGINT", stop);
     process.once("SIGTERM", stop);
     try {
-      await new BridgeService(config, controller.signal).run();
+      await service.run();
     } finally {
       process.removeListener("SIGINT", stop);
       process.removeListener("SIGTERM", stop);

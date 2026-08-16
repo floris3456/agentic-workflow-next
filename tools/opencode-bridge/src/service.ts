@@ -70,6 +70,7 @@ export async function synchronizedGitState(config: BridgeConfig): Promise<GitSta
   ]);
   if (head !== developerSha) throw new Error("Local HEAD and origin/developer are not synchronized");
   if (ref !== "developer") throw new Error("The OpenCode bridge must run from the developer checkout");
+  if (workingTree.length > 0) throw new Error("The OpenCode bridge requires a clean developer checkout");
   return { developerSha, ref, clean: workingTree.length === 0 };
 }
 
@@ -197,10 +198,17 @@ export class BridgeService {
   private readonly outbox: GitHubOutbox;
   private readonly control: GitHubControlLoop;
   private readonly sessionRuns = new Map<string, Promise<void>>();
+  private readonly controlStop = new AbortController();
+  private readonly controlStopped: Promise<void>;
+  private resolveControlStopped!: () => void;
+  private controlLaunched = false;
 
   constructor(config: BridgeConfig, signal: AbortSignal) {
     this.config = config;
     this.signal = signal;
+    this.controlStopped = new Promise((resolve) => {
+      this.resolveControlStopped = resolve;
+    });
     this.lock = new ServiceLock(config.stateFile);
     this.state = new BridgeState(config.stateFile);
     const manifest = Manifest.load(config.manifestFile);
@@ -282,6 +290,13 @@ export class BridgeService {
     });
   }
 
+  async drainControl(): Promise<void> {
+    this.state.setMeta("service.draining", "true");
+    this.controlStop.abort(new Error("Bridge control loop draining"));
+    if (!this.controlLaunched) return;
+    await this.controlStopped;
+  }
+
   private async publishEvent(event: PersistedOpenCodeEvent): Promise<void> {
     if (!event.taskId || !visibleEvent(event)) return;
     const issue = this.state.issueForTask(event.taskId);
@@ -351,6 +366,7 @@ export class BridgeService {
     this.state.setMeta("service.pid", String(process.pid));
     this.state.setMeta("service.started_at", String(Date.now()));
     this.state.setMeta("service.instance", this.config.instanceId);
+    this.state.setMeta("service.draining", "false");
     const heartbeat = setInterval(() => this.state.setMeta("service.heartbeat_at", String(Date.now())), 5_000);
     try {
       try {
@@ -373,16 +389,19 @@ export class BridgeService {
       this.executor.ptys.restore();
       for (const session of this.state.listTaskSessions()) this.startSessionRecovery(session.taskId);
       for (const session of this.state.listScoutSessions()) this.startScoutRecovery(session.requestId);
+      const control = this.control.run(
+        AbortSignal.any([this.signal, this.controlStop.signal]),
+        (commands) => this.executor.executeAll(commands),
+        (requests) => this.requests.executeAll(requests),
+      ).finally(() => this.resolveControlStopped());
+      this.controlLaunched = true;
       await Promise.all([
         this.recovery.run(this.signal),
-        this.control.run(
-          this.signal,
-          (commands) => this.executor.executeAll(commands),
-          (requests) => this.requests.executeAll(requests),
-        ),
+        control,
         this.runResponseDeliveries(),
       ]);
     } finally {
+      if (!this.controlLaunched) this.resolveControlStopped();
       clearInterval(heartbeat);
       this.state.setMeta("service.stopped_at", String(Date.now()));
       await Promise.allSettled(this.sessionRuns.values());
@@ -499,6 +518,7 @@ export function bridgeStatus(config: BridgeConfig): JsonValue {
       compatibility: compatibility ? { compatible: compatibility.compatible, running_version: compatibility.runningVersion, checked_at: compatibility.checkedAt } : null,
       pending_commands: state.listCommands(["accepted", "applying"]).length,
       pending_requests: state.listRequests(["accepted", "applying"]).length,
+      draining: state.getMeta("service.draining") === "true",
       pending_response_deliveries: state.pendingResponseDeliveries(100).length,
       scout_sessions: state.listScoutSessions().length,
       scout_runtime: {

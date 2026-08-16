@@ -71,6 +71,9 @@ try {
   assert(example.schema_version === 1 && example.policy?.pty_enabled === false && example.policy?.promotion_enabled === false, "Example config must default-deny PTY and promotion");
   assert(example.opencode?.scout_base_url && example.opencode.scout_base_url !== example.opencode.base_url, "Example config must use a distinct Scout endpoint");
   assert(!/-----BEGIN (?:[A-Z]+ )?PRIVATE KEY-----/.test(read("tools/opencode-bridge/config.example.json")), "Example config appears to contain a private key");
+  const bridgeConfig = read("tools/opencode-bridge/src/config.ts");
+  assert(bridgeConfig.includes("exactly one of scout_provider_api_key_file or scout_provider_oauth_file"), "Scout provider configuration must require exactly one credential mode");
+  assert(bridgeConfig.includes('only(document, ["openai"]') && bridgeConfig.includes("data/opencode/auth.json"), "Scout OAuth configuration must remain OpenAI-only at the isolated runtime auth path");
   const scout = read("tools/opencode-bridge/src/scout.ts");
   assert(scout.includes('allowedTools = new Set(["scout_read", "scout_glob", "scout_grep"])'), "Scout trusted read/search contract changed without review");
   assert(!scout.includes('"scout_read", "scout_glob", "scout_grep", "lsp"'), "Scout contract must not allow LSP");

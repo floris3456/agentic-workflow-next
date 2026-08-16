@@ -39,8 +39,11 @@ const config = {
     scoutPassword: "scout-smoke-password",
     scoutPasswordFile: join(temporary, "unused-scout"),
     scoutRuntimeRoot: join(temporary, "runtime"),
-    scoutProviderApiKey: "smoke-does-not-call-the-model",
-    scoutProviderApiKeyFile: join(temporary, "unused-provider"),
+    scoutProviderCredential: {
+      type: "api-key",
+      apiKey: "smoke-does-not-call-the-model",
+      file: join(temporary, "unused-provider"),
+    },
   },
 };
 

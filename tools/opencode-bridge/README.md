@@ -10,7 +10,7 @@ This package is the outbound-only local control plane between GitHub Issues and 
   repository and the bridge launches it on a distinct configured loopback port.
 - A private GitHub App installed only on intended repositories with Metadata read, Issues read/write, and Contents read. Webhooks are disabled.
 - A mode `0600` operator config, developer and Scout OpenCode password files,
-  Scout OpenAI API-key file, and GitHub App private key under a private directory
+  one Scout OpenAI credential file, and GitHub App private key under a private directory
   such as `~/.config/agentic-workflow/<instance>/`.
 - A non-root Linux operator. Unsupported platforms and root execution fail closed
   rather than weakening read-only runtime/config semantics.
@@ -38,10 +38,17 @@ OPENCODE_SERVER_PASSWORD="$(<~/.config/agentic-workflow/owner-repository/opencod
 opencode serve --hostname 127.0.0.1 --port 44123
 ```
 
-7. Add the mandatory `opencode.scout_base_url`, `scout_password_file`,
-   `scout_runtime_root`, and `scout_provider_api_key_file` settings shown in the
-   example. The runtime root must be absolute and outside `repository_root`; its
-   port must differ from the normal developer port.
+7. Add the mandatory `opencode.scout_base_url`, `scout_password_file`, and
+   `scout_runtime_root` settings plus exactly one Scout provider credential. The
+   example uses `scout_provider_api_key_file`. For ChatGPT subscription auth,
+   use `scout_provider_oauth_file` pointing exactly to the runtime root's
+   `data/opencode/auth.json`; that owner-only JSON may contain only one `openai`
+   OAuth entry with `type`, `access`, `refresh`, `expires`, and `accountId`. The
+   trusted operator setup must filter that entry from normal OpenCode auth rather
+   than expose the multi-provider auth file to Scout. Apply bootstrap preserves
+   the filtered credential while replacing the runtime. The runtime root must be
+   absolute and outside `repository_root`; its port must differ from the normal
+   developer port.
 8. Run `./scripts/bootstrap-opencode-bridge.sh --config <file>`. Apply mode installs
    exact locked `opencode-ai` and plugin `1.18.16` packages outside the repository,
    makes the trusted config/package/tool tree read-only, then launches a temporary
@@ -64,7 +71,16 @@ Inspect local status with `./scripts/opencode-bridge-status.sh --config <file>`.
 ./scripts/opencode-attach.sh --config ~/.config/agentic-workflow/opencode-bridge.json
 ```
 
-Core operation is portable foreground CLI behavior; no systemd dependency exists. Run one config/state/port/App installation mapping per repository so multiple projects can operate concurrently.
+Core operation remains portable foreground CLI behavior; no systemd dependency
+is required. On a Linux workstation, a systemd user unit may supervise the bridge
+and a second unit may run `scripts/watch-developer-sync.sh` with the private
+config path and bridge unit name. The outbound-only watcher polls every 5-10
+seconds, advances only a clean, behind-only `developer` checkout with
+`merge --ff-only`, runs apply and check bootstrap, and restarts the bridge only
+after its control loop drains. Dirty, ahead, diverged, uninspectable, or invalid
+states are left unchanged and reported under the Git-private bridge state
+directory. Run one config/state/port/App installation mapping per repository so
+multiple projects can operate concurrently.
 
 ## Durable status and ambiguous commands
 

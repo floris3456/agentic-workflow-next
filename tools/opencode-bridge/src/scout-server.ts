@@ -2,7 +2,7 @@ import { execFile, spawn, type ChildProcess } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
   chmodSync, cpSync, existsSync, lstatSync, mkdirSync, readFileSync, readdirSync,
-  realpathSync, renameSync, rmSync, statSync,
+  realpathSync, renameSync, rmSync, statSync, writeFileSync,
 } from "node:fs";
 import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import type { BridgeConfig } from "./config.js";
@@ -92,6 +92,15 @@ export async function installScoutRuntime(config: BridgeConfig): Promise<void> {
     HOME: process.env.HOME,
   });
   for (const name of ["home", "data", "cache", "state", "tmp"]) mkdirSync(join(temporary, name), { mode: 0o700 });
+  if (config.opencode.scoutProviderCredential.type === "oauth") {
+    const authDirectory = join(temporary, "data", "opencode");
+    mkdirSync(authDirectory, { mode: 0o700 });
+    writeFileSync(
+      join(authDirectory, "auth.json"),
+      `${JSON.stringify({ openai: config.opencode.scoutProviderCredential.auth })}\n`,
+      { mode: 0o600 },
+    );
+  }
   lockReadOnly(configDirectory);
   removeInstalled(root);
   renameSync(temporary, root);
@@ -136,7 +145,7 @@ function serverAddress(baseUrl: string): { hostname: string; port: string } {
 function sterileEnvironment(config: BridgeConfig, snapshots: string): NodeJS.ProcessEnv {
   const root = realpathSync(config.opencode.scoutRuntimeRoot);
   const configDirectory = join(root, "config");
-  return {
+  const environment: NodeJS.ProcessEnv = {
     HOME: join(root, "home"),
     XDG_CONFIG_HOME: join(root, "home", ".config"),
     XDG_DATA_HOME: join(root, "data"),
@@ -147,7 +156,6 @@ function sterileEnvironment(config: BridgeConfig, snapshots: string): NodeJS.Pro
     LANG: "C.UTF-8",
     LC_ALL: "C.UTF-8",
     SHELL: "/bin/false",
-    OPENAI_API_KEY: config.opencode.scoutProviderApiKey,
     OPENCODE_SERVER_USERNAME: config.opencode.username,
     OPENCODE_SERVER_PASSWORD: config.opencode.scoutPassword,
     OPENCODE_CONFIG_DIR: configDirectory,
@@ -161,6 +169,10 @@ function sterileEnvironment(config: BridgeConfig, snapshots: string): NodeJS.Pro
     OPENCODE_DISABLE_PRUNE: "1",
     SCOUT_SNAPSHOT_PARENT: realpathSync(snapshots),
   };
+  if (config.opencode.scoutProviderCredential.type === "api-key") {
+    environment.OPENAI_API_KEY = config.opencode.scoutProviderCredential.apiKey;
+  }
+  return environment;
 }
 
 export function scoutClient(config: BridgeConfig, manifest: Manifest, directory: string): OpenCodeClient {

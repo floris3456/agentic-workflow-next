@@ -175,7 +175,7 @@ for (const file of [
   "scripts/bootstrap-agent-workflow.sh", "scripts/recover-remote-sync.sh",
   "scripts/promote-developer-to-main.sh", "scripts/initialize-template-branches.sh",
   "scripts/bootstrap-opencode-bridge.sh", "scripts/opencode-bridge-status.sh",
-  "scripts/opencode-attach.sh", "scripts/validate-opencode-bridge.sh",
+  "scripts/opencode-attach.sh", "scripts/watch-developer-sync.sh", "scripts/validate-opencode-bridge.sh",
   "scripts/validate-web-orchestrator-integration.mjs", "scripts/validate-repository.sh",
 ]) {
   assert(exists(file), `Missing required executable: ${file}`);

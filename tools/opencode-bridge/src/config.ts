@@ -19,8 +19,9 @@ export interface BridgeConfig {
     scoutPassword: string;
     scoutPasswordFile: string;
     scoutRuntimeRoot: string;
-    scoutProviderApiKey: string;
-    scoutProviderApiKeyFile: string;
+    scoutProviderCredential:
+      | { type: "api-key"; apiKey: string; file: string }
+      | { type: "oauth"; auth: OpenAiOAuthCredential; file: string };
   };
   github: {
     appId: string;
@@ -45,6 +46,14 @@ export interface BridgeConfig {
     resolveSecret: (reference: string) => string;
   };
   privateRoots: string[];
+}
+
+export interface OpenAiOAuthCredential {
+  type: "oauth";
+  access: string;
+  refresh: string;
+  expires: number;
+  accountId: string;
 }
 
 function only(record: Record<string, unknown>, allowed: string[], label: string): void {
@@ -89,6 +98,19 @@ function privateText(path: string, label: string, maximum: number): string {
   const trimmed = value.replace(/[\r\n]+$/, "");
   if (trimmed.length === 0) throw new Error(`${label} is empty`);
   return trimmed;
+}
+
+function openAiOAuthCredential(path: string): OpenAiOAuthCredential {
+  const document = asRecord(JSON.parse(privateText(path, "Scout provider OAuth file", 128_000)), "Scout provider OAuth file");
+  only(document, ["openai"], "Scout provider OAuth file");
+  const credential = asRecord(document.openai, "Scout provider OAuth credential");
+  only(credential, ["type", "access", "refresh", "expires", "accountId"], "Scout provider OAuth credential");
+  if (credential.type !== "oauth") throw new TypeError("Scout provider OAuth credential.type must be oauth");
+  const access = requiredString(credential, "access", "Scout provider OAuth credential");
+  const refresh = requiredString(credential, "refresh", "Scout provider OAuth credential");
+  const accountId = requiredString(credential, "accountId", "Scout provider OAuth credential");
+  const expires = positiveInteger(credential, "expires");
+  return { type: "oauth", access, refresh, expires, accountId };
 }
 
 function absoluteRepository(path: string): string {
@@ -148,15 +170,28 @@ export function loadBridgeConfig(inputPath = defaultConfigPath()): BridgeConfig 
   stateOutsideTrackedTree(repositoryRoot, stateFile);
 
   const opencode = asRecord(root.opencode, "opencode configuration");
-  only(opencode, ["base_url", "scout_base_url", "username", "password_file", "scout_password_file", "scout_runtime_root", "scout_provider_api_key_file"], "opencode configuration");
+  only(opencode, ["base_url", "scout_base_url", "username", "password_file", "scout_password_file", "scout_runtime_root", "scout_provider_api_key_file", "scout_provider_oauth_file"], "opencode configuration");
   const passwordFile = localPath(requiredString(opencode, "password_file", "opencode configuration"), base);
   const password = privateText(passwordFile, "OpenCode password file", 16_384);
   const scoutPasswordFile = localPath(requiredString(opencode, "scout_password_file", "opencode configuration"), base);
   const scoutPassword = privateText(scoutPasswordFile, "Scout OpenCode password file", 16_384);
-  const scoutProviderApiKeyFile = localPath(requiredString(opencode, "scout_provider_api_key_file", "opencode configuration"), base);
-  const scoutProviderApiKey = privateText(scoutProviderApiKeyFile, "Scout provider API key file", 16_384);
   const scoutRuntimeRoot = localPath(requiredString(opencode, "scout_runtime_root", "opencode configuration"), base);
   runtimeOutsideRepository(repositoryRoot, scoutRuntimeRoot);
+  const apiKeySetting = opencode.scout_provider_api_key_file;
+  const oauthSetting = opencode.scout_provider_oauth_file;
+  if ((apiKeySetting === undefined) === (oauthSetting === undefined)) {
+    throw new Error("opencode requires exactly one of scout_provider_api_key_file or scout_provider_oauth_file");
+  }
+  let scoutProviderCredential: BridgeConfig["opencode"]["scoutProviderCredential"];
+  if (apiKeySetting !== undefined) {
+    const file = localPath(requiredString(opencode, "scout_provider_api_key_file", "opencode configuration"), base);
+    scoutProviderCredential = { type: "api-key", apiKey: privateText(file, "Scout provider API key file", 16_384), file };
+  } else {
+    const file = localPath(requiredString(opencode, "scout_provider_oauth_file", "opencode configuration"), base);
+    const expected = join(scoutRuntimeRoot, "data", "opencode", "auth.json");
+    if (file !== expected) throw new Error("opencode.scout_provider_oauth_file must be the Scout runtime's isolated data/opencode/auth.json");
+    scoutProviderCredential = { type: "oauth", auth: openAiOAuthCredential(file), file };
+  }
   const baseUrl = loopbackOrigin(requiredString(opencode, "base_url", "opencode configuration"), "opencode.base_url");
   const scoutBaseUrl = loopbackOrigin(requiredString(opencode, "scout_base_url", "opencode configuration"), "opencode.scout_base_url");
   if (baseUrl === scoutBaseUrl) throw new Error("opencode.scout_base_url must be distinct from opencode.base_url");
@@ -215,8 +250,7 @@ export function loadBridgeConfig(inputPath = defaultConfigPath()): BridgeConfig 
       scoutPassword,
       scoutPasswordFile,
       scoutRuntimeRoot,
-      scoutProviderApiKey,
-      scoutProviderApiKeyFile,
+      scoutProviderCredential,
     },
     github: {
       appId,

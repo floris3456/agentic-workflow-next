@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { chmodSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import test from "node:test";
 import { loadBridgeConfig } from "../src/config.js";
 import { bridgeStatus } from "../src/service.js";
@@ -66,6 +66,7 @@ test("configuration loads local secrets without exposing them in tracked setting
   assert.equal(config.opencode.password, "local-password");
   assert.equal(config.opencode.scoutPassword, "scout-password");
   assert.equal(config.opencode.scoutBaseUrl, "http://127.0.0.1:44124");
+  assert.equal(config.opencode.scoutProviderCredential.type, "api-key");
   assert.equal(config.github.privateKey.includes("PRIVATE KEY"), true);
   assert.equal(config.github.apiBaseUrl, "https://api.github.com/");
   assert.equal(config.github.gitHost, "github.com");
@@ -73,6 +74,32 @@ test("configuration loads local secrets without exposing them in tracked setting
   assert.equal(config.policy.resolveSecret("provider"), "provider-value");
   assert.throws(() => config.policy.resolveSecret("missing"), /Unknown local secret_ref/);
   assert.equal(config.manifestFile, resolve(join(config.repositoryRoot, "contracts", "opencode-bridge", "operation-manifest.json")));
+});
+
+test("configuration accepts one isolated OpenAI OAuth credential without other providers", (context) => {
+  const { configFile, document } = setup(context);
+  const opencode = document.opencode as Record<string, unknown>;
+  const runtime = String(opencode.scout_runtime_root);
+  const oauthFile = join(runtime, "data", "opencode", "auth.json");
+  mkdirSync(dirname(oauthFile), { recursive: true, mode: 0o700 });
+  writeFileSync(oauthFile, `${JSON.stringify({
+    openai: { type: "oauth", access: "access-token", refresh: "refresh-token", expires: 2_000_000_000_000, accountId: "account-id" },
+  })}\n`, { mode: 0o600 });
+  delete opencode.scout_provider_api_key_file;
+  opencode.scout_provider_oauth_file = oauthFile;
+  writeFileSync(configFile, `${JSON.stringify(document)}\n`, { mode: 0o600 });
+
+  const config = loadBridgeConfig(configFile);
+  assert.deepEqual(config.opencode.scoutProviderCredential, {
+    type: "oauth",
+    file: oauthFile,
+    auth: { type: "oauth", access: "access-token", refresh: "refresh-token", expires: 2_000_000_000_000, accountId: "account-id" },
+  });
+
+  opencode.scout_provider_api_key_file = join(dirname(oauthFile), "api-key");
+  writeFileSync(String(opencode.scout_provider_api_key_file), "api-key\n", { mode: 0o600 });
+  writeFileSync(configFile, `${JSON.stringify(document)}\n`, { mode: 0o600 });
+  assert.throws(() => loadBridgeConfig(configFile), /exactly one/);
 });
 
 test("configuration requires distinct explicit developer and Scout loopback origins", (context) => {
