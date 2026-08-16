@@ -19,7 +19,7 @@ Run bounded steering/continuation acceptance task ADAPTER-STEER-20260816-1402-A7
 Apply the explicit continuation adjustment and complete the bounded steering acceptance without archiving the task record.
 
 ## Current position
-The first-cycle handoff snapshot was pushed at `16a33f464a6256f8bb1f849382b97074c4222e6d`. The continuation record was pushed at `d30427b7ca7eb1ec181ba3db454c2aa794f7ff5d`. The result now contains the explicitly requested `adjustment: applied` marker, and this update records the applied result before the implementation commit.
+The first-cycle handoff snapshot was pushed at `16a33f464a6256f8bb1f849382b97074c4222e6d`. The continuation record was pushed at `d30427b7ca7eb1ec181ba3db454c2aa794f7ff5d`. The applied result and this progress update were pushed in implementation commit `acfef4c148ec6f07e3ece25bce207ade6d4ea960`. This update is the dedicated handoff snapshot boundary to push next; the task record remains under `docs/work/current/` as directed.
 
 ## Observed
 - Current branch is `developer`.
@@ -28,6 +28,7 @@ The first-cycle handoff snapshot was pushed at `16a33f464a6256f8bb1f849382b97074
 - `./scripts/bootstrap-agent-workflow.sh --check` reported that tracked Git hooks are active.
 - `testing/ADAPTER-STEER-20260816-1402-A78D9D/result.md` contains the three requested lines with `adjustment: applied` and a trailing newline.
 - The prior handoff snapshot `16a33f464a6256f8bb1f849382b97074c4222e6d` is synchronized on `origin/developer`.
+- The continuation record commit `d30427b7ca7eb1ec181ba3db454c2aa794f7ff5d` and implementation commit `acfef4c148ec6f07e3ece25bce207ade6d4ea960` are synchronized on `origin/developer`.
 
 ## Interpretation
 The current developer state is synchronized, and the explicit continuation instruction resolves the prior adjustment decision. The same task record now reflects the requested marker change without archiving or unrelated changes.
@@ -51,13 +52,11 @@ The first-cycle decision boundary is superseded by the explicit continuation ins
 None; the explicit continuation instruction supplies the required adjustment decision.
 
 ## Remaining work
-- Push the implementation commit containing the applied result and this progress update.
-- Update this task-progress record with the pushed implementation state and dedicated handoff boundary.
 - Push the dedicated handoff snapshot.
 - Return the canonical six fields with `Status: completed` and the exact pushed handoff SHA.
 
 ## Next action
-Commit and push the applied result plus this progress update, then create and push the dedicated handoff snapshot.
+Push this dedicated handoff snapshot, then return the canonical six fields without archiving the task record.
 
 ## Relevant durable records
 This task-progress record and `testing/ADAPTER-STEER-20260816-1402-A78D9D/result.md`.
