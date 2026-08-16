@@ -6,7 +6,7 @@
 
 ## Status
 
-In progress.
+Ready for handoff.
 
 ## Task-start developer SHA
 
@@ -26,7 +26,7 @@ Implement the two bounded bridge lifecycle corrections and their focused regress
 
 ## Current position
 
-Implementation and focused regressions are present in the working tree. The developer canonical proof is integrated into `runSession` and `recoverOnce`; Scout enrollment is wired after successful mapping/prompting and retains startup enumeration for historical sessions. Durable records now describe the corrected behavior. Required validation has passed. The implementation has not yet been committed or pushed.
+The implementation and focused regressions are committed and pushed at developer `9c1ae8a445cbf53db7af3905aefd471470c6cac6`. The developer canonical proof is integrated into `runSession` and `recoverOnce`; Scout enrollment is wired after successful mapping/prompting and retains startup enumeration for historical sessions. Durable records describe the corrected behavior. This record is being prepared for the dedicated handoff snapshot.
 
 ## Observed
 
@@ -57,19 +57,20 @@ None.
 - `node scripts/validate-agent-system.mjs`: passed.
 - `./scripts/validate-opencode-bridge.sh`: contracts/package, bridge 99/99, and template-branch 8/8 passed.
 - `./scripts/validate-repository.sh`: pre-implementation, agent-system, research/evidence, hooks, bridge 99/99, and template-branch 8/8 passed.
-- `git diff --check`: passed before the final source/record status update; rerun before commit.
+- `git diff --check`: passed immediately before the implementation commit.
+- `./scripts/bootstrap-agent-workflow.sh --check`: tracked hooks active immediately before commit.
 
 ## Blockers / required decisions
 
-None observed. Required repository-wide validation and synchronization remain.
+None observed.
 
 ## Remaining work
 
-- Run all requested checks, push each commit, and create the task-record-only handoff snapshot.
+No implementation work remains in this cycle. The dedicated task-record-only handoff snapshot still must be created and pushed.
 
 ## Next action
 
-Rerun `git diff --check`, inspect the final status, then commit and immediately push the implementation plus current records.
+Create and immediately push the dedicated task-record-only handoff snapshot; do not edit after its successful push in this cycle.
 
 ## Relevant durable records
 
