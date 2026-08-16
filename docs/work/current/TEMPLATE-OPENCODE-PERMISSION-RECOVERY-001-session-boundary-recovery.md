@@ -6,7 +6,7 @@ TEMPLATE-OPENCODE-PERMISSION-RECOVERY-001
 
 ## Status
 
-Source work complete; change package pending
+Change package complete; closure reconciliation pending
 
 ## Task-start template-development SHA
 
@@ -26,7 +26,7 @@ Finish and independently review the developer-side permission boundary and bound
 
 ## Current position
 
-The existing mapped developer route was reconciled, preserved, and absorbed without a replacement session or start replay. Its correction is pushed at `c857762c327ff9f86bd0f3afd055116ba650f23b` with handoff `80ad63319cd746d6205d67781b25e3c327b230bc`. The clean synchronized runtime passed focused real same-session and control-loop acceptance. The separate minimal web-orchestration final-response gate is pushed at `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17` and passes its exact package validation. Source ranges are remotely verified; deterministic packaging and ledger handoff remain.
+The existing mapped developer route was reconciled, preserved, and absorbed without a replacement session or start replay. Its correction is pushed at `c857762c327ff9f86bd0f3afd055116ba650f23b` with handoff `80ad63319cd746d6205d67781b25e3c327b230bc`. The clean synchronized runtime passed focused real same-session and control-loop acceptance. The separate minimal web-orchestration final-response gate is pushed at `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17` and passes its exact package validation. The exact reviewed ranges are captured in the provenance-verified change package; final issue closure, runtime readback, and ledger handoff remain.
 
 ## Source ranges
 
@@ -119,6 +119,14 @@ The initial immediate-idle recovery design was rejected during independent revie
   package validator passed and 16/16 Node tests passed.
 - Exact remote refs independently read back for developer, web-orchestration, and
   unchanged main.
+- Provenance schema-2 package validation passed for developer range
+  `29d59fb15bbdd31b59205c691deb4ddd167ade78..80ad63319cd746d6205d67781b25e3c327b230bc`
+  (18 paths) and web range
+  `1f53ce62fba87ba9677b86d3837a008717aa4c24..7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`
+  (2 paths), with package digest
+  `2a5cb0ef45c7af4658bb1c62817e1fa8589625299c533213cda44cf41f51c3a9`.
+- Full template-development validation and `git diff --check`: passed after
+  package generation.
 
 ## Blockers / required decisions
 
@@ -126,14 +134,14 @@ None.
 
 ## Remaining work
 
-- Generate and validate the deterministic change package for the exact reviewed
-  developer and web-orchestration ranges.
-- Close issue #44 after package/ledger reconciliation.
+- Close issue #44 after this package checkpoint is pushed.
+- Recheck exact remote refs and clean local runtime after closure.
 - Push the dedicated template-development handoff snapshot.
 
 ## Next action
 
-Generate the deterministic exact-range change package.
+Push the exact-range package checkpoint, then close and independently reconcile
+issue #44.
 
 ## Relevant durable records
 
@@ -142,6 +150,7 @@ Generate the deterministic exact-range change package.
 - `tools/opencode-bridge/README.md`
 - `tools/opencode-bridge/AS-BUILT.md`
 - `docs/architecture/deviations.md`
+- `changes/TEMPLATE-OPENCODE-PERMISSION-RECOVERY-001/manifest.json`
 
 ## Last handoff commit
 

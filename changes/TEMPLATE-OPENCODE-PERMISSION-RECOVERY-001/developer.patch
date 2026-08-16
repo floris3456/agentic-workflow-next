@@ -1,0 +1,1395 @@
+diff --git a/.opencode/agents/small-developer.md b/.opencode/agents/small-developer.md
+index d0b5d15b707ba8d8a2814eb49beb3a25e2e6fe7f..e8a418d9f063f449ef950be134b2c9041531a7f2 100644
+--- a/.opencode/agents/small-developer.md
++++ b/.opencode/agents/small-developer.md
+@@ -18,6 +18,15 @@ When the brief requires a human answer, use OpenCode's structured question tool
+ so the bridge can publish a task-correlated alias. Do not substitute ordinary
+ assistant prose for a required question-tool interaction.
+ 
++Use repository-relative paths and the configured current working directory for
++normal filesystem and shell work. When a tool requires an absolute path, copy
++the exact current `cwd`/repository root from live tool context; never reconstruct,
++abbreviate, or retype the checkout basename. Do not walk parent or sibling directories
++to rediscover the repository, synthesize an absolute path, or widen the task when a
++path is missing; stop and report the missing path instead. An
++`external_directory` request is outside the configured repository scope and
++must remain visible for approval rather than being broadly allowed.
++
+ Every commit on `developer` must be pushed immediately. Before returning control, create and push the required handoff snapshot commit. A successful snapshot push ends the current working cycle: do not edit, run another tool, update the snapshot with its own SHA, or create another commit before returning the six fields. A failed push is the only exception; then stop implementation and report synchronization failure without claiming a remote handoff.
+ 
+ An exact-SHA promotion explicitly delegated after human approval is a no-edit operation, not a normal task. Do not create or update task-progress or create a handoff snapshot before promotion, because doing so would invalidate the approved SHA.
+diff --git a/contracts/opencode-bridge/protocol.md b/contracts/opencode-bridge/protocol.md
+index 29b1d9539f625cfeb000408a787290256b26506c..4a9485fafec00a0e5ee40759c38c539eeb636ef9 100644
+--- a/contracts/opencode-bridge/protocol.md
++++ b/contracts/opencode-bridge/protocol.md
+@@ -169,6 +169,31 @@ history, project sync history, repository/workspace legacy live SSE, this focuse
+ interaction recovery, the Scout lifecycle fallback, and deduplication recover
+ local state without claiming unsupported SSE `Last-Event-ID` replay.
+ 
++After a successful `permission.reply` or `question.reply`, the bridge records
++the resolved interaction in the private state database. It then validates both
++pending interaction lists, the exact mapped developer session status, and the
++live session activity timestamp. An initial non-progressing observation waits a
++bounded one-second grace before all evidence is read again. Any `busy`/`retry`
++status or changed activity timestamp is clean continuation; only unchanged live
++session activity with no outstanding interaction can reach the durable claim for
++one fixed same-session continuation nudge using the existing agent and configured
++directory. Missing or malformed live session evidence fails closed. The public
++command result includes `continuation_recovery.outcome`:
++`recovered` means the nudge was sent, `clean` means the session was already
++progressing, `blocked` means safety proof or delivery was unavailable, and
++`already-recovered` means the persisted episode was already sent. A claim is
++recorded before the request, so an uncertain request is never replayed. The
++bridge never calls `session.create`, `start`, or route changes on this path.
++Outstanding interactions, missing mappings/status, malformed lists, and API
++errors fail closed with no nudge.
++
++The normal developer config leaves in-worktree read/edit/shell defaults intact
++and sets `external_directory` to `ask`. It does not add a broad external-path
++allow rule. Genuine outside-worktree access therefore remains visible for local
++OpenCode/orchestrator approval; repository-relative guidance prevents parent or
++sibling path walks from turning a missing in-scope path into an implicit scope
++change.
++
+ For a genuinely stuck `applying` command, issue one `command.status` request and
+ compare its applying age with the published service heartbeat. Do not poll
+ indefinitely and do not retry the mutation. If both command state and a current
+diff --git a/docs/architecture/AS-BUILT.md b/docs/architecture/AS-BUILT.md
+index 04025efe41a0c9b7e27ecbfe149aa0eb7e652cbb..7b73cc4c017627133eade7309641653cfd23dfaa 100644
+--- a/docs/architecture/AS-BUILT.md
++++ b/docs/architecture/AS-BUILT.md
+@@ -22,10 +22,10 @@ This repository is a reusable workflow template rather than a product implementa
+   installation source, not private live Project state.
+ - Ordinary web-orchestrator writes are limited to public-safe runtime continuity under `web-orchestration-only/task-context/**`; explicitly commissioned template maintenance instead uses `docs/work/current/**` on `template-development`. Project instructions, skills, templates, and validation remain read-only unless the human commissions template or agent-system maintenance.
+ - The web finalization reviewer requires remote Git proof that the current task path existed and the same-name archive target did not at substantive approval, then that finalization removed the current path and retained the identical Git blob under `docs/work/archive/`. The orchestration branch validator pins bridge protocol `agentic-bridge/1` and checks the exact web-owned Source/static-package inventory, ordinary and template-maintenance continuity routing, trigger/mode separation, installation/upgrade consistency, executable request/command examples, six-field handoff shape, and a small canonical safety core. Its Node test suite uses focused negative drift fixtures instead of treating editorial wording or scenario counts as protocol.
+-- `small-developer` is the default Luna route; `large-developer` is the exceptional Sol route selected by the web orchestrator. Both use the explicit six-field status/exact-pushed-SHA response contract and explicitly allow structured OpenCode questions so the bridge can publish a task-owned alias for `question.reply`; plain assistant text is not treated as an interaction event.
++- `small-developer` is the default Luna route; `large-developer` is the exceptional Sol route selected by the web orchestrator. Both use the explicit six-field status/exact-pushed-SHA response contract and explicitly allow structured OpenCode questions so the bridge can publish a task-owned alias for `question.reply`; plain assistant text is not treated as an interaction event. Small-developer normal work is guided through repository-relative paths in the configured working directory; a required absolute path must copy the exact live `cwd`/root rather than retype the checkout basename, and parent/sibling rediscovery or scope widening after missing paths is prohibited.
+ - No ref-owned `repository-scout` agent is tracked. Concurrent Scout requests use a bridge-installed external OpenCode `1.18.16` runtime on a distinct authenticated loopback endpoint. Canonical `origin/developer` snapshots use Git object plumbing without checkout/worktree, reject gitlinks, strip regular-file write/execute bits, preserve symlinks as inert evidence, and fully re-hash reuse. The Luna/high prompt and only allowed tools (`scout_read`, `scout_glob`, `scout_grep`) are bridge-owned; sterile launch, read-only config, realpath containment, active probes, and no normal-server fallback fail closed independently. LSP is excluded.
+ - Local agents deny subagent/task launches and do not perform orchestration, acceptance, or independent review.
+-- `tools/opencode-bridge/` implements pinned OpenCode `1.18.16` HTTP/SSE/PTY transports, durable recovery/state, GitHub App polling/outbox, strict command and sequence-free recovery/Scout protocols, public projection, developer/Scout response delivery, external Scout runtime installation/launch/probe, exact-tree snapshots, default-deny policy, and foreground CLI. It enforces ledger-derived contiguous sequence, one nonterminal mutation per task, ambiguity freeze with read recovery, durable rejections, task-scoped aliases, atomic terminal-event/cursor/delivery persistence, separate endpoint recovery, restart-recomputed status, and no replay of uncertain work. Repository bootstrap authenticates exact Git host plus owner/repository across supported HTTPS/SSH forms; public/Enterprise API hosts derive unambiguously and custom API layouts require explicit `github.git_host`. `contracts/opencode-bridge/` records its exact 188-operation compatibility boundary and public protocol.
++- `tools/opencode-bridge/` implements pinned OpenCode `1.18.16` HTTP/SSE/PTY transports, durable recovery/state, GitHub App polling/outbox, strict command and sequence-free recovery/Scout protocols, public projection, developer/Scout response delivery, external Scout runtime installation/launch/probe, exact-tree snapshots, default-deny policy, and foreground CLI. It enforces ledger-derived contiguous sequence, one nonterminal mutation per task, ambiguity freeze with read recovery, durable rejections, task-scoped aliases, atomic terminal-event/cursor/delivery persistence, persisted one-shot post-interaction continuation claims reached only after a bounded live-activity recheck, separate endpoint recovery, restart-recomputed status, and no replay of uncertain work. The developer config retains in-worktree defaults and keeps `external_directory` at approval (`ask`) rather than broadly allowing outside paths. Repository bootstrap authenticates exact Git host plus owner/repository across supported HTTPS/SSH forms; public/Enterprise API hosts derive unambiguously and custom API layouts require explicit `github.git_host`. `contracts/opencode-bridge/` records its exact 188-operation compatibility boundary and public protocol.
+ - The bridge keeps normal developer OpenCode loopback-only and separately attachable by the normal TUI; its dedicated Scout process/port/root/auth do not alter normal developer configuration or availability. Hardened Scout hosts are currently non-root Linux only. No inbound webhook, tunnel, custom ChatGPT MCP, self-hosted runner, or mandatory OS service is required.
+ - `scripts/initialize-template-branches.sh` repairs only provably fresh unrelated generated `main`/`developer` roots with matching metadata/tree shape, records a local old-root backup, and uses a hook-validated tree-preserving `force-with-lease`; valid ancestry no-ops and established ambiguity is refused.
+ - Tracked hooks enforce checks against direct `main` changes, branch deletion, non-fast-forward pushes, and continued work after failed synchronization within a configured local checkout. They are advisory client-side defense in depth rather than a server-side boundary; operators should also restrict `main` through a GitHub ruleset.
+diff --git a/docs/architecture/design-record.md b/docs/architecture/design-record.md
+index 721cf297635d3096154203acce133eb268f5727b..1aa4aac923c4e761e3fffec7f6e9f04d9ab7be65 100644
+--- a/docs/architecture/design-record.md
++++ b/docs/architecture/design-record.md
+@@ -69,10 +69,17 @@ installed runtime or active contract probe is unavailable.
+ When a mapped developer session idles or errors, the bridge atomically persists the event/cursor/session-state/delivery boundary, transports the structurally latest assistant message through the existing public-safety projection to the bound issue, and retains it for `task.status` recovery. The bridge does not interpret or semantically validate that response. The web orchestrator correlates it to the task, checks its explicit developer status/handoff information, and uses exact remote GitHub evidence to decide whether review can begin.
+ 
+ Canonical reconciliation is focused on recoverable developer evidence: pending
+-permission and question lists restore mapped interaction events. Historical
+-Scout recovery uses only the dedicated endpoint and a revalidated exact-tree
+-snapshot. Historical worktree mappings remain state-visible but are rejected and
+-never contacted. The bridge does not infer workflow meaning.
++permission and question lists restore mapped interaction events. After a reply,
++the bridge persists the interaction episode, proves both lists are clear, and
++reads the mapped developer session's live status and activity timestamp. It then
++waits a bounded one second and repeats that proof. A `busy`/`retry` observation or
++changed activity timestamp yields clean without a nudge; only stable live
++non-progress with no interactions can reach one fail-closed, same-session
++continuation recovery.
++Historical Scout recovery uses only the dedicated endpoint and a revalidated
++exact-tree snapshot. Historical worktree mappings remain state-visible but are
++rejected and never contacted.
++The bridge does not infer workflow meaning.
+ 
+ Scout requests retain the sequence-free lane, exact request shape, concurrent
+ admission, durable status, and no-replay behavior. The bridge fetches canonical
+diff --git a/docs/architecture/opencode-bridge.md b/docs/architecture/opencode-bridge.md
+index 903854b392b6e24da3f4c0af334851b5304624d1..c18e053a25eb5442fb7bc8f14919003e088347a9 100644
+--- a/docs/architecture/opencode-bridge.md
++++ b/docs/architecture/opencode-bridge.md
+@@ -67,11 +67,17 @@ The GitHub client serially polls open labeled issues and their comments with per
+ 
+ ## Recovery and projection
+ 
+-Developer OpenCode events are committed before callbacks. Recovery combines legacy repository SSE, per-session durable v2 history/SSE, project sync history, event-ID deduplication, durable aggregate cursors, and canonical pending permission/question lists. Pending mapped interactions receive stable synthetic events and are re-presented to the idempotent publication path until their outbox entry exists. Scout recovery gets a per-snapshot client for the dedicated endpoint only after full snapshot revalidation. Historical `scout-worktrees` mappings remain visible to status but are rejected and never contacted. It does not claim standard SSE `Last-Event-ID`; an upstream transient event can still be lost after complete outage when it is neither durable nor present in a pending canonical list.
++Developer OpenCode events are committed before callbacks. Recovery combines legacy repository SSE, per-session durable v2 history/SSE, project sync history, event-ID deduplication, durable aggregate cursors, and canonical pending permission/question lists. Pending mapped interactions receive stable synthetic events and are re-presented to the idempotent publication path until their outbox entry exists. After a reply, each mapped interaction is durably resolved; the bridge proves both pending lists plus the exact developer session's live status and activity timestamp, then waits a bounded one second and repeats that proof for an initially non-progressing session. A `busy`/`retry` observation or changed activity timestamp returns clean without a nudge; only unchanged live non-progress with no interactions can reach the at-most-one same-session continuation claim. The claim precedes delivery, so uncertain delivery is blocked and never replayed. Scout recovery gets a per-snapshot client for the dedicated endpoint only after full snapshot revalidation. Historical `scout-worktrees` mappings remain visible to status but are rejected and never contacted. It does not claim standard SSE `Last-Event-ID`; an upstream transient event can still be lost after complete outage when it is neither durable nor present in a pending canonical list.
+ 
+ Raw events/results remain local. The public projection maps session/PTY/permission/question/message/workspace/event IDs, including embedded text and object-key occurrences, plus opaque semantic project IDs to globally unique durable aliases; every task-bound kind, including workspace, has per-task storage and cannot cross task ownership. For recognized OpenCode message parts it publishes only text parts and omits reasoning, tool, step, and unknown part classes. Provider metadata and reasoning/encrypted-content fields remain local. Projection also redacts sensitive keys and token-like text, replaces private filesystem paths, neutralizes Markdown mentions/HTML/fences, and bounds depth, fields, strings, arrays, and total output. Generic requests accept only well-shaped path/query/wildcard/body transport fields, cannot override local directory/workspace/location routing, and reject raw private IDs, absolute paths, and literal secret-like values. Local-secret operations use explicit `secret_ref` files and publish only a safe local-operator action; upstream failure detail remains local. Configured repository identity separately authenticates the exact Git host and owner/repository: public GitHub and Enterprise `/api/v3` derive unambiguous hosts, custom API layouts require explicit `github.git_host`, and HTTPS/SSH origin parsing rejects userinfo, suffix hosts, encoded or extra path segments, and unsupported syntax.
+ 
+-Mapped developer `session.idle` and `session.error` events atomically commit the event, durable cursor, session state, and pending delivery before any callback. The bridge applies the existing public projection to the latest assistant message, stores the task-correlated projected response, and queues it to the bound issue; failures remain retryable. It performs only structural latest-message selection and transport. The web orchestrator, not the bridge, interprets response status and decides whether direct remote review can begin.
++Mapped developer `session.idle` and `session.error` events atomically commit the event, durable cursor, session state, and pending delivery before any callback. The bridge applies the existing public projection to the latest assistant message, stores the task-correlated projected response, and queues it to the bound issue; failures remain retryable. It performs only structural latest-message selection and transport. Reply commands publish a public-safe continuation outcome so clean and recovered interaction completion remain distinguishable. The web orchestrator, not the bridge, interprets response status and decides whether direct remote review can begin.
++
++The normal developer OpenCode configuration relies on the pinned server's
++current-working-directory defaults for contained work and sets
++`external_directory` to `ask`, without a broad allow rule. Small-developer
++guidance requires repository-relative paths and forbids parent/sibling walks or
++scope widening when a path is absent.
+ 
+ Mapped Scout state and projected responses retain task, request, and exact-ref
+ correlation. Terminal recovery and response retrieval use only the dedicated
+diff --git a/docs/work/current/TEMPLATE-OPENCODE-PERMISSION-RECOVERY-001-opencode-permission-recovery.md b/docs/work/current/TEMPLATE-OPENCODE-PERMISSION-RECOVERY-001-opencode-permission-recovery.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..491c2814756d2265dc987d2772b2ec617923af49
+--- /dev/null
++++ b/docs/work/current/TEMPLATE-OPENCODE-PERMISSION-RECOVERY-001-opencode-permission-recovery.md
+@@ -0,0 +1,177 @@
++# Task progress
++
++## Task ID
++TEMPLATE-OPENCODE-PERMISSION-RECOVERY-001
++
++## Status
++Completed
++
++## Task-start developer SHA
++29d59fb15bbdd31b59205c691deb4ddd167ade78
++
++## Review-base developer SHA
++29d59fb15bbdd31b59205c691deb4ddd167ade78
++
++## Original task brief
++Implement the developer-side source work for TEMPLATE-OPENCODE-PERMISSION-RECOVERY-001 from exact guarded developer SHA 29d59fb15bbdd31b59205c691deb4ddd167ade78. Follow root AGENTS.md and all triggered repository skills. Investigate repeat-canary run-03 as evidence, then use the pinned OpenCode 1.18.16 configuration/permission contract rather than guessing syntax. Required outcomes: (1) normal filesystem/shell work inside the exact configured developer repository root is pre-authorized and should not surface unnecessary external_directory approvals; (2) genuine access outside that exact worktree remains approval-gated and visible to the orchestrator, including bridge/local-runtime maintenance when explicitly needed; broad parent-directory access must not be silently allowed; (3) strengthen the small-developer instructions so repository tasks do not walk parent directories to rediscover the repository and do not widen scope when a path is missing; (4) after permission.reply or question.reply, add bounded automatic same-session continuation recovery when the mapped live developer session has no outstanding interactions and remains non-progressing: at most one idempotent continuation nudge per resolved-interaction episode, never replay start, never create a replacement session, never change scope, and publish public-safe recovery evidence so clean versus recovered completion is distinguishable; (5) fail closed if session/interactions/state cannot be proven safe; (6) preserve question/permission semantics, no-replay behavior, Scout isolation, and human-only promotion authority. Add focused tests for contained-path permission behavior, outside-worktree approval preservation, parent-walk guidance/validation as appropriate, one-shot post-interaction recovery, no recovery while interactions remain outstanding, no duplicate nudge, and no new session/start replay. Update protocol/README/AS-BUILT/deviations where material. Run proportional repository checks, push every commit, create/push the dedicated developer handoff snapshot, and return exactly the canonical six-field developer response. Do not modify main or web-orchestration and do not finalize/archive the task record in this working cycle.
++
++## Current objective
++Implement the bounded developer-side permission configuration, repository-scope guidance/validation, and same-session post-interaction recovery contract without weakening approval, isolation, replay, or promotion boundaries. Correct the recovery race by requiring bounded post-interaction grace and a recheck before a one-shot continuation nudge.
++
++## Current position
++The corrected implementation and durable records are pushed at
++`c857762c327ff9f86bd0f3afd055116ba650f23b`. The same mapped correction route
++was independently reconciled and absorbed without a second session or start.
++The clean synchronized runtime loaded that revision, passed the focused real
++same-session interaction/control acceptance, and remains healthy. Only this
++dedicated task-record handoff snapshot remains.
++
++## Observed
++- Task start was synchronized at `29d59fb15bbdd31b59205c691deb4ddd167ade78`;
++  after implementation push, `developer` and `origin/developer` both resolve to
++  `908d660755e00f3539dc2f7cbe2673c48664de92`.
++- Tracked workflow hooks pass `./scripts/bootstrap-agent-workflow.sh --check`.
++- Existing repeat-canary task records are present under `docs/work/current/`.
++- The pinned OpenCode `debug config` resolves root `external_directory` to
++  `ask`; no root read/edit/bash broad allow was added, and the small-developer
++  route inherits that approval boundary.
++- `npm test` passes 92 bridge tests after adding persisted interaction episodes,
++  one-shot continuation claims, command-result recovery outcomes, and scope
++  guidance/config tests.
++- `node scripts/validate-agent-system.mjs`, `./scripts/validate-opencode-bridge.sh`,
++  and `./scripts/validate-repository.sh` all passed; the latter included 92
++  bridge tests and 8 branch-initializer tests.
++- `git diff --check`: passed.
++- The review identified that the first `session.status` value of `idle` was
++  treated as sufficient proof for a nudge, allowing a race with automatic
++  resumption. This correction cycle starts from the synchronized handoff
++  snapshot and adds a bounded grace/recheck proof.
++- Live session-35 evidence showed the configured directory/root were correct.
++  The three unnecessary approvals came from consecutive `read` tool inputs that
++  manually retyped the developer checkout basename without `workflow`; the
++  immediately preceding shell tool used the exact configured root successfully.
++  This was agent path synthesis, not bridge configuration or cwd corruption.
++- The corrected coordinator waits one second after initial live non-progress,
++  then repeats both interaction lists, mapped-session status, and the session's
++  live activity timestamp. `busy`/`retry` or changed activity returns clean;
++  only stable live non-progress can reach the existing durable claim.
++- Sequence 22 and both existing status requests were consumed without replay;
++  `question.list` returned empty. Durable state and GitHub projection agree, with
++  no pending command, request, response delivery, or outbox work.
++- The delayed issue-44 read was outside the configured 5-second active cadence,
++  but the paginated ETag route consumed the page-2 comments correctly after the
++  bridge's fail-closed GitHub retry window. The prior transient error was cleared
++  on success and could not be reproduced; no polling source defect is proven.
++- Correction commit `c857762c327ff9f86bd0f3afd055116ba650f23b` is pushed and
++  independently resolves from the remote `developer` ref.
++- The sync watcher rebuilt from a clean synchronized checkout and restarted only
++  the bridge service. The new process reported compatible OpenCode `1.18.16`;
++  heartbeat and `last_poll_at` advanced, `last_error` was clear, no command,
++  request, response-delivery, or outbox work was pending, and Scout stayed ready.
++- A real session-35 canary read `AGENTS.md` in-worktree and produced no permission
++  request, then asked `question-9`. Fresh sequence 23 replied through issue #44;
++  continuation was reported `clean`, both interaction queues cleared, and the
++  same session automatically returned `The canary continued.` No manual post-
++  reply steer, recovery nudge, start replay, or replacement session occurred.
++- A fresh sequence-free `task.status` request reached durable `succeeded` about
++  2.7 seconds after its GitHub comment, within the configured 5-second active
++  cadence; bot acknowledgement/success and durable state agree.
++
++## Interpretation
++The implementation must be made against the existing bridge/runtime source and its durable records; no branch other than `developer` is part of this local task.
++
++## Attempts
++1. Inspected repeat-canary run-03, bridge state/recovery/command/service code,
++   the operation manifest, and the pinned OpenCode configuration behavior.
++2. Implemented a schema-4 interaction table with task/session/kind binding,
++   resolution state, and durable `not-attempted`/`claimed`/`sent` continuation
++   state. Recovery now validates both pending interaction lists and exact mapped
++   session status, then sends only one same-session continuation nudge when the
++   session is idle. It never starts or replaces a session or changes route.
++3. Added command, recovery, state, workflow, configuration, and guidance tests;
++   updated protocol, README, architecture, AS-BUILT, and agent-system records.
++4. The first focused test run exposed only test-fixture mismatches (the prompt
++   path used `/api` instead of the manifest's `/session` path and a multiline
++   guidance assertion); both were corrected and the full component suite passed.
++5. Review correction: replace the single post-reply idle observation with a
++   bounded post-interaction grace followed by a second interaction/status proof;
++   transient resumption must return clean without claiming or nudging.
++6. Reconciled the original session, issue commands, durable state, services, and
++   preserved dirty files before takeover; the route was terminal and absorbed,
++   not replaced.
++7. Replaced the initial correction with a coordinator-local one-second grace,
++   second interaction/status proof, and live session-activity comparison. Added
++   stable idle/inactive, transient idle-to-busy, idle-with-activity, restart
++   duplicate, outstanding-interaction, live-busy, and no-start coverage.
++8. Tightened path guidance to copy the exact live `cwd`/root when an absolute
++   path is required, rather than reconstructing the checkout basename.
++
++## Changed approach
++The supplied official OpenCode permission finding steered the implementation
++away from any broad `external_directory` allow rule. Root config now sets that
++permission to `ask`, while normal in-worktree operations retain server
++defaults. Small-developer guidance uses repository-relative paths and stops on
++missing paths instead of walking parents/siblings or widening scope. Recovery
++uses persisted interaction mapping and a pre-delivery one-shot claim; uncertain
++proof or delivery blocks without replay.
++The review correction preserves that claim boundary and adds a bounded live-
++activity recheck so an initial idle/inactive observation cannot race normal
++automatic resumption. The path correction targets the observed synthesis cause;
++it does not weaken `external_directory: ask`. Poller code is unchanged because
++pagination/cache/admission behavior reconciled and no source defect reproduced.
++
++## Checks
++- Initial synchronization: clean `developer` worktree at the guarded SHA; remote matches local.
++- `./scripts/bootstrap-agent-workflow.sh --check`: passed.
++- `npm run build` in `tools/opencode-bridge`: passed.
++- `npm test` in `tools/opencode-bridge`: passed, 92/92 tests.
++- Pinned OpenCode `1.18.16` `debug config`: resolved `external_directory: ask`,
++  with no root read/edit/bash broad permission override.
++- `node scripts/validate-agent-system.mjs`: passed.
++- `./scripts/validate-opencode-bridge.sh`: passed, including 92/92 bridge
++  tests.
++- `./scripts/validate-repository.sh`: passed, including research, structure,
++  agent-system, bridge, 92/92 bridge tests, and 8/8 branch tests.
++- `git diff --check`: passed.
++- Current focused recovery tests: 7/7 passed, including stable idle/inactive,
++  transient idle-to-busy, changed live activity, restart duplicate, outstanding
++  interaction, live busy, and unproven-state fail-closed behavior.
++- Current scope/workflow tests: 3/3 passed.
++- Current `node scripts/validate-agent-system.mjs`: passed.
++- Current `git diff --check`: passed.
++- Current `npm --prefix tools/opencode-bridge test`: passed, 95/95.
++- Current `./scripts/validate-opencode-bridge.sh`: passed.
++- Current `./scripts/validate-repository.sh`: passed, including 95/95 bridge
++  tests and 8/8 branch-initializer tests.
++- A supervised read-only `git ls-remote` proved the repository runtime route can
++  reach the exact remote developer head `af19f527390972c5f84dd2d82c40249feb2b3231`.
++- Remote readback: `developer` resolves to
++  `c857762c327ff9f86bd0f3afd055116ba650f23b`.
++- Clean synchronized runtime acceptance: compatible OpenCode `1.18.16`, live
++  bridge process, advancing heartbeat/poll time, clear error, empty work queues,
++  healthy Scout, zero in-worktree permissions, same-session question reply and
++  clean automatic continuation, and fresh sequence-free read consumed in about
++  2.7 seconds.
++- Previous implementation and handoff commits through
++  `af19f527390972c5f84dd2d82c40249feb2b3231` are pushed successfully; local
++  `HEAD` and `origin/developer` match that SHA at cycle start.
++
++## Blockers / required decisions
++None.
++
++## Remaining work
++None for this developer-side handoff.
++
++## Next action
++Create and push the dedicated task-progress-only handoff snapshot, then return
++the canonical six fields without further developer-cycle work.
++
++## Relevant durable records
++- `tools/opencode-bridge/AS-BUILT.md`
++- `docs/architecture/AS-BUILT.md`
++- `docs/architecture/deviations.md`
++- `docs/work/current/ADAPTER-REPEAT-03-CFFD06DD595E-repeat-canary.md`
++- `research/WORKFLOW.md`
++
++## Last handoff commit
++af19f527390972c5f84dd2d82c40249feb2b3231
+diff --git a/opencode.json b/opencode.json
+index dbb14e2f8924b0b7c82779a6444fc93614999349..33926ca11be260ed80959a8d8c88ec2910d37410 100644
+--- a/opencode.json
++++ b/opencode.json
+@@ -3,6 +3,7 @@
+   "default_agent": "small-developer",
+   "share": "disabled",
+   "permission": {
+-    "task": "deny"
++    "task": "deny",
++    "external_directory": "ask"
+   }
+ }
+diff --git a/scripts/validate-agent-system.mjs b/scripts/validate-agent-system.mjs
+index 5e0dfa2518170321aab625f01b93eca20bf47b94..818712bd42d086087b69ec5490f7ee066f004915 100755
+--- a/scripts/validate-agent-system.mjs
++++ b/scripts/validate-agent-system.mjs
+@@ -45,6 +45,7 @@ try {
+   assert(config.default_agent === "small-developer", "default_agent must be small-developer");
+   assert(config.share === "disabled", "OpenCode sharing must be disabled");
+   assert(config.permission?.task === "deny", "task/subagent launches must be denied");
++  assert(config.permission?.external_directory === "ask", "external_directory must remain approval-gated");
+   const defaultPath = `.opencode/agents/${config.default_agent}.md`;
+   assert(exists(defaultPath), `Configured default agent does not exist: ${defaultPath}`);
+   if (exists(defaultPath)) {
+@@ -69,6 +70,16 @@ for (const [file, model, effort] of [
+   assert(/\n\s*task:\s*deny\s*\n/.test(text), `${file} must deny task launches`);
+ }
+ 
++const smallDeveloper = read(".opencode/agents/small-developer.md");
++assert(smallDeveloper.includes("repository-relative paths")
++  && smallDeveloper.includes("exact current `cwd`/repository root")
++  && smallDeveloper.includes("never reconstruct")
++  && smallDeveloper.includes("retype the checkout basename")
++  && smallDeveloper.includes("parent or sibling directories")
++  && smallDeveloper.includes("widen the task")
++  && smallDeveloper.includes("external_directory"),
++  "small-developer must keep normal work repository-relative and external access approval-gated");
++
+ assert(!exists(".opencode/agents/repository-scout.md"),
+   "repository-scout must not be ref-owned; the hardened runtime owns its contract");
+ const scoutSource = read("tools/opencode-bridge/src/scout.ts");
+diff --git a/tools/opencode-bridge/AS-BUILT.md b/tools/opencode-bridge/AS-BUILT.md
+index d4221abbf7ce165be388439ffdbcf85a125e134c..9523351010aa1efed71e47fab739eb541deaf54b 100644
+--- a/tools/opencode-bridge/AS-BUILT.md
++++ b/tools/opencode-bridge/AS-BUILT.md
+@@ -14,9 +14,9 @@ Consequential OpenCode commands re-run live version/hash compatibility and fail
+ 
+ ## Durable recovery
+ 
+-`RecoveryCoordinator` combines legacy repository/workspace SSE, direct per-session v2 history/SSE, project sync history, event-ID deduplication, aggregate cursors, and focused canonical recovery. Pending `permission.list` and `question.list` entries for mapped developer sessions become stable task-correlated events; recovery republishes an existing entry through the idempotent outbox path so a crash after event persistence cannot strand the public interaction. Developer recovery uses only the normal client. Scout recovery first rejects historical `scout-worktrees` paths, then fully revalidates the mapped exact-tree snapshot and uses only a per-snapshot client for the distinct Scout endpoint. Events enter SQLite before callbacks. For mapped idle/error events, the event row, cursor, session state, and pending response delivery commit in the same transaction, so a stop before the callback cannot strand the handoff behind an advanced cursor. Reconnect loops use bounded exponential backoff and jitter. It does not send or claim standard SSE `Last-Event-ID`; an upstream transient event that is neither durable nor still pending in a canonical interaction list can remain unrecoverable after complete outage.
++`RecoveryCoordinator` combines legacy repository/workspace SSE, direct per-session v2 history/SSE, project sync history, event-ID deduplication, aggregate cursors, and focused canonical recovery. Pending `permission.list` and `question.list` entries for mapped developer sessions become stable task-correlated events; recovery republishes an existing entry through the idempotent outbox path so a crash after event persistence cannot strand the public interaction. A successful permission/question reply records a resolved interaction episode and proves both pending lists plus the exact mapped developer session's live status and activity timestamp. An initially non-progressing observation is followed by a bounded one-second grace and a second proof; `busy`/`retry` or a changed activity timestamp returns clean without a nudge. Only stable live non-progress with no interactions can reach the at-most-one persisted same-session continuation claim. The claim precedes delivery, so uncertain delivery is blocked and never replayed; public command results distinguish `clean`, `recovered`, `blocked`, and `already-recovered`. The nudge uses the existing agent and configured directory and never starts or replaces a session. Developer recovery uses only the normal client. Scout recovery first rejects historical `scout-worktrees` paths, then fully revalidates the mapped exact-tree snapshot and uses only a per-snapshot client for the distinct Scout endpoint. Events enter SQLite before callbacks. For mapped idle/error events, the event row, cursor, session state, and pending response delivery commit in the same transaction, so a stop before the callback cannot strand the handoff behind an advanced cursor. Reconnect loops use bounded exponential backoff and jitter. It does not send or claim standard SSE `Last-Event-ID`; an upstream transient event that is neither durable nor still pending in a canonical interaction list can remain unrecoverable after complete outage.
+ 
+-SQLite uses Node's built-in `node:sqlite` and requires Node `22.13.0` or newer. Configuration lexically confines the state file outside the tracked working tree or beneath its Git directory. The state loader requires an owner-only parent, rejects an existing final path that is a symlink or non-regular file, creates a mode `0700` parent, and normalizes the database to mode `0600`; it does not claim to reject symlinks in every ancestor component. SQLite enables WAL, full synchronization, foreign keys, and a busy timeout. Schema 3 stores command state/results and pre-ledger admission rejections, sequence-free recovery/Scout requests, task/developer-session/Scout-session and issue mappings, latest projected responses, response-delivery retries, public aliases, events/cursors, GitHub outbox/cache, compatibility, legacy reconciliation/sequence tables retained for existing databases, PTY metadata/output, and service health. Accepted `(task_id, sequence)` rows are the sole active sequence authority; admission derives the next value with `MAX(sequence)` inside the same immediate transaction and no longer reads or updates `task_sequences`. Command UUID and accepted task-sequence uniqueness are fail-closed. The first command sequence is exactly `1`, every later accepted sequence is contiguous, and no task admits another command while one is `accepted` or `applying`. Every authenticated parse-valid poller/admission rejection is durable without consuming sequence, including unbound or task-mismatched commands, the first-command rule, the one-open-mutating-issue gate, sequence/nonterminal checks, and missing/misplaced mandatory guards. An interrupted command or Scout start in `applying` becomes `indeterminate` on restart and is never reissued; an interrupted `command.status`, `task.status`, or `scout.status` is recomputed from local durable state under the same request UUID.
++SQLite uses Node's built-in `node:sqlite` and requires Node `22.13.0` or newer. Configuration lexically confines the state file outside the tracked working tree or beneath its Git directory. The state loader requires an owner-only parent, rejects an existing final path that is a symlink or non-regular file, creates a mode `0700` parent, and normalizes the database to mode `0600`; it does not claim to reject symlinks in every ancestor component. SQLite enables WAL, full synchronization, foreign keys, and a busy timeout. Schema 4 stores command state/results and pre-ledger admission rejections, sequence-free recovery/Scout requests, task/developer-session/Scout-session and issue mappings, resolved interaction episodes and one-shot continuation claims, latest projected responses, response-delivery retries, public aliases, events/cursors, GitHub outbox/cache, compatibility, legacy reconciliation/sequence tables retained for existing databases, PTY metadata/output, and service health. Accepted `(task_id, sequence)` rows are the sole active sequence authority; admission derives the next value with `MAX(sequence)` inside the same immediate transaction and no longer reads or updates `task_sequences`. Command UUID and accepted task-sequence uniqueness are fail-closed. The first command sequence is exactly `1`, every later accepted sequence is contiguous, and no task admits another command while one is `accepted` or `applying`. Every authenticated parse-valid poller/admission rejection is durable without consuming sequence, including unbound or task-mismatched commands, the first-command rule, the one-open-mutating-issue gate, sequence/nonterminal checks, and missing/misplaced mandatory guards. An interrupted command or Scout start in `applying` becomes `indeterminate` on restart and is never reissued; an interrupted `command.status`, `task.status`, or `scout.status` is recomputed from local durable state under the same request UUID.
+ 
+ ## GitHub control plane
+ 
+@@ -28,7 +28,7 @@ Bridge comments and label changes use a paced durable outbox. Comments carry det
+ 
+ ## Commands and policy
+ 
+-`agentic-bridge/1` provides guarded start, status, steer, Luna/Sol route, permission reply, question reply, abort, bounded event pages, PTY create/input/read/resize/remove, finalization, synchronization recovery, exact-SHA promotion, and generic `opencode.request`. The Luna and Sol implementation agents explicitly allow OpenCode's structured question tool; a structured question event receives a task-bound public alias that `question.reply` resolves locally, whereas ordinary assistant text does not. The Scout contract denies interactions. Start and promotion require a clean synchronized `developer` checkout plus exact expected ref/SHA. Promotion is disabled by default and delegates to the existing guarded script only after the web orchestrator has received explicit human exact-SHA approval. PTY create/input/resize/remove are denied unless `policy.pty_enabled` is true; bounded cursor-based `pty.read` is a diagnostic local-state read and remains available.
++`agentic-bridge/1` provides guarded start, status, steer, Luna/Sol route, permission reply, question reply, abort, bounded event pages, PTY create/input/read/resize/remove, finalization, synchronization recovery, exact-SHA promotion, and generic `opencode.request`. The Luna and Sol implementation agents explicitly allow OpenCode's structured question tool; a structured question event receives a task-bound public alias that `question.reply` resolves locally, whereas ordinary assistant text does not. Permission/question replies publish a public-safe `continuation_recovery` outcome so clean versus recovered completion is distinguishable. The Scout contract denies interactions. Start and promotion require a clean synchronized `developer` checkout plus exact expected ref/SHA. Promotion is disabled by default and delegates to the existing guarded script only after the web orchestrator has received explicit human exact-SHA approval. PTY create/input/resize/remove are denied unless `policy.pty_enabled` is true; bounded cursor-based `pty.read` is a diagnostic local-state read and remains available.
+ 
+ `command.status` returns one task-correlated command's exact durable ledger or pre-ledger-rejection state, known public result/error, timestamps, `applying` age, and service heartbeat. `task.status` returns the mapped developer session state and latest projected developer response. These are reconciliation views rather than progress-consuming commands. If a restart interrupts one of the three local status request kinds, the bridge safely requeues and recomputes it under the same UUID; it never calls OpenCode or repeats a mutation to do so. A stuck or ambiguous mutation gets one bounded status reconciliation; it is never automatically retried. If local inspection and a current heartbeat cannot resolve the state, an operator stops/restarts the bridge, which converts durable command `applying` to `indeterminate` for evidence-based reconciliation.
+ 
+@@ -52,7 +52,7 @@ Scout idle/error rows and projected results retain task/request/exact-ref correl
+ 
+ The strict schema-v1 JSON loader rejects unknown fields, requires config/password/private-key/provider/secret files to have owner-only permissions with no group/other bits (`0600` is recommended), validates one unambiguous API/Git host/repository identity and minimum polling intervals, and keeps runtime values outside Git. `github.git_host` is accepted only where required for a custom API base. Developer and mandatory Scout URLs must be credential-free loopback HTTP origins with explicit distinct ports; Scout runtime root must be absolute and outside `repository_root`. Provider configuration requires exactly one API-key file or one strictly shaped OpenAI-only OAuth file at the isolated runtime auth location; unknown providers/fields and dual credentials fail closed. Each instance has a unique ID, state path, App mapping, and process lock. Stale locks are recoverable; live duplicate processes are refused. Status distinguishes installation from last endpoint proof.
+ 
+-Normal developer OpenCode, dedicated Scout OpenCode, and the bridge remain portable foreground processes. Apply bootstrap installs the external Scout runtime, launches it temporarily, and checks exact installation/version/OpenAPI/agent/model/prompt/permissions/tools before checking/creating ordinary prerequisites. `--check` installs nothing and creates no labels/state but actively launches/probes an existing installation. Bridge startup records Scout failure without aborting developer recovery/control, and later Scout starts retry the independent launch. Bridge service startup now rejects a dirty checkout in addition to a non-`developer` or unsynchronized checkout. On termination, the CLI first stops new control-loop polls and waits for the in-flight poll plus all commands/requests it admitted to finish before aborting recovery and exiting; status exposes the drain state. `opencode-attach.sh` still attaches only to normal developer OpenCode.
++Normal developer OpenCode, dedicated Scout OpenCode, and the bridge remain portable foreground processes. The tracked developer config relies on OpenCode's current-working-directory defaults for contained work and sets `external_directory` to `ask`; no broad outside-path allow rule exists. Small-developer guidance uses repository-relative paths and rejects parent/sibling rediscovery or scope widening after a missing path. Apply bootstrap installs the external Scout runtime, launches it temporarily, and checks exact installation/version/OpenAPI/agent/model/prompt/permissions/tools before checking/creating ordinary prerequisites. `--check` installs nothing and creates no labels/state but actively launches/probes an existing installation. Bridge startup records Scout failure without aborting developer recovery/control, and later Scout starts retry the independent launch. Bridge service startup now rejects a dirty checkout in addition to a non-`developer` or unsynchronized checkout. On termination, the CLI first stops new control-loop polls and waits for the in-flight poll plus all commands/requests it admitted to finish before aborting recovery and exiting; status exposes the drain state. `opencode-attach.sh` still attaches only to normal developer OpenCode.
+ 
+ `scripts/watch-developer-sync.sh` is an optional Linux systemd-user-service helper for a dedicated checkout. A single-instance outbound poll fetches `origin/developer` every configured 5-10 seconds, records status beneath the Git-private bridge directory, and refuses dirty, locally ahead, diverged, wrong-branch, uninspectable, or bridge-active-work states. A behind-only checkout is advanced solely with `merge --ff-only`. Before runtime replacement it asks systemd to stop the bridge through the draining termination path, rechecks Git and durable pending work after stop, then applies and checks bootstrap, verifies the build left the tree clean, and starts the bridge. A private fingerprint over bridge contracts/package plus bootstrap, status, and watcher helpers forces rebuild/recheck when runtime-relevant content changes, including a local synchronized commit that did not require a remote fast-forward; task/document-only commits do not cause an unnecessary restart. The observed installed HEAD is retained separately for diagnostics. Failure leaves source untouched where possible and the bridge stopped after replacement begins rather than running stale or invalid code. No reset, force update, history rewrite, inbound webhook, tunnel, public listener, or force push is used.
+ 
+@@ -60,7 +60,7 @@ The template initializer repairs only complete-history, synchronized clean one-c
+ 
+ ## Verification
+ 
+-The supported bridge runtime is Node `22.13.0` or newer; hardened Scout host support is non-root Linux. Strict TypeScript build and `npm test` pass 84 deterministic tests at this task boundary. Coverage includes all-operation preparation, live version/hash drift, serialization, SSE, PTY, SQLite durability, command/request admission/recovery, developer/Scout response transport, exact repository identity, separate endpoint config, trusted Scout prompt/tool permissions, fail-before-unsafe fallback, Git-object exact snapshots, hook non-execution, write/execute stripping, tamper rebuild, inert escaping symlinks, gitlink rejection, historical-worktree recovery rejection, concurrency, and normal developer behavior.
++The supported bridge runtime is Node `22.13.0` or newer; hardened Scout host support is non-root Linux. Strict TypeScript build and `npm test` pass 92 deterministic tests at this task boundary. Coverage includes all-operation preparation, live version/hash drift, serialization, SSE, PTY, SQLite durability, command/request admission/recovery, developer/Scout response transport, exact repository identity, separate endpoint config, trusted Scout prompt/tool permissions, fail-before-unsafe fallback, Git-object exact snapshots, hook non-execution, write/execute stripping, tamper rebuild, inert escaping symlinks, gitlink rejection, historical-worktree recovery rejection, interaction continuation claims, repository-relative developer scope guidance, concurrency, and normal developer behavior.
+ 
+ `npm run test:scout-runtime-smoke` performs a temporary external locked install,
+ starts the real pinned server with the sterile launcher, and actively passes exact
+diff --git a/tools/opencode-bridge/README.md b/tools/opencode-bridge/README.md
+index a16223be71c497c726cf3d2412f0bfdb6ebc1eba..45ae19720d0963b4cff9a67a72325dabddc0717d 100644
+--- a/tools/opencode-bridge/README.md
++++ b/tools/opencode-bridge/README.md
+@@ -94,6 +94,25 @@ For a genuinely stuck `applying` command, wait only for the operation's bounded
+ 
+ On mapped developer session idle or error, the event, durable cursor, session state, and pending response delivery commit atomically. The bridge then retrieves the latest assistant response, applies the normal public-safety projection, and queues it to the task issue. Retrieval failures retry without re-running the developer task. The bridge transports this response but does not validate its workflow meaning.
+ 
++After a successful `permission.reply` or `question.reply`, the bridge persists the
++resolved interaction and proves both canonical interaction lists plus the exact
++mapped developer session's live status and activity timestamp. If the first proof
++is non-progressing, it waits a bounded one-second grace period and repeats that
++proof; only unchanged live non-progress with no interaction can claim and send one
++fixed same-session continuation nudge. A `busy`/`retry` status or changed activity
++timestamp returns clean without a nudge.
++The claim is durable before delivery, so a retry or restart cannot send a second
++nudge; an unproven delivery remains blocked rather than replayed. A progressing
++session is reported as clean, while a sent nudge is reported as recovered in the
++public command result. The nudge never starts a session, creates a replacement,
++changes the agent route, or widens the configured project scope.
++
++Normal developer filesystem and shell work uses OpenCode's existing
++current-working-directory defaults. The tracked root config explicitly keeps
++`external_directory` at `ask`; it does not broadly allow outside paths. The
++small developer uses repository-relative paths and does not walk parent/sibling
++directories to rediscover the checkout or widen scope after a missing path.
++
+ ## Read-only Scouts
+ 
+ `scout.start` retains the sequence-free marker, focused question, exact lowercase
+diff --git a/tools/opencode-bridge/src/commands.ts b/tools/opencode-bridge/src/commands.ts
+index 0b1f6dcece58307177bb6b16d7374208a87c72ab..390caacca9aaf7d9b2d3e3d7947128cdf2c6a5a1 100644
+--- a/tools/opencode-bridge/src/commands.ts
++++ b/tools/opencode-bridge/src/commands.ts
+@@ -4,7 +4,7 @@ import { commandStatusComment } from "./protocol.js";
+ import { OperationPolicy, PublicProjection } from "./projection.js";
+ import { RecoveryCoordinator } from "./recovery.js";
+ import { BridgeState } from "./state.js";
+-import type { CommandEnvelope, JsonValue, OperationArguments, StoredCommand } from "./types.js";
++import type { CommandEnvelope, InteractionKind, JsonValue, OperationArguments, StoredCommand } from "./types.js";
+ import { asJson, asRecord, errorMessage, isRecord } from "./util.js";
+ 
+ type AgentRoute = "luna" | "sol";
+@@ -288,7 +288,8 @@ export class CommandExecutor {
+       path: { requestID: requestId },
+       body: { reply, ...(message ? { message } : {}) },
+     });
+-    return { status: "permission-replied", permission: alias, reply };
++    const continuation = await this.recoverAfterInteraction(command.taskId, requestId, "permission");
++    return { status: "permission-replied", permission: alias, reply, continuation_recovery: continuation };
+   }
+ 
+   private async questionReply(command: StoredCommand, markMutation: () => void): Promise<JsonValue> {
+@@ -304,7 +305,15 @@ export class CommandExecutor {
+       path: { requestID: requestId },
+       body: { answers: input.answers },
+     });
+-    return { status: "question-replied", question: alias };
++    const continuation = await this.recoverAfterInteraction(command.taskId, requestId, "question");
++    return { status: "question-replied", question: alias, continuation_recovery: continuation };
++  }
++
++  private async recoverAfterInteraction(taskId: string, interactionId: string, kind: InteractionKind): Promise<JsonValue> {
++    if (typeof this.recovery.continueAfterInteraction !== "function") {
++      return { outcome: "blocked", reason: "continuation-recovery-unavailable" };
++    }
++    return asJson(await this.recovery.continueAfterInteraction(taskId, interactionId, kind));
+   }
+ 
+   private events(command: StoredCommand): JsonValue {
+diff --git a/tools/opencode-bridge/src/recovery.ts b/tools/opencode-bridge/src/recovery.ts
+index b6c7a7192386ae5a19d6ede18e36175501d70a49..01e1d8304159825ca54f5810e4a97e8389b3c491 100644
+--- a/tools/opencode-bridge/src/recovery.ts
++++ b/tools/opencode-bridge/src/recovery.ts
+@@ -2,7 +2,13 @@ import { OpenCodeClient, OpenCodeHttpError } from "./opencode.js";
+ import { latestAssistantMessage, terminalResponseDelivery } from "./handoff.js";
+ import { subscribeSse } from "./sse.js";
+ import { BridgeState } from "./state.js";
+-import type { JsonValue, ScoutSession, TaskSession } from "./types.js";
++import type {
++  InteractionBinding,
++  InteractionKind,
++  JsonValue,
++  ScoutSession,
++  TaskSession,
++} from "./types.js";
+ import { asJson, asRecord, backoff, isRecord, sha256, sleep, stableJson } from "./util.js";
+ 
+ export interface PersistedOpenCodeEvent {
+@@ -16,6 +22,7 @@ export interface PersistedOpenCodeEvent {
+   sessionKind?: "developer" | "scout";
+   aggregateId?: string;
+   sequence?: number;
++  interaction?: InteractionBinding;
+ }
+ 
+ export interface RecoveryCoordinatorOptions {
+@@ -58,6 +65,17 @@ function interactionEventId(
+   return `interaction-${sha256(stableJson({ eventType, interactionId, sessionId }))}`;
+ }
+ 
++function interactionBinding(eventType: string, payload: Record<string, unknown>, sessionId: string | undefined): InteractionBinding | undefined {
++  if (!sessionId || !/^(?:permission|question)\.asked$/i.test(eventType)) return undefined;
++  const body = nestedRecord(payload, "data") ?? nestedRecord(payload, "properties") ?? payload;
++  const interactionId = stringField(body, "id");
++  if (!interactionId) return undefined;
++  return {
++    interactionId,
++    kind: /^permission\./i.test(eventType) ? "permission" : "question",
++  };
++}
++
+ function requireIdentity(record: Record<string, unknown>, fallbackId?: string): { eventId: string; eventType: string } {
+   const eventId = stringField(record, "id") ?? fallbackId;
+   const eventType = stringField(record, "type");
+@@ -74,12 +92,14 @@ function normalizeLegacy(value: unknown, streamId?: string): PersistedOpenCodeEv
+   const record = asRecord(value, "legacy OpenCode event");
+   const identity = requireIdentity(record, streamId);
+   const sessionId = sessionFromPayload(record);
++  const interaction = interactionBinding(identity.eventType, record, sessionId);
+   return {
+     eventId: interactionEventId(identity.eventType, record, sessionId, identity.eventId),
+     eventType: identity.eventType,
+     source: "legacy-live",
+     payload: asJson(record),
+     ...(sessionId ? { sessionId } : {}),
++    ...(interaction ? { interaction } : {}),
+   };
+ }
+ 
+@@ -125,6 +145,7 @@ function normalizeSession(value: unknown, session: RecoverableSession): Persiste
+   if (!aggregateId) throw new TypeError("Durable session event is missing aggregateID");
+   const sequence = requireSequence(durable.seq, "Durable session event");
+   if (aggregateId !== session.sessionId) throw new Error("Durable session event aggregate does not match the mapped session");
++  const interaction = interactionBinding(identity.eventType, record, session.sessionId);
+   return {
+     eventId: interactionEventId(identity.eventType, record, session.sessionId, identity.eventId),
+     eventType: identity.eventType,
+@@ -136,6 +157,7 @@ function normalizeSession(value: unknown, session: RecoverableSession): Persiste
+     ...("requestId" in session ? { requestId: session.requestId } : {}),
+     aggregateId,
+     sequence,
++    ...(interaction ? { interaction } : {}),
+   };
+ }
+ 
+@@ -146,6 +168,7 @@ function normalizeSync(value: unknown, state: BridgeState): PersistedOpenCodeEve
+   if (!aggregateId) throw new TypeError("Sync history event is missing aggregate_id");
+   const sequence = requireSequence(record.seq, "Sync history event");
+   const session = state.sessionBindingForInternal(aggregateId);
++  const interaction = session ? interactionBinding(identity.eventType, record, session.sessionId) : undefined;
+   return {
+     ...identity,
+     source: "sync-history",
+@@ -158,6 +181,7 @@ function normalizeSync(value: unknown, state: BridgeState): PersistedOpenCodeEve
+       sessionKind: session.sessionKind,
+       ...(session.requestId ? { requestId: session.requestId } : {}),
+     } : {}),
++    ...(interaction ? { interaction } : {}),
+   };
+ }
+ 
+@@ -167,6 +191,56 @@ function historyPage(value: JsonValue | undefined): { events: unknown[]; hasMore
+   return { events: page.data, hasMore: page.hasMore };
+ }
+ 
++export type ContinuationRecoveryOutcome = "recovered" | "clean" | "blocked" | "already-recovered";
++
++export interface ContinuationRecoveryResult {
++  outcome: ContinuationRecoveryOutcome;
++  reason: string;
++}
++
++const continuationNudge = "Continue the existing task in the current repository scope after the resolved interaction. Do not restart the task, create a new session, or widen the scope.";
++const continuationGraceMs = 1_000;
++
++function pendingInteractionResponse(value: JsonValue | undefined, kind: InteractionKind, sessionId: string): boolean {
++  if (!Array.isArray(value)) throw new TypeError(`OpenCode ${kind}.list recovery response is not an array`);
++  let pending = false;
++  for (const entry of value) {
++    const interaction = asRecord(entry, `OpenCode ${kind}.list recovery item`);
++    const interactionId = stringField(interaction, "id");
++    const currentSession = stringField(interaction, "sessionID");
++    if (!interactionId || !currentSession) throw new TypeError(`OpenCode ${kind}.list recovery item is missing id or sessionID`);
++    if (currentSession === sessionId) pending = true;
++  }
++  return pending;
++}
++
++function sessionStatusType(value: JsonValue | undefined, sessionId: string): "busy" | "idle" | "retry" | "inactive" {
++  const statuses = asRecord(value ?? {}, "OpenCode session status");
++  const current = statuses[sessionId];
++  if (current === undefined) return "inactive";
++  const status = asRecord(current, "OpenCode mapped developer session status");
++  const type = stringField(status, "type");
++  if (!type || !["busy", "idle", "retry"].includes(type)) throw new TypeError("OpenCode mapped developer session status is invalid");
++  return type as "busy" | "idle" | "retry";
++}
++
++function sessionActivity(value: JsonValue | undefined, sessionId: string): number {
++  const session = asRecord(value, "OpenCode mapped developer session");
++  if (stringField(session, "id") !== sessionId) throw new TypeError("OpenCode mapped developer session identity is invalid");
++  const time = asRecord(session.time, "OpenCode mapped developer session time");
++  if (typeof time.updated !== "number" || !Number.isFinite(time.updated) || time.updated < 0) {
++    throw new TypeError("OpenCode mapped developer session activity is invalid");
++  }
++  return time.updated;
++}
++
++interface ContinuationProof {
++  permissionPending: boolean;
++  questionPending: boolean;
++  sessionStatus: "busy" | "idle" | "retry" | "inactive";
++  sessionActivity: number;
++}
++
+ export class RecoveryCoordinator {
+   private readonly client: OpenCodeClient;
+   private readonly state: BridgeState;
+@@ -180,6 +254,21 @@ export class RecoveryCoordinator {
+     this.onError = options.onError;
+   }
+ 
++  private async proveContinuationState(sessionId: string): Promise<ContinuationProof> {
++    const [permissions, questions, statuses, session] = await Promise.all([
++      this.client.request("permission.list"),
++      this.client.request("question.list"),
++      this.client.request("session.status"),
++      this.client.request("session.get", { path: { sessionID: sessionId } }),
++    ]);
++    return {
++      permissionPending: pendingInteractionResponse(permissions, "permission", sessionId),
++      questionPending: pendingInteractionResponse(questions, "question", sessionId),
++      sessionStatus: sessionStatusType(statuses, sessionId),
++      sessionActivity: sessionActivity(session, sessionId),
++    };
++  }
++
+   private async persist(event: PersistedOpenCodeEvent, notifyExisting = false): Promise<boolean> {
+     const inserted = this.state.recordEvent({
+       eventKey: `opencode:${event.eventId}`,
+@@ -192,11 +281,96 @@ export class RecoveryCoordinator {
+       ...(event.sessionKind ? { sessionKind: event.sessionKind } : {}),
+       ...(event.aggregateId ? { aggregateId: event.aggregateId } : {}),
+       ...(event.sequence === undefined ? {} : { durableSeq: event.sequence }),
++      ...(event.interaction ? { interaction: event.interaction } : {}),
+     }, terminalResponseDelivery(this.state, event));
+     if (inserted || notifyExisting) await this.onPersistedEvent?.(event);
+     return inserted;
+   }
+ 
++  async continueAfterInteraction(
++    taskId: string,
++    interactionId: string,
++    kind: InteractionKind,
++  ): Promise<ContinuationRecoveryResult> {
++    const session = this.state.getTaskSession(taskId);
++    if (!session) return { outcome: "blocked", reason: "missing-session-state" };
++
++    let interaction;
++    try {
++      interaction = this.state.resolveInteraction(interactionId, kind, taskId);
++    } catch {
++      return { outcome: "blocked", reason: "inconsistent-interaction-state" };
++    }
++    if (!interaction || interaction.sessionId !== session.sessionId) {
++      return { outcome: "blocked", reason: "missing-interaction-state" };
++    }
++    if (interaction.nudgeState === "sent") {
++      return { outcome: "already-recovered", reason: "continuation-already-attempted" };
++    }
++    if (interaction.nudgeState === "claimed") {
++      return { outcome: "blocked", reason: "continuation-delivery-unproven" };
++    }
++    if (interaction.nudgeState !== "not-attempted") {
++      return { outcome: "blocked", reason: "inconsistent-interaction-state" };
++    }
++
++    let initialProof: ContinuationProof;
++    try {
++      initialProof = await this.proveContinuationState(session.sessionId);
++    } catch {
++      await this.onError?.(new Error("Post-interaction continuation proof was unavailable"));
++      return { outcome: "blocked", reason: "continuation-proof-unavailable" };
++    }
++    if (initialProof.permissionPending || initialProof.questionPending) {
++      return { outcome: "blocked", reason: "outstanding-interaction" };
++    }
++    if (["busy", "retry"].includes(initialProof.sessionStatus)) return { outcome: "clean", reason: "session-progressing" };
++
++    // An immediate idle response can race the server's normal resumption after
++    // a reply. Require a bounded second proof before claiming the one-shot nudge.
++    await sleep(continuationGraceMs);
++    let recheck: ContinuationProof;
++    try {
++      recheck = await this.proveContinuationState(session.sessionId);
++    } catch {
++      await this.onError?.(new Error("Post-interaction continuation recheck was unavailable"));
++      return { outcome: "blocked", reason: "continuation-proof-unavailable" };
++    }
++    if (recheck.permissionPending || recheck.questionPending) {
++      return { outcome: "blocked", reason: "outstanding-interaction" };
++    }
++    if (["busy", "retry"].includes(recheck.sessionStatus)
++      || recheck.sessionActivity !== initialProof.sessionActivity) {
++      return { outcome: "clean", reason: "session-progressing" };
++    }
++
++    let claim: ReturnType<BridgeState["claimInteractionContinuation"]>;
++    try {
++      claim = this.state.claimInteractionContinuation({
++        interactionId,
++        kind,
++        taskId,
++        sessionId: session.sessionId,
++      });
++    } catch {
++      return { outcome: "blocked", reason: "continuation-state-unavailable" };
++    }
++    if (claim === "already-attempted") return { outcome: "already-recovered", reason: "continuation-already-attempted" };
++    if (claim !== "claimed") return { outcome: "blocked", reason: "continuation-state-unavailable" };
++
++    try {
++      await this.client.request("session.prompt_async", {
++        path: { sessionID: session.sessionId },
++        body: { agent: session.agent, parts: [{ type: "text", text: continuationNudge }] },
++      });
++      this.state.markInteractionContinuationSent(interactionId, taskId, kind, session.sessionId);
++      return { outcome: "recovered", reason: "same-session-continuation-nudge-sent" };
++    } catch {
++      await this.onError?.(new Error("Post-interaction continuation delivery was not proven"));
++      return { outcome: "blocked", reason: "continuation-delivery-unproven" };
++    }
++  }
++
+   async recoverSyncHistory(): Promise<number> {
+     const response = await this.client.request("sync.history.list", { body: this.state.durableCursors("sync-history") });
+     if (!Array.isArray(response)) throw new TypeError("Sync history response is not an array");
+@@ -290,6 +464,7 @@ export class RecoveryCoordinator {
+           sessionId,
+           sessionKind: binding.sessionKind,
+           ...(binding.requestId ? { requestId: binding.requestId } : {}),
++          interaction: { interactionId, kind: group.eventType === "permission.asked" ? "permission" : "question" },
+           payload: {
+             id: eventId,
+             type: group.eventType,
+diff --git a/tools/opencode-bridge/src/state.ts b/tools/opencode-bridge/src/state.ts
+index 53f0b39ab3a92b265e05c79455cb9a6878dc49de..48334fb1552230e4de5065e42748789bd5443d4f 100644
+--- a/tools/opencode-bridge/src/state.ts
++++ b/tools/opencode-bridge/src/state.ts
+@@ -6,6 +6,10 @@ import type {
+   CommandEnvelope,
+   CommandState,
+   CompatibilityResult,
++  InteractionBinding,
++  InteractionKind,
++  InteractionRecord,
++  InteractionNudgeState,
+   JsonValue,
+   OutboxItem,
+   RequestEnvelope,
+@@ -98,6 +102,21 @@ function scoutSessionFromRow(row: Row): ScoutSession {
+   };
+ }
+ 
++function interactionFromRow(row: Row): InteractionRecord {
++  return {
++    interactionId: String(row.interaction_id),
++    kind: String(row.kind) as InteractionKind,
++    taskId: String(row.task_id),
++    sessionId: String(row.session_id),
++    state: String(row.state) as InteractionRecord["state"],
++    nudgeState: String(row.nudge_state) as InteractionNudgeState,
++    createdAt: Number(row.created_at),
++    updatedAt: Number(row.updated_at),
++    ...(row.resolved_at === null || row.resolved_at === undefined ? {} : { resolvedAt: Number(row.resolved_at) }),
++    ...(row.nudged_at === null || row.nudged_at === undefined ? {} : { nudgedAt: Number(row.nudged_at) }),
++  };
++}
++
+ export class BridgeState {
+   readonly path: string;
+   private readonly db: DatabaseSync;
+@@ -162,6 +181,19 @@ export class BridgeState {
+         created_at INTEGER NOT NULL,
+         updated_at INTEGER NOT NULL
+       );
++      CREATE TABLE IF NOT EXISTS interactions (
++        interaction_id TEXT PRIMARY KEY,
++        kind TEXT NOT NULL,
++        task_id TEXT NOT NULL,
++        session_id TEXT NOT NULL,
++        state TEXT NOT NULL DEFAULT 'pending',
++        nudge_state TEXT NOT NULL DEFAULT 'not-attempted',
++        resolved_at INTEGER,
++        nudged_at INTEGER,
++        created_at INTEGER NOT NULL,
++        updated_at INTEGER NOT NULL
++      );
++      CREATE INDEX IF NOT EXISTS interactions_task_session ON interactions(task_id, session_id, created_at);
+       CREATE TABLE IF NOT EXISTS issue_tasks (
+         issue_number INTEGER PRIMARY KEY,
+         task_id TEXT NOT NULL UNIQUE,
+@@ -321,7 +353,7 @@ export class BridgeState {
+       `);
+     }
+     this.db.exec("CREATE UNIQUE INDEX IF NOT EXISTS aliases_kind_internal_scope ON aliases(kind, internal_id, scope)");
+-    this.setMeta("schema_version", "3");
++    this.setMeta("schema_version", "4");
+   }
+ 
+   private transaction<T>(operation: () => T): T {
+@@ -586,6 +618,88 @@ export class BridgeState {
+     return (this.db.prepare("SELECT * FROM task_sessions ORDER BY task_id").all() as Row[]).map(taskSessionFromRow);
+   }
+ 
++  private upsertInteraction(input: {
++    interactionId: string;
++    kind: InteractionKind;
++    taskId: string;
++    sessionId: string;
++  }): void {
++    const existing = this.db.prepare("SELECT * FROM interactions WHERE interaction_id=?").get(input.interactionId) as Row | undefined;
++    if (existing) {
++      if (String(existing.kind) !== input.kind || String(existing.task_id) !== input.taskId || String(existing.session_id) !== input.sessionId) {
++        throw new Error(`Interaction ${input.interactionId} has inconsistent task, session, or kind mapping`);
++      }
++      return;
++    }
++    const timestamp = now();
++    this.db.prepare(`
++      INSERT INTO interactions(
++        interaction_id, kind, task_id, session_id, state, nudge_state,
++        resolved_at, nudged_at, created_at, updated_at
++      ) VALUES (?, ?, ?, ?, 'pending', 'not-attempted', NULL, NULL, ?, ?)
++    `).run(input.interactionId, input.kind, input.taskId, input.sessionId, timestamp, timestamp);
++  }
++
++  recordInteraction(input: {
++    interactionId: string;
++    kind: InteractionKind;
++    taskId: string;
++    sessionId: string;
++  }): void {
++    this.transaction(() => this.upsertInteraction(input));
++  }
++
++  interaction(interactionId: string, taskId?: string, kind?: InteractionKind): InteractionRecord | undefined {
++    const row = this.db.prepare("SELECT * FROM interactions WHERE interaction_id=?").get(interactionId) as Row | undefined;
++    if (!row) return undefined;
++    const record = interactionFromRow(row);
++    if (taskId !== undefined && record.taskId !== taskId) throw new Error(`Interaction ${interactionId} is not available to task ${taskId}`);
++    if (kind !== undefined && record.kind !== kind) throw new Error(`Interaction ${interactionId} is ${record.kind}, not ${kind}`);
++    return record;
++  }
++
++  resolveInteraction(interactionId: string, kind: InteractionKind, taskId: string): InteractionRecord | undefined {
++    return this.transaction(() => {
++      const record = this.interaction(interactionId, taskId, kind);
++      if (!record) return undefined;
++      if (record.state === "pending") {
++        this.db.prepare(
++          "UPDATE interactions SET state='resolved', resolved_at=?, updated_at=? WHERE interaction_id=? AND state='pending'",
++        ).run(now(), now(), interactionId);
++      }
++      return this.interaction(interactionId, taskId, kind);
++    });
++  }
++
++  claimInteractionContinuation(input: {
++    interactionId: string;
++    kind: InteractionKind;
++    taskId: string;
++    sessionId: string;
++  }): "claimed" | "already-attempted" | "not-resolved" | "missing" {
++    return this.transaction(() => {
++      const record = this.interaction(input.interactionId, input.taskId, input.kind);
++      if (!record || record.sessionId !== input.sessionId) return "missing";
++      if (record.state !== "resolved") return "not-resolved";
++      if (record.nudgeState !== "not-attempted") return "already-attempted";
++      const timestamp = now();
++      const result = this.db.prepare(
++        "UPDATE interactions SET nudge_state='claimed', nudged_at=?, updated_at=? WHERE interaction_id=? AND nudge_state='not-attempted'",
++      ).run(timestamp, timestamp, input.interactionId);
++      return result.changes === 1 ? "claimed" : "already-attempted";
++    });
++  }
++
++  markInteractionContinuationSent(interactionId: string, taskId: string, kind: InteractionKind, sessionId: string): void {
++    const record = this.interaction(interactionId, taskId, kind);
++    if (!record || record.sessionId !== sessionId || record.state !== "resolved" || record.nudgeState !== "claimed") {
++      throw new Error(`Interaction ${interactionId} continuation is not in the claimed state`);
++    }
++    this.db.prepare(
++      "UPDATE interactions SET nudge_state='sent', updated_at=? WHERE interaction_id=? AND nudge_state='claimed'",
++    ).run(now(), interactionId);
++  }
++
+   listCommands(states?: CommandState[]): StoredCommand[] {
+     if (!states || states.length === 0) {
+       return (this.db.prepare("SELECT * FROM commands ORDER BY created_at, command_id").all() as Row[]).map(commandFromRow);
+@@ -726,6 +840,7 @@ export class BridgeState {
+   recordEvent(input: {
+     eventKey: string; source: string; eventType: string; payload: JsonValue; taskId?: string; sessionId?: string;
+     requestId?: string; sessionKind?: "developer" | "scout"; aggregateId?: string; durableSeq?: number;
++    interaction?: InteractionBinding;
+   }, responseDelivery?: ResponseDeliveryInput): boolean {
+     return this.transaction(() => {
+       const result = this.db.prepare(`
+@@ -752,6 +867,15 @@ export class BridgeState {
+         );
+       }
+       if (input.aggregateId && input.durableSeq !== undefined) this.setDurableCursor(input.source, input.aggregateId, input.durableSeq);
++      if (input.interaction) {
++        if (!input.taskId || !input.sessionId) throw new Error("Interaction event is missing task or session mapping");
++        this.upsertInteraction({
++          interactionId: input.interaction.interactionId,
++          kind: input.interaction.kind,
++          taskId: input.taskId,
++          sessionId: input.sessionId,
++        });
++      }
+       if (responseDelivery) this.queueResponseDeliveryRecord(responseDelivery);
+       return result.changes > 0;
+     });
+diff --git a/tools/opencode-bridge/src/types.ts b/tools/opencode-bridge/src/types.ts
+index 0b6da387ba251a79cd6ffbe162906324d10d83b1..e61cbfadd0fed37759c924248763151f0252652a 100644
+--- a/tools/opencode-bridge/src/types.ts
++++ b/tools/opencode-bridge/src/types.ts
+@@ -161,6 +161,26 @@ export interface SessionBinding {
+   requestId?: string;
+ }
+ 
++export type InteractionKind = "permission" | "question";
++
++export type InteractionNudgeState = "not-attempted" | "claimed" | "sent";
++
++export interface InteractionBinding {
++  interactionId: string;
++  kind: InteractionKind;
++}
++
++export interface InteractionRecord extends InteractionBinding {
++  taskId: string;
++  sessionId: string;
++  state: "pending" | "resolved";
++  nudgeState: InteractionNudgeState;
++  createdAt: number;
++  updatedAt: number;
++  resolvedAt?: number;
++  nudgedAt?: number;
++}
++
+ export interface ResponseDelivery {
+   eventId: string;
+   taskId: string;
+diff --git a/tools/opencode-bridge/tests/recovery.test.ts b/tools/opencode-bridge/tests/recovery.test.ts
+index 8a42ca489f874c5b14fc50ab19a6966b6c0de7f5..65d79285b702d72bdba2136f33f878673022f307 100644
+--- a/tools/opencode-bridge/tests/recovery.test.ts
++++ b/tools/opencode-bridge/tests/recovery.test.ts
+@@ -7,6 +7,7 @@ import { Manifest } from "../src/manifest.js";
+ import { OpenCodeClient } from "../src/opencode.js";
+ import { RecoveryCoordinator } from "../src/recovery.js";
+ import { BridgeState } from "../src/state.js";
++import type { JsonValue } from "../src/types.js";
+ import { asRecord } from "../src/util.js";
+ 
+ const manifest = Manifest.load(resolve(import.meta.dirname, "../../../../contracts/opencode-bridge/operation-manifest.json"));
+@@ -45,6 +46,10 @@ function durable(id: string, sessionId: string, sequence: number, type = "sessio
+   };
+ }
+ 
++function liveSession(id: string, updated = 1) {
++  return { id, time: { created: 0, updated } };
++}
++
+ test("recovery combines sync/session history, deduplicates IDs, and advances cursors", async (context) => {
+   const state = stateForTest(context);
+   state.mapTaskSession("TASK-1", "ses_private", 17, "luna");
+@@ -274,6 +279,241 @@ test("legacy and canonical lanes share one interaction identity", async (context
+   assert.equal(publications, 1);
+ });
+ 
++test("post-interaction continuation nudges one idle developer session once", async (context) => {
++  const state = stateForTest(context);
++  state.mapTaskSession("TASK-CONTINUE", "ses_continue", 21, "small-developer");
++  state.recordInteraction({
++    interactionId: "per_continue",
++    kind: "permission",
++    taskId: "TASK-CONTINUE",
++    sessionId: "ses_continue",
++  });
++  const calls: string[] = [];
++  let statusReads = 0;
++  const api = client(asFetch(async (request) => {
++    const path = new URL(request.url).pathname;
++    calls.push(path);
++    if (path === "/permission" || path === "/question") return Response.json([]);
++    if (path === "/session/status") {
++      statusReads++;
++      return Response.json({ ses_continue: { type: "idle" } });
++    }
++    if (path === "/session/ses_continue") return Response.json(liveSession("ses_continue"));
++    if (path === "/session/ses_continue/prompt_async") {
++      const body = await request.json() as Record<string, JsonValue>;
++      assert.deepEqual(body, {
++        agent: "small-developer",
++        parts: [{
++          type: "text",
++          text: "Continue the existing task in the current repository scope after the resolved interaction. Do not restart the task, create a new session, or widen the scope.",
++        }],
++      });
++      return Response.json(null);
++    }
++    return new Response("not found", { status: 404 });
++  }));
++  const recovery = new RecoveryCoordinator({ client: api, state });
++
++  assert.deepEqual(await recovery.continueAfterInteraction("TASK-CONTINUE", "per_continue", "permission"), {
++    outcome: "recovered",
++    reason: "same-session-continuation-nudge-sent",
++  });
++  const restarted = new RecoveryCoordinator({ client: api, state });
++  assert.deepEqual(await restarted.continueAfterInteraction("TASK-CONTINUE", "per_continue", "permission"), {
++    outcome: "already-recovered",
++    reason: "continuation-already-attempted",
++  });
++  assert.equal(calls.filter((path) => path.endsWith("/prompt_async")).length, 1);
++  assert.equal(statusReads, 2);
++  assert.equal(calls.includes("/session"), false);
++});
++
++test("post-interaction continuation treats transient idle as natural resumption and does not nudge", async (context) => {
++  const state = stateForTest(context);
++  state.mapTaskSession("TASK-TRANSIENT-IDLE", "ses_transient_idle", 25, "small-developer");
++  state.recordInteraction({
++    interactionId: "per_transient_idle",
++    kind: "permission",
++    taskId: "TASK-TRANSIENT-IDLE",
++    sessionId: "ses_transient_idle",
++  });
++  let statusReads = 0;
++  let prompts = 0;
++  const api = client(asFetch((request) => {
++    const path = new URL(request.url).pathname;
++    if (path === "/permission" || path === "/question") return Response.json([]);
++    if (path === "/session/status") {
++      statusReads++;
++      return Response.json({ ses_transient_idle: { type: statusReads === 1 ? "idle" : "busy" } });
++    }
++    if (path === "/session/ses_transient_idle") return Response.json(liveSession("ses_transient_idle"));
++    if (path.endsWith("/prompt_async")) {
++      prompts++;
++      return Response.json(null);
++    }
++    return new Response("not found", { status: 404 });
++  }));
++  const recovery = new RecoveryCoordinator({ client: api, state });
++
++  assert.deepEqual(await recovery.continueAfterInteraction("TASK-TRANSIENT-IDLE", "per_transient_idle", "permission"), {
++    outcome: "clean",
++    reason: "session-progressing",
++  });
++  assert.equal(statusReads, 2);
++  assert.equal(prompts, 0);
++  assert.equal(state.interaction("per_transient_idle")?.nudgeState, "not-attempted");
++});
++
++test("post-interaction continuation treats live activity during an idle grace as natural progress", async (context) => {
++  const state = stateForTest(context);
++  state.mapTaskSession("TASK-IDLE-ACTIVITY", "ses_idle_activity", 26, "small-developer");
++  state.recordInteraction({
++    interactionId: "per_idle_activity",
++    kind: "permission",
++    taskId: "TASK-IDLE-ACTIVITY",
++    sessionId: "ses_idle_activity",
++  });
++  let activityReads = 0;
++  let prompts = 0;
++  const api = client(asFetch((request) => {
++    const path = new URL(request.url).pathname;
++    if (path === "/permission" || path === "/question") return Response.json([]);
++    if (path === "/session/status") return Response.json({ ses_idle_activity: { type: "idle" } });
++    if (path === "/session/ses_idle_activity") {
++      activityReads++;
++      return Response.json(liveSession("ses_idle_activity", activityReads));
++    }
++    if (path.endsWith("/prompt_async")) {
++      prompts++;
++      return Response.json(null);
++    }
++    return new Response("not found", { status: 404 });
++  }));
++  const recovery = new RecoveryCoordinator({ client: api, state });
++
++  assert.deepEqual(await recovery.continueAfterInteraction("TASK-IDLE-ACTIVITY", "per_idle_activity", "permission"), {
++    outcome: "clean",
++    reason: "session-progressing",
++  });
++  assert.equal(activityReads, 2);
++  assert.equal(prompts, 0);
++  assert.equal(state.interaction("per_idle_activity")?.nudgeState, "not-attempted");
++});
++
++test("post-interaction continuation accepts stable inactive status only with unchanged live session activity", async (context) => {
++  const state = stateForTest(context);
++  state.mapTaskSession("TASK-INACTIVE", "ses_inactive", 27, "small-developer");
++  state.recordInteraction({
++    interactionId: "per_inactive",
++    kind: "permission",
++    taskId: "TASK-INACTIVE",
++    sessionId: "ses_inactive",
++  });
++  let prompts = 0;
++  const api = client(asFetch((request) => {
++    const path = new URL(request.url).pathname;
++    if (path === "/permission" || path === "/question") return Response.json([]);
++    if (path === "/session/status") return Response.json({});
++    if (path === "/session/ses_inactive") return Response.json(liveSession("ses_inactive", 10));
++    if (path.endsWith("/prompt_async")) {
++      prompts++;
++      return Response.json(null);
++    }
++    return new Response("not found", { status: 404 });
++  }));
++  const recovery = new RecoveryCoordinator({ client: api, state });
++
++  assert.deepEqual(await recovery.continueAfterInteraction("TASK-INACTIVE", "per_inactive", "permission"), {
++    outcome: "recovered",
++    reason: "same-session-continuation-nudge-sent",
++  });
++  assert.equal(prompts, 1);
++});
++
++test("post-interaction continuation fails closed while an interaction remains outstanding", async (context) => {
++  const state = stateForTest(context);
++  state.mapTaskSession("TASK-PENDING", "ses_pending_continue", 22, "small-developer");
++  state.recordInteraction({
++    interactionId: "que_pending_continue",
++    kind: "question",
++    taskId: "TASK-PENDING",
++    sessionId: "ses_pending_continue",
++  });
++  let prompts = 0;
++  const api = client(asFetch((request) => {
++    const path = new URL(request.url).pathname;
++    if (path === "/permission") return Response.json([]);
++    if (path === "/question") return Response.json([{ id: "que_other", sessionID: "ses_pending_continue", questions: [] }]);
++    if (path === "/session/status") return Response.json({ ses_pending_continue: { type: "idle" } });
++    if (path === "/session/ses_pending_continue") return Response.json(liveSession("ses_pending_continue"));
++    if (path.endsWith("/prompt_async")) {
++      prompts++;
++      return Response.json(null);
++    }
++    return new Response("not found", { status: 404 });
++  }));
++  const recovery = new RecoveryCoordinator({ client: api, state });
++  assert.deepEqual(await recovery.continueAfterInteraction("TASK-PENDING", "que_pending_continue", "question"), {
++    outcome: "blocked",
++    reason: "outstanding-interaction",
++  });
++  assert.equal(prompts, 0);
++  assert.equal(state.interaction("que_pending_continue")?.nudgeState, "not-attempted");
++});
++
++test("post-interaction continuation treats a progressing session as clean and does not create a session", async (context) => {
++  const state = stateForTest(context);
++  state.mapTaskSession("TASK-BUSY", "ses_busy_continue", 23, "small-developer");
++  state.recordInteraction({
++    interactionId: "per_busy_continue",
++    kind: "permission",
++    taskId: "TASK-BUSY",
++    sessionId: "ses_busy_continue",
++  });
++  const calls: string[] = [];
++  const api = client(asFetch((request) => {
++    const path = new URL(request.url).pathname;
++    calls.push(path);
++    if (path === "/permission" || path === "/question") return Response.json([]);
++    if (path === "/session/status") return Response.json({ ses_busy_continue: { type: "busy" } });
++    if (path === "/session/ses_busy_continue") return Response.json(liveSession("ses_busy_continue"));
++    return new Response("not found", { status: 404 });
++  }));
++  const recovery = new RecoveryCoordinator({ client: api, state });
++  assert.deepEqual(await recovery.continueAfterInteraction("TASK-BUSY", "per_busy_continue", "permission"), {
++    outcome: "clean",
++    reason: "session-progressing",
++  });
++  assert.equal(calls.some((path) => path.endsWith("/prompt_async")), false);
++  assert.equal(calls.some((path) => path === "/session"), false);
++});
++
++test("post-interaction continuation fails closed when mapped session status is not proven", async (context) => {
++  const state = stateForTest(context);
++  state.mapTaskSession("TASK-UNKNOWN-STATUS", "ses_unknown_status", 24, "small-developer");
++  state.recordInteraction({
++    interactionId: "per_unknown_status",
++    kind: "permission",
++    taskId: "TASK-UNKNOWN-STATUS",
++    sessionId: "ses_unknown_status",
++  });
++  let prompts = 0;
++  const api = client(asFetch((request) => {
++    const path = new URL(request.url).pathname;
++    if (path === "/permission" || path === "/question") return Response.json([]);
++    if (path === "/session/status") return Response.json({});
++    if (path === "/session/ses_unknown_status") return new Response("not found", { status: 404 });
++    if (path.endsWith("/prompt_async")) prompts++;
++    return new Response("not found", { status: 404 });
++  }));
++  const recovery = new RecoveryCoordinator({ client: api, state });
++  assert.deepEqual(await recovery.continueAfterInteraction("TASK-UNKNOWN-STATUS", "per_unknown_status", "permission"), {
++    outcome: "blocked",
++    reason: "continuation-proof-unavailable",
++  });
++  assert.equal(prompts, 0);
++});
++
+ test("project SSE is persisted before notification and maps private sessions locally", async (context) => {
+   const state = stateForTest(context);
+   state.mapTaskSession("TASK-1", "ses_private", 17, "luna");
+diff --git a/tools/opencode-bridge/tests/scope.test.ts b/tools/opencode-bridge/tests/scope.test.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..c51bfee3c42bba840126326fde7163c378d31aef
+--- /dev/null
++++ b/tools/opencode-bridge/tests/scope.test.ts
+@@ -0,0 +1,26 @@
++import assert from "node:assert/strict";
++import { readFileSync } from "node:fs";
++import { resolve } from "node:path";
++import test from "node:test";
++
++test("developer OpenCode keeps in-worktree defaults and asks for genuine external paths", () => {
++  const config = JSON.parse(readFileSync(resolve(import.meta.dirname, "../../../../opencode.json"), "utf8")) as {
++    permission?: Record<string, unknown>;
++  };
++  assert.equal(config.permission?.external_directory, "ask");
++  assert.equal(config.permission?.read, undefined);
++  assert.equal(config.permission?.edit, undefined);
++  assert.equal(config.permission?.bash, undefined);
++  assert.notEqual(config.permission?.external_directory, "allow");
++});
++
++test("small developer guidance rejects parent-walk scope widening", () => {
++  const prompt = readFileSync(resolve(import.meta.dirname, "../../../../.opencode/agents/small-developer.md"), "utf8");
++  assert.match(prompt, /repository-relative paths/);
++  assert.match(prompt, /exact current `cwd`\/repository root/);
++  assert.match(prompt, /never reconstruct[\s\S]*retype the checkout basename/);
++  assert.match(prompt, /parent or sibling directories/);
++  assert.match(prompt, /widen the task/);
++  assert.match(prompt, /external_directory[\s\S]*approval/);
++  assert.doesNotMatch(prompt, /external_directory.*allow/);
++});
+diff --git a/tools/opencode-bridge/tests/state.test.ts b/tools/opencode-bridge/tests/state.test.ts
+index cda2dadf2a6c9e8b35b5c832c9a4e0e5433f7ef7..5220889826823935a234bf2e335311b50cd49169 100644
+--- a/tools/opencode-bridge/tests/state.test.ts
++++ b/tools/opencode-bridge/tests/state.test.ts
+@@ -34,7 +34,7 @@ test("SQLite state creates private durable files and metadata", (context) => {
+   const { state, path } = stateForTest(context);
+   assert.equal(statSync(path).mode & 0o777, 0o600);
+   assert.equal(statSync(join(path, "..")).mode & 0o777, 0o700);
+-  assert.equal(state.getMeta("schema_version"), "3");
++  assert.equal(state.getMeta("schema_version"), "4");
+   state.setMeta("instance", "project-one");
+   assert.equal(state.getMeta("instance"), "project-one");
+ });
+@@ -202,6 +202,50 @@ test("task, alias, event, and durable cursor mappings survive projection needs",
+   assert.equal(state.listEvents("TASK-1")[0]?.eventType, "message.updated");
+ });
+ 
++test("resolved interaction continuation is persisted and claimable only once", (context) => {
++  const root = mkdtempSync(join(tmpdir(), "opencode-bridge-interaction-"));
++  const path = join(root, "private", "bridge.sqlite");
++  const state = new BridgeState(path);
++  state.mapTaskSession("TASK-INTERACTION", "ses_interaction", 19, "small-developer");
++  state.recordInteraction({
++    interactionId: "per_interaction",
++    kind: "permission",
++    taskId: "TASK-INTERACTION",
++    sessionId: "ses_interaction",
++  });
++  assert.equal(state.interaction("per_interaction", "TASK-INTERACTION", "permission")?.state, "pending");
++  assert.equal(state.resolveInteraction("per_interaction", "permission", "TASK-INTERACTION")?.state, "resolved");
++  assert.equal(state.claimInteractionContinuation({
++    interactionId: "per_interaction",
++    kind: "permission",
++    taskId: "TASK-INTERACTION",
++    sessionId: "ses_interaction",
++  }), "claimed");
++  state.markInteractionContinuationSent("per_interaction", "TASK-INTERACTION", "permission", "ses_interaction");
++  assert.equal(state.claimInteractionContinuation({
++    interactionId: "per_interaction",
++    kind: "permission",
++    taskId: "TASK-INTERACTION",
++    sessionId: "ses_interaction",
++  }), "already-attempted");
++  state.close();
++
++  const reopened = new BridgeState(path);
++  context.after(() => {
++    reopened.close();
++    rmSync(root, { recursive: true, force: true });
++  });
++  const record = reopened.interaction("per_interaction", "TASK-INTERACTION", "permission");
++  assert.equal(record?.state, "resolved");
++  assert.equal(record?.nudgeState, "sent");
++  assert.equal(reopened.claimInteractionContinuation({
++    interactionId: "per_interaction",
++    kind: "permission",
++    taskId: "TASK-INTERACTION",
++    sessionId: "ses_interaction",
++  }), "already-attempted");
++});
++
+ test("schema migration replaces global alias identity with task-bound scope", (context) => {
+   const root = mkdtempSync(join(tmpdir(), "opencode-bridge-v1-"));
+   const path = join(root, "bridge.sqlite");
+@@ -227,7 +271,7 @@ test("schema migration replaces global alias identity with task-bound scope", (c
+     migrated.close();
+     rmSync(root, { recursive: true, force: true });
+   });
+-  assert.equal(migrated.getMeta("schema_version"), "3");
++  assert.equal(migrated.getMeta("schema_version"), "4");
+   assert.equal(migrated.ensureAlias("workspace", "wrk_shared", "TASK-1"), "workspace-1");
+   const second = migrated.ensureAlias("workspace", "wrk_shared", "TASK-2");
+   assert.equal(second, "workspace-2");
+@@ -265,7 +309,7 @@ test("schema migration extends v2 events and response deliveries for Scout corre
+     migrated.close();
+     rmSync(root, { recursive: true, force: true });
+   });
+-  assert.equal(migrated.getMeta("schema_version"), "3");
++  assert.equal(migrated.getMeta("schema_version"), "4");
+   assert.equal(migrated.pendingResponseDeliveries()[0]?.deliveryKind, "developer");
+ 
+   const requestId = "88888888-8888-4888-8888-888888888888";
+diff --git a/tools/opencode-bridge/tests/workflow.test.ts b/tools/opencode-bridge/tests/workflow.test.ts
+index c13a1d9d7bee739d0c8c2b022d71dacf3184b638..4db98f6335b0414834ab14a01915408e355d7f75 100644
+--- a/tools/opencode-bridge/tests/workflow.test.ts
++++ b/tools/opencode-bridge/tests/workflow.test.ts
+@@ -7,7 +7,7 @@ import { CommandExecutor } from "../src/commands.js";
+ import { Manifest } from "../src/manifest.js";
+ import { OpenCodeClient } from "../src/opencode.js";
+ import { OperationPolicy, PublicProjection } from "../src/projection.js";
+-import type { RecoveryCoordinator } from "../src/recovery.js";
++import { RecoveryCoordinator } from "../src/recovery.js";
+ import { BridgeState } from "../src/state.js";
+ import type { CommandEnvelope, CompatibilityResult, JsonValue, OperationArguments } from "../src/types.js";
+ 
+@@ -57,13 +57,33 @@ test("deterministic workflow covers routing, interaction, recovery, finalization
+       ses_workflow_private: { type: "idle" },
+       ses_other_private: { type: "busy" },
+     };
++    if (operationId === "session.get") return {
++      id: "ses_workflow_private",
++      time: { created: 0, updated: 1 },
++    };
+     if (operationId === "session.messages") return [{ info: { id: "msg_workflow_private", sessionID: "ses_workflow_private" }, parts: [] }];
+-    if (["permission.reply", "question.reply", "session.abort"].includes(operationId)) return true;
++    if (operationId === "permission.reply") {
++      permissionPending = false;
++      return true;
++    }
++    if (operationId === "question.reply") {
++      questionPending = false;
++      return true;
++    }
++    if (operationId === "permission.list") return permissionPending ? [{ id: "per_workflow_private", sessionID: "ses_workflow_private" }] : [];
++    if (operationId === "question.list") return questionPending ? [{ id: "que_workflow_private", sessionID: "ses_workflow_private" }] : [];
+     if (operationId === "session.prompt_async") return undefined;
++    if (operationId === "session.abort") return true;
+     throw new Error(`unexpected operation ${operationId}`);
+   };
++  let permissionPending = true;
++  let questionPending = true;
+   let recoveries = 0;
+-  const recovery = { recoverOnce: async () => { recoveries++; } } as unknown as RecoveryCoordinator;
++  const recoveryCoordinator = new RecoveryCoordinator({ client, state });
++  const recovery = {
++    recoverOnce: async () => { recoveries++; },
++    continueAfterInteraction: recoveryCoordinator.continueAfterInteraction.bind(recoveryCoordinator),
++  } as unknown as RecoveryCoordinator;
+   const promotions: string[] = [];
+   const controller = new AbortController();
+   const executor = new CommandExecutor({
+@@ -95,13 +115,17 @@ test("deterministic workflow covers routing, interaction, recovery, finalization
+   const question = projection.project("que_workflow_private", "WORKFLOW-1");
+   assert.equal(permission, "permission-1");
+   assert.equal(question, "question-1");
++  state.recordInteraction({ interactionId: "per_workflow_private", kind: "permission", taskId: "WORKFLOW-1", sessionId: "ses_workflow_private" });
++  state.recordInteraction({ interactionId: "que_workflow_private", kind: "question", taskId: "WORKFLOW-1", sessionId: "ses_workflow_private" });
+   state.recordEvent({ eventKey: "event-1", source: "test", eventType: "session.idle", taskId: "WORKFLOW-1", payload: { sessionID: "ses_workflow_private" } });
+ 
+   await apply(2, "steer", { message: "Continue with the requested correction" });
+   await apply(3, "route", { agent: "sol", message: "Handle the exceptional complex step" });
+   assert.equal(state.getTaskSession("WORKFLOW-1")?.agent, "large-developer");
+-  await apply(4, "permission.reply", { permission: "permission-1", reply: "once" });
+-  await apply(5, "question.reply", { question: "question-1", answers: [["Option A"]] });
++  const permissionReply = await apply(4, "permission.reply", { permission: "permission-1", reply: "once" });
++  assert.match(JSON.stringify(permissionReply.publicResult), /outcome[" ]+:[" ]+blocked/);
++  const questionReply = await apply(5, "question.reply", { question: "question-1", answers: [["Option A"]] });
++  assert.match(JSON.stringify(questionReply.publicResult), /outcome[" ]+:[" ]+recovered/);
+   const status = await apply(6, "status", {});
+   assert.match(JSON.stringify(status.publicResult), /session-1/);
+   assert.doesNotMatch(JSON.stringify(status.rawResult), /ses_other_private/);

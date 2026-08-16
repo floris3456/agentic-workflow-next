@@ -1,0 +1,69 @@
+{
+  "schema_version": 2,
+  "task_id": "TEMPLATE-OPENCODE-PERMISSION-RECOVERY-001",
+  "canonical_repository": "https://github.com/floris3456/agentic-workflow-template.git",
+  "created_at": "2026-08-16T18:05:24.719Z",
+  "provenance": {
+    "mode": "canonical-remote-fetch-v1",
+    "source_lock": {
+      "schema_version": 1,
+      "canonical_repository": "https://github.com/floris3456/agentic-workflow-template.git",
+      "recorded_at": "2026-08-16T18:02:37Z",
+      "sources": {
+        "main": "6127611113dfdb66f93a0cfd2d355359aa370833",
+        "developer": "80ad63319cd746d6205d67781b25e3c327b230bc",
+        "web-orchestration": "7e29c07e6ac9fc65a2cb2a8957514bc03500cc17"
+      },
+      "last_reconciled_task": "TEMPLATE-OPENCODE-PERMISSION-RECOVERY-001",
+      "last_change_package": "changes/TEMPLATE-PROJECT-MAINTENANCE-ROUTE-001/manifest.json"
+    },
+    "source_lock_sha256": "0ff0e2466e9c39a6493086f9a1bc74e70e2508f60ef33d31a38252240a331cac",
+    "canonical_tips": {
+      "developer": "80ad63319cd746d6205d67781b25e3c327b230bc",
+      "web-orchestration": "7e29c07e6ac9fc65a2cb2a8957514bc03500cc17"
+    },
+    "head_relations": {
+      "developer": "reviewed-head-ancestor-of-canonical-tip",
+      "web-orchestration": "reviewed-head-ancestor-of-canonical-tip"
+    }
+  },
+  "ranges": {
+    "developer": {
+      "base": "29d59fb15bbdd31b59205c691deb4ddd167ade78",
+      "head": "80ad63319cd746d6205d67781b25e3c327b230bc",
+      "changed_paths": [
+        ".opencode/agents/small-developer.md",
+        "contracts/opencode-bridge/protocol.md",
+        "docs/architecture/AS-BUILT.md",
+        "docs/architecture/design-record.md",
+        "docs/architecture/opencode-bridge.md",
+        "docs/work/current/TEMPLATE-OPENCODE-PERMISSION-RECOVERY-001-opencode-permission-recovery.md",
+        "opencode.json",
+        "scripts/validate-agent-system.mjs",
+        "tools/opencode-bridge/AS-BUILT.md",
+        "tools/opencode-bridge/README.md",
+        "tools/opencode-bridge/src/commands.ts",
+        "tools/opencode-bridge/src/recovery.ts",
+        "tools/opencode-bridge/src/state.ts",
+        "tools/opencode-bridge/src/types.ts",
+        "tools/opencode-bridge/tests/recovery.test.ts",
+        "tools/opencode-bridge/tests/scope.test.ts",
+        "tools/opencode-bridge/tests/state.test.ts",
+        "tools/opencode-bridge/tests/workflow.test.ts"
+      ],
+      "patch": "developer.patch",
+      "patch_sha256": "95a74e203eb1fe1620cb2062d8025e1a4b7a242e0414af5160cd2b4bd549c770"
+    },
+    "web-orchestration": {
+      "base": "1f53ce62fba87ba9677b86d3837a008717aa4c24",
+      "head": "7e29c07e6ac9fc65a2cb2a8957514bc03500cc17",
+      "changed_paths": [
+        "web-orchestration-only/chatgpt-project/developer-instructions.md",
+        "web-orchestration-only/validate-package.mjs"
+      ],
+      "patch": "web-orchestration.patch",
+      "patch_sha256": "186764f4af7890134a42df9c4b804a22d3a1a3150a96a8cffff57291c3ea9a13"
+    }
+  },
+  "package_sha256": "2a5cb0ef45c7af4658bb1c62817e1fa8589625299c533213cda44cf41f51c3a9"
+}
