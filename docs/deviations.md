@@ -47,33 +47,38 @@
   repository value from `source-lock.json`. A different local object database
   could therefore manufacture plausible range/patch evidence. The first schema-2
   draft over-corrected this by requiring each reviewed head to equal the current
-  branch tip; when `web-orchestration` later gained an unrelated Scout smoke-task
-  continuity record, that rule would have forced unrelated history into the
-  package.
-- Reason neither prior behavior could remain the provenance authority: local
-  commit existence does not prove canonical provenance, while current-tip
-  equality conflates canonicality with task membership.
-- Selected alternative: schema 2 authenticates the supplied checkout origin,
-  requires bases to equal the source-lock review bases, and fetches the current
-  canonical branch tips into a sterile temporary Git object database. Each exact
-  reviewed head must resolve from that fetched branch history and be an ancestor
-  of (or equal to) its current canonical tip. Patch bytes are generated only from
-  fetched canonical objects for the locked-base-to-reviewed-head range. The
-  manifest embeds the source-lock snapshot plus digest, observed canonical tips,
+  branch tip; a later revision still unnecessarily required package bases to
+  equal `source-lock.json`, which serialized otherwise independent maintenance
+  packages behind the source snapshot.
+- Reason those behaviors could not remain the provenance authority: local commit
+  existence does not prove canonical provenance, current-tip equality conflates
+  canonicality with task membership, and source-snapshot equality conflates the
+  ledger's current baseline with a task's exact reviewed range.
+- Selected alternative: schema 2 authenticates the supplied checkout origin and
+  fetches current canonical branch tips into a sterile temporary Git object
+  database. Each exact package base and reviewed head must resolve from fetched
+  canonical objects; the base must be an ancestor of the reviewed head, and the
+  reviewed head must be an ancestor of (or equal to) its current canonical tip.
+  Patch bytes are generated only from fetched canonical objects for that exact
+  base-to-reviewed-head range. The manifest embeds the generation-time source
+  snapshot plus digest as provenance context, observed canonical tips,
   reviewed-head relationship markers, and a package SHA-256 over provenance
-  metadata and both patch byte streams. Offline validation recomputes all
-  byte-level bindings.
-- Evidence: focused tests cover deceptive origins, wrong bases, canonical branch
-  advance beyond the reviewed head, local-only/forged heads,
-  provenance/patch/package tampering, determinism, and downstream apply. Remote
-  template-development Actions passes the corrected schema-2 implementation.
-- Effect: newly generated packages are provenance-verified rather than merely
-  locally self-consistent, while exact reviewed task ranges remain stable even if
-  later unrelated canonical commits exist. Historical schema-1 packages remain
-  integrity-compatible for downstream use but are explicitly not reclassified as
-  provenance-verified.
+  metadata and both patch byte streams. `source-lock.json` itself is independently
+  reconciled to exact live canonical refs and does not define package membership.
+- Evidence: focused tests cover a source snapshot newer than the package base,
+  deceptive origins, non-ancestor bases, canonical branch advance beyond the
+  reviewed head, local-only/forged heads, source-snapshot/patch/package tampering,
+  determinism, and downstream apply. Remote template-development Actions executes
+  these fixtures through the canonical push validation path.
+- Effect: newly generated packages remain provenance-verified while exact reviewed
+  task ranges are independent from later canonical state and from other pending
+  package work. Historical schema-1 packages remain integrity-compatible for
+  downstream use but are explicitly not reclassified as provenance-verified;
+  existing schema-2 packages remain valid as a subset of the relaxed snapshot
+  relation.
 - Remaining limitation: generation still needs legitimate network access to the
-  canonical public Git remote. When that execution surface is unavailable, the
-  correct state is a packaging blocker, not a hand-built or downgraded package.
+  canonical public Git remote. When that execution surface is unavailable, only
+  that package remains pending; the source snapshot and unrelated maintenance
+  tasks are not blocked.
 
 No other current deviation is known.
