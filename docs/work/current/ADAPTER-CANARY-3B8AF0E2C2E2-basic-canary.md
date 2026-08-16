@@ -26,14 +26,16 @@ Create the bounded canary result at the requested developer starting SHA while p
 
 ## Current position
 
-The required task-progress record was pushed first at `a6b8bdeae8e4c6a451dafcb35f8246f6b061cfd1`. The exact canary result was created and verified; the result and this progress update are ready for their implementation commit.
+The required task-progress record was pushed first at `a6b8bdeae8e4c6a451dafcb35f8246f6b061cfd1`. The exact canary result and this progress update are pushed in implementation commit `17132927704040f3fb942adb0f525c4d0bb90a15`; this update is the dedicated handoff snapshot boundary.
 
 ## Observed
 
 - Current branch is `developer`.
-- The pushed task-progress start commit is `a6b8bdeae8e4c6a451dafcb35f8246f6b061cfd1` on both local `HEAD` and `origin/developer`.
+- The pushed task-progress start commit is `a6b8bdeae8e4c6a451dafcb35f8246f6b061cfd1`.
+- The implementation commit `17132927704040f3fb942adb0f525c4d0bb90a15` is synchronized on `origin/developer`.
 - No pre-existing task-progress record matched this task ID.
 - `testing/ADAPTER-CANARY-3B8AF0E2C2E2/result.md` contains exactly four requested lines and a trailing newline.
+- The task-start-to-implementation range contains only the required task-progress record and canary result.
 
 ## Interpretation
 
@@ -54,6 +56,8 @@ None.
 - `./scripts/bootstrap-agent-workflow.sh --check`: passed; tracked Git hooks are active.
 - Exact-byte assertion for `testing/ADAPTER-CANARY-3B8AF0E2C2E2/result.md`: passed.
 - `git diff --check`: passed.
+- Task-start-to-implementation `git diff --check`: passed.
+- Task-start-to-implementation path review: only the required task-progress record and canary result are present.
 
 ## Blockers / required decisions
 
@@ -61,13 +65,11 @@ None.
 
 ## Remaining work
 
-- Commit and push this task-progress record.
-- Create and push the exact four-line canary result and this progress update.
-- Create and push the dedicated handoff snapshot.
+- Push this dedicated handoff snapshot.
 
 ## Next action
 
-Commit and push the canary result with this progress update, then create and push the dedicated handoff snapshot.
+Push this dedicated handoff snapshot, then return the canonical six fields.
 
 ## Relevant durable records
 
