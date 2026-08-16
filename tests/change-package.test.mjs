@@ -66,7 +66,7 @@ function fixture(context) {
     schema_version: 1,
     canonical_repository: canonicalUrl,
     recorded_at: "2026-01-01T00:00:00Z",
-    sources: { main: "f".repeat(40), developer: developerBase, "web-orchestration": webBase },
+    sources: { main: "f".repeat(40), developer: developerTip, "web-orchestration": webHead },
     last_reconciled_task: "PREVIOUS",
     last_change_package: "changes/PREVIOUS/manifest.json",
   };
@@ -94,15 +94,17 @@ function createPackage(input, output, overrides = {}, expected = 0) {
   return run("node", args, root, expected, input.environment);
 }
 
-test("creates deterministic provenance schema 2 from canonical fetched branch tips", (context) => {
+test("creates deterministic provenance schema 2 with source snapshot independent from range bases", (context) => {
   const input = fixture(context);
   const output = join(input.directory, "package");
+  assert.notEqual(input.lock.sources.developer, input.developerBase);
   const result = createPackage(input, output);
   assert.match(result.stdout, /provenance-verified/);
   const checked = validateChangePackage(output, "TASK-001");
   assert.equal(checked.schemaVersion, 2);
   assert.equal(checked.provenanceVerified, true);
-  assert.equal(checked.manifest.provenance.source_lock.sources.developer, input.developerBase);
+  assert.equal(checked.manifest.provenance.source_lock.sources.developer, input.developerTip);
+  assert.equal(checked.manifest.ranges.developer.base, input.developerBase);
   assert.equal(checked.manifest.provenance.canonical_tips.developer, input.developerTip);
   assert.equal(checked.manifest.ranges.developer.head, input.developerHead);
   assert.equal(checked.manifest.provenance.head_relations.developer, "reviewed-head-ancestor-of-canonical-tip");
@@ -115,7 +117,7 @@ test("creates deterministic provenance schema 2 from canonical fetched branch ti
   assert.equal(readFileSync(join(output, "developer.patch"), "utf8"), readFileSync(join(second, "developer.patch"), "utf8"));
 });
 
-test("rejects deceptive local origin, wrong review base, and forged local head", (context) => {
+test("rejects deceptive local origin, non-ancestor range base, and forged local head", (context) => {
   const input = fixture(context);
   git(input.source, ["remote", "set-url", "origin", "https://github.com.evil.invalid/floris3456/agentic-workflow-template.git"]);
   let result = spawnSync("node", [join(input.template, "scripts", "create-change-package.mjs"), "--repository", input.source, "--task-id", "TASK-BAD", "--developer-base", input.developerBase, "--developer-head", input.developerHead, "--web-base", input.webBase, "--web-head", input.webHead, "--output", join(input.directory, "bad-origin")], { cwd: root, env: input.environment, encoding: "utf8" });
@@ -123,8 +125,8 @@ test("rejects deceptive local origin, wrong review base, and forged local head",
   assert.match(result.stderr, /origin does not match/);
   git(input.source, ["remote", "set-url", "origin", canonicalUrl]);
 
-  result = createPackage(input, join(input.directory, "bad-base"), { developerBase: input.developerHead }, 1);
-  assert.match(result.stderr, /does not match source-lock review base/);
+  result = createPackage(input, join(input.directory, "bad-base"), { developerBase: input.webBase }, 1);
+  assert.match(result.stderr, /range base is not an ancestor of canonical head/);
 
   git(input.source, ["checkout", "developer"]);
   const forged = commit(input.source, "forged.txt", "local only\n", "forged local head");
@@ -132,7 +134,7 @@ test("rejects deceptive local origin, wrong review base, and forged local head",
   assert.match(result.stderr, /did not resolve exactly from canonical fetch|not an ancestor of the current canonical tip/);
 });
 
-test("schema 2 validation detects source-lock, patch, and package-binding tampering", (context) => {
+test("schema 2 validation detects source-snapshot, patch, and package-binding tampering", (context) => {
   const input = fixture(context);
   const output = join(input.directory, "package");
   createPackage(input, output);
@@ -141,7 +143,7 @@ test("schema 2 validation detects source-lock, patch, and package-binding tamper
   const manifest = JSON.parse(originalManifest);
   manifest.provenance.source_lock.sources.developer = "1".repeat(40);
   writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
-  assert.throws(() => validateChangePackage(output), /source-lock digest|base does not match/);
+  assert.throws(() => validateChangePackage(output), /source-lock digest/);
   writeFileSync(manifestPath, originalManifest);
   writeFileSync(join(output, "developer.patch"), Buffer.concat([readFileSync(join(output, "developer.patch")), Buffer.from("tamper\n")]));
   assert.throws(() => validateChangePackage(output), /patch digest/);
