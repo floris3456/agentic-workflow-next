@@ -6,7 +6,7 @@ TEMPLATE-OPENCODE-FAST-COMPLETION-001
 
 ## Status
 
-In progress; developer source reviewed, terminal proof reconciliation pending
+Blocked; source correction complete and independently reviewed, portable package pending local maintainer execution
 
 ## Task-start template-development SHA
 
@@ -22,32 +22,40 @@ Correct the post-interaction continuation race where normal same-session work ca
 
 ## Current objective
 
-Prove the mapped Luna route terminal from live evidence, then package the reviewed source.
+Source correction and independent review are complete. Generate and validate the required provenance package on a maintainer execution surface with canonical GitHub network access.
 
 ## Current position
 
-Developer implementation `61c430590dc7008c845586373f27355847a4ac31` and task-record-only handoff `326e9c402f571b82f6497c4da0f9d3722b553dba` are remote. Independent exact-range review finds no blocking source defect: pre-reply baseline activity/latest-assistant completion evidence is captured before permission/question reply; post-reply changed activity or changed terminal assistant fingerprint is clean completion; baseline/proof failure blocks; the existing grace and durable claim-before-delivery remain; and the regression covers completion before the first post-reply observation with inactive status and unchanged session activity. Luna reports build, focused recovery 19/19, bridge 96/96, agent-system, bridge/repository validation, 8/8 branch-initializer tests, and `git diff --check` passing.
+Developer implementation `61c430590dc7008c845586373f27355847a4ac31` and task-record-only handoff `326e9c402f571b82f6497c4da0f9d3722b553dba` are remote and independently reviewed. The exact fix captures mapped-session activity plus latest assistant completion evidence before permission/question reply; post-reply changed activity or changed terminal assistant-message fingerprint is clean completion; baseline/proof failure blocks; the existing grace and durable one-shot claim-before-delivery remain; and the regression covers normal completion before the first post-reply observation with inactive status and unchanged session activity.
 
-Bridge durable `task.status` remains stale at `starting`. Live sequence 4 `session.status` returned `{}`, proving the mapped session inactive/idle. Sequence 5 `sync.recover` succeeded but did not materialize the missing terminal task projection. Pending read-only sequence 6 command `84787149-8736-4666-bca0-85dba278997d` will read `session.messages` with `limit:1`; terminal latest-assistant evidence matching the handoff will independently prove route termination without restart, replay, prompt, or steer.
+The bridge missed the durable terminal projection for the Luna session. Read-only sequence 4 proved live `session.status = {}`; sequence 5 idempotent `sync.recover` succeeded but did not update stale `task.status`; read-only sequence 6 then returned the latest assistant turn with `finish: stop` and the canonical six-field completed handoff naming exact SHA `326e9c402f571b82f6497c4da0f9d3722b553dba`. That exact live terminal evidence plus the remote handoff proves the Luna route terminal and absorbed without restart, replay, replacement session, or steer. Canonical issue #45 is closed `completed`.
+
+Exact source refs were reread and `source-lock.json` was reconciled to developer `326e9c402f571b82f6497c4da0f9d3722b553dba`, web-orchestration `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`, and unchanged main `6127611113dfdb66f93a0cfd2d355359aa370833`; the template-development push validator passed on that lock commit.
+
+The tracked package generator was attempted on the available execution sandbox, but its mandatory fresh canonical Git fetch failed because that sandbox cannot resolve/access GitHub. No package files were generated. The repository contract forbids hand-building the package, so package creation remains explicitly pending a local maintainer execution surface with canonical network access.
 
 ## Source ranges
 
 - developer: `80ad63319cd746d6205d67781b25e3c327b230bc..326e9c402f571b82f6497c4da0f9d3722b553dba`
 - implementation: `afd5d48a6aafc5c6c8974c9f5398bd06cfcb8c81..61c430590dc7008c845586373f27355847a4ac31`
 - handoff: `61c430590dc7008c845586373f27355847a4ac31..326e9c402f571b82f6497c4da0f9d3722b553dba` (task record only)
-- web-orchestration: unchanged for this task
+- web-orchestration: `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17..7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`
 - main: unchanged at `6127611113dfdb66f93a0cfd2d355359aa370833`
 
 ## Observed
 
 - Normal OpenCode idle removes the session from live status; the prior race was real.
 - New recovery anchors proof before the reply instead of merely increasing delay.
+- Baseline unavailability blocks continuation recovery rather than permitting an unbaselined nudge; the interaction reply itself is still delivered once.
 - Regression proves inactive/unchanged-session fast completion returns `clean`, sends zero nudge, and leaves nudge state `not-attempted`.
-- Remote handoff exists and live status is inactive; only bridge terminal projection is stale.
+- Luna reported build, focused recovery 19/19, full bridge 96/96, agent-system, bridge/repository validation, 8/8 branch-initializer tests, and `git diff --check` passing.
+- Latest live assistant message is terminal (`finish: stop`) and contains the six-field completed handoff for the exact remote developer SHA.
+- Template-development validation passed after source-lock reconciliation.
+- The available sandbox lacks canonical GitHub network access required by `scripts/create-change-package.mjs`; no package was produced there.
 
 ## Interpretation
 
-The source fix closes the reviewed race while preserving the prior recovery authority. Missing terminal projection is a control-plane reconciliation issue, not evidence that Luna is still working.
+The source defect is fixed and the developer route is terminal/absorbed. The only incomplete maintenance obligation is the repository-required provenance package. It must be generated by the tracked script from canonical remote history; fabricating equivalent patch/manifest bytes through connected-GitHub writes would violate the maintenance contract.
 
 ## Attempts
 
@@ -57,10 +65,14 @@ The source fix closes the reviewed race while preserving the prior recovery auth
 4. Luna pushed implementation and handoff without replacement session/start.
 5. Independently reviewed exact source/test behavior.
 6. Live status proved inactive; idempotent `sync.recover` succeeded but durable task projection stayed stale.
+7. Minimal latest-message read proved terminal `finish: stop` and exact completed handoff.
+8. Closed issue #45 after terminal route absorption.
+9. Reconciled `source-lock.json` from independently reread exact refs; template-development CI passed.
+10. Attempted the tracked package generator on the available sandbox; canonical Git fetch failed at DNS/network resolution before package generation. No manual package construction was attempted.
 
 ## Changed approach
 
-The rejected prior implementation used only post-reply evidence. This correction uses a pre-reply baseline plus terminal assistant-message evidence without widening recovery authority or delay.
+The rejected prior implementation used only post-reply evidence. This correction uses a pre-reply baseline plus terminal assistant-message evidence without widening recovery authority or delay. Package completion is deliberately separated from source completion because the only available execution sandbox cannot perform the generator's mandatory canonical fetch.
 
 ## Checks
 
@@ -68,29 +80,37 @@ The rejected prior implementation used only post-reply evidence. This correction
 - Baseline placement before both reply kinds verified.
 - Fail-closed baseline/proof behavior and one-shot claim preserved.
 - Fast-completion regression semantics inspected directly.
+- Live terminal assistant response independently read and matched to exact remote handoff.
+- Current refs reread: developer `326e9c402f571b82f6497c4da0f9d3722b553dba`; web-orchestration `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`; main `6127611113dfdb66f93a0cfd2d355359aa370833`.
+- `source-lock.json` reconciled at template-development commit `61da94440982422413df992ca31305998e16fa29`.
+- GitHub Actions run `31972355347` for that lock commit completed successfully.
 
 ## Blockers / required decisions
 
-None currently.
+No product/design decision is required. Package generation is blocked only by the current orchestrator sandbox lacking canonical GitHub network access; a local maintainer execution surface can complete it mechanically.
 
 ## Remaining work
 
-Read latest live terminal message; mark developer route absorbed if proven; generate/validate tracked package; reconcile source lock/ledger from exact refs; final remote readback; close #45; create template-development handoff. Full `main -> developer` promotion review remains separate and later.
+1. From a clean synchronized `template-development` checkout, run the tracked generator for developer range `80ad63319cd746d6205d67781b25e3c327b230bc..326e9c402f571b82f6497c4da0f9d3722b553dba` and empty web range `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17..7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`, outputting `changes/TEMPLATE-OPENCODE-FAST-COMPLETION-001`.
+2. Run the tracked package validator/template-development validation, commit and push the generated package, update `source-lock.json.last_change_package`, and record exact package digest/checks here.
+3. Independently review the pushed package and create the dedicated template-development handoff snapshot.
+4. Finalization/archive remains separate. Full `main -> developer` promotion review remains separate and later.
 
 ## Next action
 
-Publish sequence 6 read-only `opencode.request` command `84787149-8736-4666-bca0-85dba278997d` for `session.messages` with task-owned alias `session-54` and `limit:1`.
+Run the repository-owned package generator and validator on a local maintainer checkout with GitHub network access; do not hand-build the package.
 
 ## Relevant durable records
 
-- Issue #45
-- Start: `01c0ce88-6cca-4760-8562-71c34db3409b`
-- Live status: `c8a6d9fb-b43e-4802-83c1-ccca03ad4456`
-- Recovery: `addf782f-bf81-4246-ab17-de148654ae16`
-- Pending latest-message read: `84787149-8736-4666-bca0-85dba278997d`
+- Issue #45 (closed completed)
+- Start command: `01c0ce88-6cca-4760-8562-71c34db3409b`
+- Live terminal-state command: `c8a6d9fb-b43e-4802-83c1-ccca03ad4456`
+- Recovery command: `addf782f-bf81-4246-ab17-de148654ae16`
+- Terminal latest-message command: `84787149-8736-4666-bca0-85dba278997d`
 - Implementation: `61c430590dc7008c845586373f27355847a4ac31`
 - Developer handoff: `326e9c402f571b82f6497c4da0f9d3722b553dba`
+- Reconciled source lock: template-development commit `61da94440982422413df992ca31305998e16fa29`
 
 ## Last handoff commit
 
-None
+None; source work is complete but the maintenance working cycle is blocked before the required package/handoff stage.
