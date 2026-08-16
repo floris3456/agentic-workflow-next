@@ -22,11 +22,11 @@ Implement the bounded bridge lifecycle correction for TEMPLATE-BRIDGE-LIFECYCLE-
 
 ## Current objective
 
-Implement the two bounded bridge lifecycle corrections and their focused regressions without changing acceptance, promotion, or trust boundaries.
+Correct only the canonical recovery evidence-method metadata identified by independent review and lock both method strings with focused assertions; do not change lifecycle behavior or scope.
 
 ## Current position
 
-The implementation and focused regressions are committed and pushed at developer `9c1ae8a445cbf53db7af3905aefd471470c6cac6`. The developer canonical proof is integrated into `runSession` and `recoverOnce`; Scout enrollment is wired after successful mapping/prompting and retains startup enumeration for historical sessions. Durable records describe the corrected behavior. This record is being prepared for the dedicated handoff snapshot.
+The lifecycle implementation and focused regressions are committed and pushed at developer `9c1ae8a445cbf53db7af3905aefd471470c6cac6`, with handoff snapshot `305c72cd87bff6d9cccf91b97f78e87af241efd3`. The metadata correction and focused assertions are pushed at developer `0362e24a363d9f905234283666b3f840983a6ef1`; no lifecycle behavior changed. This record is being prepared for the new dedicated handoff snapshot.
 
 ## Observed
 
@@ -36,29 +36,30 @@ The implementation and focused regressions are committed and pushed at developer
 - `ScoutRuntime.start` now invokes the service callback after a new Scout is mapped and successfully prompted, while the callback guard keeps enrollment idempotent.
 - The first full bridge test run after implementation exposed only test-fixture issues: a callback inferred `number` instead of `void`, one boundary fixture reused an issue number, and one existing cursor assertion did not include the new proof's interaction-list reads.
 - After those fixes, the bridge suite passed 99/99 tests, including the new developer proof boundaries/restart delivery and immediate Scout enrollment/capture regressions.
+- Independent review confirmed the lifecycle behavior is bounded but identified that the two canonical `recovery.method` strings do not match their actual proof request paths.
+- The correction now labels Scout proof inputs as `session.status+session.messages` and developer proof inputs as `permission.list+question.list+session.status+session.messages`; focused assertions inspect both persisted payloads.
+- `AS-BUILT.md` already described these proof inputs truthfully, so no durable implementation-record text change was needed for this metadata-only correction.
 
 ## Interpretation
 
-The bounded repair uses a developer-specific proof that first rules out exact-session pending interactions, then requires an inactive/idle status and structurally terminal matching assistant completion. It persists one deterministic canonical event through `recordEvent` and `terminalResponseDelivery`, so existing projection/publication and retry semantics remain authoritative. Scout enrollment is an idempotent service callback after successful mapping and prompting, while startup enumeration remains unchanged.
+The review correction changes only persisted evidence labels: Scout will name `session.status+session.messages`, and developer will name `permission.list+question.list+session.status+session.messages`. Focused payload assertions will prevent future drift; proof calls, terminal decisions, delivery, projection, and Scout enrollment remain unchanged.
 
 ## Attempts
 
-- Initial build/test attempt: `npm --prefix tools/opencode-bridge test` stopped at TypeScript test typing and fixture setup/assertion failures; the route was corrected without changing the implementation strategy.
-- Corrected full bridge test attempt: `npm --prefix tools/opencode-bridge test` passed 99/99.
+None in this correction cycle.
 
 ## Changed approach
 
-None.
+Independent review steering narrowed the work to evidence-metadata truthfulness and regression assertions; no lifecycle implementation route is being changed.
 
 ## Checks
 
-- Focused recovery/Scout build and tests (`npm --prefix tools/opencode-bridge run build && node --test --test-concurrency=1 tools/opencode-bridge/dist/tests/recovery.test.js tools/opencode-bridge/dist/tests/scout.test.js`): passed 34/34.
-- Full bridge tests (`npm --prefix tools/opencode-bridge test`): passed 99/99.
-- `node scripts/validate-agent-system.mjs`: passed.
+- Prior-cycle focused/full bridge and repository validation passed at handoff snapshot `305c72cd87bff6d9cccf91b97f78e87af241efd3`.
+- Correction-cycle focused recovery/Scout build and tests: passed 34/34.
 - `./scripts/validate-opencode-bridge.sh`: contracts/package, bridge 99/99, and template-branch 8/8 passed.
 - `./scripts/validate-repository.sh`: pre-implementation, agent-system, research/evidence, hooks, bridge 99/99, and template-branch 8/8 passed.
-- `git diff --check`: passed immediately before the implementation commit.
-- `./scripts/bootstrap-agent-workflow.sh --check`: tracked hooks active immediately before commit.
+- `git diff --check`: passed immediately before the correction commit.
+- `./scripts/bootstrap-agent-workflow.sh --check`: tracked hooks active at cycle start.
 
 ## Blockers / required decisions
 
@@ -66,11 +67,11 @@ None observed.
 
 ## Remaining work
 
-No implementation work remains in this cycle. The dedicated task-record-only handoff snapshot still must be created and pushed.
+No implementation work remains in this correction cycle. The new task-record-only handoff snapshot still must be created and pushed.
 
 ## Next action
 
-Create and immediately push the dedicated task-record-only handoff snapshot; do not edit after its successful push in this cycle.
+Run final diff/status inspection, then create/push the new task-record-only handoff snapshot; do not edit after its successful push in this cycle.
 
 ## Relevant durable records
 
@@ -83,4 +84,4 @@ Create and immediately push the dedicated task-record-only handoff snapshot; do 
 
 ## Last handoff commit
 
-`None`
+`305c72cd87bff6d9cccf91b97f78e87af241efd3`
