@@ -4,7 +4,7 @@
 TEMPLATE-OPENCODE-FAST-COMPLETION-001
 
 ## Status
-In progress
+Completed
 
 ## Task-start developer SHA
 80ad63319cd746d6205d67781b25e3c327b230bc
@@ -19,7 +19,7 @@ Implement the narrow developer correction for TEMPLATE-OPENCODE-FAST-COMPLETION-
 Correct post-reply recovery proof so a normal same-session continuation that completes before the first recovery observation is recognized as clean, without weakening the existing durable one-shot recovery and safety boundaries.
 
 ## Current position
-The bridge recovery/command path now captures pre-reply mapped-session evidence and compares it with post-reply activity/terminal-message evidence before the existing bounded recheck and durable nudge claim. Focused and full bridge tests pass locally; validation and the implementation commit remain.
+The bounded correction and its durable records are pushed in implementation commit `61c430590dc7008c845586373f27355847a4ac31`. Local `developer` and `origin/developer` are synchronized at that commit. All requested focused, bridge, agent-system, repository, and diff checks pass; only the dedicated task-progress handoff snapshot remains for this working cycle.
 
 ## Observed
 - `developer` is checked out and matched `origin/developer` at `80ad63319cd746d6205d67781b25e3c327b230bc`.
@@ -28,6 +28,8 @@ The bridge recovery/command path now captures pre-reply mapped-session evidence 
 - The implementation calls a recovery baseline capture before forwarding `permission.reply` or `question.reply`; an unavailable baseline is carried as a blocked proof rather than falling back to an unbaselined nudge path.
 - The post-reply proof can read the latest assistant message and recognizes a changed terminal completion record even when the mapped session is absent from `session.status`.
 - The focused regression keeps the mapped session/activity unchanged, returns an inactive status, changes the assistant message from `tool-calls` to terminal `stop`, and observes no continuation nudge or new session.
+- The implementation commit `61c430590dc7008c845586373f27355847a4ac31` is pushed and resolves on both local `developer` and `origin/developer`.
+- The bridge command path exercises the pre-reply baseline for both permission and question reply commands; the recovery regression covers the fast terminal completion race.
 
 ## Interpretation
 The prior proof could treat an inactive/unchanged-for-one-second observation as a stall after normal same-session completion. Capturing activity and assistant completion evidence before the reply provides a stable comparison point; post-reply changes are clean progress/completion, while malformed or unavailable evidence remains blocked.
@@ -46,23 +48,27 @@ The implementation does not lengthen the existing one-second grace. It adds an e
 - `npm run build` in `tools/opencode-bridge`: passed.
 - Focused recovery tests: passed, 19/19.
 - Full bridge tests: passed, 96/96.
+- `node scripts/validate-agent-system.mjs`: passed.
+- `./scripts/validate-opencode-bridge.sh`: passed, including 96/96 bridge tests.
+- `./scripts/validate-repository.sh`: passed, including research, structure, agent-system, bridge, 96/96 bridge tests, and 8/8 branch-initializer tests.
+- `git diff --check`: passed.
 
 ## Blockers / required decisions
 None.
 
 ## Remaining work
-- Review the complete diff and run `git diff --check`.
-- Run agent-system, bridge, and repository validation.
-- Commit and immediately push the implementation and durable-record update, then create and push the dedicated handoff snapshot.
+- Create and push the dedicated task-progress-only handoff snapshot.
 
 ## Next action
-Inspect the implementation diff for scope and record accuracy, then commit/push the bounded correction before the remaining validation checks.
+Create and push the dedicated handoff snapshot, then return the canonical six fields without another tool action in this working cycle.
 
 ## Relevant durable records
 - `tools/opencode-bridge/AS-BUILT.md`
 - `docs/architecture/AS-BUILT.md`
 - `docs/architecture/deviations.md`
 - `docs/work/current/TEMPLATE-OPENCODE-PERMISSION-RECOVERY-001-opencode-permission-recovery.md`
+- `contracts/opencode-bridge/protocol.md`
+- `docs/architecture/design-record.md`
 
 ## Last handoff commit
 None
