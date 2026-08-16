@@ -4,7 +4,7 @@
 TEMPLATE-OPENCODE-PERMISSION-RECOVERY-001
 
 ## Status
-In progress
+Completed
 
 ## Task-start developer SHA
 29d59fb15bbdd31b59205c691deb4ddd167ade78
@@ -19,14 +19,12 @@ Implement the developer-side source work for TEMPLATE-OPENCODE-PERMISSION-RECOVE
 Implement the bounded developer-side permission configuration, repository-scope guidance/validation, and same-session post-interaction recovery contract without weakening approval, isolation, replay, or promotion boundaries. Correct the recovery race by requiring bounded post-interaction grace and a recheck before a one-shot continuation nudge.
 
 ## Current position
-The previous handoff snapshot remains synchronized at
-`af19f527390972c5f84dd2d82c40249feb2b3231`. The same mapped correction route
-was independently reconciled as idle with no live permission/question and no
-activity after its preserved dirty turn; no second session or start was created.
-Its work is absorbed in place. The source now uses a one-second grace/recheck
-with live activity evidence, and the path guidance addresses the observed
-checkout-basename retyping failure. Full checks, runtime acceptance, correction
-commit, and handoff snapshot remain.
+The corrected implementation and durable records are pushed at
+`c857762c327ff9f86bd0f3afd055116ba650f23b`. The same mapped correction route
+was independently reconciled and absorbed without a second session or start.
+The clean synchronized runtime loaded that revision, passed the focused real
+same-session interaction/control acceptance, and remains healthy. Only this
+dedicated task-record handoff snapshot remains.
 
 ## Observed
 - Task start was synchronized at `29d59fb15bbdd31b59205c691deb4ddd167ade78`;
@@ -64,6 +62,20 @@ commit, and handoff snapshot remain.
   but the paginated ETag route consumed the page-2 comments correctly after the
   bridge's fail-closed GitHub retry window. The prior transient error was cleared
   on success and could not be reproduced; no polling source defect is proven.
+- Correction commit `c857762c327ff9f86bd0f3afd055116ba650f23b` is pushed and
+  independently resolves from the remote `developer` ref.
+- The sync watcher rebuilt from a clean synchronized checkout and restarted only
+  the bridge service. The new process reported compatible OpenCode `1.18.16`;
+  heartbeat and `last_poll_at` advanced, `last_error` was clear, no command,
+  request, response-delivery, or outbox work was pending, and Scout stayed ready.
+- A real session-35 canary read `AGENTS.md` in-worktree and produced no permission
+  request, then asked `question-9`. Fresh sequence 23 replied through issue #44;
+  continuation was reported `clean`, both interaction queues cleared, and the
+  same session automatically returned `The canary continued.` No manual post-
+  reply steer, recovery nudge, start replay, or replacement session occurred.
+- A fresh sequence-free `task.status` request reached durable `succeeded` about
+  2.7 seconds after its GitHub comment, within the configured 5-second active
+  cadence; bot acknowledgement/success and durable state agree.
 
 ## Interpretation
 The implementation must be made against the existing bridge/runtime source and its durable records; no branch other than `developer` is part of this local task.
@@ -133,22 +145,26 @@ pagination/cache/admission behavior reconciled and no source defect reproduced.
   tests and 8/8 branch-initializer tests.
 - A supervised read-only `git ls-remote` proved the repository runtime route can
   reach the exact remote developer head `af19f527390972c5f84dd2d82c40249feb2b3231`.
+- Remote readback: `developer` resolves to
+  `c857762c327ff9f86bd0f3afd055116ba650f23b`.
+- Clean synchronized runtime acceptance: compatible OpenCode `1.18.16`, live
+  bridge process, advancing heartbeat/poll time, clear error, empty work queues,
+  healthy Scout, zero in-worktree permissions, same-session question reply and
+  clean automatic continuation, and fresh sequence-free read consumed in about
+  2.7 seconds.
 - Previous implementation and handoff commits through
   `af19f527390972c5f84dd2d82c40249feb2b3231` are pushed successfully; local
   `HEAD` and `origin/developer` match that SHA at cycle start.
 
 ## Blockers / required decisions
-None currently. Clean synchronized runtime acceptance, pushed correction commit,
-and new handoff snapshot remain.
+None.
 
 ## Remaining work
-- Push the correction, synchronize/restart only the bridge runtime, and run the
-  smallest real path/interaction/control acceptance.
-- Record exact evidence, then create and push the dedicated handoff snapshot
-  without archiving/finalizing this task record.
+None for this developer-side handoff.
 
 ## Next action
-Create and push the correction implementation commit.
+Create and push the dedicated task-progress-only handoff snapshot, then return
+the canonical six fields without further developer-cycle work.
 
 ## Relevant durable records
 - `tools/opencode-bridge/AS-BUILT.md`
