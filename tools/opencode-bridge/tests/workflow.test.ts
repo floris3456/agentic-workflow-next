@@ -7,7 +7,7 @@ import { CommandExecutor } from "../src/commands.js";
 import { Manifest } from "../src/manifest.js";
 import { OpenCodeClient } from "../src/opencode.js";
 import { OperationPolicy, PublicProjection } from "../src/projection.js";
-import type { RecoveryCoordinator } from "../src/recovery.js";
+import { RecoveryCoordinator } from "../src/recovery.js";
 import { BridgeState } from "../src/state.js";
 import type { CommandEnvelope, CompatibilityResult, JsonValue, OperationArguments } from "../src/types.js";
 
@@ -58,12 +58,28 @@ test("deterministic workflow covers routing, interaction, recovery, finalization
       ses_other_private: { type: "busy" },
     };
     if (operationId === "session.messages") return [{ info: { id: "msg_workflow_private", sessionID: "ses_workflow_private" }, parts: [] }];
-    if (["permission.reply", "question.reply", "session.abort"].includes(operationId)) return true;
+    if (operationId === "permission.reply") {
+      permissionPending = false;
+      return true;
+    }
+    if (operationId === "question.reply") {
+      questionPending = false;
+      return true;
+    }
+    if (operationId === "permission.list") return permissionPending ? [{ id: "per_workflow_private", sessionID: "ses_workflow_private" }] : [];
+    if (operationId === "question.list") return questionPending ? [{ id: "que_workflow_private", sessionID: "ses_workflow_private" }] : [];
     if (operationId === "session.prompt_async") return undefined;
+    if (operationId === "session.abort") return true;
     throw new Error(`unexpected operation ${operationId}`);
   };
+  let permissionPending = true;
+  let questionPending = true;
   let recoveries = 0;
-  const recovery = { recoverOnce: async () => { recoveries++; } } as unknown as RecoveryCoordinator;
+  const recoveryCoordinator = new RecoveryCoordinator({ client, state });
+  const recovery = {
+    recoverOnce: async () => { recoveries++; },
+    continueAfterInteraction: recoveryCoordinator.continueAfterInteraction.bind(recoveryCoordinator),
+  } as unknown as RecoveryCoordinator;
   const promotions: string[] = [];
   const controller = new AbortController();
   const executor = new CommandExecutor({
@@ -95,13 +111,17 @@ test("deterministic workflow covers routing, interaction, recovery, finalization
   const question = projection.project("que_workflow_private", "WORKFLOW-1");
   assert.equal(permission, "permission-1");
   assert.equal(question, "question-1");
+  state.recordInteraction({ interactionId: "per_workflow_private", kind: "permission", taskId: "WORKFLOW-1", sessionId: "ses_workflow_private" });
+  state.recordInteraction({ interactionId: "que_workflow_private", kind: "question", taskId: "WORKFLOW-1", sessionId: "ses_workflow_private" });
   state.recordEvent({ eventKey: "event-1", source: "test", eventType: "session.idle", taskId: "WORKFLOW-1", payload: { sessionID: "ses_workflow_private" } });
 
   await apply(2, "steer", { message: "Continue with the requested correction" });
   await apply(3, "route", { agent: "sol", message: "Handle the exceptional complex step" });
   assert.equal(state.getTaskSession("WORKFLOW-1")?.agent, "large-developer");
-  await apply(4, "permission.reply", { permission: "permission-1", reply: "once" });
-  await apply(5, "question.reply", { question: "question-1", answers: [["Option A"]] });
+  const permissionReply = await apply(4, "permission.reply", { permission: "permission-1", reply: "once" });
+  assert.match(JSON.stringify(permissionReply.publicResult), /outcome[" ]+:[" ]+blocked/);
+  const questionReply = await apply(5, "question.reply", { question: "question-1", answers: [["Option A"]] });
+  assert.match(JSON.stringify(questionReply.publicResult), /outcome[" ]+:[" ]+recovered/);
   const status = await apply(6, "status", {});
   assert.match(JSON.stringify(status.publicResult), /session-1/);
   assert.doesNotMatch(JSON.stringify(status.rawResult), /ses_other_private/);

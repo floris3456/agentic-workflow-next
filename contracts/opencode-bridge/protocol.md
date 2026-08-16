@@ -169,6 +169,27 @@ history, project sync history, repository/workspace legacy live SSE, this focuse
 interaction recovery, the Scout lifecycle fallback, and deduplication recover
 local state without claiming unsupported SSE `Last-Event-ID` replay.
 
+After a successful `permission.reply` or `question.reply`, the bridge records
+the resolved interaction in the private state database. It then validates both
+pending interaction lists and the exact mapped developer session status. If no
+interaction remains and that session is `idle`, one durable claim permits one
+fixed same-session continuation nudge using the existing agent and configured
+directory. The public command result includes `continuation_recovery.outcome`:
+`recovered` means the nudge was sent, `clean` means the session was already
+progressing, `blocked` means safety proof or delivery was unavailable, and
+`already-recovered` means the persisted episode was already sent. A claim is
+recorded before the request, so an uncertain request is never replayed. The
+bridge never calls `session.create`, `start`, or route changes on this path.
+Outstanding interactions, missing mappings/status, malformed lists, and API
+errors fail closed with no nudge.
+
+The normal developer config leaves in-worktree read/edit/shell defaults intact
+and sets `external_directory` to `ask`. It does not add a broad external-path
+allow rule. Genuine outside-worktree access therefore remains visible for local
+OpenCode/orchestrator approval; repository-relative guidance prevents parent or
+sibling path walks from turning a missing in-scope path into an implicit scope
+change.
+
 For a genuinely stuck `applying` command, issue one `command.status` request and
 compare its applying age with the published service heartbeat. Do not poll
 indefinitely and do not retry the mutation. If both command state and a current

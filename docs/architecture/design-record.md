@@ -69,10 +69,13 @@ installed runtime or active contract probe is unavailable.
 When a mapped developer session idles or errors, the bridge atomically persists the event/cursor/session-state/delivery boundary, transports the structurally latest assistant message through the existing public-safety projection to the bound issue, and retains it for `task.status` recovery. The bridge does not interpret or semantically validate that response. The web orchestrator correlates it to the task, checks its explicit developer status/handoff information, and uses exact remote GitHub evidence to decide whether review can begin.
 
 Canonical reconciliation is focused on recoverable developer evidence: pending
-permission and question lists restore mapped interaction events. Historical
-Scout recovery uses only the dedicated endpoint and a revalidated exact-tree
-snapshot. Historical worktree mappings remain state-visible but are rejected and
-never contacted. The bridge does not infer workflow meaning.
+permission and question lists restore mapped interaction events. After a reply,
+the bridge persists the interaction episode and performs one fail-closed,
+same-session continuation recovery only after proving that both lists are clear
+and the mapped developer session is idle. Historical Scout recovery uses only
+the dedicated endpoint and a revalidated exact-tree snapshot. Historical
+worktree mappings remain state-visible but are rejected and never contacted.
+The bridge does not infer workflow meaning.
 
 Scout requests retain the sequence-free lane, exact request shape, concurrent
 admission, durable status, and no-replay behavior. The bridge fetches canonical

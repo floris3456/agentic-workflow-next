@@ -45,6 +45,7 @@ try {
   assert(config.default_agent === "small-developer", "default_agent must be small-developer");
   assert(config.share === "disabled", "OpenCode sharing must be disabled");
   assert(config.permission?.task === "deny", "task/subagent launches must be denied");
+  assert(config.permission?.external_directory === "ask", "external_directory must remain approval-gated");
   const defaultPath = `.opencode/agents/${config.default_agent}.md`;
   assert(exists(defaultPath), `Configured default agent does not exist: ${defaultPath}`);
   if (exists(defaultPath)) {
@@ -68,6 +69,13 @@ for (const [file, model, effort] of [
   assert(fm?.reasoningEffort === effort, `${file} reasoningEffort must be ${effort}`);
   assert(/\n\s*task:\s*deny\s*\n/.test(text), `${file} must deny task launches`);
 }
+
+const smallDeveloper = read(".opencode/agents/small-developer.md");
+assert(smallDeveloper.includes("repository-relative paths")
+  && smallDeveloper.includes("parent or sibling directories")
+  && smallDeveloper.includes("widen the task")
+  && smallDeveloper.includes("external_directory"),
+  "small-developer must keep normal work repository-relative and external access approval-gated");
 
 assert(!exists(".opencode/agents/repository-scout.md"),
   "repository-scout must not be ref-owned; the hardened runtime owns its contract");

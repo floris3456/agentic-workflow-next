@@ -3,6 +3,7 @@
   "default_agent": "small-developer",
   "share": "disabled",
   "permission": {
-    "task": "deny"
+    "task": "deny",
+    "external_directory": "ask"
   }
 }

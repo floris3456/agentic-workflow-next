@@ -18,6 +18,13 @@ When the brief requires a human answer, use OpenCode's structured question tool
 so the bridge can publish a task-correlated alias. Do not substitute ordinary
 assistant prose for a required question-tool interaction.
 
+Use repository-relative paths and the configured current working directory for
+normal filesystem and shell work. Do not walk parent or sibling directories to
+rediscover the repository, synthesize an absolute path, or widen the task when a
+path is missing; stop and report the missing path instead. An
+`external_directory` request is outside the configured repository scope and
+must remain visible for approval rather than being broadly allowed.
+
 Every commit on `developer` must be pushed immediately. Before returning control, create and push the required handoff snapshot commit. A successful snapshot push ends the current working cycle: do not edit, run another tool, update the snapshot with its own SHA, or create another commit before returning the six fields. A failed push is the only exception; then stop implementation and report synchronization failure without claiming a remote handoff.
 
 An exact-SHA promotion explicitly delegated after human approval is a no-edit operation, not a normal task. Do not create or update task-progress or create a handoff snapshot before promotion, because doing so would invalidate the approved SHA.

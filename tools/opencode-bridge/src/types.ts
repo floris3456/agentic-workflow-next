@@ -161,6 +161,26 @@ export interface SessionBinding {
   requestId?: string;
 }
 
+export type InteractionKind = "permission" | "question";
+
+export type InteractionNudgeState = "not-attempted" | "claimed" | "sent";
+
+export interface InteractionBinding {
+  interactionId: string;
+  kind: InteractionKind;
+}
+
+export interface InteractionRecord extends InteractionBinding {
+  taskId: string;
+  sessionId: string;
+  state: "pending" | "resolved";
+  nudgeState: InteractionNudgeState;
+  createdAt: number;
+  updatedAt: number;
+  resolvedAt?: number;
+  nudgedAt?: number;
+}
+
 export interface ResponseDelivery {
   eventId: string;
   taskId: string;

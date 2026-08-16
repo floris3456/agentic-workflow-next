@@ -7,6 +7,7 @@ import { Manifest } from "../src/manifest.js";
 import { OpenCodeClient } from "../src/opencode.js";
 import { RecoveryCoordinator } from "../src/recovery.js";
 import { BridgeState } from "../src/state.js";
+import type { JsonValue } from "../src/types.js";
 import { asRecord } from "../src/util.js";
 
 const manifest = Manifest.load(resolve(import.meta.dirname, "../../../../contracts/opencode-bridge/operation-manifest.json"));
@@ -272,6 +273,129 @@ test("legacy and canonical lanes share one interaction identity", async (context
   await recovery.run(abort.signal, () => 0);
   assert.equal(state.listEvents("TASK-INTERACTION").length, 1);
   assert.equal(publications, 1);
+});
+
+test("post-interaction continuation nudges one idle developer session once", async (context) => {
+  const state = stateForTest(context);
+  state.mapTaskSession("TASK-CONTINUE", "ses_continue", 21, "small-developer");
+  state.recordInteraction({
+    interactionId: "per_continue",
+    kind: "permission",
+    taskId: "TASK-CONTINUE",
+    sessionId: "ses_continue",
+  });
+  const calls: string[] = [];
+  const api = client(asFetch(async (request) => {
+    const path = new URL(request.url).pathname;
+    calls.push(path);
+    if (path === "/permission" || path === "/question") return Response.json([]);
+    if (path === "/session/status") return Response.json({ ses_continue: { type: "idle" } });
+    if (path === "/session/ses_continue/prompt_async") {
+      const body = await request.json() as Record<string, JsonValue>;
+      assert.deepEqual(body, {
+        agent: "small-developer",
+        parts: [{
+          type: "text",
+          text: "Continue the existing task in the current repository scope after the resolved interaction. Do not restart the task, create a new session, or widen the scope.",
+        }],
+      });
+      return Response.json(null);
+    }
+    return new Response("not found", { status: 404 });
+  }));
+  const recovery = new RecoveryCoordinator({ client: api, state });
+
+  assert.deepEqual(await recovery.continueAfterInteraction("TASK-CONTINUE", "per_continue", "permission"), {
+    outcome: "recovered",
+    reason: "same-session-continuation-nudge-sent",
+  });
+  assert.deepEqual(await recovery.continueAfterInteraction("TASK-CONTINUE", "per_continue", "permission"), {
+    outcome: "already-recovered",
+    reason: "continuation-already-attempted",
+  });
+  assert.equal(calls.filter((path) => path.endsWith("/prompt_async")).length, 1);
+  assert.equal(calls.includes("/session"), false);
+});
+
+test("post-interaction continuation fails closed while an interaction remains outstanding", async (context) => {
+  const state = stateForTest(context);
+  state.mapTaskSession("TASK-PENDING", "ses_pending_continue", 22, "small-developer");
+  state.recordInteraction({
+    interactionId: "que_pending_continue",
+    kind: "question",
+    taskId: "TASK-PENDING",
+    sessionId: "ses_pending_continue",
+  });
+  let prompts = 0;
+  const api = client(asFetch((request) => {
+    const path = new URL(request.url).pathname;
+    if (path === "/permission") return Response.json([]);
+    if (path === "/question") return Response.json([{ id: "que_other", sessionID: "ses_pending_continue", questions: [] }]);
+    if (path === "/session/status") return Response.json({ ses_pending_continue: { type: "idle" } });
+    if (path.endsWith("/prompt_async")) {
+      prompts++;
+      return Response.json(null);
+    }
+    return new Response("not found", { status: 404 });
+  }));
+  const recovery = new RecoveryCoordinator({ client: api, state });
+  assert.deepEqual(await recovery.continueAfterInteraction("TASK-PENDING", "que_pending_continue", "question"), {
+    outcome: "blocked",
+    reason: "outstanding-interaction",
+  });
+  assert.equal(prompts, 0);
+  assert.equal(state.interaction("que_pending_continue")?.nudgeState, "not-attempted");
+});
+
+test("post-interaction continuation treats a progressing session as clean and does not create a session", async (context) => {
+  const state = stateForTest(context);
+  state.mapTaskSession("TASK-BUSY", "ses_busy_continue", 23, "small-developer");
+  state.recordInteraction({
+    interactionId: "per_busy_continue",
+    kind: "permission",
+    taskId: "TASK-BUSY",
+    sessionId: "ses_busy_continue",
+  });
+  const calls: string[] = [];
+  const api = client(asFetch((request) => {
+    const path = new URL(request.url).pathname;
+    calls.push(path);
+    if (path === "/permission" || path === "/question") return Response.json([]);
+    if (path === "/session/status") return Response.json({ ses_busy_continue: { type: "busy" } });
+    return new Response("not found", { status: 404 });
+  }));
+  const recovery = new RecoveryCoordinator({ client: api, state });
+  assert.deepEqual(await recovery.continueAfterInteraction("TASK-BUSY", "per_busy_continue", "permission"), {
+    outcome: "clean",
+    reason: "session-progressing",
+  });
+  assert.equal(calls.some((path) => path.endsWith("/prompt_async")), false);
+  assert.equal(calls.some((path) => path === "/session"), false);
+});
+
+test("post-interaction continuation fails closed when mapped session status is not proven", async (context) => {
+  const state = stateForTest(context);
+  state.mapTaskSession("TASK-UNKNOWN-STATUS", "ses_unknown_status", 24, "small-developer");
+  state.recordInteraction({
+    interactionId: "per_unknown_status",
+    kind: "permission",
+    taskId: "TASK-UNKNOWN-STATUS",
+    sessionId: "ses_unknown_status",
+  });
+  let prompts = 0;
+  const api = client(asFetch((request) => {
+    const path = new URL(request.url).pathname;
+    if (path === "/permission" || path === "/question") return Response.json([]);
+    if (path === "/session/status") return Response.json({});
+    if (path.endsWith("/prompt_async")) prompts++;
+    return new Response("not found", { status: 404 });
+  }));
+  const recovery = new RecoveryCoordinator({ client: api, state });
+  assert.deepEqual(await recovery.continueAfterInteraction("TASK-UNKNOWN-STATUS", "per_unknown_status", "permission"), {
+    outcome: "blocked",
+    reason: "continuation-proof-unavailable",
+  });
+  assert.equal(prompts, 0);
 });
 
 test("project SSE is persisted before notification and maps private sessions locally", async (context) => {

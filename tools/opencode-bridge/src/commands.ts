@@ -4,7 +4,7 @@ import { commandStatusComment } from "./protocol.js";
 import { OperationPolicy, PublicProjection } from "./projection.js";
 import { RecoveryCoordinator } from "./recovery.js";
 import { BridgeState } from "./state.js";
-import type { CommandEnvelope, JsonValue, OperationArguments, StoredCommand } from "./types.js";
+import type { CommandEnvelope, InteractionKind, JsonValue, OperationArguments, StoredCommand } from "./types.js";
 import { asJson, asRecord, errorMessage, isRecord } from "./util.js";
 
 type AgentRoute = "luna" | "sol";
@@ -288,7 +288,8 @@ export class CommandExecutor {
       path: { requestID: requestId },
       body: { reply, ...(message ? { message } : {}) },
     });
-    return { status: "permission-replied", permission: alias, reply };
+    const continuation = await this.recoverAfterInteraction(command.taskId, requestId, "permission");
+    return { status: "permission-replied", permission: alias, reply, continuation_recovery: continuation };
   }
 
   private async questionReply(command: StoredCommand, markMutation: () => void): Promise<JsonValue> {
@@ -304,7 +305,15 @@ export class CommandExecutor {
       path: { requestID: requestId },
       body: { answers: input.answers },
     });
-    return { status: "question-replied", question: alias };
+    const continuation = await this.recoverAfterInteraction(command.taskId, requestId, "question");
+    return { status: "question-replied", question: alias, continuation_recovery: continuation };
+  }
+
+  private async recoverAfterInteraction(taskId: string, interactionId: string, kind: InteractionKind): Promise<JsonValue> {
+    if (typeof this.recovery.continueAfterInteraction !== "function") {
+      return { outcome: "blocked", reason: "continuation-recovery-unavailable" };
+    }
+    return asJson(await this.recovery.continueAfterInteraction(taskId, interactionId, kind));
   }
 
   private events(command: StoredCommand): JsonValue {

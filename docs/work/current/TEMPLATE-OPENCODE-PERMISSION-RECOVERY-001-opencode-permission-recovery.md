@@ -19,38 +19,79 @@ Implement the developer-side source work for TEMPLATE-OPENCODE-PERMISSION-RECOVE
 Implement the bounded developer-side permission configuration, repository-scope guidance/validation, and same-session post-interaction recovery contract without weakening approval, isolation, replay, or promotion boundaries.
 
 ## Current position
-Task record created on synchronized `developer` at the guarded task-start SHA. Evidence and pinned OpenCode contract inspection are next.
+The bridge implementation, focused tests, developer scope guidance, and durable
+records are edited locally. The configured OpenCode contract was checked with
+the pinned `1.18.16` binary; proportional and full repository validation now
+pass and the implementation commit is ready to push.
 
 ## Observed
 - `developer` and `origin/developer` both resolve to `29d59fb15bbdd31b59205c691deb4ddd167ade78`.
 - Tracked workflow hooks pass `./scripts/bootstrap-agent-workflow.sh --check`.
 - Existing repeat-canary task records are present under `docs/work/current/`.
+- The pinned OpenCode `debug config` resolves root `external_directory` to
+  `ask`; no root read/edit/bash broad allow was added, and the small-developer
+  route inherits that approval boundary.
+- `npm test` passes 92 bridge tests after adding persisted interaction episodes,
+  one-shot continuation claims, command-result recovery outcomes, and scope
+  guidance/config tests.
+- `node scripts/validate-agent-system.mjs`, `./scripts/validate-opencode-bridge.sh`,
+  and `./scripts/validate-repository.sh` all passed; the latter included 92
+  bridge tests and 8 branch-initializer tests.
+- `git diff --check`: passed.
 
 ## Interpretation
 The implementation must be made against the existing bridge/runtime source and its durable records; no branch other than `developer` is part of this local task.
 
 ## Attempts
-None yet.
+1. Inspected repeat-canary run-03, bridge state/recovery/command/service code,
+   the operation manifest, and the pinned OpenCode configuration behavior.
+2. Implemented a schema-4 interaction table with task/session/kind binding,
+   resolution state, and durable `not-attempted`/`claimed`/`sent` continuation
+   state. Recovery now validates both pending interaction lists and exact mapped
+   session status, then sends only one same-session continuation nudge when the
+   session is idle. It never starts or replaces a session or changes route.
+3. Added command, recovery, state, workflow, configuration, and guidance tests;
+   updated protocol, README, architecture, AS-BUILT, and agent-system records.
+4. The first focused test run exposed only test-fixture mismatches (the prompt
+   path used `/api` instead of the manifest's `/session` path and a multiline
+   guidance assertion); both were corrected and the full component suite passed.
 
 ## Changed approach
-None.
+The supplied official OpenCode permission finding steered the implementation
+away from any broad `external_directory` allow rule. Root config now sets that
+permission to `ask`, while normal in-worktree operations retain server
+defaults. Small-developer guidance uses repository-relative paths and stops on
+missing paths instead of walking parents/siblings or widening scope. Recovery
+uses persisted interaction mapping and a pre-delivery one-shot claim; uncertain
+proof or delivery blocks without replay.
 
 ## Checks
 - Initial synchronization: clean `developer` worktree at the guarded SHA; remote matches local.
 - `./scripts/bootstrap-agent-workflow.sh --check`: passed.
+- `npm run build` in `tools/opencode-bridge`: passed.
+- `npm test` in `tools/opencode-bridge`: passed, 92/92 tests.
+- Pinned OpenCode `1.18.16` `debug config`: resolved `external_directory: ask`,
+  with no root read/edit/bash broad permission override.
+- `node scripts/validate-agent-system.mjs`: passed.
+- `./scripts/validate-opencode-bridge.sh`: passed, including 92/92 bridge
+  tests.
+- `./scripts/validate-repository.sh`: passed, including research, structure,
+  agent-system, bridge, 92/92 bridge tests, and 8/8 branch tests.
+- `git diff --check`: passed.
 
 ## Blockers / required decisions
-None currently.
+None currently. The remaining work is synchronization and the required handoff
+snapshot only.
 
 ## Remaining work
-- Inspect repeat-canary run-03 evidence and the pinned OpenCode 1.18.16 contract.
-- Trace current permission, interaction reply, recovery, scope guidance, tests, and records.
-- Implement and document the bounded changes.
-- Run focused and proportional checks, review the full diff, and push commits immediately.
-- Create and push the dedicated handoff snapshot without archiving/finalizing this task record.
+- Commit and push the implementation range with the task ID in the commit
+  message.
+- Create and push the dedicated handoff snapshot without
+  archiving/finalizing this task record.
 
 ## Next action
-Read run-03 evidence, repository architecture/source records, and OpenCode configuration/permission references.
+Commit the inspected implementation range, verify its push, then update only
+the task-progress boundary for the final handoff snapshot.
 
 ## Relevant durable records
 - `tools/opencode-bridge/AS-BUILT.md`

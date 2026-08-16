@@ -94,6 +94,22 @@ For a genuinely stuck `applying` command, wait only for the operation's bounded 
 
 On mapped developer session idle or error, the event, durable cursor, session state, and pending response delivery commit atomically. The bridge then retrieves the latest assistant response, applies the normal public-safety projection, and queues it to the task issue. Retrieval failures retry without re-running the developer task. The bridge transports this response but does not validate its workflow meaning.
 
+After a successful `permission.reply` or `question.reply`, the bridge persists the
+resolved interaction and proves both canonical interaction lists and the exact
+mapped developer session status. Only when no interaction remains and the session
+is still `idle` does it claim and send one fixed same-session continuation nudge.
+The claim is durable before delivery, so a retry or restart cannot send a second
+nudge; an unproven delivery remains blocked rather than replayed. A progressing
+session is reported as clean, while a sent nudge is reported as recovered in the
+public command result. The nudge never starts a session, creates a replacement,
+changes the agent route, or widens the configured project scope.
+
+Normal developer filesystem and shell work uses OpenCode's existing
+current-working-directory defaults. The tracked root config explicitly keeps
+`external_directory` at `ask`; it does not broadly allow outside paths. The
+small developer uses repository-relative paths and does not walk parent/sibling
+directories to rediscover the checkout or widen scope after a missing path.
+
 ## Read-only Scouts
 
 `scout.start` retains the sequence-free marker, focused question, exact lowercase

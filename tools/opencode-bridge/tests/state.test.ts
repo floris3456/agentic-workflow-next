@@ -34,7 +34,7 @@ test("SQLite state creates private durable files and metadata", (context) => {
   const { state, path } = stateForTest(context);
   assert.equal(statSync(path).mode & 0o777, 0o600);
   assert.equal(statSync(join(path, "..")).mode & 0o777, 0o700);
-  assert.equal(state.getMeta("schema_version"), "3");
+  assert.equal(state.getMeta("schema_version"), "4");
   state.setMeta("instance", "project-one");
   assert.equal(state.getMeta("instance"), "project-one");
 });
@@ -202,6 +202,50 @@ test("task, alias, event, and durable cursor mappings survive projection needs",
   assert.equal(state.listEvents("TASK-1")[0]?.eventType, "message.updated");
 });
 
+test("resolved interaction continuation is persisted and claimable only once", (context) => {
+  const root = mkdtempSync(join(tmpdir(), "opencode-bridge-interaction-"));
+  const path = join(root, "private", "bridge.sqlite");
+  const state = new BridgeState(path);
+  state.mapTaskSession("TASK-INTERACTION", "ses_interaction", 19, "small-developer");
+  state.recordInteraction({
+    interactionId: "per_interaction",
+    kind: "permission",
+    taskId: "TASK-INTERACTION",
+    sessionId: "ses_interaction",
+  });
+  assert.equal(state.interaction("per_interaction", "TASK-INTERACTION", "permission")?.state, "pending");
+  assert.equal(state.resolveInteraction("per_interaction", "permission", "TASK-INTERACTION")?.state, "resolved");
+  assert.equal(state.claimInteractionContinuation({
+    interactionId: "per_interaction",
+    kind: "permission",
+    taskId: "TASK-INTERACTION",
+    sessionId: "ses_interaction",
+  }), "claimed");
+  state.markInteractionContinuationSent("per_interaction", "TASK-INTERACTION", "permission", "ses_interaction");
+  assert.equal(state.claimInteractionContinuation({
+    interactionId: "per_interaction",
+    kind: "permission",
+    taskId: "TASK-INTERACTION",
+    sessionId: "ses_interaction",
+  }), "already-attempted");
+  state.close();
+
+  const reopened = new BridgeState(path);
+  context.after(() => {
+    reopened.close();
+    rmSync(root, { recursive: true, force: true });
+  });
+  const record = reopened.interaction("per_interaction", "TASK-INTERACTION", "permission");
+  assert.equal(record?.state, "resolved");
+  assert.equal(record?.nudgeState, "sent");
+  assert.equal(reopened.claimInteractionContinuation({
+    interactionId: "per_interaction",
+    kind: "permission",
+    taskId: "TASK-INTERACTION",
+    sessionId: "ses_interaction",
+  }), "already-attempted");
+});
+
 test("schema migration replaces global alias identity with task-bound scope", (context) => {
   const root = mkdtempSync(join(tmpdir(), "opencode-bridge-v1-"));
   const path = join(root, "bridge.sqlite");
@@ -227,7 +271,7 @@ test("schema migration replaces global alias identity with task-bound scope", (c
     migrated.close();
     rmSync(root, { recursive: true, force: true });
   });
-  assert.equal(migrated.getMeta("schema_version"), "3");
+  assert.equal(migrated.getMeta("schema_version"), "4");
   assert.equal(migrated.ensureAlias("workspace", "wrk_shared", "TASK-1"), "workspace-1");
   const second = migrated.ensureAlias("workspace", "wrk_shared", "TASK-2");
   assert.equal(second, "workspace-2");
@@ -265,7 +309,7 @@ test("schema migration extends v2 events and response deliveries for Scout corre
     migrated.close();
     rmSync(root, { recursive: true, force: true });
   });
-  assert.equal(migrated.getMeta("schema_version"), "3");
+  assert.equal(migrated.getMeta("schema_version"), "4");
   assert.equal(migrated.pendingResponseDeliveries()[0]?.deliveryKind, "developer");
 
   const requestId = "88888888-8888-4888-8888-888888888888";

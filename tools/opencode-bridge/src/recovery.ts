@@ -2,7 +2,13 @@ import { OpenCodeClient, OpenCodeHttpError } from "./opencode.js";
 import { latestAssistantMessage, terminalResponseDelivery } from "./handoff.js";
 import { subscribeSse } from "./sse.js";
 import { BridgeState } from "./state.js";
-import type { JsonValue, ScoutSession, TaskSession } from "./types.js";
+import type {
+  InteractionBinding,
+  InteractionKind,
+  JsonValue,
+  ScoutSession,
+  TaskSession,
+} from "./types.js";
 import { asJson, asRecord, backoff, isRecord, sha256, sleep, stableJson } from "./util.js";
 
 export interface PersistedOpenCodeEvent {
@@ -16,6 +22,7 @@ export interface PersistedOpenCodeEvent {
   sessionKind?: "developer" | "scout";
   aggregateId?: string;
   sequence?: number;
+  interaction?: InteractionBinding;
 }
 
 export interface RecoveryCoordinatorOptions {
@@ -58,6 +65,17 @@ function interactionEventId(
   return `interaction-${sha256(stableJson({ eventType, interactionId, sessionId }))}`;
 }
 
+function interactionBinding(eventType: string, payload: Record<string, unknown>, sessionId: string | undefined): InteractionBinding | undefined {
+  if (!sessionId || !/^(?:permission|question)\.asked$/i.test(eventType)) return undefined;
+  const body = nestedRecord(payload, "data") ?? nestedRecord(payload, "properties") ?? payload;
+  const interactionId = stringField(body, "id");
+  if (!interactionId) return undefined;
+  return {
+    interactionId,
+    kind: /^permission\./i.test(eventType) ? "permission" : "question",
+  };
+}
+
 function requireIdentity(record: Record<string, unknown>, fallbackId?: string): { eventId: string; eventType: string } {
   const eventId = stringField(record, "id") ?? fallbackId;
   const eventType = stringField(record, "type");
@@ -74,12 +92,14 @@ function normalizeLegacy(value: unknown, streamId?: string): PersistedOpenCodeEv
   const record = asRecord(value, "legacy OpenCode event");
   const identity = requireIdentity(record, streamId);
   const sessionId = sessionFromPayload(record);
+  const interaction = interactionBinding(identity.eventType, record, sessionId);
   return {
     eventId: interactionEventId(identity.eventType, record, sessionId, identity.eventId),
     eventType: identity.eventType,
     source: "legacy-live",
     payload: asJson(record),
     ...(sessionId ? { sessionId } : {}),
+    ...(interaction ? { interaction } : {}),
   };
 }
 
@@ -125,6 +145,7 @@ function normalizeSession(value: unknown, session: RecoverableSession): Persiste
   if (!aggregateId) throw new TypeError("Durable session event is missing aggregateID");
   const sequence = requireSequence(durable.seq, "Durable session event");
   if (aggregateId !== session.sessionId) throw new Error("Durable session event aggregate does not match the mapped session");
+  const interaction = interactionBinding(identity.eventType, record, session.sessionId);
   return {
     eventId: interactionEventId(identity.eventType, record, session.sessionId, identity.eventId),
     eventType: identity.eventType,
@@ -136,6 +157,7 @@ function normalizeSession(value: unknown, session: RecoverableSession): Persiste
     ...("requestId" in session ? { requestId: session.requestId } : {}),
     aggregateId,
     sequence,
+    ...(interaction ? { interaction } : {}),
   };
 }
 
@@ -146,6 +168,7 @@ function normalizeSync(value: unknown, state: BridgeState): PersistedOpenCodeEve
   if (!aggregateId) throw new TypeError("Sync history event is missing aggregate_id");
   const sequence = requireSequence(record.seq, "Sync history event");
   const session = state.sessionBindingForInternal(aggregateId);
+  const interaction = session ? interactionBinding(identity.eventType, record, session.sessionId) : undefined;
   return {
     ...identity,
     source: "sync-history",
@@ -158,6 +181,7 @@ function normalizeSync(value: unknown, state: BridgeState): PersistedOpenCodeEve
       sessionKind: session.sessionKind,
       ...(session.requestId ? { requestId: session.requestId } : {}),
     } : {}),
+    ...(interaction ? { interaction } : {}),
   };
 }
 
@@ -165,6 +189,38 @@ function historyPage(value: JsonValue | undefined): { events: unknown[]; hasMore
   const page = asRecord(value, "session history response");
   if (!Array.isArray(page.data) || typeof page.hasMore !== "boolean") throw new TypeError("Session history response is invalid");
   return { events: page.data, hasMore: page.hasMore };
+}
+
+export type ContinuationRecoveryOutcome = "recovered" | "clean" | "blocked" | "already-recovered";
+
+export interface ContinuationRecoveryResult {
+  outcome: ContinuationRecoveryOutcome;
+  reason: string;
+}
+
+const continuationNudge = "Continue the existing task in the current repository scope after the resolved interaction. Do not restart the task, create a new session, or widen the scope.";
+
+function pendingInteractionResponse(value: JsonValue | undefined, kind: InteractionKind, sessionId: string): boolean {
+  if (!Array.isArray(value)) throw new TypeError(`OpenCode ${kind}.list recovery response is not an array`);
+  let pending = false;
+  for (const entry of value) {
+    const interaction = asRecord(entry, `OpenCode ${kind}.list recovery item`);
+    const interactionId = stringField(interaction, "id");
+    const currentSession = stringField(interaction, "sessionID");
+    if (!interactionId || !currentSession) throw new TypeError(`OpenCode ${kind}.list recovery item is missing id or sessionID`);
+    if (currentSession === sessionId) pending = true;
+  }
+  return pending;
+}
+
+function sessionStatusType(value: JsonValue | undefined, sessionId: string): string {
+  const statuses = asRecord(value ?? {}, "OpenCode session status");
+  const current = statuses[sessionId];
+  if (current === undefined) throw new TypeError("OpenCode session status does not contain the mapped developer session");
+  const status = asRecord(current, "OpenCode mapped developer session status");
+  const type = stringField(status, "type");
+  if (!type || !["busy", "idle", "retry"].includes(type)) throw new TypeError("OpenCode mapped developer session status is invalid");
+  return type;
 }
 
 export class RecoveryCoordinator {
@@ -192,9 +248,83 @@ export class RecoveryCoordinator {
       ...(event.sessionKind ? { sessionKind: event.sessionKind } : {}),
       ...(event.aggregateId ? { aggregateId: event.aggregateId } : {}),
       ...(event.sequence === undefined ? {} : { durableSeq: event.sequence }),
+      ...(event.interaction ? { interaction: event.interaction } : {}),
     }, terminalResponseDelivery(this.state, event));
     if (inserted || notifyExisting) await this.onPersistedEvent?.(event);
     return inserted;
+  }
+
+  async continueAfterInteraction(
+    taskId: string,
+    interactionId: string,
+    kind: InteractionKind,
+  ): Promise<ContinuationRecoveryResult> {
+    const session = this.state.getTaskSession(taskId);
+    if (!session) return { outcome: "blocked", reason: "missing-session-state" };
+
+    let interaction;
+    try {
+      interaction = this.state.resolveInteraction(interactionId, kind, taskId);
+    } catch {
+      return { outcome: "blocked", reason: "inconsistent-interaction-state" };
+    }
+    if (!interaction || interaction.sessionId !== session.sessionId) {
+      return { outcome: "blocked", reason: "missing-interaction-state" };
+    }
+    if (interaction.nudgeState === "sent") {
+      return { outcome: "already-recovered", reason: "continuation-already-attempted" };
+    }
+    if (interaction.nudgeState === "claimed") {
+      return { outcome: "blocked", reason: "continuation-delivery-unproven" };
+    }
+    if (interaction.nudgeState !== "not-attempted") {
+      return { outcome: "blocked", reason: "inconsistent-interaction-state" };
+    }
+
+    let permissions: JsonValue | undefined;
+    let questions: JsonValue | undefined;
+    let statuses: JsonValue | undefined;
+    try {
+      [permissions, questions, statuses] = await Promise.all([
+        this.client.request("permission.list"),
+        this.client.request("question.list"),
+        this.client.request("session.status"),
+      ]);
+      const permissionPending = pendingInteractionResponse(permissions, "permission", session.sessionId);
+      const questionPending = pendingInteractionResponse(questions, "question", session.sessionId);
+      if (permissionPending || questionPending) return { outcome: "blocked", reason: "outstanding-interaction" };
+      const type = sessionStatusType(statuses, session.sessionId);
+      if (type !== "idle") return { outcome: "clean", reason: "session-progressing" };
+    } catch {
+      await this.onError?.(new Error("Post-interaction continuation proof was unavailable"));
+      return { outcome: "blocked", reason: "continuation-proof-unavailable" };
+    }
+
+    let claim: ReturnType<BridgeState["claimInteractionContinuation"]>;
+    try {
+      claim = this.state.claimInteractionContinuation({
+        interactionId,
+        kind,
+        taskId,
+        sessionId: session.sessionId,
+      });
+    } catch {
+      return { outcome: "blocked", reason: "continuation-state-unavailable" };
+    }
+    if (claim === "already-attempted") return { outcome: "already-recovered", reason: "continuation-already-attempted" };
+    if (claim !== "claimed") return { outcome: "blocked", reason: "continuation-state-unavailable" };
+
+    try {
+      await this.client.request("session.prompt_async", {
+        path: { sessionID: session.sessionId },
+        body: { agent: session.agent, parts: [{ type: "text", text: continuationNudge }] },
+      });
+      this.state.markInteractionContinuationSent(interactionId, taskId, kind, session.sessionId);
+      return { outcome: "recovered", reason: "same-session-continuation-nudge-sent" };
+    } catch {
+      await this.onError?.(new Error("Post-interaction continuation delivery was not proven"));
+      return { outcome: "blocked", reason: "continuation-delivery-unproven" };
+    }
   }
 
   async recoverSyncHistory(): Promise<number> {
@@ -290,6 +420,7 @@ export class RecoveryCoordinator {
           sessionId,
           sessionKind: binding.sessionKind,
           ...(binding.requestId ? { requestId: binding.requestId } : {}),
+          interaction: { interactionId, kind: group.eventType === "permission.asked" ? "permission" : "question" },
           payload: {
             id: eventId,
             type: group.eventType,

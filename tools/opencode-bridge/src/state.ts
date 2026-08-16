@@ -6,6 +6,10 @@ import type {
   CommandEnvelope,
   CommandState,
   CompatibilityResult,
+  InteractionBinding,
+  InteractionKind,
+  InteractionRecord,
+  InteractionNudgeState,
   JsonValue,
   OutboxItem,
   RequestEnvelope,
@@ -98,6 +102,21 @@ function scoutSessionFromRow(row: Row): ScoutSession {
   };
 }
 
+function interactionFromRow(row: Row): InteractionRecord {
+  return {
+    interactionId: String(row.interaction_id),
+    kind: String(row.kind) as InteractionKind,
+    taskId: String(row.task_id),
+    sessionId: String(row.session_id),
+    state: String(row.state) as InteractionRecord["state"],
+    nudgeState: String(row.nudge_state) as InteractionNudgeState,
+    createdAt: Number(row.created_at),
+    updatedAt: Number(row.updated_at),
+    ...(row.resolved_at === null || row.resolved_at === undefined ? {} : { resolvedAt: Number(row.resolved_at) }),
+    ...(row.nudged_at === null || row.nudged_at === undefined ? {} : { nudgedAt: Number(row.nudged_at) }),
+  };
+}
+
 export class BridgeState {
   readonly path: string;
   private readonly db: DatabaseSync;
@@ -162,6 +181,19 @@ export class BridgeState {
         created_at INTEGER NOT NULL,
         updated_at INTEGER NOT NULL
       );
+      CREATE TABLE IF NOT EXISTS interactions (
+        interaction_id TEXT PRIMARY KEY,
+        kind TEXT NOT NULL,
+        task_id TEXT NOT NULL,
+        session_id TEXT NOT NULL,
+        state TEXT NOT NULL DEFAULT 'pending',
+        nudge_state TEXT NOT NULL DEFAULT 'not-attempted',
+        resolved_at INTEGER,
+        nudged_at INTEGER,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS interactions_task_session ON interactions(task_id, session_id, created_at);
       CREATE TABLE IF NOT EXISTS issue_tasks (
         issue_number INTEGER PRIMARY KEY,
         task_id TEXT NOT NULL UNIQUE,
@@ -321,7 +353,7 @@ export class BridgeState {
       `);
     }
     this.db.exec("CREATE UNIQUE INDEX IF NOT EXISTS aliases_kind_internal_scope ON aliases(kind, internal_id, scope)");
-    this.setMeta("schema_version", "3");
+    this.setMeta("schema_version", "4");
   }
 
   private transaction<T>(operation: () => T): T {
@@ -586,6 +618,88 @@ export class BridgeState {
     return (this.db.prepare("SELECT * FROM task_sessions ORDER BY task_id").all() as Row[]).map(taskSessionFromRow);
   }
 
+  private upsertInteraction(input: {
+    interactionId: string;
+    kind: InteractionKind;
+    taskId: string;
+    sessionId: string;
+  }): void {
+    const existing = this.db.prepare("SELECT * FROM interactions WHERE interaction_id=?").get(input.interactionId) as Row | undefined;
+    if (existing) {
+      if (String(existing.kind) !== input.kind || String(existing.task_id) !== input.taskId || String(existing.session_id) !== input.sessionId) {
+        throw new Error(`Interaction ${input.interactionId} has inconsistent task, session, or kind mapping`);
+      }
+      return;
+    }
+    const timestamp = now();
+    this.db.prepare(`
+      INSERT INTO interactions(
+        interaction_id, kind, task_id, session_id, state, nudge_state,
+        resolved_at, nudged_at, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, 'pending', 'not-attempted', NULL, NULL, ?, ?)
+    `).run(input.interactionId, input.kind, input.taskId, input.sessionId, timestamp, timestamp);
+  }
+
+  recordInteraction(input: {
+    interactionId: string;
+    kind: InteractionKind;
+    taskId: string;
+    sessionId: string;
+  }): void {
+    this.transaction(() => this.upsertInteraction(input));
+  }
+
+  interaction(interactionId: string, taskId?: string, kind?: InteractionKind): InteractionRecord | undefined {
+    const row = this.db.prepare("SELECT * FROM interactions WHERE interaction_id=?").get(interactionId) as Row | undefined;
+    if (!row) return undefined;
+    const record = interactionFromRow(row);
+    if (taskId !== undefined && record.taskId !== taskId) throw new Error(`Interaction ${interactionId} is not available to task ${taskId}`);
+    if (kind !== undefined && record.kind !== kind) throw new Error(`Interaction ${interactionId} is ${record.kind}, not ${kind}`);
+    return record;
+  }
+
+  resolveInteraction(interactionId: string, kind: InteractionKind, taskId: string): InteractionRecord | undefined {
+    return this.transaction(() => {
+      const record = this.interaction(interactionId, taskId, kind);
+      if (!record) return undefined;
+      if (record.state === "pending") {
+        this.db.prepare(
+          "UPDATE interactions SET state='resolved', resolved_at=?, updated_at=? WHERE interaction_id=? AND state='pending'",
+        ).run(now(), now(), interactionId);
+      }
+      return this.interaction(interactionId, taskId, kind);
+    });
+  }
+
+  claimInteractionContinuation(input: {
+    interactionId: string;
+    kind: InteractionKind;
+    taskId: string;
+    sessionId: string;
+  }): "claimed" | "already-attempted" | "not-resolved" | "missing" {
+    return this.transaction(() => {
+      const record = this.interaction(input.interactionId, input.taskId, input.kind);
+      if (!record || record.sessionId !== input.sessionId) return "missing";
+      if (record.state !== "resolved") return "not-resolved";
+      if (record.nudgeState !== "not-attempted") return "already-attempted";
+      const timestamp = now();
+      const result = this.db.prepare(
+        "UPDATE interactions SET nudge_state='claimed', nudged_at=?, updated_at=? WHERE interaction_id=? AND nudge_state='not-attempted'",
+      ).run(timestamp, timestamp, input.interactionId);
+      return result.changes === 1 ? "claimed" : "already-attempted";
+    });
+  }
+
+  markInteractionContinuationSent(interactionId: string, taskId: string, kind: InteractionKind, sessionId: string): void {
+    const record = this.interaction(interactionId, taskId, kind);
+    if (!record || record.sessionId !== sessionId || record.state !== "resolved" || record.nudgeState !== "claimed") {
+      throw new Error(`Interaction ${interactionId} continuation is not in the claimed state`);
+    }
+    this.db.prepare(
+      "UPDATE interactions SET nudge_state='sent', updated_at=? WHERE interaction_id=? AND nudge_state='claimed'",
+    ).run(now(), interactionId);
+  }
+
   listCommands(states?: CommandState[]): StoredCommand[] {
     if (!states || states.length === 0) {
       return (this.db.prepare("SELECT * FROM commands ORDER BY created_at, command_id").all() as Row[]).map(commandFromRow);
@@ -726,6 +840,7 @@ export class BridgeState {
   recordEvent(input: {
     eventKey: string; source: string; eventType: string; payload: JsonValue; taskId?: string; sessionId?: string;
     requestId?: string; sessionKind?: "developer" | "scout"; aggregateId?: string; durableSeq?: number;
+    interaction?: InteractionBinding;
   }, responseDelivery?: ResponseDeliveryInput): boolean {
     return this.transaction(() => {
       const result = this.db.prepare(`
@@ -752,6 +867,15 @@ export class BridgeState {
         );
       }
       if (input.aggregateId && input.durableSeq !== undefined) this.setDurableCursor(input.source, input.aggregateId, input.durableSeq);
+      if (input.interaction) {
+        if (!input.taskId || !input.sessionId) throw new Error("Interaction event is missing task or session mapping");
+        this.upsertInteraction({
+          interactionId: input.interaction.interactionId,
+          kind: input.interaction.kind,
+          taskId: input.taskId,
+          sessionId: input.sessionId,
+        });
+      }
       if (responseDelivery) this.queueResponseDeliveryRecord(responseDelivery);
       return result.changes > 0;
     });
