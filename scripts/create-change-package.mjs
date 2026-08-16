@@ -69,7 +69,7 @@ function range(repository, base, head, label, env) {
       ...(env ? { env } : {}),
     });
   } catch {
-    fail(`${label} locked base is not an ancestor of canonical head`);
+    fail(`${label} range base is not an ancestor of canonical head`);
   }
   const patch = runGit(repository, ["diff", "--binary", "--full-index", "--no-renames", base, head, "--"], { env });
   const rawNames = runGit(repository, ["diff", "--name-only", "-z", base, head, "--"], { encoding: "buffer", env });
@@ -121,8 +121,6 @@ const developerBase = exact(required(values, "--developer-base"), "developer-bas
 const developerHead = exact(required(values, "--developer-head"), "developer-head");
 const webBase = exact(required(values, "--web-base"), "web-base");
 const webHead = exact(required(values, "--web-head"), "web-head");
-if (developerBase !== lock.sources.developer) fail("developer-base does not match source-lock review base");
-if (webBase !== lock.sources["web-orchestration"]) fail("web-base does not match source-lock review base");
 
 const output = resolve(required(values, "--output"));
 if (existsSync(output) && (!statSync(output).isDirectory() || readdirSync(output).length !== 0)) {
