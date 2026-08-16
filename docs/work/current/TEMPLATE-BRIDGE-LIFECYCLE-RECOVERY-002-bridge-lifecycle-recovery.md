@@ -26,7 +26,7 @@ Correct only the canonical recovery evidence-method metadata identified by indep
 
 ## Current position
 
-The lifecycle implementation and focused regressions are committed and pushed at developer `9c1ae8a445cbf53db7af3905aefd471470c6cac6`, with handoff snapshot `305c72cd87bff6d9cccf91b97f78e87af241efd3`. The metadata correction and focused assertions are pushed at developer `0362e24a363d9f905234283666b3f840983a6ef1`; no lifecycle behavior changed. This record is being prepared for the new dedicated handoff snapshot.
+The lifecycle implementation and focused regressions are committed and pushed at developer `9c1ae8a445cbf53db7af3905aefd471470c6cac6`, with handoff snapshot `305c72cd87bff6d9cccf91b97f78e87af241efd3`. The metadata correction and focused assertions are pushed at developer `0362e24a363d9f905234283666b3f840983a6ef1`; no lifecycle behavior changed. This continuation cycle starts from the previous handoff snapshot `a12855280dc35a10aded89cd3db2989fad84bcc4` and has no further implementation work.
 
 ## Observed
 
@@ -59,7 +59,7 @@ Independent review steering narrowed the work to evidence-metadata truthfulness 
 - `./scripts/validate-opencode-bridge.sh`: contracts/package, bridge 99/99, and template-branch 8/8 passed.
 - `./scripts/validate-repository.sh`: pre-implementation, agent-system, research/evidence, hooks, bridge 99/99, and template-branch 8/8 passed.
 - `git diff --check`: passed immediately before the correction commit.
-- `./scripts/bootstrap-agent-workflow.sh --check`: tracked hooks active at cycle start.
+- `./scripts/bootstrap-agent-workflow.sh --check`: tracked hooks active at continuation-cycle start.
 
 ## Blockers / required decisions
 
@@ -84,4 +84,4 @@ Run final diff/status inspection, then create/push the new task-record-only hand
 
 ## Last handoff commit
 
-`305c72cd87bff6d9cccf91b97f78e87af241efd3`
+`a12855280dc35a10aded89cd3db2989fad84bcc4`
