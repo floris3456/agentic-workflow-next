@@ -404,6 +404,7 @@ export class ScoutRuntime {
     clientFor: (workspace: string) => OpenCodeClient;
     state: BridgeState;
     assertReady: () => Promise<void>;
+    onSessionStarted?: (requestId: string) => void;
   }) {}
 
   async start(request: StoredRequest): Promise<JsonValue> {
@@ -444,6 +445,7 @@ export class ScoutRuntime {
       path: { sessionID: created.id },
       body: { agent: scoutAgent, parts: [{ type: "text", text: prompt }] },
     });
+    this.options.onSessionStarted?.(request.requestId);
     return {
       status: "scout-started",
       scout_request_id: request.requestId,

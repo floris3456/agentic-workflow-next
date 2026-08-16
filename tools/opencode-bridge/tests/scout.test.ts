@@ -8,6 +8,7 @@ import { queueScoutResponseEvent, ScoutResponseTransport } from "../src/handoff.
 import { Manifest } from "../src/manifest.js";
 import { OpenCodeClient } from "../src/opencode.js";
 import { PublicProjection } from "../src/projection.js";
+import { RecoveryCoordinator } from "../src/recovery.js";
 import { RequestExecutor } from "../src/requests.js";
 import { assertScoutAgentContract, scoutAgentPrompt, ScoutRuntime, ScoutWorkspaceManager, scoutRuntimeBoundary } from "../src/scout.js";
 import { probeScoutServer } from "../src/scout-server.js";
@@ -308,6 +309,65 @@ test("hardened Scout start uses the trusted agent and exact snapshot client", as
   assert.match(JSON.stringify(calls), /repository-scout/);
   assert.match(JSON.stringify(calls), /untrusted evidence/);
   assert.equal(state.getScoutSession(accepted.requestId)?.workspacePath, workspace);
+});
+
+test("newly started Scout enrolls recovery after its prompt and captures a terminal response without restart", async (context) => {
+  const { root, state, projection } = fixture(context);
+  const workspace = join(root, "private", "scout-snapshots", refSha);
+  mkdirSync(workspace, { recursive: true, mode: 0o700 });
+  const workspaces = new ScoutWorkspaceManager(root, join(root, "private", "bridge.sqlite"), { fetchOrigin: false });
+  workspaces.prepare = async () => workspace;
+  const calls: string[] = [];
+  let watcher: Promise<boolean> | undefined;
+  let enrollmentCount = 0;
+  const client = {
+    request: async (operation: string) => {
+      calls.push(operation);
+      if (operation === "session.create") return { id: "ses_new_scout" };
+      if (operation === "session.status") return {};
+      if (operation === "session.messages") return [{
+        info: {
+          id: "msg_new_scout",
+          role: "assistant",
+          sessionID: "ses_new_scout",
+          time: { created: 10, completed: 20 },
+          finish: "stop",
+        },
+        parts: [{ id: "part_new_scout", type: "text", text: "New Scout terminal response" }],
+      }];
+      return undefined;
+    },
+  } as unknown as OpenCodeClient;
+  const recovery = new RecoveryCoordinator({ client, state });
+  const scout = new ScoutRuntime({
+    workspaces,
+    clientFor: (path) => {
+      assert.equal(path, workspace);
+      return client;
+    },
+    state,
+    assertReady: async () => undefined,
+    onSessionStarted: (requestId) => {
+      enrollmentCount++;
+      assert.ok(state.getScoutSession(requestId));
+      assert.deepEqual(calls, ["session.create", "session.prompt_async"]);
+      watcher = recovery.recoverScoutCanonical(state.getScoutSession(requestId)!);
+    },
+  });
+  const accepted = state.acceptRequest(scoutStart("52000000-0000-4000-8000-000000000001"), 52).request;
+  const result = await new RequestExecutor({ state, projection, scout }).execute(accepted);
+  assert.equal(result.state, "succeeded");
+  assert.equal(enrollmentCount, 1);
+  assert.ok(watcher);
+  assert.equal(await watcher, true);
+  assert.equal(state.getScoutSession(accepted.requestId)?.sessionState, "session.idle");
+  const delivery = state.pendingResponseDeliveries()[0];
+  assert.ok(delivery);
+  const transport = new ScoutResponseTransport({ clientFor: () => client, state, projection });
+  await transport.deliver(delivery);
+  assert.match(JSON.stringify(state.getScoutSession(accepted.requestId)?.latestResponse), /New Scout terminal response/);
+  assert.equal(state.pendingResponseDeliveries().length, 0);
+  assert.ok(state.pendingOutbox(Date.now() + 1_000, 100).some((entry) => entry.dedupeKey === `scout-response:${delivery.eventId}`));
 });
 
 test("Scout runtime status exposes the hard blocker for bootstrap and status", () => {

@@ -137,6 +137,38 @@ function canonicalScoutTerminal(
   return { eventType: "session.idle", messageId, completedAt };
 }
 
+function canonicalDeveloperTerminal(
+  statusValue: JsonValue | undefined,
+  messagesValue: JsonValue | undefined,
+  session: TaskSession,
+): { eventType: "session.idle" | "session.error"; messageId: string; completedAt: number } | undefined {
+  const status = asRecord(statusValue, "OpenCode session status");
+  const current = status[session.sessionId];
+  if (current !== undefined) {
+    const sessionStatus = asRecord(current, "OpenCode developer session status");
+    const type = stringField(sessionStatus, "type");
+    if (type === "busy" || type === "retry") return undefined;
+    if (type !== "idle") throw new TypeError("OpenCode developer session status is invalid");
+  }
+
+  const latest = latestAssistantMessage(messagesValue);
+  if (!isRecord(latest)) return undefined;
+  const info = nestedRecord(latest, "info");
+  if (!info || info.role !== "assistant" || stringField(info, "sessionID") !== session.sessionId) return undefined;
+  const messageId = stringField(info, "id");
+  const time = nestedRecord(info, "time");
+  const completedAt = time?.completed;
+  if (!messageId || typeof completedAt !== "number" || !Number.isSafeInteger(completedAt) || completedAt <= 0) return undefined;
+  const finish = stringField(info, "finish");
+  if (finish === "tool-calls") return undefined;
+  if (info.error !== undefined && info.error !== null) {
+    if (!isRecord(info.error)) return undefined;
+    return { eventType: "session.error", messageId, completedAt };
+  }
+  if (!finish) return undefined;
+  return { eventType: "session.idle", messageId, completedAt };
+}
+
 function normalizeSession(value: unknown, session: RecoverableSession): PersistedOpenCodeEvent {
   const record = asRecord(value, "durable session event");
   const identity = requireIdentity(record);
@@ -529,6 +561,57 @@ export class RecoveryCoordinator {
         id: eventId,
         type: terminal.eventType,
         properties: { sessionID: session.sessionId },
+        recovery: { method: "permission.list+question.list+session.status+session.messages", completedAt: terminal.completedAt },
+      },
+    });
+  }
+
+  async recoverDeveloperCanonical(session: TaskSession): Promise<boolean> {
+    const current = this.state.getTaskSession(session.taskId);
+    if (!current || current.taskId !== session.taskId || current.sessionId !== session.sessionId) {
+      throw new Error("Developer recovery mapping is missing or inconsistent");
+    }
+    if (terminalSessionState(current.sessionState)) return false;
+
+    let terminal: ReturnType<typeof canonicalDeveloperTerminal>;
+    try {
+      const [permissions, questions] = await Promise.all([
+        this.client.request("permission.list"),
+        this.client.request("question.list"),
+      ]);
+      if (pendingInteractionResponse(permissions, "permission", session.sessionId)
+        || pendingInteractionResponse(questions, "question", session.sessionId)) return false;
+      const [status, messages] = await Promise.all([
+        this.client.request("session.status"),
+        this.client.request("session.messages", {
+          path: { sessionID: session.sessionId },
+          query: { limit: 20 },
+        }),
+      ]);
+      terminal = canonicalDeveloperTerminal(status, messages, session);
+    } catch {
+      await this.onError?.(new Error("Developer canonical terminal proof was unavailable"));
+      return false;
+    }
+    if (!terminal) return false;
+
+    const eventId = `canonical-${sha256(stableJson({
+      sessionId: session.sessionId,
+      messageId: terminal.messageId,
+      completedAt: terminal.completedAt,
+      eventType: terminal.eventType,
+    }))}`;
+    return await this.persist({
+      eventId,
+      source: "canonical-recovery",
+      eventType: terminal.eventType,
+      taskId: session.taskId,
+      sessionId: session.sessionId,
+      sessionKind: "developer",
+      payload: {
+        id: eventId,
+        type: terminal.eventType,
+        properties: { sessionID: session.sessionId },
         recovery: { method: "session.status+session.messages", completedAt: terminal.completedAt },
       },
     });
@@ -583,6 +666,7 @@ export class RecoveryCoordinator {
       } catch (error) {
         if (!(error instanceof OpenCodeHttpError) || error.status !== 404) throw error;
       }
+      await this.recoverDeveloperCanonical(session);
     }
     await this.recoverCanonicalInteractions();
   }
@@ -627,6 +711,11 @@ export class RecoveryCoordinator {
     while (!signal.aborted) {
       try {
         await this.recoverSessionHistory(session);
+        if (!("requestId" in session)) {
+          if (await this.recoverDeveloperCanonical(session)) return;
+          const current = this.state.getTaskSession(session.taskId);
+          if (!current || current.sessionId !== session.sessionId || terminalSessionState(current.sessionState)) return;
+        }
         const cursor = this.state.durableCursor("session-v2", session.sessionId);
         const args = {
           path: { sessionID: session.sessionId },

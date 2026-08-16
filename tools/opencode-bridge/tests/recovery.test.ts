@@ -3,8 +3,10 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import test, { type TestContext } from "node:test";
+import { DeveloperResponseTransport } from "../src/handoff.js";
 import { Manifest } from "../src/manifest.js";
 import { OpenCodeClient } from "../src/opencode.js";
+import { PublicProjection } from "../src/projection.js";
 import { RecoveryCoordinator } from "../src/recovery.js";
 import { BridgeState } from "../src/state.js";
 import type { JsonValue } from "../src/types.js";
@@ -189,6 +191,132 @@ test("startup repair queues a terminal event persisted by an older bridge withou
   assert.equal(state.recoverTerminalResponseDeliveries(), 0);
   assert.deepEqual(state.pendingResponseDeliveries().map((delivery) => delivery.eventId), ["evt_legacy_idle"]);
   assert.equal(state.durableCursor("session-v2", "ses_legacy"), 4);
+});
+
+test("canonical developer recovery captures an inactive terminal response once through the normal delivery path", async (context) => {
+  const root = mkdtempSync(join(tmpdir(), "opencode-bridge-developer-canonical-"));
+  const statePath = join(root, "private", "bridge.sqlite");
+  const state = new BridgeState(statePath);
+  context.after(() => rmSync(root, { recursive: true, force: true }));
+  state.mapTaskSession("TASK-DEVELOPER-CANONICAL", "ses_developer_canonical", 93, "luna");
+  const paths: string[] = [];
+  const terminalMessage = {
+    info: {
+      id: "msg_developer_canonical",
+      role: "assistant",
+      sessionID: "ses_developer_canonical",
+      time: { created: 10, completed: 20 },
+      finish: "stop",
+    },
+    parts: [{ id: "part_developer_canonical", type: "text", text: "Terminal developer response" }],
+  };
+  const api = client(asFetch((request) => {
+    const url = new URL(request.url);
+    paths.push(url.pathname);
+    if (url.pathname === "/permission" || url.pathname === "/question") return Response.json([]);
+    if (url.pathname === "/session/status") return Response.json({});
+    if (url.pathname === "/session/ses_developer_canonical/message") return Response.json([terminalMessage]);
+    if (url.pathname === "/api/session/ses_developer_canonical/history") return Response.json({ data: [], hasMore: false });
+    if (url.pathname === "/sync/history") return Response.json([]);
+    return new Response("not found", { status: 404 });
+  }));
+  const persisted: string[] = [];
+  const recovery = new RecoveryCoordinator({
+    client: api,
+    state,
+    onPersistedEvent: (event) => { persisted.push(event.eventId); },
+  });
+
+  await recovery.runSession(state.getTaskSession("TASK-DEVELOPER-CANONICAL")!, new AbortController().signal);
+  assert.equal(persisted.length, 1);
+  assert.match(persisted[0]!, /^canonical-/);
+  assert.equal(state.getTaskSession("TASK-DEVELOPER-CANONICAL")?.sessionState, "session.idle");
+  assert.equal(state.listEvents("TASK-DEVELOPER-CANONICAL").length, 1);
+  assert.equal(state.pendingResponseDeliveries().length, 1);
+  assert.equal(paths.includes("/session/ses_developer_canonical/event"), false);
+
+  const projection = new PublicProjection({ state, privateRoots: [root] });
+  const transport = new DeveloperResponseTransport({ client: api, state, projection });
+  await transport.deliver(state.pendingResponseDeliveries()[0]);
+  assert.match(JSON.stringify(state.getTaskSession("TASK-DEVELOPER-CANONICAL")?.latestResponse), /Terminal developer response/);
+  assert.equal(state.pendingResponseDeliveries().length, 0);
+
+  await recovery.recoverOnce();
+  assert.equal(state.listEvents("TASK-DEVELOPER-CANONICAL").length, 1);
+  assert.equal(state.pendingResponseDeliveries().length, 0);
+
+  state.close();
+  const restarted = new BridgeState(statePath);
+  context.after(() => restarted.close());
+  const afterRestart = new RecoveryCoordinator({ client: api, state: restarted });
+  await afterRestart.recoverOnce();
+  assert.equal(restarted.listEvents("TASK-DEVELOPER-CANONICAL").length, 1);
+  assert.equal(restarted.getTaskSession("TASK-DEVELOPER-CANONICAL")?.sessionState, "session.idle");
+  assert.equal(restarted.pendingResponseDeliveries().length, 0);
+});
+
+test("developer canonical terminal proof fails closed for ambiguity, progress, malformed, and unavailable evidence", async (context) => {
+  const state = stateForTest(context);
+  const cases = [
+    ["TASK-DEVELOPER-BUSY", "ses_developer_busy"],
+    ["TASK-DEVELOPER-RETRY", "ses_developer_retry"],
+    ["TASK-DEVELOPER-NONTERMINAL", "ses_developer_nonterminal"],
+    ["TASK-DEVELOPER-TOOLS", "ses_developer_tools"],
+    ["TASK-DEVELOPER-MALFORMED", "ses_developer_malformed"],
+    ["TASK-DEVELOPER-UNAVAILABLE", "ses_developer_unavailable"],
+    ["TASK-DEVELOPER-PENDING", "ses_developer_pending"],
+  ] as const;
+  for (const [index, [taskId, sessionId]] of cases.entries()) state.mapTaskSession(taskId, sessionId, 94 + index, "luna");
+  const status: Record<string, JsonValue> = {
+    ses_developer_busy: { type: "busy" },
+    ses_developer_retry: { type: "retry" },
+    ses_developer_nonterminal: { type: "idle" },
+    ses_developer_tools: { type: "idle" },
+    ses_developer_malformed: { type: "unknown" },
+    ses_developer_pending: { type: "idle" },
+  };
+  let proofSession: string | undefined;
+  const api = client(asFetch((request) => {
+    const url = new URL(request.url);
+    if (url.pathname === "/permission") {
+      return Response.json(proofSession === "ses_developer_pending"
+        ? [{ id: "permission-pending", sessionID: proofSession }]
+        : []);
+    }
+    if (url.pathname === "/question") return Response.json([]);
+    if (url.pathname === "/session/status") {
+      return Response.json(status);
+    }
+    const sessionId = url.pathname.match(/^\/session\/([^/]+)\/message$/)?.[1];
+    if (sessionId) {
+      if (sessionId === "ses_developer_unavailable") return new Response("unavailable", { status: 503 });
+      const completed = sessionId === "ses_developer_malformed" ? "invalid" : 20;
+      const finish = sessionId === "ses_developer_nonterminal" ? undefined
+        : sessionId === "ses_developer_tools" ? "tool-calls" : "stop";
+      return Response.json([{
+        info: {
+          id: `msg_${sessionId}`,
+          role: "assistant",
+          sessionID: sessionId,
+          time: { created: 10, completed },
+          ...(finish === undefined ? {} : { finish }),
+          ...(sessionId === "ses_developer_tools" ? { error: { name: "ToolError" } } : {}),
+        },
+        parts: [],
+      }]);
+    }
+    return new Response("not found", { status: 404 });
+  }));
+  const recovery = new RecoveryCoordinator({ client: api, state });
+
+  for (const [, sessionId] of cases) {
+    proofSession = sessionId;
+    assert.equal(await recovery.recoverDeveloperCanonical(state.taskSessionForInternal(sessionId)!), false);
+  }
+  for (const [taskId] of cases) {
+    assert.equal(state.getTaskSession(taskId)?.sessionState, "starting");
+    assert.equal(state.listEvents(taskId).length, 0);
+  }
 });
 
 test("canonical recovery republishes pending mapped interactions idempotently without materializing a snapshot", async (context) => {
@@ -640,6 +768,8 @@ test("durable session SSE resumes from its stored cursor", async (context) => {
   await recovery.runSession(state.getTaskSession("TASK-1")!, abort.signal, () => 0);
   assert.deepEqual(queries, [
     "/api/session/ses_private/history?limit=100&after=2",
+    "/permission?directory=%2Fwork%2Fproject",
+    "/question?directory=%2Fwork%2Fproject",
     "/api/session/ses_private/event?after=2",
   ]);
   assert.equal(state.durableCursor("session-v2", "ses_private"), 3);

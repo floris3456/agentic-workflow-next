@@ -278,6 +278,7 @@ export class BridgeService {
         await this.scoutServer.start();
         await probeScoutServer(scoutClient(config, manifest, config.opencode.scoutRuntimeRoot));
       },
+      onSessionStarted: (requestId) => this.startScoutRecovery(requestId),
     });
     this.requests = new RequestExecutor({ state: this.state, projection: this.projection, scout });
     this.control = new GitHubControlLoop({
