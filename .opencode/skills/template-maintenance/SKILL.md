@@ -18,8 +18,10 @@ compatibility: template-development ledger branch
    constraints, and material decisions without quoting or reproducing private
    chat, personal data, secrets, host-local absolute paths, or raw private agent
    identifiers.
-4. Resolve exact live canonical source refs. Record changes from the lock as
-   observations; never silently move a task's review base.
+4. Resolve exact live canonical source refs. Treat `source-lock.json` as the latest
+   reconciled canonical source snapshot, not a task review base. Reconcile it only
+   from independently verified exact remote refs; task records keep their own
+   exact review bases and source ranges.
 
 ## Source work
 
@@ -43,6 +45,11 @@ position, direct observations, interpretations, attempts, changed approach,
 checks, blockers, remaining work, next action, source ranges, and relevant
 durable records. Do not store private reasoning or sensitive data.
 
+Keep `source-lock.json` current at meaningful maintenance checkpoints by writing
+only independently verified exact canonical `main`, `developer`, and
+`web-orchestration` refs. Package creation does not consume, freeze, or advance
+the source snapshot.
+
 Push every ledger commit immediately to `origin/template-development`. On a
 failed push, stop mutation and use the directed recovery script; never claim a
 local-only SHA as a handoff.
@@ -50,8 +57,10 @@ local-only SHA as a handoff.
 ## Package and apply
 
 After exact source-range review, run `scripts/create-change-package.mjs` with the
-reviewed developer and web ranges. Commit the generated
-`changes/<task-id>/**` package and verify it with the validator.
+reviewed developer and web ranges. Package bases and heads come from the reviewed
+task ranges and do not have to equal `source-lock.json`. The generator still
+proves those endpoints against freshly fetched canonical branch history. Commit
+the generated `changes/<task-id>/**` package and verify it with the validator.
 
 Apply each non-empty patch to the downstream repository's matching branch using
 `scripts/apply-change-package.mjs`. Application only updates the working tree;
