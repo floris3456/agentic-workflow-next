@@ -296,6 +296,54 @@ test("GitHub client paginates, filters pull requests, and reuses ETag-cached 304
   assert.deepEqual(Object.fromEntries(calls), { "1": 2, "2": 2 });
 });
 
+test("GitHub client probes beyond a 304-cached full page and discovers a new command", async (context) => {
+  const state = stateForTest(context);
+  const command = envelope("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", 2, "status");
+  const cachedComments = Array.from({ length: 100 }, (_, index) => ({
+    id: index + 1,
+    body: `comment ${index + 1}`,
+    ...actor("alice", "COLLABORATOR"),
+  }));
+  const calls: string[] = [];
+  const github = new GitHubClient({
+    owner: "acme",
+    repository: "demo",
+    tokens: new FakeTokens(),
+    state,
+    apiBaseUrl: "https://api.github.test",
+    fetch: asFetch((request) => {
+      const url = new URL(request.url);
+      const page = url.searchParams.get("page") ?? "1";
+      calls.push(page);
+      assert.equal(url.searchParams.get("per_page"), "100");
+      if (page === "1" && calls.length === 1) {
+        assert.equal(request.headers.get("if-none-match"), null);
+        return Response.json(cachedComments, { headers: { etag: '"comments-page-1"' } });
+      }
+      if (page === "1") {
+        assert.equal(request.headers.get("if-none-match"), '"comments-page-1"');
+        return new Response(null, { status: 304, headers: { etag: '"comments-page-1"' } });
+      }
+      assert.equal(page, "2");
+      assert.equal(request.headers.get("if-none-match"), null);
+      return Response.json([{
+        id: 101,
+        body: commandMarker(command),
+        ...actor("alice", "COLLABORATOR"),
+      }], { headers: { etag: '"comments-page-2"' } });
+    }),
+  });
+
+  assert.equal((await github.listIssueComments(7)).length, 100);
+  const comments = await github.listIssueComments(7);
+  assert.equal(comments.length, 101);
+  assert.equal(comments[100]?.id, 101);
+  const discovered = scanCommandEnvelopes(comments[100]?.body ?? "")[0];
+  assert.equal(discovered?.valid, true);
+  assert.equal(discovered?.valid ? discovered.envelope.command_id : undefined, command.command_id);
+  assert.deepEqual(calls, ["1", "1", "2"]);
+});
+
 test("GitHub client invalidates and retries one unauthorized installation token", async (context) => {
   const state = stateForTest(context);
   const tokens = new FakeTokens();

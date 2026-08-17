@@ -78,6 +78,24 @@ function nextLink(value: string | null): string | undefined {
   return undefined;
 }
 
+function nextPageProbe(url: URL, itemCount: number): string | undefined {
+  const perPageValues = url.searchParams.getAll("per_page");
+  if (perPageValues.length !== 1 || !/^[1-9]\d*$/.test(perPageValues[0]!)) return undefined;
+  const perPage = Number(perPageValues[0]);
+  if (!Number.isSafeInteger(perPage) || itemCount !== perPage) return undefined;
+
+  const pageValues = url.searchParams.getAll("page");
+  if (pageValues.length > 1) return undefined;
+  const pageValue = pageValues[0];
+  if (pageValue !== undefined && !/^[1-9]\d*$/.test(pageValue)) return undefined;
+  const page = pageValue === undefined ? 1 : Number(pageValue);
+  if (!Number.isSafeInteger(page) || page >= Number.MAX_SAFE_INTEGER) return undefined;
+
+  const probe = new URL(url);
+  probe.searchParams.set("page", String(page + 1));
+  return probe.toString();
+}
+
 function actor(record: Record<string, unknown>): { author: string; authorAssociation: string } {
   const user = isRecord(record.user) ? record.user : undefined;
   return {
@@ -176,7 +194,11 @@ export class GitHubClient {
       if (cached?.value === undefined) throw new Error("GitHub returned 304 without a cached response");
       const value = asRecord(cached.value, "cached GitHub page");
       if (!Array.isArray(value.data)) throw new TypeError("Cached GitHub page is invalid");
-      return { data: value.data.map(asJson), ...(typeof value.next === "string" ? { next: value.next } : {}) };
+      const data = value.data.map(asJson);
+      const next = nextLink(response.headers.get("link"))
+        ?? (typeof value.next === "string" ? value.next : undefined)
+        ?? nextPageProbe(url, data.length);
+      return { data, ...(next ? { next } : {}) };
     }
     const value = await response.json();
     if (!Array.isArray(value)) throw new TypeError("GitHub paginated response is not an array");
