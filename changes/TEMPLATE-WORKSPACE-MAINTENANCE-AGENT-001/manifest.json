@@ -1,0 +1,108 @@
+{
+  "schema_version": 3,
+  "task_id": "TEMPLATE-WORKSPACE-MAINTENANCE-AGENT-001",
+  "canonical_repository": "https://github.com/floris3456/agentic-workflow-template.git",
+  "created_at": "2026-08-17T23:36:29.000Z",
+  "provenance": {
+    "mode": "canonical-remote-fetch-v2",
+    "source_lock": {
+      "schema_version": 1,
+      "canonical_repository": "https://github.com/floris3456/agentic-workflow-template.git",
+      "recorded_at": "2026-08-17T23:35:12Z",
+      "sources": {
+        "main": "6127611113dfdb66f93a0cfd2d355359aa370833",
+        "developer": "3d3cbad9f423cc4d80aaff8a0fba86a16300c502",
+        "web-orchestration": "7e29c07e6ac9fc65a2cb2a8957514bc03500cc17"
+      },
+      "last_reconciled_task": "TEMPLATE-WORKSPACE-MAINTENANCE-AGENT-001",
+      "last_change_package": "changes/TEMPLATE-WORKSPACE-MAINTENANCE-AGENT-001/manifest.json"
+    },
+    "source_lock_sha256": "1e4ed20af43d74410600470b64ef60b0c8d8263db0d28b623ac9297825ee9a34",
+    "canonical_tips": {
+      "template-development": "1e8ac4a276eb8e6a2687495aa51b4e5767f04cfa",
+      "developer": "3d3cbad9f423cc4d80aaff8a0fba86a16300c502",
+      "web-orchestration": "7e29c07e6ac9fc65a2cb2a8957514bc03500cc17"
+    },
+    "head_relations": {
+      "template-development": "reviewed-head-ancestor-of-canonical-tip",
+      "developer": "reviewed-head-ancestor-of-canonical-tip",
+      "web-orchestration": "reviewed-head-ancestor-of-canonical-tip"
+    }
+  },
+  "ranges": {
+    "template-development": {
+      "base": "7915a22248f11c8000622ffd761fb2a6e91e2359",
+      "head": "1e8ac4a276eb8e6a2687495aa51b4e5767f04cfa",
+      "changed_paths": [
+        ".github/workflows/validate-template-development.yml",
+        ".opencode/.gitignore",
+        ".opencode/agents/workspace-maintainer.md",
+        ".opencode/package.json",
+        ".opencode/plugins/workspace-maintenance.ts",
+        ".opencode/skills/template-maintenance/SKILL.md",
+        ".opencode/skills/workspace-maintenance/SKILL.md",
+        "AGENTS.md",
+        "README.md",
+        "changes/README.md",
+        "docs/architecture/AS-BUILT.md",
+        "docs/architecture/decisions/0001-template-development-ledger.md",
+        "docs/design/template-maintenance-workflow.md",
+        "docs/deviations.md",
+        "docs/work/current/TEMPLATE-BRIDGE-LIFECYCLE-RECOVERY-002-terminal-scout-recovery.md",
+        "docs/work/current/TEMPLATE-WORKSPACE-MAINTENANCE-AGENT-001-workspace-maintenance-agent.md",
+        "scripts/apply-change-package.mjs",
+        "scripts/change-package-lib.mjs",
+        "scripts/create-change-package.mjs",
+        "scripts/validate-template-development.mjs",
+        "scripts/validate-template-development.sh",
+        "scripts/validate-workspace-opencode-runtime.mjs",
+        "scripts/workspace-maintenance-lib.mjs",
+        "source-lock.json",
+        "tests/change-package.test.mjs",
+        "tests/workspace-maintenance.test.mjs"
+      ],
+      "patch": "template-development.patch",
+      "patch_sha256": "0eb33783939e34efea1575d372f0185211b1e0fc6af60c4912237f07ab8d92ce"
+    },
+    "developer": {
+      "base": "ba73b3b54febfdeadbff66262acaa7be12e5760e",
+      "head": "3d3cbad9f423cc4d80aaff8a0fba86a16300c502",
+      "changed_paths": [
+        "contracts/opencode-bridge/command.schema.json",
+        "contracts/opencode-bridge/protocol.md",
+        "docs/architecture/AS-BUILT.md",
+        "docs/architecture/opencode-bridge.md",
+        "docs/work/current/TEMPLATE-WORKSPACE-MAINTENANCE-AGENT-001-workspace-maintenance-agent.md",
+        "scripts/validate-opencode-bridge.mjs",
+        "tools/opencode-bridge/AS-BUILT.md",
+        "tools/opencode-bridge/README.md",
+        "tools/opencode-bridge/package.json",
+        "tools/opencode-bridge/scripts/smoke-workspace-runtime.mjs",
+        "tools/opencode-bridge/src/commands.ts",
+        "tools/opencode-bridge/src/github.ts",
+        "tools/opencode-bridge/src/handoff.ts",
+        "tools/opencode-bridge/src/projection.ts",
+        "tools/opencode-bridge/src/protocol.ts",
+        "tools/opencode-bridge/src/recovery.ts",
+        "tools/opencode-bridge/src/requests.ts",
+        "tools/opencode-bridge/src/service.ts",
+        "tools/opencode-bridge/src/state.ts",
+        "tools/opencode-bridge/src/types.ts",
+        "tools/opencode-bridge/src/workspace.ts",
+        "tools/opencode-bridge/tests/protocol-github.test.ts",
+        "tools/opencode-bridge/tests/state.test.ts",
+        "tools/opencode-bridge/tests/workspace.test.ts"
+      ],
+      "patch": "developer.patch",
+      "patch_sha256": "a64a5e89f6416e3257122c195d6d353fb01e73f20b8ca586685691fc0b59fce7"
+    },
+    "web-orchestration": {
+      "base": "7e29c07e6ac9fc65a2cb2a8957514bc03500cc17",
+      "head": "7e29c07e6ac9fc65a2cb2a8957514bc03500cc17",
+      "changed_paths": [],
+      "patch": "web-orchestration.patch",
+      "patch_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "package_sha256": "3929590c1ca829709fabaa2a41f9eab8450693485a74194cd8b3e4f43be345b5"
+}

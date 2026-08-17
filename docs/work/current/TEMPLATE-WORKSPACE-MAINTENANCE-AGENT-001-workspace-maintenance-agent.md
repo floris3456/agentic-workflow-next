@@ -85,7 +85,10 @@ handoff is `3d3cbad9f423cc4d80aaff8a0fba86a16300c502`. A fresh credential-isolat
 OpenCode 1.18.16 lifecycle passed through the production bridge path with zero
 repository mutation. The exact source snapshot is now reconciled to that
 developer handoff plus unchanged main and web refs. Corrected package generation
-is the remaining implementation action.
+used the pushed pre-package template-development head
+`1e8ac4a276eb8e6a2687495aa51b4e5767f04cfa` and is complete. The resulting
+schema-3 package is deterministically validated and awaits only its ledger
+storage commit, remote/CI proof, and dedicated handoff snapshot.
 
 Historical position before review correction:
 
@@ -140,8 +143,8 @@ back. Only this dedicated handoff snapshot remains in the working cycle.
 - corrected developer package range:
   `ba73b3b54febfdeadbff66262acaa7be12e5760e..3d3cbad9f423cc4d80aaff8a0fba86a16300c502`
 - corrected template-development package range begins at
-  `7915a22248f11c8000622ffd761fb2a6e91e2359` and will end at the pushed
-  pre-package checkpoint containing this reconciled source snapshot
+  `7915a22248f11c8000622ffd761fb2a6e91e2359` and ends at the pushed pre-package
+  checkpoint `1e8ac4a276eb8e6a2687495aa51b4e5767f04cfa`
 
 ## Observed
 
@@ -259,6 +262,19 @@ promote `main`; exact-SHA human approval remains unchanged.
 20. Re-fetched all canonical refs, independently read them back, and reconciled
     `source-lock.json` directly to the exact developer handoff plus unchanged
     main and web refs without adding a self-referential template-development SHA.
+21. Published the non-self-referential reviewed template-development endpoint
+    `1e8ac4a276eb8e6a2687495aa51b4e5767f04cfa`, independently read it back, and
+    generated the complete schema-3 package only with
+    `scripts/create-change-package.mjs` using that exact template head,
+    developer handoff `3d3cbad9f423cc4d80aaff8a0fba86a16300c502`, and the unchanged empty web
+    range.
+22. Re-ran the generator with the reviewed template commit epoch and compared all
+    four files byte-for-byte; deterministic regeneration, offline provenance,
+    and public-safe content checks passed.
+23. Ran the final package through clean disposable matching-branch dry runs and
+    applications. Applied template-development and developer trees exactly
+    matched their reviewed head trees; the web patch remained an explicit clean
+    no-op.
 
 ## Changed approach
 
@@ -352,6 +368,38 @@ normal repository-owned path.
   `3d3cbad9f423cc4d80aaff8a0fba86a16300c502`, main
   `6127611113dfdb66f93a0cfd2d355359aa370833`, and web-orchestration
   `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`.
+- Pre-package checkpoint `1e8ac4a276eb8e6a2687495aa51b4e5767f04cfa`:
+  immediate push, independent `ls-remote`, exact local/tracking equality, and
+  ancestry from task base passed.
+- Corrected package manifest: schema 3; template-development 26 paths at
+  `7915a22248f11c8000622ffd761fb2a6e91e2359..1e8ac4a276eb8e6a2687495aa51b4e5767f04cfa`;
+  developer 24 paths at
+  `ba73b3b54febfdeadbff66262acaa7be12e5760e..3d3cbad9f423cc4d80aaff8a0fba86a16300c502`;
+  web-orchestration zero paths at
+  `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17..7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`.
+- Corrected package binding SHA-256:
+  `3929590c1ca829709fabaa2a41f9eab8450693485a74194cd8b3e4f43be345b5`;
+  manifest file SHA-256:
+  `ec9730b5f53467215e7f4e63a6ef4019dfc0d8349f9ceca08b15081bbdfb2b61`;
+  source-lock SHA-256:
+  `1e4ed20af43d74410600470b64ef60b0c8d8263db0d28b623ac9297825ee9a34`.
+- Corrected template-development patch SHA-256:
+  `0eb33783939e34efea1575d372f0185211b1e0fc6af60c4912237f07ab8d92ce`;
+  developer patch SHA-256:
+  `a64a5e89f6416e3257122c195d6d353fb01e73f20b8ca586685691fc0b59fce7`;
+  empty web patch SHA-256:
+  `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`.
+- Final package deterministic regeneration, schema-3 provenance validation,
+  exact file inventory, patch/package digest recomputation, and public-safe scan:
+  passed.
+- Final package dry-run/application against clean exact-base disposable
+  template-development, developer, and web-orchestration branches: passed; both
+  non-empty applied trees equaled their reviewed head trees.
+- Final focused package/provenance fixtures: passed 6/6; workspace containment/
+  publication fixtures: passed 2/2.
+- Final `./scripts/validate-template-development.sh`: passed structural checks,
+  8/8 tests, real pinned OpenCode agent/plugin/skill/tool inventory, and
+  `git diff --check` with the generated package present.
 
 ## Blockers / required decisions
 
@@ -360,18 +408,15 @@ requires explicit human approval of an exact SHA and is outside this task.
 
 ## Remaining work
 
-1. Validate and push this exact pre-package source-snapshot checkpoint.
-2. Regenerate the schema-3 package only with the repository-owned generator from
-   the exact reviewed template-development, developer, and unchanged web ranges.
-3. Validate/dry-run/apply-review the generated package, push package/ledger and
-   dedicated handoff commits, and independently verify remote refs, ancestry,
-   package identity, changed paths/digests/provenance, and relevant CI.
+1. Commit/push the generated package and this ledger identity record.
+2. Independently verify remote refs, ancestry, exact package files/digests/
+   provenance, and relevant CI from pushed commits.
+3. Publish the dedicated correction handoff snapshot.
 
 ## Next action
 
-Run template-development validation, commit/push this pre-package checkpoint,
-then use its exact SHA as the template-development reviewed range head for the
-repository-owned generator.
+Commit/push the generated package and ledger identity, read back the exact remote
+tree, then complete CI and handoff verification.
 
 ## Relevant durable records
 
@@ -384,8 +429,9 @@ repository-owned generator.
   `9ad0913bc40692887f1eed5031c97d2512397961` with schema-2 package SHA-256
   `79815d273f90870b6e7acd7b6239d478c7573f76aba17196297edd0e299d915f`
 - Corrected schema-3 package path
-  `changes/TEMPLATE-WORKSPACE-MAINTENANCE-AGENT-001/manifest.json` (currently
-  absent pending final reviewed source heads and repository-owned regeneration)
+  `changes/TEMPLATE-WORKSPACE-MAINTENANCE-AGENT-001/manifest.json`, binding
+  SHA-256
+  `3929590c1ca829709fabaa2a41f9eab8450693485a74194cd8b3e4f43be345b5`
 - Corrected template-development implementation checkpoint
   `33227b741c0dc2909ed8ca8dc00ea1b28963febc`
 - Developer correction implementation checkpoints
