@@ -72,8 +72,11 @@ The supported bridge runtime is Node `22.13.0` or newer; hardened Scout host sup
 
 `npm run test:scout-runtime-smoke` performs a temporary external locked install,
 starts the real pinned server with the sterile launcher, and actively passes exact
-version/OpenAPI plus trusted agent/prompt/permission/tool inventory checks without
-sending a model request; the temporary runtime is stopped and removed afterward.
+version/OpenAPI plus trusted agent/prompt/permission/tool inventory checks. It
+creates and reads one harmless no-model session and its empty messages, stops the
+server, proves a runtime marker is removed by reinstall, restarts/reprobes, and
+reads the exact same session ID and empty messages through the real API. The
+temporary runtime and persistence tree are stopped and removed afterward.
 
 Eight disposable-Git tests prove correct-ancestry no-op, fresh unrelated-root repair with identical developer tree and an old-root backup, and refusal of established/shallow, generated-fingerprint-mismatched, local-HEAD-mismatched, shared-ancestry, dirty, active-task, and synchronization-failed-marker states. Repository validation includes bridge structure/contracts, package tests, branch tests, mandatory agent-system/research checks, and active hooks. When `WOR_WEB_ORCHESTRATION_ROOT` names an independent checkout, it also runs the Project package validator and compares that exact checkout's command/request examples, six-field handoff, Scout model/effort boundary, non-semantic response transport, observable lifecycle, and duplicate task-issue containment to developer-owned contracts. A real authenticated loopback OpenCode `1.18.16` run returned the exact version/hash, 188-operation manifest, `compatible: true`, and a successful project read.
 

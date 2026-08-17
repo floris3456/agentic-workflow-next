@@ -6,7 +6,7 @@
 
 ## Status
 
-Ready for handoff.
+Real-runtime persistence smoke correction complete; ready to commit.
 
 ## Task-start developer SHA
 
@@ -22,11 +22,11 @@ Implement the bounded bridge lifecycle correction for TEMPLATE-BRIDGE-LIFECYCLE-
 
 ## Current objective
 
-Correct the confirmed Scout session-persistence lifecycle gap by preserving private OpenCode data/state across trusted Scout runtime replacement without allowing mutable persistence to become config, plugin, instruction, or executable authority.
+Close the bounded acceptance-proof gap by making the real no-model Scout runtime smoke prove that pinned OpenCode `1.18.16` reloads the exact same API-created session from persistent XDG data/state after trusted runtime reinstall.
 
 ## Current position
 
-This same-task continuation started from exact synchronized developer and prior handoff `9ca25b8b6f9036744cb61845039f9185deb9e78f`. The Scout persistence correction and its tests/durable records are committed and pushed at developer `14b1bc2a6ec95dac3e932881c2ca6a649a199064`. The installer derives a sibling persistence root, preserves only XDG data/state there across complete trusted-runtime replacement, keeps HOME/config/cache/tmp/PATH authority in the replaceable runtime, validates persistence containment, filesystem structure, and the exclusive credential boundary, and migrates legacy isolated OAuth into the persistent auth location. All requested focused/full, real-runtime smoke, agent-system, bridge-package, and repository validation passes.
+This same-task review correction started from exact clean synchronized handoff `fc2cdb9567ade7ec24dc5e82c0ba27869caea59b`; the otherwise review-clean persistence source remains `14b1bc2a6ec95dac3e932881c2ca6a649a199064`. The extended smoke now creates and reads one real no-model OpenCode session and its empty messages, stops Scout, proves the trusted runtime was replaced, restarts/reprobes, and reads the exact same session ID and empty messages. No persistence implementation or unit recovery semantics changed.
 
 ## Observed
 
@@ -53,10 +53,14 @@ This same-task continuation started from exact synchronized developer and prior 
 - Install and launch require the configured persistence root to equal the derived runtime sibling, revalidate persistent OAuth shape/private mode, and refuse any post-install persistent OAuth file in API-key mode.
 - The reinstall regression maps a Scout before replacement, retains terminal message evidence in persistence, verifies trusted runtime replacement, recovers/publishes one canonical response after reopening bridge state, and proves no duplicate on repeated recovery/restart.
 - Existing immediate new-Scout recovery enrollment remains covered and passed in focused/full runs.
+- Independent review observed that the real runtime smoke did not exercise OpenCode's actual session store: its persisted terminal fixture and exactly-once recovery client are unit-level fakes, while the real smoke only reinstalled and probed compatibility.
+- The corrected real smoke created a session through pinned OpenCode `1.18.16`, retrieved its exact ID and zero messages before reinstall, removed an injected runtime marker through reinstall, then retrieved the same ID and zero messages after restart while the exact compatibility probe remained true.
 
 ## Interpretation
 
 Deriving the persistence sibling from the configured runtime root avoids a new caller-controlled trust path and supports automatic migration. Preserving only OpenCode data/state is narrower than preserving the old runtime root wholesale: trusted config/binaries and all startup-authority locations are still replaced and revalidated, while session/message and OAuth refresh evidence remain available for startup recovery.
+
+The acceptance gap can be closed without changing persistence design by creating a harmless session through the real Scout API, reading its exact ID and empty messages before reinstall, then reading that same ID and messages after an independently proven runtime replacement and restart.
 
 ## Attempts
 
@@ -64,7 +68,7 @@ No abandoned implementation route. The first focused run exposed one pre-existin
 
 ## Changed approach
 
-Fresh same-task steering adds the confirmed Scout persistence correction after the developer second-terminal fix. It does not relaunch historical Scouts, alter snapshot verification/fallback boundaries, or address the separate Node-floor and path-synthesis blockers.
+Fresh same-task steering adds the confirmed Scout persistence correction after the developer second-terminal fix. It does not relaunch historical Scouts, alter snapshot verification/fallback boundaries, or address the separate Node-floor and path-synthesis blockers. Independent review at handoff `fc2cdb9567ade7ec24dc5e82c0ba27869caea59b` then narrowed the remaining work to real pinned-runtime session persistence evidence; the persistence design and existing unit recovery semantics remain unchanged unless that smoke exposes a defect.
 
 ## Checks
 
@@ -91,6 +95,12 @@ Fresh same-task steering adds the confirmed Scout persistence correction after t
 - Final full `npm test`: passed 104/104 after credential-boundary assertions.
 - Final `npm run test:scout-runtime-smoke`: reinstalled, started/probed idempotently before and after reinstall, and passed with real pinned OpenCode `1.18.16`.
 - Final sequential agent-system, bridge-package, and repository validators passed; bridge tests passed 104/104 in each package/repository validation and template-branch tests passed 8/8.
+- `./scripts/bootstrap-agent-workflow.sh --check`: tracked hooks active at real-smoke correction start.
+- Exact continuation check: local `developer`, `HEAD`, and `origin/developer` all matched `fc2cdb9567ade7ec24dc5e82c0ba27869caea59b` with a clean tree.
+- Corrected `npm run test:scout-runtime-smoke`: passed against real pinned OpenCode `1.18.16`; exact session ID survived runtime replacement/restart, messages were readable with count zero before/after, the runtime marker was removed, and compatibility remained true.
+- Focused build plus config/recovery/Scout-runtime/Scout/workflow tests: passed 45/45; existing canonical terminal and exactly-once coverage remained green.
+- Full `npm test`: passed 104/104.
+- Final sequential `node scripts/validate-agent-system.mjs`, `./scripts/validate-opencode-bridge.sh`, and `./scripts/validate-repository.sh`: passed; bridge tests passed 104/104 in package/repository validation and template-branch tests passed 8/8.
 
 ## Blockers / required decisions
 
@@ -98,11 +108,11 @@ None observed.
 
 ## Remaining work
 
-No implementation work remains. Create and push the required new task-record-only handoff snapshot.
+Commit and push the minimal smoke/verification/task-record correction, then update this record with the pushed source SHA and create/push a new task-record-only handoff snapshot.
 
 ## Next action
 
-Run final task-record diff/status inspection, then create and push the handoff snapshot; do not edit or run another tool after its successful push in this cycle.
+Run final diff/status inspection, then commit and push the minimal source correction.
 
 ## Relevant durable records
 
@@ -120,4 +130,4 @@ Run final task-record diff/status inspection, then create and push the handoff s
 
 ## Last handoff commit
 
-`9ca25b8b6f9036744cb61845039f9185deb9e78f`
+`fc2cdb9567ade7ec24dc5e82c0ba27869caea59b`
