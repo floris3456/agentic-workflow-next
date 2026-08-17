@@ -6,9 +6,10 @@ TEMPLATE-WORKSPACE-MAINTENANCE-AGENT-001
 
 ## Status
 
-Completed working cycle; the template-owned workspace gate and explicit bridge
-route are reviewed, pushed, and packaged, with finalization and any `main`
-promotion remaining separate human-controlled boundaries
+Correction cycle in progress after independent review; the earlier completed
+working-cycle state is retained below as historical evidence but is superseded
+until containment, package completeness, mechanical permission enforcement, and
+real pinned-runtime acceptance are corrected and re-reviewed
 
 ## Task-start template-development SHA
 
@@ -37,10 +38,34 @@ replay, replace, abort, close, or reinterpret that work.
 
 ## Current objective
 
-Hand off the exact pushed source ranges, provenance package, reconciled source
-snapshot, and validation evidence. No `main` promotion is authorized.
+Correct the reviewed workspace-maintenance security and transfer defects without
+rewriting the already-sound routing/lifecycle behavior, regenerate the complete
+portable package from exact reviewed ranges, and hand off independently verified
+pushed source and ledger SHAs. No `main` promotion is authorized.
 
 ## Current position
+
+Independent review reopened this task at remote heads template-development
+`fb903dafdb2713621abbfe86b220f26c8d26a6e0`, developer
+`d24b67d78d58bd0c217530545ab0b548b64e2485`, main
+`6127611113dfdb66f93a0cfd2d355359aa370833`, and web-orchestration
+`7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`. A fresh canonical fetch and a
+separate connected-GitHub readback established those exact refs before this
+correction-cycle mutation. The existing package remains historical review
+evidence and must not be presented as the final portable package after source
+corrections.
+
+Review found four required correction areas: general `workspace_exec` is not a
+filesystem containment boundary; the agent's stated instruction/tool boundary
+is not fully mechanical; schema-2 packages omit the template-development-owned
+runtime assets; and fake-client bridge tests do not prove the real pinned
+OpenCode lifecycle. The correction must keep the workspace runtime rooted in
+template-development, preserve ordinary developer routing and exact-SHA human
+authority over `main`, and leave web-orchestration plus the protected paused
+Scout/#49/#53 state unchanged unless a separately proved dependency requires
+otherwise.
+
+Historical position before review correction:
 
 Template-development commit `cd433706bfefebaf42a5de6ea1521ec61deb2c8a`
 owns the primary `workspace-maintainer`, its stable-authority skill, the pinned
@@ -133,6 +158,9 @@ promote `main`; exact-SHA human approval remains unchanged.
    `9ad0913bc40692887f1eed5031c97d2512397961` was pushed; a fresh canonical
    fetch and independent remote readback returned that exact template-development
    tip while the three source refs remained unchanged.
+10. Reconciled the correction-cycle start through both a fresh proxy-bypassed
+    canonical fetch and an independent connected-GitHub branch readback; all four
+    heads still matched the last reviewed state before reopening this record.
 
 ## Changed approach
 
@@ -182,19 +210,31 @@ weakened.
 
 ## Blockers / required decisions
 
-None for this working cycle. Any future `main` promotion still requires explicit
+No correction blocker is established yet. Completion remains gated on a real
+pinned OpenCode 1.18.16 lifecycle acceptance; if the environment cannot provide
+that dependency after all safe attempts, this task must remain explicitly
+blocked on that boundary. Any future `main` promotion still requires explicit
 human approval of an exact SHA.
 
 ## Remaining work
 
-1. Push this dedicated template-development handoff snapshot.
-2. Keep downstream application, task archival, and any `main` promotion as
-   separate later workflows.
+1. Replace or isolate general command execution so verified-worktree access is a
+   truthful containment boundary, including Git, symlink, and environment tests.
+2. Enforce the pinned OpenCode agent's default-deny tool/skill inventory using
+   the exact supported configuration syntax and prove it through real inventory.
+3. Extend package generation, provenance, verification, and application to an
+   exact pre-package template-development implementation range.
+4. Run focused and complete source validation plus the real pinned-runtime
+   lifecycle acceptance, then independently verify pushed refs, ancestry, ranges,
+   package identity, and relevant CI.
+5. Regenerate the task package using only the corrected repository generator,
+   update durable records, and push a dedicated correction handoff snapshot.
 
 ## Next action
 
-Commit and push this task-record-only handoff snapshot, then independently verify
-all four canonical refs remain at the recorded exact tips.
+Commit and immediately push this reopened task-record snapshot, then inspect the
+authoritative template-development runtime/package code and developer bridge
+context before selecting the smallest robust correction architecture.
 
 ## Relevant durable records
 
@@ -209,4 +249,4 @@ all four canonical refs remain at the recorded exact tips.
 
 ## Last handoff commit
 
-None; this dedicated handoff snapshot cannot record its own commit SHA.
+`fb903dafdb2713621abbfe86b220f26c8d26a6e0`
