@@ -6,7 +6,7 @@
 
 ## Status
 
-Real-runtime persistence smoke correction complete; ready to commit.
+Ready for handoff.
 
 ## Task-start developer SHA
 
@@ -26,7 +26,7 @@ Close the bounded acceptance-proof gap by making the real no-model Scout runtime
 
 ## Current position
 
-This same-task review correction started from exact clean synchronized handoff `fc2cdb9567ade7ec24dc5e82c0ba27869caea59b`; the otherwise review-clean persistence source remains `14b1bc2a6ec95dac3e932881c2ca6a649a199064`. The extended smoke now creates and reads one real no-model OpenCode session and its empty messages, stops Scout, proves the trusted runtime was replaced, restarts/reprobes, and reads the exact same session ID and empty messages. No persistence implementation or unit recovery semantics changed.
+This same-task review correction started from exact clean synchronized handoff `fc2cdb9567ade7ec24dc5e82c0ba27869caea59b`; the persistence source remains `14b1bc2a6ec95dac3e932881c2ca6a649a199064`, and the bounded real-smoke correction is committed and pushed at developer `1a7794342b56e8fcafbf6cb0eb1246ee4722017d`. The extended smoke creates and reads one real no-model OpenCode session and its empty messages, stops Scout, proves the trusted runtime was replaced, restarts/reprobes, and reads the exact same session ID and empty messages. No persistence implementation or unit recovery semantics changed.
 
 ## Observed
 
@@ -108,11 +108,11 @@ None observed.
 
 ## Remaining work
 
-Commit and push the minimal smoke/verification/task-record correction, then update this record with the pushed source SHA and create/push a new task-record-only handoff snapshot.
+No implementation work remains. Create and push the required new task-record-only handoff snapshot.
 
 ## Next action
 
-Run final diff/status inspection, then commit and push the minimal source correction.
+Run final task-record diff/status inspection, then create and push the handoff snapshot; do not edit or run another tool after its successful push in this cycle.
 
 ## Relevant durable records
 
