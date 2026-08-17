@@ -87,6 +87,7 @@ export interface CommandExecutorOptions {
   currentGitState?: () => Promise<GitState>;
   runPromotion?: (approvedSha: string) => Promise<JsonValue>;
   onSessionStarted?: (taskId: string) => void;
+  onSessionContinued?: (taskId: string, sessionId: string) => void;
   onApplying?: (command: StoredCommand) => void | Promise<void>;
 }
 
@@ -164,6 +165,7 @@ export class CommandExecutor {
   private readonly currentGitState: (() => Promise<GitState>) | undefined;
   private readonly runPromotion: ((approvedSha: string) => Promise<JsonValue>) | undefined;
   private readonly onSessionStarted: ((taskId: string) => void) | undefined;
+  private readonly onSessionContinued: ((taskId: string, sessionId: string) => void) | undefined;
   private readonly onApplying: ((command: StoredCommand) => void | Promise<void>) | undefined;
   readonly ptys: PtyManager;
 
@@ -179,6 +181,7 @@ export class CommandExecutor {
     this.currentGitState = options.currentGitState;
     this.runPromotion = options.runPromotion;
     this.onSessionStarted = options.onSessionStarted;
+    this.onSessionContinued = options.onSessionContinued;
     this.onApplying = options.onApplying;
     this.ptys = new PtyManager({ client: options.client, state: options.state, signal: options.signal });
   }
@@ -256,6 +259,8 @@ export class CommandExecutor {
       path: { sessionID: session.sessionId },
       body: { agent: session.agent, parts: [{ type: "text", text: message }] },
     });
+    this.state.reactivateTaskSession(command.taskId, session.sessionId);
+    this.onSessionContinued?.(command.taskId, session.sessionId);
     return { status: kind === "steer" ? "steering-delivered" : "finalization-delivered", session: session.sessionId };
   }
 
@@ -271,7 +276,8 @@ export class CommandExecutor {
       path: { sessionID: session.sessionId },
       body: { agent, parts: [{ type: "text", text: message }] },
     });
-    this.state.updateTaskAgent(command.taskId, agent);
+    this.state.reactivateTaskSession(command.taskId, session.sessionId, agent);
+    this.onSessionContinued?.(command.taskId, session.sessionId);
     return { status: "route-changed", agent: selected, session: session.sessionId };
   }
 

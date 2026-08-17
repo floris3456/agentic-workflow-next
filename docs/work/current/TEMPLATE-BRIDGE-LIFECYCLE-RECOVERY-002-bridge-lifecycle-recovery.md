@@ -6,7 +6,7 @@
 
 ## Status
 
-Ready for handoff.
+Implementation and requested validation complete; source correction ready to commit.
 
 ## Task-start developer SHA
 
@@ -22,11 +22,11 @@ Implement the bounded bridge lifecycle correction for TEMPLATE-BRIDGE-LIFECYCLE-
 
 ## Current objective
 
-Correct only the canonical recovery evidence-method metadata identified by independent review and lock both method strings with focused assertions; do not change lifecycle behavior or scope.
+Correct the confirmed same-session second-terminal lifecycle gap: only after proven steer/finalize/route prompt delivery, reactivate the exact mapped developer session and race-safely re-enroll its recovery observer so a later missed terminal event remains canonically recoverable exactly once.
 
 ## Current position
 
-The lifecycle implementation and focused regressions are committed and pushed at developer `9c1ae8a445cbf53db7af3905aefd471470c6cac6`, with handoff snapshot `305c72cd87bff6d9cccf91b97f78e87af241efd3`. The metadata correction and focused assertions are pushed at developer `0362e24a363d9f905234283666b3f840983a6ef1`; no lifecycle behavior changed. This continuation cycle starts from the previous handoff snapshot `a12855280dc35a10aded89cd3db2989fad84bcc4` and has no further implementation work.
+This same-task continuation started from synchronized developer `7bc274c4e54dbe0fda2f0cfdd397bb7b78f41e98`, after prior task handoff `5dad89af63057545677e47d546783184b5e8c65d`. The source correction now reactivates only the exact mapped task/session after successful follow-up prompt delivery, atomically updates the route agent where applicable, coalesces re-enrollment behind an ending prior observer, and prevents duplicate prior terminal delivery from undoing reactivation. All focused, full bridge, agent-system, bridge-package, and repository validation requested for this cycle passes.
 
 ## Observed
 
@@ -39,18 +39,24 @@ The lifecycle implementation and focused regressions are committed and pushed at
 - Independent review confirmed the lifecycle behavior is bounded but identified that the two canonical `recovery.method` strings do not match their actual proof request paths.
 - The correction now labels Scout proof inputs as `session.status+session.messages` and developer proof inputs as `permission.list+question.list+session.status+session.messages`; focused assertions inspect both persisted payloads.
 - `AS-BUILT.md` already described these proof inputs truthfully, so no durable implementation-record text change was needed for this metadata-only correction.
+- Before this continuation correction, successful `steer`, `finalize`, and `route` prompts did not change a mapped task session's persisted terminal state or request a new recovery observer.
+- The prior observer registry guard could reject a follow-up enrollment while the old promise was still present, then delete that promise without preserving the enrollment request.
+- Reprocessing the first canonical terminal event after reactivation reached an existing response-delivery row; the state layer nevertheless reapplied its terminal state before this correction.
+- Successful follow-up commands now reactivate the exact mapping to `starting` after prompt delivery returns, while a failed prompt leaves terminal state unchanged.
+- A pending re-enrollment is coalesced while the prior observer is present and launches after that exact promise exits; immediate re-enrollment occurs when no observer remains.
+- A focused second-terminal regression proves first canonical delivery, stale first-completion deduplication, the ending-observer race, a distinct second canonical delivery, and no duplicate after explicit recovery or database restart.
 
 ## Interpretation
 
-The review correction changes only persisted evidence labels: Scout will name `session.status+session.messages`, and developer will name `permission.list+question.list+session.status+session.messages`. Focused payload assertions will prevent future drift; proof calls, terminal decisions, delivery, projection, and Scout enrollment remain unchanged.
+The smallest robust route requires both post-delivery state reactivation and an observer-registry handoff. Reactivation alone could either be immediately reversed by the previously recorded terminal event or leave no canonical proof running when the second completion arrives. Coalescing one pending factory behind the current observer preserves exactly one active observer per key and closes the finishing-promise race without creating or replacing an OpenCode session.
 
 ## Attempts
 
-None in this correction cycle.
+No abandoned implementation route. The first focused build found one `exactOptionalPropertyTypes` declaration mismatch in the new observer registry; changing the callback field to an explicit union resolved it without changing behavior.
 
 ## Changed approach
 
-Independent review steering narrowed the work to evidence-metadata truthfulness and regression assertions; no lifecycle implementation route is being changed.
+Fresh same-task steering expanded the correction from evidence metadata to the confirmed second-terminal lifecycle defect. Prior canonical proof behavior and corrected `recovery.method` assertions are retained; the new work is limited to proven follow-up prompt paths, exact-session state, observer enrollment, and associated regressions.
 
 ## Checks
 
@@ -60,6 +66,12 @@ Independent review steering narrowed the work to evidence-metadata truthfulness 
 - `./scripts/validate-repository.sh`: pre-implementation, agent-system, research/evidence, hooks, bridge 99/99, and template-branch 8/8 passed.
 - `git diff --check`: passed immediately before the correction commit.
 - `./scripts/bootstrap-agent-workflow.sh --check`: tracked hooks active at continuation-cycle start.
+- Focused TypeScript build plus recovery/workflow tests: passed 24/24.
+- Full `npm test`: passed 102/102.
+- `node scripts/validate-agent-system.mjs`: passed.
+- `./scripts/validate-opencode-bridge.sh`: contracts/package, bridge 102/102, and template-branch 8/8 passed.
+- `./scripts/validate-repository.sh`: pre-implementation, agent-system, research/evidence, hooks, bridge 102/102, and template-branch 8/8 passed.
+- `git diff --check`: passed after implementation and record updates.
 
 ## Blockers / required decisions
 
@@ -67,11 +79,11 @@ None observed.
 
 ## Remaining work
 
-No implementation work remains in this correction cycle. The new task-record-only handoff snapshot still must be created and pushed.
+Commit and push the source correction with its implementation/task records, then update this record with the pushed source SHA and create/push a new task-record-only handoff snapshot.
 
 ## Next action
 
-Run final diff/status inspection, then create/push the new task-record-only handoff snapshot; do not edit after its successful push in this cycle.
+Run final status/diff inspection, then commit and push the source correction.
 
 ## Relevant durable records
 
@@ -80,8 +92,11 @@ Run final diff/status inspection, then create/push the new task-record-only hand
 - `docs/architecture/deviations.md`
 - `tools/opencode-bridge/src/recovery.ts`
 - `tools/opencode-bridge/src/service.ts`
+- `tools/opencode-bridge/src/commands.ts`
+- `tools/opencode-bridge/src/state.ts`
+- `tools/opencode-bridge/src/recovery-observer.ts`
 - `tools/opencode-bridge/src/scout.ts`
 
 ## Last handoff commit
 
-`a12855280dc35a10aded89cd3db2989fad84bcc4`
+`5dad89af63057545677e47d546783184b5e8c65d`

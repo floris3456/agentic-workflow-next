@@ -15,6 +15,7 @@ import { Manifest } from "./manifest.js";
 import { OpenCodeClient } from "./opencode.js";
 import { OperationPolicy, PublicProjection } from "./projection.js";
 import { RecoveryCoordinator, type PersistedOpenCodeEvent } from "./recovery.js";
+import { RecoveryObserverRegistry } from "./recovery-observer.js";
 import { RequestExecutor } from "./requests.js";
 import { ScoutRuntime, ScoutWorkspaceManager, scoutRuntimeBoundary } from "./scout.js";
 import {
@@ -180,6 +181,10 @@ function terminalSessionEvent(event: PersistedOpenCodeEvent): boolean {
   return /session\.(?:idle|error)/i.test(event.eventType);
 }
 
+function terminalSessionState(value: string): boolean {
+  return /session\.(?:idle|error)/i.test(value);
+}
+
 export class BridgeService {
   private readonly config: BridgeConfig;
   private readonly signal: AbortSignal;
@@ -197,7 +202,7 @@ export class BridgeService {
   private readonly manifest: Manifest;
   private readonly outbox: GitHubOutbox;
   private readonly control: GitHubControlLoop;
-  private readonly sessionRuns = new Map<string, Promise<void>>();
+  private readonly sessionRuns: RecoveryObserverRegistry;
   private readonly controlStop = new AbortController();
   private readonly controlStopped: Promise<void>;
   private resolveControlStopped!: () => void;
@@ -215,6 +220,9 @@ export class BridgeService {
     this.manifest = manifest;
     this.client = opencode(config, manifest);
     this.projection = new PublicProjection({ state: this.state, privateRoots: config.privateRoots });
+    this.sessionRuns = new RecoveryObserverRegistry(signal, (error) => {
+      this.state.setMeta("service.last_error", this.projection.safeText(errorMessage(error)));
+    });
     const githubClient = github(config, this.state);
     const poller = new GitHubCommandPoller({
       github: githubClient,
@@ -261,6 +269,7 @@ export class BridgeService {
       currentGitState: () => synchronizedGitState(config),
       ...(config.policy.promotionEnabled ? { runPromotion: promotion(config) } : {}),
       onSessionStarted: (taskId) => this.startSessionRecovery(taskId),
+      onSessionContinued: (taskId, sessionId) => this.reenrollSessionRecovery(taskId, sessionId),
       onApplying: async () => {
         try {
           await this.outbox.flush();
@@ -337,21 +346,32 @@ export class BridgeService {
     }
   }
 
+  private developerRecoveryFactory(taskId: string, sessionId: string): () => Promise<void> {
+    return async () => {
+      const current = this.state.getTaskSession(taskId);
+      if (!current || current.sessionId !== sessionId || terminalSessionState(current.sessionState)) return;
+      await this.recovery.runSession(current, this.signal);
+    };
+  }
+
   private startSessionRecovery(taskId: string): void {
     const key = `developer:${taskId}`;
-    if (this.sessionRuns.has(key) || this.signal.aborted) return;
     const session = this.state.getTaskSession(taskId);
-    if (!session) return;
-    const run = this.recovery.runSession(session, this.signal).finally(() => this.sessionRuns.delete(key));
-    this.sessionRuns.set(key, run);
+    if (!session || terminalSessionState(session.sessionState)) return;
+    this.sessionRuns.start(key, this.developerRecoveryFactory(taskId, session.sessionId));
+  }
+
+  private reenrollSessionRecovery(taskId: string, sessionId: string): void {
+    const session = this.state.getTaskSession(taskId);
+    if (!session || session.sessionId !== sessionId || terminalSessionState(session.sessionState)) return;
+    this.sessionRuns.reenroll(`developer:${taskId}`, this.developerRecoveryFactory(taskId, sessionId));
   }
 
   private startScoutRecovery(requestId: string): void {
     const key = `scout:${requestId}`;
-    if (this.sessionRuns.has(key) || this.signal.aborted) return;
     const session = this.state.getScoutSession(requestId);
     if (!session) return;
-    const run = (async () => {
+    this.sessionRuns.start(key, async () => {
       const workspace = await this.scoutWorkspaces.reopen(session.refSha, session.workspacePath);
       await this.scoutServer.start();
       const recovery = new RecoveryCoordinator({
@@ -361,10 +381,7 @@ export class BridgeService {
         onError: (error) => this.state.setMeta("service.last_error", this.projection.safeText(errorMessage(error))),
       });
       await recovery.runScoutSession(session, this.signal);
-    })().catch((error) => {
-      this.state.setMeta("service.last_error", this.projection.safeText(errorMessage(error)));
-    }).finally(() => this.sessionRuns.delete(key));
-    this.sessionRuns.set(key, run);
+    });
   }
 
   async run(): Promise<void> {

@@ -784,6 +784,14 @@ export class BridgeState {
     this.db.prepare("UPDATE task_sessions SET agent=?, updated_at=? WHERE task_id=?").run(agent, now(), taskId);
   }
 
+  reactivateTaskSession(taskId: string, sessionId: string, agent?: string): void {
+    const result = this.db.prepare(`
+      UPDATE task_sessions SET session_state='starting', agent=COALESCE(?, agent), updated_at=?
+      WHERE task_id=? AND session_id=?
+    `).run(agent ?? null, now(), taskId, sessionId);
+    if (result.changes !== 1) throw new Error(`Task ${taskId} does not map exact developer session ${sessionId}`);
+  }
+
   updateTaskSessionState(taskId: string, sessionState: string, eventId: string): void {
     this.db.prepare(
       "UPDATE task_sessions SET session_state=?, latest_event_id=?, updated_at=? WHERE task_id=?",
@@ -903,11 +911,13 @@ export class BridgeState {
       input.eventType, input.deliveryKind ?? "developer", input.requestId ?? null,
       timestamp, timestamp,
     );
-    if (input.deliveryKind === "scout") {
-      if (!input.requestId) throw new Error("Scout response delivery requires request correlation");
-      this.updateScoutSessionState(input.requestId, input.eventType, input.eventId);
-    } else {
-      this.updateTaskSessionState(input.taskId, input.eventType, input.eventId);
+    if (result.changes > 0) {
+      if (input.deliveryKind === "scout") {
+        if (!input.requestId) throw new Error("Scout response delivery requires request correlation");
+        this.updateScoutSessionState(input.requestId, input.eventType, input.eventId);
+      } else {
+        this.updateTaskSessionState(input.taskId, input.eventType, input.eventId);
+      }
     }
     return result.changes > 0;
   }
