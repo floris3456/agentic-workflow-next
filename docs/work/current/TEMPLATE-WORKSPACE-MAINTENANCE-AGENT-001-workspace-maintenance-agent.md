@@ -6,11 +6,10 @@ TEMPLATE-WORKSPACE-MAINTENANCE-AGENT-001
 
 ## Status
 
-Correction sources, real-runtime acceptance, and final schema-3 package
-validation complete after independent review; the earlier completed
-working-cycle state is retained below as historical evidence but remains
-superseded until the regenerated package and template-development handoff are
-pushed, pass CI, and are independently verified
+Completed correction cycle after independent review: corrected sources,
+real-runtime acceptance, final schema-3 package, package application proof,
+remote readback, and relevant source/package CI are complete; the earlier
+working-cycle state remains below only as historical evidence
 
 ## Task-start template-development SHA
 
@@ -97,7 +96,9 @@ portability correction. The final package-free reviewed head is now
 `d509bf3fd0d3a4622d080f920aca6c122f77624d`; remote run 32081956594 passed,
 including real Bubblewrap containment and the pinned OpenCode inventory. The
 repository-owned generator has regenerated the final package from that exact
-head and the unchanged exact developer/web ranges.
+head and the unchanged exact developer/web ranges. Final package/ledger commit
+`66a8289fc112de4546ea9cee1933a8c056fd0ba7` is pushed, independently fetched
+and byte-verified, and green in template-development CI run 32082204637.
 
 Historical position before review correction:
 
@@ -313,6 +314,11 @@ promote `main`; exact-SHA human approval remains unchanged.
     template head `d509bf3fd0d3a4622d080f920aca6c122f77624d`, developer handoff
     `3d3cbad9f423cc4d80aaff8a0fba86a16300c502`, and unchanged web head
     `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`.
+29. Published final package/ledger commit
+    `66a8289fc112de4546ea9cee1933a8c056fd0ba7`, fetched all four branches into a
+    fresh bare repository, proved its parent is the reviewed implementation
+    head, matched all four package file digests, and observed successful
+    template-development CI run 32082204637.
 
 ## Changed approach
 
@@ -474,26 +480,36 @@ normal repository-owned path.
   applied-tree equality: passed. Focused fixtures passed 6/6 package and 2/2
   containment; complete validation passed 8/8 plus actual OpenCode 1.18.16
   inventory with the regenerated package present.
+- Fresh remote package readback: template-development package checkpoint
+  `66a8289fc112de4546ea9cee1933a8c056fd0ba7` with exact parent
+  `d509bf3fd0d3a4622d080f920aca6c122f77624d`, developer
+  `3d3cbad9f423cc4d80aaff8a0fba86a16300c502`, main
+  `6127611113dfdb66f93a0cfd2d355359aa370833`, and web-orchestration
+  `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`; exact changed-path inventory,
+  package bytes, ancestry, and clean worktree checks passed.
+- Template GitHub Actions run 32082204637: passed on the stored final package
+  commit, including structural validation, 8/8 fixtures, real Bubblewrap
+  containment, and actual pinned OpenCode 1.18.16 inventory.
+- No `main` or web-orchestration mutation occurred. The paused
+  `TEMPLATE-BRIDGE-LIFECYCLE-RECOVERY-002` task and protected #49/#53/Scout
+  lifecycle state were not replayed, aborted, replaced, closed, or
+  reinterpreted.
 
 ## Blockers / required decisions
 
-No human decision is required. Completion is pending the regenerated
-package/ledger push, its green template-development CI, independent remote
-readback, and the dedicated handoff snapshot. Any future `main` promotion still
-requires explicit human approval of an exact SHA and is outside this task.
+No technical blocker or human decision remains within this correction task. Any
+future `main` promotion still requires explicit human approval of an exact SHA
+and is outside this task.
 
 ## Remaining work
 
-1. Commit and immediately push the regenerated package plus this ledger update.
-2. Independently verify remote refs, ancestry, exact package bytes/digests and
-   provenance, then require successful package-commit CI.
-3. Publish and verify the dedicated template-development handoff snapshot and
-   require its CI to pass.
+None within the approved correction scope. The dedicated task-progress snapshot
+containing this record is the handoff boundary and does not promote `main`.
 
 ## Next action
 
-Publish the regenerated package/ledger commit, read it back independently, and
-require its template-development workflow to pass before the handoff snapshot.
+Return the exact pushed handoff snapshot, source handoffs, package identity,
+checks, and task-record path using the maintainer response contract.
 
 ## Relevant durable records
 
@@ -509,6 +525,8 @@ require its template-development workflow to pass before the handoff snapshot.
   `changes/TEMPLATE-WORKSPACE-MAINTENANCE-AGENT-001/manifest.json` with final
   binding SHA-256
   `78fbf87877d48810c527fbdb0a055d345bbeaa9cddff7efc4a9c0bf777df6d60`
+- Final corrected package/ledger commit
+  `66a8289fc112de4546ea9cee1933a8c056fd0ba7`
 - Superseded first schema-3 package/ledger commit
   `18747555881db600ee033dd93b7fc53e1f7d8f12` with binding SHA-256
   `3929590c1ca829709fabaa2a41f9eab8450693485a74194cd8b3e4f43be345b5`
