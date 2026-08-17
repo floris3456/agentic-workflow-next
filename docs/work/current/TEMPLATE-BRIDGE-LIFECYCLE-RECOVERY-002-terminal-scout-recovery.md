@@ -6,7 +6,7 @@ TEMPLATE-BRIDGE-LIFECYCLE-RECOVERY-002
 
 ## Status
 
-Runtime acceptance failed; Scout session durability correction required
+Source correction complete and independently reviewed; runtime-install acceptance pending
 
 ## Task-start template-development SHA
 
@@ -22,119 +22,141 @@ Correct bridge lifecycle defects found during full promotion review: recover mis
 
 ## Current objective
 
-Correct the newly proven Scout session-durability defect in the same lifecycle task: synchronized bridge runtime replacement must not erase the hardened Scout OpenCode session/message storage that startup recovery needs. Preserve the immutable trusted Scout runtime/config boundary while moving or preserving mutable application/session data across runtime install/rebootstrap. Do not relaunch the three historical Scouts whose original session evidence may already have been erased.
+Prove the final reviewed Scout-persistence correction is installed by the normal developer synchronization watcher, then run one fresh bounded Scout acceptance against that installed runtime. The fresh Scout is acceptance evidence for the corrected runtime and must not relaunch, reconstruct, or replace historical promotion-review Scouts #46-#48.
 
 ## Current position
 
-Fresh canonical source refs: developer `9ca25b8b6f9036744cb61845039f9185deb9e78f`, web-orchestration `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`, main `6127611113dfdb66f93a0cfd2d355359aa370833`. Template-development was `f1b5a50fe1d426563dec8f4f2fd61c066c7dc54c` immediately before this ledger update.
+Fresh canonical refs are developer `ba73b3b54febfdeadbff66262acaa7be12e5760e`, web-orchestration `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`, and main `6127611113dfdb66f93a0cfd2d355359aa370833`. Template-development was `ed501942dec87af9dca67ef29d0c200145d171fc` immediately before this ledger update.
 
-Canonical source issue #49 remained bound to one mapped developer session throughout prior source work; no replacement start/session occurred. Initial lifecycle implementation landed at `9c1ae8a445cbf53db7af3905aefd471470c6cac6`, evidence metadata correction at `0362e24a363d9f905234283666b3f840983a6ef1`, and the reviewed second-terminal correction at `6527f78ac9735b038f2f3febad025eb626734b6d`, followed by task-record-only handoff `9ca25b8b6f9036744cb61845039f9185deb9e78f`. A final live same-session Sol message was structurally terminal and named that handoff; source and handoff CI succeeded. Issue #49 was then closed completed.
+Canonical source issue #49 remains the one lifecycle control issue and stays bound to the original mapped developer session `session-81`; no replacement start/session occurred. Initial canonical developer-terminal/new-Scout recovery landed at `9c1ae8a445cbf53db7af3905aefd471470c6cac6`, evidence-method metadata correction at `0362e24a363d9f905234283666b3f840983a6ef1`, second-terminal substantive correction at `6527f78ac9735b038f2f3febad025eb626734b6d`, and its task-record-only handoff at `9ca25b8b6f9036744cb61845039f9185deb9e78f`.
 
-The three original read-only promotion-review Scouts remain bound to their original request IDs and have never been relaunched: #46 request `2bab872f-8e36-4ff2-a6cd-5cb8e6c9631d`, #47 request `2d97c6f4-029e-49ed-8d99-61f3ccaacb5d`, and #48 request `b8c8c6eb-c49c-43ac-a29c-09154fc52cc5`. A fresh sequence-free #46 status after the final source handoff still reported `session_state: starting`, no latest event, and no projected Scout response.
+A read-only operator snapshot at exact `9ca25b8b6f9036744cb61845039f9185deb9e78f` proved local HEAD, origin/developer, installed runtime SHA, and synchronization state all matched; bridge heartbeat/poll were advancing, queues were clear, draining false, last_error null, and repository-specific sync/bridge/OpenCode services active. A fresh original-ID #46 Scout status still remained `starting` with no terminal event/response. That converted the historical Scout symptom from deployment uncertainty into a real lifecycle durability failure.
 
-Fresh operator read-only evidence then proved the local developer checkout, `origin/developer`, installed bridge SHA, and synchronized runtime all exactly equal `9ca25b8b6f9036744cb61845039f9185deb9e78f`; the sync watcher reported synchronized/current, the bridge heartbeat and poll were advancing, all pending command/request/response/outbox counts were zero, draining was false, `last_error` was null, and the repository-specific sync/bridge/OpenCode services were active. Therefore the stuck historical Scouts are not explained by a stale runtime.
+Direct source tracing proved the cause: normal developer synchronization invokes apply bootstrap; apply bootstrap reinstalls the Scout runtime; the old installer stored Scout HOME/XDG data/state inside the replaceable runtime root and recursively replaced that root. The bridge mapping and immutable Scout snapshot survived, but the OpenCode Scout session/message store required for startup recovery could be erased before restart recovery queried it.
 
-Direct source inspection now proves the missing durability boundary. `scripts/watch-developer-sync.sh` stops an idle bridge, fast-forwards developer, then always invokes `scripts/bootstrap-opencode-bridge.sh` before restart. Apply-mode bootstrap always runs the bridge CLI `install-scout-runtime`. `installScoutRuntime()` creates Scout `home`, `data`, `cache`, `state`, and `tmp` directories inside `scoutRuntimeRoot`, then calls `removeInstalled(root)` before replacing the runtime. The Scout server sets both `HOME` and XDG application-data/state locations inside that same replaceable root. OpenCode's documented session/message application data is stored in its user application-data directory. Thus synchronized runtime replacement deletes the storage namespace that contains Scout session history before startup recovery can query the old mapped session. The immutable Scout snapshot survives separately, but the session/message evidence needed to terminalize the historical mapping does not.
+Issue #49 was reopened and the same mapped Sol/large-developer session continued at sequence 29. The substantive persistence correction landed at `14b1bc2a6ec95dac3e932881c2ca6a649a199064`, followed by task-record-only handoff `fc2cdb9567ade7ec24dc5e82c0ba27869caea59b`. Independent review confirmed the implementation separates private persistent Scout OpenCode data/state into a derived sibling persistence root while HOME/config/cache/tmp/PATH and trusted config/binaries remain in the replaceable runtime. Persistence is private, outside repository authority, recursively rejects symlinks/unsupported entries, preserves the credential boundary, and supports legacy isolated OAuth migration into the persistent auth location. Focused/full tests and repository Actions passed.
 
-This is within the original lifecycle acceptance requirement that startup recovery remain valid for historical hardened Scout sessions. It is not a new task and does not justify relaunching #46-#48. Issue #49 must be resumed/reopened and the existing mapped developer session continued at the next valid sequence after prior terminal sequence 28.
+Independent review then found one bounded evidence gap: the first real Scout runtime smoke reinstalled and reprobed the real server but did not prove pinned OpenCode itself reloaded the same session store after reinstall. Same-session sequence 49 requested only that proof correction. Test-only source commit `1a7794342b56e8fcafbf6cb0eb1246ee4722017d` changed only the lifecycle task record, component AS-BUILT, and `tools/opencode-bridge/scripts/smoke-scout-runtime.mjs`; no persistence implementation code changed. The corrected real smoke creates a harmless real OpenCode session without a model prompt, reads its exact ID and empty messages, stops the Scout server, proves trusted runtime replacement via a removed runtime marker, reinstalls/restarts/reprobes pinned OpenCode `1.18.16`, then reads the exact same session ID and empty messages. Repository Actions passed. Task-record-only handoff `ba73b3b54febfdeadbff66262acaa7be12e5760e` followed and its Actions run passed.
+
+The bridge independently published terminal developer response `message-359` with `finish: stop`, a completion timestamp, exact handoff `ba73b3b54febfdeadbff66262acaa7be12e5760e`, and no blockers. Final read-only sequence 54 succeeded with inactive `{}`; a sequence-free `command.status` read independently found sequence 54 durable and succeeded. The developer source route is therefore terminal and absorbed.
+
+The three historical promotion-review Scouts remain unreplayed: #46 request `2bab872f-8e36-4ff2-a6cd-5cb8e6c9631d`, #47 request `2d97c6f4-029e-49ed-8d99-61f3ccaacb5d`, #48 request `b8c8c6eb-c49c-43ac-a29c-09154fc52cc5`. Their pre-fix OpenCode session history may already have been erased and must not be recreated under the old request identities.
 
 ## Source ranges
 
-The lifecycle task is intentionally split because the separate pagination correction was interleaved in developer history and must not be silently absorbed into a lifecycle package:
+The lifecycle task remains intentionally split because the separate pagination correction is interleaved in developer history and must not be silently absorbed into a lifecycle package:
 
 - lifecycle range A: `326e9c402f571b82f6497c4da0f9d3722b553dba..5dad89af63057545677e47d546783184b5e8c65d`
 - separate pagination task: `5dad89af63057545677e47d546783184b5e8c65d..7bc274c4e54dbe0fda2f0cfdd397bb7b78f41e98`
 - lifecycle range B: `7bc274c4e54dbe0fda2f0cfdd397bb7b78f41e98..9ca25b8b6f9036744cb61845039f9185deb9e78f`
-- lifecycle range C: `9ca25b8b6f9036744cb61845039f9185deb9e78f..pending-durability-handoff`
-- prior second-terminal substantive implementation: `6527f78ac9735b038f2f3febad025eb626734b6d`
-- prior lifecycle handoff: `9ca25b8b6f9036744cb61845039f9185deb9e78f`
+- lifecycle range C: `9ca25b8b6f9036744cb61845039f9185deb9e78f..ba73b3b54febfdeadbff66262acaa7be12e5760e`
+- range C persistence implementation: `14b1bc2a6ec95dac3e932881c2ca6a649a199064`
+- range C first task-record-only handoff: `fc2cdb9567ade7ec24dc5e82c0ba27869caea59b`
+- range C real-runtime proof correction: `1a7794342b56e8fcafbf6cb0eb1246ee4722017d`
+- range C final task-record-only handoff: `ba73b3b54febfdeadbff66262acaa7be12e5760e`
 - web-orchestration: no source change
 - main: unchanged at `6127611113dfdb66f93a0cfd2d355359aa370833`
 
 ## Observed
 
-- Strict canonical developer terminal recovery, immediate new-Scout recovery enrollment, and same-session second-terminal recovery are implemented and independently reviewed.
-- Runtime acceptance of historical Scout recovery failed despite exact current source/runtime installation and a healthy idle bridge.
-- Historical Scouts #46-#48 were launched after the hardened `scout-snapshots` model already existed; they are not legacy weaker-worktree mappings.
-- Current startup recovery enrolls historical Scout mappings, but it can only succeed if the mapped OpenCode Scout session/messages still exist.
-- The developer synchronization watcher always runs apply bootstrap for a runtime-changing update.
-- Apply bootstrap always installs the Scout runtime.
-- Scout runtime installation recursively removes the prior `scoutRuntimeRoot` after creating replacement `home`/`data`/`cache`/`state`/`tmp` directories in a temporary replacement root.
-- The Scout server places HOME and XDG data/state under that replaceable root, so runtime replacement destroys the storage namespace used by Scout OpenCode application/session data.
-- The bridge database retains the Scout mapping, which explains a healthy bridge continuing to report `starting` with no terminal event after the session store has been replaced.
-- The original Scout starts must not be replayed. If their session history has already been deleted, their missing responses are unrecoverable historical evidence and must be dispositioned via exact GitHub/source inspection rather than relaunch.
-- The recurring wrong sibling-path synthesis and Node runtime-floor mismatch remain separate promotion blockers.
+- Strict canonical developer terminal recovery, immediate new-Scout recovery enrollment, same-session second-terminal recovery, and Scout session-store durability across trusted runtime replacement are now implemented and independently reviewed.
+- Historical #46-#48 were hardened `scout-snapshots`, not legacy weaker worktree mappings; their stuck state was caused by session-store durability loss, not an intentional trust-boundary refusal.
+- The corrected installer preserves only private OpenCode data/state outside the replaceable runtime; mutable persistence does not become config/plugin/instruction/executable authority.
+- Runtime and persistence roots are derived and non-overlapping; persistence is private and recursively fails closed on symlinks/unsupported filesystem entries.
+- OAuth credentials move to the persistent OpenCode data location with bounded legacy migration; API-key mode rejects a persistent OAuth credential file.
+- Unit coverage proves persisted terminal-message evidence can produce one canonical Scout response after reinstall/reopen and does not duplicate across repeated recovery/restart.
+- The corrected real pinned-runtime smoke proves OpenCode `1.18.16` itself preserves and reloads the exact same API-created session and readable messages across proven trusted runtime replacement/restart without a model call.
+- Source commit `1a779434...` is proof-only: three paths changed and no runtime implementation code changed.
+- GitHub repository validation succeeded for persistence source `14b1bc2...`, handoff `fc2cdb9...`, real-smoke correction `1a779434...`, and final handoff `ba73b3b...`.
+- Final same-session developer response is terminal and final sequence 54 is durably succeeded.
+- Historical Scout starts have never been replayed.
+- Recurring wrong sibling-path synthesis and the Node runtime-floor mismatch remain separate promotion blockers.
 
 ## Interpretation
 
-The previous lifecycle source was review-clean for the code it changed but incomplete against real runtime lifecycle acceptance. Startup recovery cannot protect historical Scout completion if synchronized rebootstrap deletes Scout session persistence first. The smallest safe correction is to separate trusted immutable runtime/config replacement from private persistent Scout OpenCode application/session storage, or otherwise preserve that storage across install, without allowing mutable state to become configuration/plugin/executable authority. A focused regression must simulate install/reinstall/restart and prove a pre-existing hardened Scout session remains discoverable and canonically deliverable exactly once.
+The source defect is now corrected with both unit-level canonical recovery evidence and a real pinned-OpenCode persistence proof. The remaining lifecycle acceptance boundary is deployment: connected GitHub cannot prove the host-local synchronization watcher has installed final handoff `ba73b3b54febfdeadbff66262acaa7be12e5760e`. Once installed-sha/HEAD/origin-developer are proven equal to that handoff and the bridge is healthy, one fresh bounded Scout may be started specifically to prove current adapter/runtime completion. That acceptance Scout must use a new task/request identity and is not a replay of #46-#48.
 
-The historical #46-#48 sessions are evidence of the defect, not candidates for replay. Runtime acceptance of the correction must use new bounded Scout evidence after the fix; it may not reconstruct or replace those original reports.
+Historical #46-#48 should be dispositioned as unavailable historical results if their original session evidence remains absent; their original promotion-review scopes can later be covered by exact direct GitHub review or separately scoped fresh review, but never by pretending the original Scout executions were recovered.
 
-Packaging remains non-contiguous because pagination is interleaved between lifecycle ranges A and B; range C will add another lifecycle segment. Do not hand-build or widen a package across unrelated pagination history.
+Packaging remains non-contiguous because pagination is interleaved between lifecycle ranges A and B. The current one-range package generator/validator cannot represent these lifecycle segments without either absorbing unrelated pagination history or a repository-owned multi-range representation. Do not hand-build or widen a package.
 
 ## Attempts
 
 1. Luna implemented canonical developer terminal recovery and immediate Scout enrollment.
 2. Independent review corrected recovery evidence metadata.
 3. Independent review found the post-terminal same-session continuation gap.
-4. After Luna failed to implement that edge, the same mapped session was routed to Sol without restart; Sol implemented and handed off the second-terminal correction.
+4. The same mapped session was routed to Sol without replacement; Sol implemented second-terminal recovery.
 5. A >100-comment pagination/cache defect was isolated, fixed, reviewed, and accepted without replaying the original route marker.
-6. Exact source, tests, CI, handoff separation, and final live terminal message for `9ca25b8b...` were independently reviewed.
-7. The synchronized current runtime was proven locally at exact `9ca25b8b...`, yet a fresh original-ID Scout status remained `starting` with no response.
-8. Direct source tracing connected developer synchronization -> apply bootstrap -> Scout runtime install -> recursive replacement of the runtime root containing Scout HOME/XDG persistence, identifying the lifecycle durability defect.
+6. Exact source, CI, handoff separation, and terminal responses through `9ca25b8b...` were independently reviewed.
+7. Fresh synchronized-runtime observation at `9ca25b8b...` plus original #46 status reproduced the historical Scout durability failure.
+8. Source tracing identified runtime-root replacement deleting Scout OpenCode data/state.
+9. Same-session Sol sequence 29 implemented derived private persistence at `14b1bc2...`; source and handoff were independently reviewed.
+10. Independent review found the real-runtime smoke proof gap and same-session sequence 49 narrowed correction to that evidence only.
+11. `1a779434...` added real no-model OpenCode session persistence proof; CI passed; `ba73b3b...` provided the task-record-only handoff; terminal `message-359` and sequence 54 were reconciled.
 
 ## Changed approach
 
-Reopen and resume the same lifecycle source issue instead of proceeding to packaging. Continue the existing mapped developer session at the next contiguous command sequence with a bounded Scout-persistence correction. Do not create a replacement developer session and do not relaunch any historical Scout. After the source fix is reviewed and installed, run a new bounded acceptance Scout specifically to prove session durability across synchronized runtime replacement/restart.
+Source implementation is complete. Keep issue #49 open only through runtime-install/fresh acceptance. Obtain one read-only installed-runtime snapshot for `ba73b3b...`; after exact installation is proven, launch one new bounded Scout acceptance and absorb it without touching historical #46-#48. Do not create another developer route unless fresh acceptance exposes a concrete source defect.
 
 ## Checks
 
-- Exact current developer ref independently re-read as `9ca25b8b6f9036744cb61845039f9185deb9e78f`.
-- User-supplied read-only runtime observation proves installed SHA/runtime and remote developer are exact and synchronized; bridge queues are clear and repository services active.
-- Fresh post-install #46 `scout.status` still reports no terminal event/response and `starting`.
-- `scripts/watch-developer-sync.sh` exact current source inspected: runtime-changing synchronization invokes apply bootstrap before bridge restart.
-- `scripts/bootstrap-opencode-bridge.sh` exact current source inspected: apply mode invokes `install-scout-runtime` every time.
-- `tools/opencode-bridge/src/scout-server.ts` exact current source inspected: install creates persistence directories under the runtime root, removes the old root, and the server sets HOME/XDG paths inside that root.
-- OpenCode primary documentation confirms session/message data is stored in its user application-data storage.
-- Earlier source/handoff Actions for `6527f78...` and `9ca25b8...` succeeded; those checks do not cover persistence across a runtime reinstall.
+- Current developer, main, web-orchestration, and template-development refs independently reread during this cycle.
+- `9ca25b8... -> 14b1bc2...` persistence source range directly reviewed, including persistence derivation, filesystem/trust checks, credential migration, installer behavior, environment wiring, and unit regressions.
+- `14b1bc2... -> fc2cdb9...` verified task-record-only handoff.
+- Repository Actions for `14b1bc2...` and `fc2cdb9...` concluded success.
+- `fc2cdb9... -> 1a779434...` independently verified one commit and only three expected proof/documentation paths.
+- Corrected smoke directly inspected: real `session.create`, `session.get`, `session.messages` before reinstall; no model prompt; stop/reinstall/runtime-marker removal/restart/reprobe; same exact `session.get` and `session.messages` after reinstall.
+- Repository Actions for `1a779434...` and `ba73b3b...` concluded success.
+- `1a779434... -> ba73b3b...` verified task-record-only handoff.
+- Bridge-published `message-359` is terminal `finish: stop` and names exact handoff `ba73b3b...`.
+- Sequence 54 succeeded with `{}` and sequence-free `command.status` independently returned `found: true`, `state: succeeded`, and the same known result.
+- Main remains unchanged at `6127611113dfdb66f93a0cfd2d355359aa370833`; web-orchestration remains unchanged at `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`.
 
 ## Blockers / required decisions
 
-No human product/design decision is needed. The source task is blocked only until the same mapped developer session implements and hands off the confirmed Scout-persistence correction. Historical #46-#48 results may no longer be recoverable because their underlying Scout session data was deleted; replay remains prohibited.
+No human product/design decision is needed. The current lifecycle blocker is only host-local runtime-install proof followed by one fresh bounded Scout acceptance.
 
-Packaging also requires a repository-owned representation for the task's multiple disjoint lifecycle ranges; do not hand-build or widen the package.
+Historical #46-#48 results remain unavailable unless their original persisted evidence unexpectedly reappears; replay is prohibited.
 
-Promotion remains blocked independently by this lifecycle durability defect, unresolved historical Scout dispositions, recurring wrong-sibling path synthesis, Node runtime-floor mismatch, package/finalization work, and the later full `main -> developer` promotion review.
+Packaging still requires a repository-owned representation for multiple disjoint lifecycle ranges; no package has been hand-built or widened.
+
+Promotion remains blocked independently by runtime acceptance, historical Scout disposition, recurring wrong-sibling path synthesis, Node runtime-floor mismatch, package/finalization work, and a later full `main -> developer` promotion review.
 
 ## Remaining work
 
-1. Reopen canonical issue #49 and remove stale completed disposition while preserving its `agentic-bridge` binding.
-2. Continue the same mapped developer session at sequence 29 with the bounded Scout-persistence correction; no replacement start/session.
-3. Require focused regressions for persistence across install/reinstall/restart, startup canonical Scout recovery exactly once, and failure/trust-boundary cases; run full bridge/repository checks and push source plus a new task-record-only handoff.
-4. Independently review the exact new range and CI.
-5. Let the synchronization watcher install the corrected runtime and run a fresh bounded acceptance Scout; prove completion survives a controlled normal runtime synchronization/rebootstrap/restart without replay.
-6. Disposition #46-#48 without relaunch; use any recoverable original evidence if it still exists, otherwise mark the historical result unavailable due the confirmed state-loss defect and rely on exact direct source review for their original promotion-review scopes.
-7. Resolve the repository-owned multi-range package representation for lifecycle ranges A/B/C without absorbing pagination; package/validate lifecycle and pagination work in maintenance order.
-8. Separately resolve wrong-sibling path synthesis and Node runtime-floor mismatch, then reconcile finalization and repeat full `main -> developer` promotion review before any human exact-SHA decision.
+1. Obtain a read-only host snapshot proving local HEAD, origin/developer, installed-sha, and synchronization state are exactly `ba73b3b54febfdeadbff66262acaa7be12e5760e`, with healthy bridge queues/services.
+2. After installation is proven, launch one fresh bounded Scout acceptance under a new task/request identity; verify start admission, meaningful lifecycle progress, terminal response/publication, exact session continuity, and no new recovery/permission regression. Do not relaunch #46-#48.
+3. Close #49 only after the fresh acceptance is terminal/absorbed and no source defect remains.
+4. Disposition #46-#48 without replay; mark original results unavailable due the confirmed pre-fix state-loss defect if no original evidence exists.
+5. Resolve repository-owned multi-range package representation and generate/validate lifecycle and pagination packages in maintenance order without absorbing unrelated source.
+6. Separately resolve wrong-sibling path synthesis and Node runtime-floor mismatch.
+7. Reconcile source-lock/template finalization and repeat full `main -> developer` promotion review before any human exact-SHA acceptance request.
 
 ## Next action
 
-Reopen issue #49 and steer the existing mapped developer session at sequence 29 to preserve Scout OpenCode session/message persistence across synchronized runtime installation while retaining the hardened immutable runtime/config boundary.
+Prove host-local installation of exact final developer handoff `ba73b3b54febfdeadbff66262acaa7be12e5760e` using read-only sync/runtime status. Do not restart or mutate services before that observation.
 
 ## Relevant durable records
 
-- Canonical lifecycle source issue #49
-- Successful same-session Sol route `cdb85fa8-dc36-4e98-b6e7-5f94caf6143e`
-- Prior second-terminal source `6527f78ac9735b038f2f3febad025eb626734b6d`
+- Lifecycle source issue #49
+- Historical promotion-review Scout issues #46, #47, #48 and original request IDs above
+- Initial lifecycle implementation `9c1ae8a445cbf53db7af3905aefd471470c6cac6`
+- Evidence metadata correction `0362e24a363d9f905234283666b3f840983a6ef1`
+- Second-terminal implementation `6527f78ac9735b038f2f3febad025eb626734b6d`
 - Prior lifecycle handoff `9ca25b8b6f9036744cb61845039f9185deb9e78f`
-- Pagination source `3f6eae08bbbe34a966f0d074e0a43771ddbeb2c4`
-- Pagination handoff `7bc274c4e54dbe0fda2f0cfdd397bb7b78f41e98`
-- Promotion review Scout issues #46, #47, #48 and their original request IDs above
+- Scout persistence implementation `14b1bc2a6ec95dac3e932881c2ca6a649a199064`
+- Persistence handoff `fc2cdb9567ade7ec24dc5e82c0ba27869caea59b`
+- Real-runtime smoke proof `1a7794342b56e8fcafbf6cb0eb1246ee4722017d`
+- Final persistence handoff `ba73b3b54febfdeadbff66262acaa7be12e5760e`
+- Same-session persistence steer `9631f944-7822-4cc6-bdd1-16ae100867fd`
+- Same-session real-smoke review steer `f0811242-7366-4865-bbd3-77f303352a32`
+- Final bridge developer response `message-359`
+- Final read command `a7945610-0f7e-4323-afc2-7c2ad313e6a2`
+- Separate pagination source `3f6eae08bbbe34a966f0d074e0a43771ddbeb2c4`
+- Separate pagination handoff `7bc274c4e54dbe0fda2f0cfdd397bb7b78f41e98`
 - Current synchronization watcher `scripts/watch-developer-sync.sh`
 - Current bootstrap `scripts/bootstrap-opencode-bridge.sh`
-- Current Scout runtime installer/server `tools/opencode-bridge/src/scout-server.ts`
-- Prior fast-completion package `changes/TEMPLATE-OPENCODE-FAST-COMPLETION-001/manifest.json`
+- Scout runtime installer/server `tools/opencode-bridge/src/scout-server.ts`
 
 ## Last handoff commit
 
