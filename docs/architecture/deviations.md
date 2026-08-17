@@ -17,16 +17,21 @@ Failed approaches belong in task-progress unless they create a durable system co
   `opencode.scout_provider_api_key_file` as a minimum hardened Scout setting; the
   pre-task bridge implementation required only that static OpenAI API-key file.
 - **Implemented state:** Schema v1 accepts exactly one static API-key file or one
-  filtered OpenAI-only OAuth document at the Scout runtime's isolated OpenCode
-  auth location. Other providers, unknown fields, a general OpenCode auth store,
-  and dual credential configuration are rejected.
+  filtered OpenAI-only OAuth document at the Scout persistence root's isolated
+  OpenCode auth location. A legacy runtime-data location is accepted only as the
+  migration source when the persistent file is absent. Other providers, unknown
+  fields, a general OpenCode auth store, and dual credential configuration are
+  rejected.
 - **Reason:** The operator directed the repair to reuse an existing ChatGPT
   subscription while preserving the Scout trust boundary. Normal OpenCode auth
   contains unrelated provider credentials and therefore cannot be mounted or
   read directly by Scout.
-- **Impact and residual risk:** OAuth refresh state is writable inside the
-  otherwise sterile runtime data area and is preserved by apply bootstrap. The
-  immutable trusted config/tool/dependency tree remains separate and read-only.
+- **Impact and residual risk:** OAuth refresh state and OpenCode session data are
+  writable in a derived owner-private persistence sibling that survives apply
+  bootstrap. Unsafe root/data/state/auth symlinks and structural path corruption
+  fail closed. The immutable trusted config/tool/dependency tree remains separate
+  and read-only, and persistent storage is not configured as code, config, plugin,
+  instruction, HOME, cache, temp, or executable-path authority.
   Active contract probes do not send a model request, so provider-side token or
   subscription failures remain observable only when a later Scout request uses
   the model.

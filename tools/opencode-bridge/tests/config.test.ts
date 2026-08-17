@@ -66,6 +66,7 @@ test("configuration loads local secrets without exposing them in tracked setting
   assert.equal(config.opencode.password, "local-password");
   assert.equal(config.opencode.scoutPassword, "scout-password");
   assert.equal(config.opencode.scoutBaseUrl, "http://127.0.0.1:44124");
+  assert.equal(config.opencode.scoutPersistenceRoot, `${config.opencode.scoutRuntimeRoot}-persistence`);
   assert.equal(config.opencode.scoutProviderCredential.type, "api-key");
   assert.equal(config.github.privateKey.includes("PRIVATE KEY"), true);
   assert.equal(config.github.apiBaseUrl, "https://api.github.com/");
@@ -90,10 +91,23 @@ test("configuration accepts one isolated OpenAI OAuth credential without other p
   writeFileSync(configFile, `${JSON.stringify(document)}\n`, { mode: 0o600 });
 
   const config = loadBridgeConfig(configFile);
+  const persistentOauthFile = join(`${runtime}-persistence`, "data", "opencode", "auth.json");
   assert.deepEqual(config.opencode.scoutProviderCredential, {
     type: "oauth",
-    file: oauthFile,
+    file: persistentOauthFile,
     auth: { type: "oauth", access: "access-token", refresh: "refresh-token", expires: 2_000_000_000_000, accountId: "account-id" },
+  });
+
+  mkdirSync(dirname(persistentOauthFile), { recursive: true, mode: 0o700 });
+  writeFileSync(persistentOauthFile, `${JSON.stringify({
+    openai: { type: "oauth", access: "refreshed-access", refresh: "refreshed-refresh", expires: 2_000_000_000_001, accountId: "account-id" },
+  })}\n`, { mode: 0o600 });
+  rmSync(oauthFile);
+  assert.equal(loadBridgeConfig(configFile).opencode.scoutProviderCredential.type, "oauth");
+  assert.deepEqual(loadBridgeConfig(configFile).opencode.scoutProviderCredential, {
+    type: "oauth",
+    file: persistentOauthFile,
+    auth: { type: "oauth", access: "refreshed-access", refresh: "refreshed-refresh", expires: 2_000_000_000_001, accountId: "account-id" },
   });
 
   opencode.scout_provider_api_key_file = join(dirname(oauthFile), "api-key");

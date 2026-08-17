@@ -21,7 +21,7 @@ foreground-capable processes. Developer and Scout servers bind distinct
 authenticated loopback ports; the ordinary TUI attaches only to the developer
 server. The bridge installs, launches, and probes Scout independently, and Scout
 failure does not stop developer operation. Each repository instance has unique
-config, state, ports/passwords, external Scout runtime root, GitHub mapping, and
+config, state, ports/passwords, external Scout runtime and derived persistence roots, GitHub mapping, and
 process lock. No inbound webhook, public listener, tunnel, custom ChatGPT MCP,
 self-hosted runner, or mandatory systemd unit exists.
 
@@ -41,8 +41,12 @@ Sequence-free `agentic-bridge-request` envelopes provide task-bound durable reco
 
 The tracked ref-owned `repository-scout` remains removed. The bridge copies a
 locked trusted runtime package outside `repository_root`, installs exact OpenCode/
-plugin `1.18.16`, and makes config/dependencies read-only. Launch uses an allowlist
-environment with sterile HOME/XDG/temp, one explicit provider key, project config/
+plugin `1.18.16`, and makes config/dependencies read-only. Reinstallation replaces
+that runtime tree while preserving a separate private non-symlink persistence
+tree for OpenCode data/state, including mapped Scout sessions and filtered OAuth
+refresh state. Persistent files are not HOME, config, cache, temp, PATH, plugin,
+or instruction authority. Launch uses an allowlist environment with sterile
+runtime-owned HOME/config/cache/temp, persistent data/state, one explicit provider key, project config/
 default plugin/external skill/watcher disablement, managed-config redirection to a
 nonexistent immutable-runtime path, and LSP/formatter false. A
 read-only config directory makes OpenCode's dependency-install check return before

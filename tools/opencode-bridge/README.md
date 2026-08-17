@@ -41,17 +41,23 @@ opencode serve --hostname 127.0.0.1 --port 44123
 7. Add the mandatory `opencode.scout_base_url`, `scout_password_file`, and
    `scout_runtime_root` settings plus exactly one Scout provider credential. The
    example uses `scout_provider_api_key_file`. For ChatGPT subscription auth,
-   use `scout_provider_oauth_file` pointing exactly to the runtime root's
-   `data/opencode/auth.json`; that owner-only JSON may contain only one `openai`
+   use `scout_provider_oauth_file` pointing exactly to
+   `<scout_runtime_root>-persistence/data/opencode/auth.json`; that owner-only
+   JSON may contain only one `openai`
    OAuth entry with `type`, `access`, `refresh`, `expires`, and `accountId`. The
    trusted operator setup must filter that entry from normal OpenCode auth rather
-   than expose the multi-provider auth file to Scout. Apply bootstrap preserves
-   the filtered credential while replacing the runtime. The runtime root must be
+   than expose the multi-provider auth file to Scout. A legacy setting that
+   points to the runtime root's former `data/opencode/auth.json` is accepted for
+   one safe migration when the persistent file is absent; later loads prefer the
+   persistent refreshed credential. Apply bootstrap preserves that credential
+   and OpenCode session/application data while replacing the runtime. The
+   persistence root is derived rather than caller-configurable. The runtime root must be
    absolute and outside `repository_root`; its port must differ from the normal
    developer port.
 8. Run `./scripts/bootstrap-opencode-bridge.sh --config <file>`. Apply mode installs
    exact locked `opencode-ai` and plugin `1.18.16` packages outside the repository,
-   makes the trusted config/package/tool tree read-only, then launches a temporary
+    makes the trusted config/package/tool tree read-only, verifies the separate
+    owner-private non-symlink persistence tree, then launches a temporary
    sterile Scout endpoint and actively verifies its version, OpenAPI hash, Luna/
    high agent, bridge-owned prompt, wildcard-deny permissions, and trusted tool
    inventory. It also verifies the normal endpoint, repository access, state, and

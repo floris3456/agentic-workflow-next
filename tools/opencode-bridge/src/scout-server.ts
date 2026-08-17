@@ -4,8 +4,8 @@ import {
   chmodSync, cpSync, existsSync, lstatSync, mkdirSync, readFileSync, readdirSync,
   realpathSync, renameSync, rmSync, statSync, writeFileSync,
 } from "node:fs";
-import { dirname, isAbsolute, join, relative, resolve } from "node:path";
-import type { BridgeConfig } from "./config.js";
+import { basename, dirname, isAbsolute, join, relative, resolve } from "node:path";
+import { readOpenAiOAuthCredential, type BridgeConfig } from "./config.js";
 import { Manifest } from "./manifest.js";
 import { OpenCodeClient } from "./opencode.js";
 import { assertScoutAgentContract } from "./scout.js";
@@ -13,6 +13,38 @@ import { asRecord, ensurePrivateDirectory, sleep } from "./util.js";
 
 export const scoutRuntimeVersion = "1.18.16";
 const trustedFiles = ["package.json", "package-lock.json", "opencode.json", "plugins/scout-tools.mjs"] as const;
+
+export interface ScoutRuntimeInstallOptions {
+  installDependencies?: (configDirectory: string) => void | Promise<void>;
+}
+
+export interface ScoutRuntimePaths {
+  runtimeRoot: string;
+  configDirectory: string;
+  homeDirectory: string;
+  cacheDirectory: string;
+  temporaryDirectory: string;
+  persistenceRoot: string;
+  dataDirectory: string;
+  stateDirectory: string;
+  authFile: string;
+}
+
+export function scoutRuntimePaths(config: BridgeConfig): ScoutRuntimePaths {
+  const runtimeRoot = resolve(config.opencode.scoutRuntimeRoot);
+  const persistenceRoot = resolve(config.opencode.scoutPersistenceRoot);
+  return {
+    runtimeRoot,
+    configDirectory: join(runtimeRoot, "config"),
+    homeDirectory: join(runtimeRoot, "home"),
+    cacheDirectory: join(runtimeRoot, "cache"),
+    temporaryDirectory: join(runtimeRoot, "tmp"),
+    persistenceRoot,
+    dataDirectory: join(persistenceRoot, "data"),
+    stateDirectory: join(persistenceRoot, "state"),
+    authFile: join(persistenceRoot, "data", "opencode", "auth.json"),
+  };
+}
 
 function sourceRoot(repositoryRoot: string): string {
   return join(repositoryRoot, "tools", "opencode-bridge", "scout-runtime");
@@ -73,16 +105,81 @@ function assertReadOnlyTree(path: string, root = path): void {
   if (stat.isDirectory()) for (const name of readdirSync(path)) assertReadOnlyTree(join(path, name), root);
 }
 
-export async function installScoutRuntime(config: BridgeConfig): Promise<void> {
-  if (process.platform !== "linux" || process.getuid?.() === 0) throw new Error("Hardened Scout runtime installation supports non-root Linux operators only");
-  const root = resolve(config.opencode.scoutRuntimeRoot);
-  const parent = dirname(root);
-  ensurePrivateDirectory(parent);
-  const temporary = `${root}.installing-${process.pid}`;
-  removeInstalled(temporary);
-  mkdirSync(temporary, { mode: 0o700 });
-  const configDirectory = join(temporary, "config");
-  cpSync(sourceRoot(config.repositoryRoot), configDirectory, { recursive: true, errorOnExist: true, force: false });
+function pathInside(parent: string, child: string): boolean {
+  const fromParent = relative(parent, child);
+  return fromParent === "" || (!fromParent.startsWith("..") && !isAbsolute(fromParent));
+}
+
+function privatePersistenceDirectory(path: string, label: string, create: boolean): void {
+  if (!existsSync(path)) {
+    if (!create) throw new Error(`${label} is absent: ${path}`);
+    mkdirSync(path, { mode: 0o700 });
+  }
+  const stat = lstatSync(path);
+  if (stat.isSymbolicLink() || !stat.isDirectory()) throw new Error(`${label} must be a regular non-symlink directory: ${path}`);
+  if ((stat.mode & 0o077) !== 0) throw new Error(`${label} must not be accessible by group or other users: ${path}`);
+}
+
+function assertPersistenceTree(path: string): void {
+  const stat = lstatSync(path);
+  if (stat.isSymbolicLink()) throw new Error(`Scout persistence must not contain symlinks: ${path}`);
+  if (stat.isDirectory()) {
+    for (const name of readdirSync(path)) assertPersistenceTree(join(path, name));
+    return;
+  }
+  if (!stat.isFile()) throw new Error(`Scout persistence contains an unsupported filesystem entry: ${path}`);
+}
+
+function assertScoutPersistence(config: BridgeConfig, create: boolean): ScoutRuntimePaths {
+  const paths = scoutRuntimePaths(config);
+  if (paths.persistenceRoot !== resolve(`${paths.runtimeRoot}-persistence`)) {
+    throw new Error("Scout persistence root must be the derived runtime sibling");
+  }
+  const parent = dirname(paths.persistenceRoot);
+  if (create) ensurePrivateDirectory(parent);
+  if (!existsSync(parent)) throw new Error(`Scout persistence parent is absent: ${parent}`);
+  const parentStat = lstatSync(parent);
+  if (parentStat.isSymbolicLink() || !parentStat.isDirectory()) {
+    throw new Error(`Scout persistence parent must be a regular non-symlink directory: ${parent}`);
+  }
+  const repository = realpathSync(config.repositoryRoot);
+  const canonicalParent = realpathSync(parent);
+  const intendedPersistence = join(canonicalParent, basename(paths.persistenceRoot));
+  if (pathInside(repository, intendedPersistence)) throw new Error("Scout persistence resolves inside repository_root");
+  if (pathInside(paths.runtimeRoot, paths.persistenceRoot) || pathInside(paths.persistenceRoot, paths.runtimeRoot)) {
+    throw new Error("Scout runtime and persistence roots must not overlap");
+  }
+  const runtimeParent = dirname(paths.runtimeRoot);
+  const intendedRuntime = existsSync(runtimeParent)
+    ? join(realpathSync(runtimeParent), basename(paths.runtimeRoot))
+    : paths.runtimeRoot;
+  if (pathInside(intendedRuntime, intendedPersistence) || pathInside(intendedPersistence, intendedRuntime)) {
+    throw new Error("Scout runtime and persistence roots resolve to overlapping paths");
+  }
+  privatePersistenceDirectory(paths.persistenceRoot, "Scout persistence root", create);
+  privatePersistenceDirectory(paths.dataDirectory, "Scout persistence data directory", create);
+  privatePersistenceDirectory(paths.stateDirectory, "Scout persistence state directory", create);
+  assertPersistenceTree(paths.persistenceRoot);
+
+  const persistence = realpathSync(paths.persistenceRoot);
+  if (pathInside(repository, persistence)) throw new Error("Scout persistence resolves inside repository_root");
+  if (existsSync(paths.runtimeRoot)) {
+    const runtime = realpathSync(paths.runtimeRoot);
+    if (pathInside(runtime, persistence) || pathInside(persistence, runtime)) {
+      throw new Error("Scout runtime and persistence roots resolve to overlapping paths");
+    }
+  }
+  if (!create) {
+    if (config.opencode.scoutProviderCredential.type === "api-key") {
+      if (existsSync(paths.authFile)) throw new Error("Scout persistent OAuth file must be absent in API-key mode");
+    } else {
+      readOpenAiOAuthCredential(paths.authFile);
+    }
+  }
+  return paths;
+}
+
+async function installDependencies(configDirectory: string): Promise<void> {
   await execute("npm", ["ci", "--omit=dev", "--no-audit", "--no-fund"], configDirectory, {
     PATH: process.env.PATH,
     HOME: process.env.HOME,
@@ -91,16 +188,42 @@ export async function installScoutRuntime(config: BridgeConfig): Promise<void> {
     PATH: process.env.PATH,
     HOME: process.env.HOME,
   });
-  for (const name of ["home", "data", "cache", "state", "tmp"]) mkdirSync(join(temporary, name), { mode: 0o700 });
-  if (config.opencode.scoutProviderCredential.type === "oauth") {
-    const authDirectory = join(temporary, "data", "opencode");
-    mkdirSync(authDirectory, { mode: 0o700 });
-    writeFileSync(
-      join(authDirectory, "auth.json"),
-      `${JSON.stringify({ openai: config.opencode.scoutProviderCredential.auth })}\n`,
-      { mode: 0o600 },
-    );
+}
+
+function persistProviderCredential(config: BridgeConfig, paths: ScoutRuntimePaths): void {
+  const authDirectory = dirname(paths.authFile);
+  if (existsSync(authDirectory)) privatePersistenceDirectory(authDirectory, "Scout persistence auth directory", false);
+  else mkdirSync(authDirectory, { recursive: true, mode: 0o700 });
+  if (existsSync(paths.authFile)) {
+    const stat = lstatSync(paths.authFile);
+    if (stat.isSymbolicLink() || !stat.isFile()) throw new Error(`Scout provider auth must be a regular non-symlink file: ${paths.authFile}`);
+    if ((stat.mode & 0o077) !== 0) throw new Error(`Scout provider auth must not be accessible by group or other users: ${paths.authFile}`);
   }
+  if (config.opencode.scoutProviderCredential.type === "api-key") {
+    rmSync(paths.authFile, { force: true });
+    return;
+  }
+  const temporary = `${paths.authFile}.installing-${process.pid}`;
+  rmSync(temporary, { force: true });
+  writeFileSync(temporary, `${JSON.stringify({ openai: config.opencode.scoutProviderCredential.auth })}\n`, { mode: 0o600 });
+  renameSync(temporary, paths.authFile);
+}
+
+export async function installScoutRuntime(config: BridgeConfig, options: ScoutRuntimeInstallOptions = {}): Promise<void> {
+  if (process.platform !== "linux" || process.getuid?.() === 0) throw new Error("Hardened Scout runtime installation supports non-root Linux operators only");
+  const paths = assertScoutPersistence(config, true);
+  const root = paths.runtimeRoot;
+  const parent = dirname(root);
+  ensurePrivateDirectory(parent);
+  const temporary = `${root}.installing-${process.pid}`;
+  removeInstalled(temporary);
+  mkdirSync(temporary, { mode: 0o700 });
+  const configDirectory = join(temporary, "config");
+  cpSync(sourceRoot(config.repositoryRoot), configDirectory, { recursive: true, errorOnExist: true, force: false });
+  await (options.installDependencies ?? installDependencies)(configDirectory);
+  for (const name of ["home", "cache", "tmp"]) mkdirSync(join(temporary, name), { mode: 0o700 });
+  persistProviderCredential(config, paths);
+  assertScoutPersistence(config, false);
   lockReadOnly(configDirectory);
   removeInstalled(root);
   renameSync(temporary, root);
@@ -111,6 +234,7 @@ export function assertScoutRuntimeInstallation(config: BridgeConfig): { ready: t
   if (process.platform !== "linux" || process.getuid?.() === 0) throw new Error("Hardened Scout runtime supports non-root Linux operators only");
   const root = resolve(config.opencode.scoutRuntimeRoot);
   if (!existsSync(root)) throw new Error(`Hardened Scout runtime installation is absent: ${root}`);
+  assertScoutPersistence(config, false);
   const repository = realpathSync(config.repositoryRoot);
   const installed = realpathSync(root);
   const fromRepository = relative(repository, installed);
@@ -134,7 +258,7 @@ export function assertScoutRuntimeInstallation(config: BridgeConfig): { ready: t
   const binaryTarget = realpathSync(binary);
   const fromConfig = relative(configDirectory, binaryTarget);
   if (fromConfig.startsWith("..") || isAbsolute(fromConfig)) throw new Error("Pinned Scout OpenCode executable escapes the installed runtime");
-  return { ready: true, reason: `installed immutable OpenCode ${scoutRuntimeVersion} runtime and trusted tools verified` };
+  return { ready: true, reason: `installed immutable OpenCode ${scoutRuntimeVersion} runtime, trusted tools, and private persistent state verified` };
 }
 
 function serverAddress(baseUrl: string): { hostname: string; port: string } {
@@ -142,16 +266,17 @@ function serverAddress(baseUrl: string): { hostname: string; port: string } {
   return { hostname: url.hostname.replace(/^\[|\]$/g, ""), port: url.port };
 }
 
-function sterileEnvironment(config: BridgeConfig, snapshots: string): NodeJS.ProcessEnv {
-  const root = realpathSync(config.opencode.scoutRuntimeRoot);
+export function scoutServerEnvironment(config: BridgeConfig, snapshots: string): NodeJS.ProcessEnv {
+  const paths = assertScoutPersistence(config, false);
+  const root = realpathSync(paths.runtimeRoot);
   const configDirectory = join(root, "config");
   const environment: NodeJS.ProcessEnv = {
-    HOME: join(root, "home"),
-    XDG_CONFIG_HOME: join(root, "home", ".config"),
-    XDG_DATA_HOME: join(root, "data"),
-    XDG_CACHE_HOME: join(root, "cache"),
-    XDG_STATE_HOME: join(root, "state"),
-    TMPDIR: join(root, "tmp"),
+    HOME: paths.homeDirectory,
+    XDG_CONFIG_HOME: join(paths.homeDirectory, ".config"),
+    XDG_DATA_HOME: paths.dataDirectory,
+    XDG_CACHE_HOME: paths.cacheDirectory,
+    XDG_STATE_HOME: paths.stateDirectory,
+    TMPDIR: paths.temporaryDirectory,
     PATH: `${join(configDirectory, "node_modules", ".bin")}:/usr/bin:/bin`,
     LANG: "C.UTF-8",
     LC_ALL: "C.UTF-8",
@@ -230,7 +355,7 @@ export class ScoutServerProcess {
     const address = serverAddress(this.config.opencode.scoutBaseUrl);
     this.child = spawn(binary, ["serve", "--hostname", address.hostname, "--port", address.port], {
       cwd: root,
-      env: sterileEnvironment(this.config, this.snapshots),
+      env: scoutServerEnvironment(this.config, this.snapshots),
       stdio: ["ignore", "ignore", "pipe"],
     });
     this.diagnostic = "";

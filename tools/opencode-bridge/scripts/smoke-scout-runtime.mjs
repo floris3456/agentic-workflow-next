@@ -39,6 +39,7 @@ const config = {
     scoutPassword: "scout-smoke-password",
     scoutPasswordFile: join(temporary, "unused-scout"),
     scoutRuntimeRoot: join(temporary, "runtime"),
+    scoutPersistenceRoot: join(temporary, "runtime-persistence"),
     scoutProviderCredential: {
       type: "api-key",
       apiKey: "smoke-does-not-call-the-model",
@@ -53,8 +54,14 @@ const server = new ScoutServerProcess(config, manifest, workspaces.root);
 try {
   await installScoutRuntime(config);
   await server.start();
+  await server.start();
+  const first = await probeScoutServer(scoutClient(config, manifest, config.opencode.scoutRuntimeRoot));
+  await server.stop();
+  await installScoutRuntime(config);
+  await server.start();
+  await server.start();
   const result = await probeScoutServer(scoutClient(config, manifest, config.opencode.scoutRuntimeRoot));
-  process.stdout.write(`${JSON.stringify({ runtime: "installed-outside-repository", ...result })}\n`);
+  process.stdout.write(`${JSON.stringify({ runtime: "reinstalled-outside-repository", first: first.version, ...result })}\n`);
 } finally {
   await server.stop();
   remove(temporary);

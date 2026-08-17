@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, statSync } from "node:fs";
+import { existsSync, lstatSync, readFileSync, statSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { asRecord, assertPrivateFile } from "./util.js";
@@ -19,6 +19,7 @@ export interface BridgeConfig {
     scoutPassword: string;
     scoutPasswordFile: string;
     scoutRuntimeRoot: string;
+    scoutPersistenceRoot: string;
     scoutProviderCredential:
       | { type: "api-key"; apiKey: string; file: string }
       | { type: "oauth"; auth: OpenAiOAuthCredential; file: string };
@@ -90,8 +91,10 @@ function localPath(value: string, base: string): string {
   return resolve(base, expanded);
 }
 
-function privateText(path: string, label: string, maximum: number): string {
-  if (!existsSync(path) || !statSync(path).isFile()) throw new Error(`${label} is not a regular file: ${path}`);
+function privateText(path: string, label: string, maximum: number, rejectSymlink = false): string {
+  if (!existsSync(path) || (rejectSymlink ? !lstatSync(path).isFile() : !statSync(path).isFile())) {
+    throw new Error(`${label} is not a regular file: ${path}`);
+  }
   assertPrivateFile(path, label);
   const value = readFileSync(path, "utf8");
   if (Buffer.byteLength(value, "utf8") > maximum || value.includes("\0")) throw new Error(`${label} is invalid`);
@@ -100,8 +103,8 @@ function privateText(path: string, label: string, maximum: number): string {
   return trimmed;
 }
 
-function openAiOAuthCredential(path: string): OpenAiOAuthCredential {
-  const document = asRecord(JSON.parse(privateText(path, "Scout provider OAuth file", 128_000)), "Scout provider OAuth file");
+export function readOpenAiOAuthCredential(path: string): OpenAiOAuthCredential {
+  const document = asRecord(JSON.parse(privateText(path, "Scout provider OAuth file", 128_000, true)), "Scout provider OAuth file");
   only(document, ["openai"], "Scout provider OAuth file");
   const credential = asRecord(document.openai, "Scout provider OAuth credential");
   only(credential, ["type", "access", "refresh", "expires", "accountId"], "Scout provider OAuth credential");
@@ -177,6 +180,8 @@ export function loadBridgeConfig(inputPath = defaultConfigPath()): BridgeConfig 
   const scoutPassword = privateText(scoutPasswordFile, "Scout OpenCode password file", 16_384);
   const scoutRuntimeRoot = localPath(requiredString(opencode, "scout_runtime_root", "opencode configuration"), base);
   runtimeOutsideRepository(repositoryRoot, scoutRuntimeRoot);
+  const scoutPersistenceRoot = `${scoutRuntimeRoot}-persistence`;
+  runtimeOutsideRepository(repositoryRoot, scoutPersistenceRoot);
   const apiKeySetting = opencode.scout_provider_api_key_file;
   const oauthSetting = opencode.scout_provider_oauth_file;
   if ((apiKeySetting === undefined) === (oauthSetting === undefined)) {
@@ -187,10 +192,14 @@ export function loadBridgeConfig(inputPath = defaultConfigPath()): BridgeConfig 
     const file = localPath(requiredString(opencode, "scout_provider_api_key_file", "opencode configuration"), base);
     scoutProviderCredential = { type: "api-key", apiKey: privateText(file, "Scout provider API key file", 16_384), file };
   } else {
-    const file = localPath(requiredString(opencode, "scout_provider_oauth_file", "opencode configuration"), base);
-    const expected = join(scoutRuntimeRoot, "data", "opencode", "auth.json");
-    if (file !== expected) throw new Error("opencode.scout_provider_oauth_file must be the Scout runtime's isolated data/opencode/auth.json");
-    scoutProviderCredential = { type: "oauth", auth: openAiOAuthCredential(file), file };
+    const configuredFile = localPath(requiredString(opencode, "scout_provider_oauth_file", "opencode configuration"), base);
+    const persistentFile = join(scoutPersistenceRoot, "data", "opencode", "auth.json");
+    const legacyFile = join(scoutRuntimeRoot, "data", "opencode", "auth.json");
+    if (configuredFile !== persistentFile && configuredFile !== legacyFile) {
+      throw new Error("opencode.scout_provider_oauth_file must be the Scout persistence root's isolated data/opencode/auth.json");
+    }
+    const sourceFile = existsSync(persistentFile) ? persistentFile : configuredFile;
+    scoutProviderCredential = { type: "oauth", auth: readOpenAiOAuthCredential(sourceFile), file: persistentFile };
   }
   const baseUrl = loopbackOrigin(requiredString(opencode, "base_url", "opencode configuration"), "opencode.base_url");
   const scoutBaseUrl = loopbackOrigin(requiredString(opencode, "scout_base_url", "opencode configuration"), "opencode.scout_base_url");
@@ -250,6 +259,7 @@ export function loadBridgeConfig(inputPath = defaultConfigPath()): BridgeConfig 
       scoutPassword,
       scoutPasswordFile,
       scoutRuntimeRoot,
+      scoutPersistenceRoot,
       scoutProviderCredential,
     },
     github: {
@@ -278,6 +288,6 @@ export function loadBridgeConfig(inputPath = defaultConfigPath()): BridgeConfig 
         return privateText(file, `Secret reference ${reference}`, 1_000_000);
       },
     },
-    privateRoots: [...new Set([repositoryRoot, scoutRuntimeRoot, base, homedir()])],
+    privateRoots: [...new Set([repositoryRoot, scoutRuntimeRoot, scoutPersistenceRoot, base, homedir()])],
   };
 }
