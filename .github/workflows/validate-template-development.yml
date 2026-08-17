@@ -20,6 +20,8 @@ jobs:
         with:
           node-version: 22.13.0
       - run: sudo apt-get update && sudo apt-get install --yes bubblewrap
+      - name: Enable Bubblewrap namespaces on the ephemeral Ubuntu runner
+        run: sudo sysctl --write kernel.apparmor_restrict_unprivileged_userns=0
       - run: npm install --prefix .opencode --ignore-scripts --no-audit --no-fund
       - run: node .opencode/node_modules/opencode-ai/postinstall.mjs
       - run: chmod +x .githooks/* scripts/*.sh scripts/*.mjs

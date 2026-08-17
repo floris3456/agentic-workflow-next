@@ -133,7 +133,10 @@ The current authoritative branches satisfy that invariant as follows:
   runs on pushes to `template-development`, installs Bubblewrap plus the exact
   pinned OpenCode runtime, and reaches ledger/package/containment fixtures plus a
   real agent/plugin/skill/tool inventory check through
-  `scripts/validate-template-development.sh`.
+  `scripts/validate-template-development.sh`. On the ephemeral Ubuntu 24.04
+  runner it disables the one-boot AppArmor unprivileged-user-namespace
+  restriction so Bubblewrap's real namespace boundary executes; the containment
+  fixture is not skipped or replaced with a cwd-only fallback.
 
 The web-orchestrator template-maintenance Source carries the reusable invariant.
 Its executable Node acceptance suite mechanically checks the web workflow's push

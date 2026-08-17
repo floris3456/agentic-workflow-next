@@ -10,6 +10,7 @@ const fail = (message) => failures.push(message);
 const read = (path) => readFileSync(join(root, path), "utf8");
 const required = [
   "README.md", "AGENTS.md", "source-lock.json", "opencode.json",
+  ".github/workflows/validate-template-development.yml",
   ".opencode/agents/template-maintainer.md", ".opencode/skills/template-maintenance/SKILL.md",
   ".opencode/agents/workspace-maintainer.md", ".opencode/skills/workspace-maintenance/SKILL.md",
   ".opencode/plugins/workspace-maintenance.ts", ".opencode/.gitignore", ".opencode/package.json",
@@ -40,6 +41,16 @@ try {
   validateSourceLock(JSON.parse(read("source-lock.json")));
 } catch (error) {
   fail(`source-lock.json is invalid: ${error.message}`);
+}
+
+if (existsSync(join(root, ".github/workflows/validate-template-development.yml"))) {
+  const workflow = read(".github/workflows/validate-template-development.yml");
+  for (const term of [
+    "branches: [template-development]",
+    "sudo apt-get update && sudo apt-get install --yes bubblewrap",
+    "sudo sysctl --write kernel.apparmor_restrict_unprivileged_userns=0",
+    "./scripts/validate-template-development.sh",
+  ]) if (!workflow.includes(term)) fail(`Template-development CI is missing ${term}`);
 }
 
 try {
