@@ -69,8 +69,9 @@ the developer patch SHA-256 is
 and the explicit empty web patch SHA-256 is
 `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`.
 The source snapshot is reconciled to the exact independently verified canonical
-refs listed below. Package/ledger publication is the only remaining operation in
-this working cycle.
+refs listed below. Package/ledger commit
+`9ad0913bc40692887f1eed5031c97d2512397961` is pushed and independently read
+back. Only this dedicated handoff snapshot remains in the working cycle.
 
 ## Source ranges
 
@@ -128,6 +129,10 @@ promote `main`; exact-SHA human approval remains unchanged.
    generated the schema-2 package for only the reviewed task range.
 8. Offline package verification and clean-base dry runs succeeded for both
    source targets, followed by full template-development validation.
+9. Package/source-snapshot commit
+   `9ad0913bc40692887f1eed5031c97d2512397961` was pushed; a fresh canonical
+   fetch and independent remote readback returned that exact template-development
+   tip while the three source refs remained unchanged.
 
 ## Changed approach
 
@@ -169,6 +174,11 @@ weakened.
   `git diff --check`.
 - Public-path scan of the generated package and reconciled source snapshot:
   passed.
+- Package/ledger remote readback: template-development
+  `9ad0913bc40692887f1eed5031c97d2512397961`; developer
+  `d24b67d78d58bd0c217530545ab0b548b64e2485`; web-orchestration
+  `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`; main
+  `6127611113dfdb66f93a0cfd2d355359aa370833`.
 
 ## Blockers / required decisions
 
@@ -177,16 +187,14 @@ human approval of an exact SHA.
 
 ## Remaining work
 
-1. Publish and independently read back the package/source-snapshot ledger commit.
-2. Push a dedicated template-development handoff snapshot after that exact
-   publication is recorded.
-3. Keep downstream application, task archival, and any `main` promotion as
+1. Push this dedicated template-development handoff snapshot.
+2. Keep downstream application, task archival, and any `main` promotion as
    separate later workflows.
 
 ## Next action
 
-Commit and push the validated package, reconciled source snapshot, and this
-ledger record, then record that exact commit in a dedicated handoff snapshot.
+Commit and push this task-record-only handoff snapshot, then independently verify
+all four canonical refs remain at the recorded exact tips.
 
 ## Relevant durable records
 
@@ -197,7 +205,8 @@ ledger record, then record that exact commit in a dedicated handoff snapshot.
 - Developer handoff `d24b67d78d58bd0c217530545ab0b548b64e2485`
 - Change package `changes/TEMPLATE-WORKSPACE-MAINTENANCE-AGENT-001/manifest.json`
 - Package SHA-256 `79815d273f90870b6e7acd7b6239d478c7573f76aba17196297edd0e299d915f`
+- Package/ledger commit `9ad0913bc40692887f1eed5031c97d2512397961`
 
 ## Last handoff commit
 
-None
+None; this dedicated handoff snapshot cannot record its own commit SHA.
