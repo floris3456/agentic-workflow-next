@@ -6,7 +6,10 @@
 
 ## Status
 
-Source implementation is pushed and remotely verified; the developer handoff snapshot and ledger reconciliation are in progress.
+Correction cycle in progress after independent review. The original implementation
+and handoff remain historical evidence, but completion is superseded until a real
+pinned-OpenCode bridge lifecycle acceptance is tracked, executed, and remotely
+reviewable.
 
 ## Task-start developer SHA
 
@@ -273,15 +276,22 @@ If implementation reveals a material design conflict that cannot safely be resol
 
 ## Current objective
 
-Complete and publish the explicit template-development-rooted bridge lifecycle
-on `developer`, then reconcile the canonical template-maintenance ledger and
-deterministic change package without changing `main`.
+Add the missing real-runtime acceptance proof for the already-implemented
+template-development-rooted workspace bridge route while preserving its reviewed
+session-kind, recovery, interaction, terminal-delivery, public-projection, and
+ordinary developer-routing behavior. Do not change `main`, web-orchestration, or
+the protected paused Scout/#49/#53 state.
 
 ## Current position
 
-The template-owned agent, instruction route, stable workspace skill, verified
-`workspace_*` gate, tests, and AS-BUILT remain remotely verified at
-template-development `cd433706bfefebaf42a5de6ea1521ec61deb2c8a`.
+Independent correction-cycle reconciliation found developer still at the prior
+handoff `d24b67d78d58bd0c217530545ab0b548b64e2485`, main at
+`6127611113dfdb66f93a0cfd2d355359aa370833`, and web-orchestration at
+`7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`. Template-development advanced only
+through the reviewed correction ledger/runtime work and is now
+`dfbfeaa2cdd513e7f5012b3829179c596d9c0d80`; its corrected containment/package
+implementation checkpoint is
+`33227b741c0dc2909ed8ca8dc00ea1b28963febc`.
 
 The developer implementation is complete in the verified worktree based on
 `11f1f1178394bd0ff80116f4acf67958cdc08ace`. It adds the explicit
@@ -292,6 +302,15 @@ The complete required validation set passed on the published source tree. Develo
 Main remains `6127611113dfdb66f93a0cfd2d355359aa370833` and
 web-orchestration remains `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`.
 Neither branch has been modified.
+
+Independent review accepted the core bridge routing but found the lifecycle
+suite relied on fake OpenCode clients. This correction must use the real pinned
+OpenCode 1.18.16 server to prove the workspace project directory, selected agent,
+loaded workspace surface and denied tools/skills, one harmless bounded non-main
+operation, target-instruction non-takeover, meaningful progress, terminal
+response, same mapped session, public path redaction, and an independent normal
+developer route. Fake-client tests remain useful focused coverage but are not the
+acceptance authority.
 
 ## Observed
 
@@ -323,6 +342,9 @@ Neither branch has been modified.
   published.
 - Issues #49 and #53 and preserved session-86 were not read, modified, replayed,
   replaced, aborted, or reinterpreted.
+- A fresh proxy-bypassed canonical fetch plus independent `ls-remote` readback
+  established all four current refs before correction mutation; the developer
+  worktree is clean, on `developer`, synchronized, and has active tracked hooks.
 
 ## Interpretation
 
@@ -374,22 +396,27 @@ when that start fails before session creation.
 
 ## Blockers / required decisions
 
-No technical decision is pending. Ordinary Git network transport is unavailable
-in this environment; publishing will use the bounded connected-GitHub route only
-if the normal immediate push retry remains unavailable, followed by independent
-exact remote ref and tree verification.
+No technical decision is pending. Direct Git transport works with the execution
+environment's intercepting proxy variables removed. Completion remains gated on
+one successful real OpenCode 1.18.16 workspace lifecycle acceptance; if model
+authentication or another external runtime dependency cannot be provided after
+safe local attempts, the task must remain blocked on that exact boundary.
 
 ## Remaining work
 
-1. Commit, immediately publish, and independently verify this exact developer
-   handoff snapshot.
-2. Return to template-development for source-lock/change-package/handoff
+1. Inspect the existing bridge runtime/client and add the smallest tracked real
+   OpenCode acceptance harness without changing route semantics.
+2. Run focused tests, full bridge tests, bridge/repository validators, bootstrap
+   check, and diff checks; execute one fresh real pinned-runtime acceptance.
+3. Commit/push the developer correction and a dedicated handoff snapshot, then
+   return to template-development for the final three-range package and ledger
    reconciliation.
 
 ## Next action
 
-Create and immediately publish this developer handoff snapshot, then verify its
-exact remote parent/tree and return to the template-maintenance ledger.
+Commit and immediately push this correction-cycle reopening record, then inspect
+the existing real-runtime launcher/client and workspace route before implementing
+the acceptance harness.
 
 ## Continuation prompt
 
@@ -410,4 +437,4 @@ None. This session is actively completing the task.
 
 ## Last handoff commit
 
-`f76dfbd2c103ae43605939ec999f7f846acf7286`
+`d24b67d78d58bd0c217530545ab0b548b64e2485`
