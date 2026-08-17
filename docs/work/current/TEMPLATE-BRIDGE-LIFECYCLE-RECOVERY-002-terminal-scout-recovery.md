@@ -26,7 +26,7 @@ Run one fresh bounded Scout acceptance against the proven installed runtime. The
 
 ## Current position
 
-Fresh canonical refs are developer `ba73b3b54febfdeadbff66262acaa7be12e5760e`, web-orchestration `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`, and main `6127611113dfdb66f93a0cfd2d355359aa370833`. Template-development was `0a3c04e34de1adeeab3199acf29856411b0ae6ac` immediately before this runtime-install ledger update.
+Fresh canonical refs are developer `ba73b3b54febfdeadbff66262acaa7be12e5760e`, web-orchestration `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`, and main `6127611113dfdb66f93a0cfd2d355359aa370833`. Template-development was `754a57985d357b4c4dc437cc37dad97e89346e0c` immediately before this acceptance-lane ledger update.
 
 Canonical source issue #49 remains the one lifecycle control issue and stays bound to the original mapped developer session `session-81`; no replacement start/session occurred. Initial canonical developer-terminal/new-Scout recovery landed at `9c1ae8a445cbf53db7af3905aefd471470c6cac6`, evidence-method metadata correction at `0362e24a363d9f905234283666b3f840983a6ef1`, second-terminal substantive correction at `6527f78ac9735b038f2f3febad025eb626734b6d`, and its task-record-only handoff at `9ca25b8b6f9036744cb61845039f9185deb9e78f`.
 
@@ -44,7 +44,9 @@ The three historical promotion-review Scouts were never replayed: #46 request `2
 
 A fresh read-only host snapshot at `2026-08-17T13:35:42+02:00` proved local `HEAD` and `origin/developer` both equal final handoff `ba73b3b54febfdeadbff66262acaa7be12e5760e`; synchronization reported `state=synchronized` and `detail=developer is current and bridge runtime matches HEAD`; bridge pending commands, requests, response deliveries, and outbox were all zero; draining was false; and sync, bridge, and OpenCode services were active. The watcher's `installed-sha` remained `1a7794342b56e8fcafbf6cb0eb1246ee4722017d`, but exact remote comparison proves `1a779434... -> ba73b3b...` is one task-record-only commit changing only `docs/work/current/TEMPLATE-BRIDGE-LIFECYCLE-RECOVERY-002-bridge-lifecycle-recovery.md`. Therefore the installed runtime code is exactly the runtime represented by final handoff `ba73b3b...`, and the watcher's runtime-fingerprint match is the authoritative runtime-equivalence signal for this documentation-only handoff.
 
-That snapshot also exposed `service.last_error = OpenCode session.messages ... Session not found: session-82`. No current pending bridge work existed, all services were active, control polling/heartbeat advanced, and repository search found no recent public control issue/comment bound to `session-82`. Current source also shows the control loop clears `service.last_error` on successful polls while independent recovery observers may set it afterward. This error is therefore recorded as stale background recovery noise, not evidence of an unresolved current command or request; the fresh acceptance remains responsible for proving current Scout start/progress/terminal behavior despite that historical noise.
+That snapshot also exposed `service.last_error = OpenCode session.messages ... Session not found: session-82`. No current pending bridge work existed, all services were active, control polling/heartbeat advanced, and repository search found no recent public control issue/comment bound to `session-82`. Current source also shows the control loop clears `service.last_error` on successful polls while independent recovery observers may set it afterward. This error is recorded as stale background recovery noise, not evidence of an unresolved current command or request; the fresh acceptance remains responsible for proving current Scout start/progress/terminal behavior despite that historical noise.
+
+Fresh Scout-only acceptance issue #53 now exists with no control label yet. Task ID `SCOUT-RUNTIME-ACCEPTANCE-20260817T1136Z-BA73B3B`, exact ref `ba73b3b54febfdeadbff66262acaa7be12e5760e`, and pending request ID `ba57a03f-30c7-4beb-a454-34a02fc045ba` are fixed before request publication. The issue authorizes no repository mutation and exists only to prove one new Scout lifecycle on the corrected runtime.
 
 ## Source ranges
 
@@ -79,7 +81,7 @@ The lifecycle task remains intentionally split because the separate pagination c
 
 ## Interpretation
 
-The source defect is corrected with unit-level canonical recovery evidence, a real pinned-OpenCode persistence proof, and host installation evidence. The remaining lifecycle acceptance boundary is one fresh bounded Scout using a new task/request identity against exact ref `ba73b3b54febfdeadbff66262acaa7be12e5760e`. It is not a replay of #46-#48.
+The source defect is corrected with unit-level canonical recovery evidence, a real pinned-OpenCode persistence proof, and host installation evidence. The remaining lifecycle acceptance boundary is one fresh bounded Scout using new task/request identity `SCOUT-RUNTIME-ACCEPTANCE-20260817T1136Z-BA73B3B` / `ba57a03f-30c7-4beb-a454-34a02fc045ba` against exact ref `ba73b3b54febfdeadbff66262acaa7be12e5760e`. It is not a replay of #46-#48.
 
 Historical #46-#48 are dispositioned as unavailable original results caused by the confirmed pre-fix state-loss defect. Their original promotion-review scopes remain uncovered by those Scout executions and can later be covered by exact direct GitHub review or separately scoped fresh review, never by pretending the original Scout executions were recovered.
 
@@ -100,10 +102,11 @@ Packaging remains non-contiguous because pagination is interleaved between lifec
 11. `1a779434...` added real no-model OpenCode session persistence proof; CI passed; `ba73b3b...` provided the task-record-only handoff; terminal `message-359` and sequence 54 were reconciled.
 12. #46-#48 were reconciled against their original request/session evidence, explicitly marked unavailable without replay, had `agentic-bridge` removed, and were closed `not_planned`.
 13. The host snapshot at final handoff proved synchronized current developer/runtime state; the literal `installed-sha` lag was reconciled as expected because the only later commit is task-record-only and the watcher reports the runtime fingerprint matches HEAD.
+14. Fresh Scout-only issue #53 was created without a control label and its exact task/request/ref were persisted before request publication.
 
 ## Changed approach
 
-Source implementation and installation proof are complete. Keep issue #49 open only through the fresh acceptance. Launch one new bounded Scout acceptance and absorb it without touching historical #46-#48. Do not create another developer route unless fresh acceptance exposes a concrete source defect.
+Source implementation and installation proof are complete. Keep issue #49 open only through the fresh acceptance. Use #53 solely for one new bounded Scout acceptance and absorb it without touching historical #46-#48. Do not create another developer route unless fresh acceptance exposes a concrete source defect.
 
 ## Checks
 
@@ -133,19 +136,21 @@ Promotion remains blocked independently by fresh runtime acceptance, uncovered r
 
 ## Remaining work
 
-1. Launch one fresh bounded Scout acceptance under a new task/request identity against exact ref `ba73b3b54febfdeadbff66262acaa7be12e5760e`; verify start admission, meaningful lifecycle progress, terminal response/publication, exact session continuity, and no new recovery/permission regression. Do not relaunch #46-#48.
-2. Close #49 only after the fresh acceptance is terminal/absorbed and no source defect remains.
-3. Resolve repository-owned multi-range package representation and generate/validate lifecycle and pagination packages in maintenance order without absorbing unrelated source.
-4. Separately resolve wrong-sibling path synthesis and Node runtime-floor mismatch.
-5. Reconcile source-lock/template finalization and repeat full `main -> developer` promotion review before any human exact-SHA acceptance request.
+1. Apply the bridge-control label to #53 and publish exactly one `scout.start` request ID `ba57a03f-30c7-4beb-a454-34a02fc045ba` against exact ref `ba73b3b54febfdeadbff66262acaa7be12e5760e`; verify admission, one session, meaningful progress, terminal response/publication, exact session continuity, and no external-directory regression.
+2. Close #53 after the fresh acceptance is terminal/absorbed.
+3. Close #49 only after the fresh acceptance is terminal/absorbed and no source defect remains.
+4. Resolve repository-owned multi-range package representation and generate/validate lifecycle and pagination packages in maintenance order without absorbing unrelated source.
+5. Separately resolve wrong-sibling path synthesis and Node runtime-floor mismatch.
+6. Reconcile source-lock/template finalization and repeat full `main -> developer` promotion review before any human exact-SHA acceptance request.
 
 ## Next action
 
-Launch the fresh bounded Scout acceptance on a new Scout-only control issue. Preserve exact ref `ba73b3b54febfdeadbff66262acaa7be12e5760e` and do not touch historical #46-#48.
+Apply `agentic-bridge` to #53 and publish the one persisted fresh Scout request. Do not touch historical #46-#48.
 
 ## Relevant durable records
 
 - Lifecycle source issue #49
+- Fresh Scout acceptance issue #53; task `SCOUT-RUNTIME-ACCEPTANCE-20260817T1136Z-BA73B3B`; request `ba57a03f-30c7-4beb-a454-34a02fc045ba`
 - Historical promotion-review Scout issues #46, #47, #48 and original request IDs above
 - Initial lifecycle implementation `9c1ae8a445cbf53db7af3905aefd471470c6cac6`
 - Evidence metadata correction `0362e24a363d9f905234283666b3f840983a6ef1`
