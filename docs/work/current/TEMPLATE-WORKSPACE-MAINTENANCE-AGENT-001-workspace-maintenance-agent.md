@@ -6,10 +6,10 @@
 
 ## Status
 
-Correction cycle in progress after independent review. The original implementation
-and handoff remain historical evidence, but completion is superseded until a real
-pinned-OpenCode bridge lifecycle acceptance is tracked, executed, and remotely
-reviewable.
+Developer correction complete after independent review. The real pinned-OpenCode
+bridge lifecycle acceptance succeeded without repository mutation, and the
+corrected developer implementation is pushed. Overall template maintenance
+remains active only for the final portable package and ledger handoff.
 
 ## Task-start developer SHA
 
@@ -301,9 +301,10 @@ A tracked real-runtime acceptance harness and its architecture, component,
 operator, and validator records were published at
 `f455d6269678dbbab3783fd845ef26e0227c7ed7`. Its first model-backed attempt
 exposed a missing OAuth-provider precondition; the smallest launcher/gate
-correction is now ready for its immediate commit/push. The live credentialed
-acceptance deliberately follows each checkpoint so the developer worktree can
-be proved clean and equal to `origin/developer`.
+correction is published at `1b7fb2bce9d9bf23e107d808632066c62fe4c13c`.
+The fresh credentialed acceptance then passed from the clean synchronized
+developer worktree. A dedicated developer handoff snapshot is now the only
+remaining source-branch action.
 
 Main remains `6127611113dfdb66f93a0cfd2d355359aa370833` and
 web-orchestration remains `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`.
@@ -364,6 +365,18 @@ not the live acceptance authority.
   state. One mode-private credential file is validated, copied into temporary
   runtime state, and removed afterward. Helper Git reads use fixed arguments and
   sterile global/system configuration.
+- The successful fresh run used real OpenCode 1.18.16 and the production bridge
+  path. It proved the template-development project root, fixed
+  `workspace-maintainer`, connected expected provider/model, effective
+  default-deny inventory, `workspace-maintenance` loading, all four required
+  workspace operations including sandboxed `git status --short`, unchanged
+  project/session/skill context after reading developer instructions, two
+  terminal phases on one mapping, canonical recovery/public delivery without
+  local paths, and a separate `small-developer` session.
+- The successful smoke removed all temporary runtime state and left both
+  developer and template-development clean at their exact remote heads. It did
+  not access or mutate `main`, web-orchestration, issues #49/#53, or the paused
+  Scout lifecycle state.
 
 ## Interpretation
 
@@ -437,32 +450,44 @@ skill because the real effective permission inventory remains default-deny.
   through the intercepted proxy, the explicit proxy-free push succeeded, and
   `recover-remote-sync.sh` independently proved the exact remote commit before
   clearing the synchronization marker.
-- Real pinned-runtime lifecycle smoke: pending the synchronized implementation
-  checkpoint required by its own clean-worktree precondition. The first server
-  attempt failed before assistant execution and produced no repository mutation;
-  its provider-connection gap is now explicitly gated.
+- Developer OAuth/provider-gate correction
+  `1b7fb2bce9d9bf23e107d808632066c62fe4c13c`: immediate hook push and
+  independent `ls-remote` readback matched; local HEAD/tracking ref remained
+  exact and clean.
+- `npm --prefix tools/opencode-bridge run test:workspace-runtime-smoke` with a
+  private OAuth source and exact real OpenCode 1.18.16: passed. Observed bounded
+  workspace tool progress, same-session terminal delivery, evidence-only target
+  instructions, independent normal developer routing, public-safe output, zero
+  repository mutation, and complete temporary-state cleanup.
+- Final-source focused workspace/protocol/state/recovery/projection/scope suite:
+  passed 68/68.
+- Final-source complete `npm --prefix tools/opencode-bridge test`: passed
+  113/113.
+- Final-source `./scripts/validate-opencode-bridge.sh`: passed contracts,
+  structure, build, 113/113 tests, and 8/8 branch-initialization tests.
+- Final-source `./scripts/validate-repository.sh`: passed structure, links,
+  agent-system, research, bridge contracts/build/tests, 8/8 branch tests, hooks,
+  and diff checks.
+- Final-source `./scripts/bootstrap-agent-workflow.sh --check` and
+  `git diff --check`: passed.
 
 ## Blockers / required decisions
 
-No technical decision is pending. Direct Git transport works with the execution
-environment's intercepting proxy variables removed. Completion remains gated on
-one successful real OpenCode 1.18.16 workspace lifecycle acceptance; if the
-privately available model credential or another external runtime dependency
-fails after safe local attempts, the task remains blocked on that exact boundary.
+No developer technical blocker or decision remains. Direct Git transport works
+with the execution environment's intercepting proxy variables removed. Overall
+completion now depends only on template-development package regeneration,
+validation, remote evidence, and its normal ledger handoff.
 
 ## Remaining work
 
-1. Commit and immediately push the OAuth-provider precondition correction.
-2. Execute one fresh real pinned-runtime lifecycle acceptance on the clean,
-   synchronized checkpoint and correct only evidence-backed harness defects.
-3. Publish a dedicated developer handoff snapshot, then return to
-   template-development for the final three-range package and ledger
+1. Publish this dedicated developer handoff snapshot.
+2. Return to template-development for the final three-range package and ledger
    reconciliation.
 
 ## Next action
 
-Validate the focused launcher correction, commit/push it, independently read
-back the remote, and re-run the real pinned-runtime smoke.
+Commit/push this developer handoff snapshot, independently read it back, and
+continue from template-development.
 
 ## Continuation prompt
 
