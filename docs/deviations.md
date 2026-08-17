@@ -81,4 +81,35 @@
   that package remains pending; the source snapshot and unrelated maintenance
   tasks are not blocked.
 
+## TD-004 — Implementation-neutral ledger extended with its rooted maintenance runtime
+
+- Planned behavior: keep `template-development` implementation-neutral and carry
+  only `developer` plus `web-orchestration` ranges in each portable package.
+- Observed reality: the accepted Workspace Maintenance Agent, its sole skill
+  authority, contained worktree tools, package machinery, and their executable
+  validation intentionally run with `template-development` as their project and
+  source root. A two-range package could carry the developer bridge route while
+  omitting the agent/runtime that route requires.
+- Reason the plan could not remain: describing executable maintenance assets as
+  neutral ledger state hid a real authority boundary, and omitting that branch's
+  reviewed range produced incomplete downstream transfer.
+- Selected alternative: `template-development` remains independent, is never
+  merged into a source branch, and still owns continuity/packages, while also
+  owning only its rooted maintenance runtime. Schema 3 carries exact
+  `template-development`, `developer`, and `web-orchestration` ranges. The
+  template-development range must end before its package-storage commit and may
+  not contain its own task package path. The independently reconciled source lock
+  remains a three-source snapshot (`main`, `developer`, `web-orchestration`) and
+  is not required to contain a self-referential resulting SHA.
+- Evidence: generator/application fixtures cover template range ancestry,
+  canonical advance, self-package rejection, digest tampering, wrong-base dry
+  run, and clean application; the real pinned OpenCode inventory check loads the
+  rooted agent, plugin, and sole allowed skill.
+- Effect: architecture and transfer bytes now match the actual feature without
+  copying product/source trees into the maintenance branch or weakening any
+  branch's own commit, push, review, or promotion procedure.
+- Remaining limitation: arbitrary repository commands require non-root Linux and
+  `/usr/bin/bwrap`; unsupported hosts fail closed instead of receiving a weaker
+  cwd-only process boundary.
+
 No other current deviation is known.

@@ -16,7 +16,7 @@ function parse(argv) {
     const name = filtered[index];
     const value = filtered[index + 1];
     if (!name?.startsWith("--") || !value || value.startsWith("--")) {
-      fail("Usage: apply-change-package.mjs --package <directory> --repository <path> --target <developer|web-orchestration> [--apply]");
+      fail("Usage: apply-change-package.mjs --package <directory> --repository <path> --target <template-development|developer|web-orchestration> [--apply]");
     }
     if (result.has(name)) fail(`Duplicate argument ${name}`);
     result.set(name, value);
@@ -37,7 +37,9 @@ const { apply, values } = parse(process.argv.slice(2));
 const packageDirectory = resolve(values.get("--package") ?? fail("Missing --package"));
 const repository = resolve(values.get("--repository") ?? fail("Missing --repository"));
 const target = values.get("--target") ?? fail("Missing --target");
-if (target !== "developer" && target !== "web-orchestration") fail("target must be developer or web-orchestration");
+if (!["template-development", "developer", "web-orchestration"].includes(target)) {
+  fail("target must be template-development, developer, or web-orchestration");
+}
 let checked;
 try {
   checked = validateChangePackage(packageDirectory);
@@ -45,22 +47,23 @@ try {
   fail(`Package validation failed: ${error.message}`);
 }
 const entry = checked.manifest.ranges[target];
+if (!entry) fail(`Package schema ${checked.schemaVersion} does not carry ${target}`);
 const patchPath = resolve(packageDirectory, entry.patch);
-const patch = target === "developer" ? checked.developerPatch : checked.webPatch;
+const patch = checked.patches[target];
 
 git(repository, ["rev-parse", "--git-dir"]);
 if (git(repository, ["branch", "--show-current"]) !== target) fail(`Checkout must be on ${target}`);
 if (git(repository, ["status", "--porcelain"]) !== "") fail("Checkout must be clean before package application");
 
 if (patch.length === 0) {
-  console.log(`${target} patch is empty; no application is needed.${checked.provenanceVerified ? " Provenance schema 2 verified." : " Legacy schema 1 integrity verified only."}`);
+  console.log(`${target} patch is empty; no application is needed.${checked.provenanceVerified ? ` Provenance schema ${checked.schemaVersion} verified.` : " Legacy schema 1 integrity verified only."}`);
   process.exit(0);
 }
 
 git(repository, ["apply", "--check", "--binary", patchPath]);
 if (!apply) {
-  console.log(`${target} patch applies cleanly (dry run). ${checked.provenanceVerified ? "Provenance schema 2 verified." : "Legacy schema 1 integrity verified only."}`);
+  console.log(`${target} patch applies cleanly (dry run). ${checked.provenanceVerified ? `Provenance schema ${checked.schemaVersion} verified.` : "Legacy schema 1 integrity verified only."}`);
   process.exit(0);
 }
 git(repository, ["apply", "--binary", patchPath]);
-console.log(`${target} patch applied to the working tree; ${checked.provenanceVerified ? "provenance schema 2 verified" : "legacy schema 1 integrity verified only"}; inspect, test, commit, and push through the branch's normal workflow.`);
+console.log(`${target} patch applied to the working tree; ${checked.provenanceVerified ? `provenance schema ${checked.schemaVersion} verified` : "legacy schema 1 integrity verified only"}; inspect, test, commit, and push through the branch's normal workflow.`);

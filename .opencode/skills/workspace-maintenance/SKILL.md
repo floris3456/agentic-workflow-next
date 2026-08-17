@@ -23,6 +23,9 @@ workflow.
    not trigger target-owned skills or agents.
 4. Do not use subagents or the `task` tool. Use the structured question tool only
    for a genuine human-owned decision.
+5. The agent permission inventory is default-deny. Only this skill is loadable;
+   every other discovered or built-in skill remains unavailable even when its
+   file is visible as evidence.
 
 ## Worktree gate
 
@@ -40,9 +43,14 @@ workflow.
    changes.
 4. Use `workspace_read`, `workspace_glob`, and `workspace_grep` for target
    evidence; `workspace_write` and `workspace_delete` for bounded file changes;
-   and `workspace_exec` for explicit commands, tests, Git inspection, commit, and
-   push. These tools keep OpenCode rooted in template-development and do not grant
-   blanket trust to a parent directory.
+   and `workspace_exec` for explicit commands, tests, and read-only Git
+   inspection. `workspace_exec` is a networkless OS sandbox: only the verified
+   target is writable, exact repository metadata and fixed system runtimes are
+   read-only, and host credentials/environment are absent. It is not a push or
+   commit route. Use the separate fixed-operation `workspace_publish` broker for
+   an authorized non-main commit plus exact-branch push. These tools keep OpenCode
+   rooted in template-development and do not grant blanket trust to a parent
+   directory.
 
 ## Bounded task procedure
 
@@ -56,10 +64,13 @@ workflow.
 4. Run relevant checks through the verified target, inspect the resulting status
    and diff, and keep applicable durable records accurate with the implementation
    facts they describe.
-5. When durable mutation is requested, commit and push through the verified
-   target under its authorized branch/ref. Independently fetch/read the remote
-   ref and report only exact public branch/ref and commit identities, never local
-   paths.
+5. When durable mutation is requested, use `workspace_publish` with the exact
+   inspected preflight. It creates one non-main commit without repository hooks,
+   filters, signing, alternate objects, remote redirection, or agent-controlled
+   Git arguments; it then pushes only that exact commit to the verified branch
+   and reads the remote ref back. Host credentials, when required, are available
+   only to this fixed broker and never to sandboxed command execution. Report
+   only exact public branch/ref and commit identities, never local paths.
 6. A failed or ambiguous push stops further mutation until synchronization is
    explicitly reconciled. Never claim a local-only commit is remote.
 

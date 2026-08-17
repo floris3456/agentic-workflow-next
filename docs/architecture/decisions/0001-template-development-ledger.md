@@ -18,17 +18,23 @@ authority.
 
 ## Decision
 
-Keep `template-development` as an independent ledger branch that is included
-when a project is generated with all template branches. It stores only:
+Keep `template-development` as an independent maintenance branch that is
+included when a project is generated with all template branches. It stores:
 
 - exact source locks and cross-branch task continuity;
 - template-maintenance AS-BUILT, decisions, deviations, and task progress; and
-- deterministic exact-range change packages.
+- deterministic exact-range change packages; and
+- the template-development-rooted Workspace Maintenance Agent, its sole
+  repository skill authority, its narrow OpenCode plugin, and the validated
+  containment/package runtime that implements those maintenance capabilities.
 
-Actual implementation remains in isolated worktrees of the real `developer` and
-`web-orchestration` branches. Reviewed content moves between repositories as a
-validated patch package, never by merging the ledger branch or treating it as
-source truth. Every `main` promotion retains its normal human exact-SHA approval.
+Product, bridge, and web-orchestration implementation remains in isolated
+worktrees of the real `developer` and `web-orchestration` branches. The
+maintenance runtime named above is intentionally authoritative on
+`template-development`; it does not make that branch a copy of either source
+tree. Reviewed content moves between repositories as a validated three-range
+patch package, never by merging the ledger branch. Every `main` promotion retains
+its normal human exact-SHA approval.
 
 ## Consequences
 
@@ -38,6 +44,9 @@ source truth. Every `main` promotion retains its normal human exact-SHA approval
   even when their branch histories differ.
 - A maintenance task has multiple independently pushed source ranges rather than
   artificial cross-branch atomicity.
+- A package that changes the maintenance runtime carries a reviewed
+  `template-development` implementation range ending before the commit that
+  stores the package itself.
 - Generated projects must include all branches and keep their source lock
   current; template updates are not automatic.
 

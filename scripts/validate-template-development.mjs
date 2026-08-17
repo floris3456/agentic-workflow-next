@@ -20,7 +20,7 @@ const required = [
   "scripts/change-package-lib.mjs", "scripts/create-change-package.mjs", "scripts/apply-change-package.mjs",
   "scripts/bootstrap-template-development.sh", "scripts/recover-template-development-sync.sh",
   "scripts/validate-template-development.sh", "tests/change-package.test.mjs",
-  "tests/workspace-maintenance.test.mjs",
+  "scripts/validate-workspace-opencode-runtime.mjs", "tests/workspace-maintenance.test.mjs",
 ];
 for (const path of required) if (!existsSync(join(root, path))) fail(`Missing required path: ${path}`);
 
@@ -56,6 +56,9 @@ try {
   if (packageFile.dependencies?.["@opencode-ai/plugin"] !== "1.18.16") {
     fail("Workspace plugin dependency must remain pinned to @opencode-ai/plugin 1.18.16");
   }
+  if (packageFile.dependencies?.["opencode-ai"] !== "1.18.16") {
+    fail("Workspace runtime dependency must remain pinned to OpenCode 1.18.16");
+  }
 } catch (error) {
   fail(`.opencode/package.json is invalid: ${error.message}`);
 }
@@ -64,11 +67,12 @@ if (existsSync(join(root, ".opencode/agents/workspace-maintainer.md"))) {
   const agent = read(".opencode/agents/workspace-maintainer.md");
   for (const term of [
     "mode: primary", "model: openai/gpt-5.6-sol", "reasoningEffort: high",
-    "task: deny", "bash: deny", "edit: deny", "question: allow", "external_directory: deny",
+    '"*": deny', "task: deny", "bash: deny", "edit: deny", "question: allow", "external_directory: deny",
+    "skill:\n    \"*\": deny\n    workspace-maintenance: allow",
     "workspace_list: allow", "workspace_inspect: allow", "workspace_read: allow",
     "workspace_write: allow", "workspace_delete: allow", "workspace_glob: allow",
-    "workspace_grep: allow", "workspace_exec: allow", "load\n`workspace-maintenance`",
-    "Reading them never\ntransfers instruction authority",
+    "workspace_grep: allow", "workspace_exec: allow", "workspace_publish: allow", "load\n`workspace-maintenance`",
+    "Reading them never transfers",
   ]) if (!agent.includes(term)) fail(`workspace-maintainer is missing required boundary: ${term}`);
 }
 
@@ -96,7 +100,7 @@ if (existsSync(join(root, ".opencode/plugins/workspace-maintenance.ts"))) {
   const plugin = read(".opencode/plugins/workspace-maintenance.ts");
   for (const name of [
     "workspace_list", "workspace_inspect", "workspace_read", "workspace_write",
-    "workspace_delete", "workspace_glob", "workspace_grep", "workspace_exec",
+    "workspace_delete", "workspace_glob", "workspace_grep", "workspace_exec", "workspace_publish",
   ]) if (!plugin.includes(`${name}: tool(`)) fail(`Workspace plugin is missing ${name}`);
 }
 
@@ -150,6 +154,7 @@ for (const path of [
   "scripts/create-change-package.mjs", "scripts/apply-change-package.mjs",
   "scripts/bootstrap-template-development.sh", "scripts/recover-template-development-sync.sh",
   "scripts/validate-template-development.mjs", "scripts/validate-template-development.sh",
+  "scripts/validate-workspace-opencode-runtime.mjs",
 ]) {
   const full = join(root, path);
   if (existsSync(full) && (statSync(full).mode & 0o111) === 0) fail(`Executable bit missing: ${path}`);

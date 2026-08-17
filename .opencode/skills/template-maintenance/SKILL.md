@@ -25,17 +25,22 @@ compatibility: template-development ledger branch
 
 ## Source work
 
-- Keep edits on the canonical repository's real `developer` and
-  `web-orchestration` branches. Use a bounded direct connected-GitHub route when
+- Keep product, bridge, and Project-package edits on the canonical repository's
+  real `developer` and `web-orchestration` branches. Use a bounded direct connected-GitHub route when
   proportionality makes it the shortest safe remotely provable route; otherwise
   use isolated source worktrees when local repository context/tools materially
   help. Never materialize source trees in this ledger.
+- Maintain the template-development-rooted Workspace Maintenance Agent/runtime,
+  package machinery, and their cross-branch records on `template-development`.
+  Treat those files as this branch's intentional maintenance implementation, not
+  as copied developer or web source.
 - Follow each source branch's own agent instructions, task lifecycle, AS-BUILT,
   deviations, push recovery, and review boundaries regardless of execution
   route.
 - Treat source commits as implementation evidence only after remote readback.
-- A change spanning the branches has two independently pushed/reviewed source
-  ranges. It is not made atomic by merging them.
+- A change may have independently pushed/reviewed `template-development`,
+  `developer`, and `web-orchestration` ranges. It is not made atomic by merging
+  them.
 - Never modify `main` without its repository's normal exact-SHA human approval.
 
 ## Maintain the ledger
@@ -57,10 +62,14 @@ local-only SHA as a handoff.
 ## Package and apply
 
 After exact source-range review, run `scripts/create-change-package.mjs` with the
-reviewed developer and web ranges. Package bases and heads come from the reviewed
-task ranges and do not have to equal `source-lock.json`. The generator still
-proves those endpoints against freshly fetched canonical branch history. Commit
-the generated `changes/<task-id>/**` package and verify it with the validator.
+reviewed template-development, developer, and web ranges. The reviewed
+template-development head must precede the commit that stores the generated
+package; its range must not contain `changes/<task-id>/**`. Package bases and
+heads come from reviewed task ranges and do not have to equal `source-lock.json`.
+The source lock deliberately does not contain its own or a resulting
+template-development commit SHA. The generator proves every endpoint against
+freshly fetched canonical branch history. Commit the generated
+`changes/<task-id>/**` package and verify it with the validator.
 
 Apply each non-empty patch to the downstream repository's matching branch using
 `scripts/apply-change-package.mjs`. Application only updates the working tree;

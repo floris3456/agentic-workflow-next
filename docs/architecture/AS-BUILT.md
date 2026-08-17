@@ -25,15 +25,18 @@ history.
 ## Branch contents
 
 This branch contains maintenance instructions, provenance, design/decision
-records, task records, deterministic change packages, tests, validation, and Git
-synchronization hooks. It contains no copy of `developer`, `main`,
+records, task records, deterministic change packages, tests, validation, Git
+synchronization hooks, and the template-development-rooted Workspace Maintenance
+Agent/runtime. It contains no copy of `developer`, `main`,
 `web-orchestration-only/**`, bridge implementation, or downstream project source.
-Source histories are never merged into this ledger.
+Source histories are never merged into this independent branch.
 
 ## Source execution
 
-Actual edits stay on the authoritative `developer` and `web-orchestration`
-branches. The web orchestrator selects the route proportionally:
+Product, bridge, and Project-package edits stay on the authoritative `developer`
+and `web-orchestration` branches. The maintenance agent/runtime and portable
+package machinery are the explicit template-development-owned implementation.
+The web orchestrator selects source routes proportionally:
 
 - bounded direct connected-GitHub edits when exact paths/edits are known and
   remote readback plus focused checks can prove the outcome more simply;
@@ -59,12 +62,14 @@ inspectable compatibility evidence only.
 
 The template-development-owned OpenCode plugin exposes `workspace_list`,
 `workspace_inspect`, `workspace_read`, `workspace_write`, `workspace_delete`,
-`workspace_glob`, `workspace_grep`, and `workspace_exec`. The agent denies
-`external_directory`, `task`, built-in shell, and built-in edits; it allows these
-repository-scoped tools plus structured questions. No parent-directory allow rule
-or host-specific path is tracked. `.opencode/package.json` pins the local plugin
-helper API to `@opencode-ai/plugin` `1.18.16`; generated dependencies and lockfiles
-remain ignored.
+`workspace_glob`, `workspace_grep`, `workspace_exec`, and `workspace_publish`.
+The agent uses a real default-deny permission inventory, explicitly allows only
+these tools plus structured questions, and denies every skill before allowing
+only `workspace-maintenance`. Built-in task, shell, read/edit, web, planning, and
+external-directory capabilities therefore remain denied. No parent-directory
+allow rule or host-specific path is tracked. `.opencode/package.json` pins both
+OpenCode and `@opencode-ai/plugin` to `1.18.16`; generated dependencies and
+lockfiles remain ignored.
 
 Every tool invocation starts from the active template-development directory and
 derives NUL-delimited porcelain inventory from `git worktree list`. Eligibility
@@ -79,11 +84,26 @@ host-local worktree paths.
 File tools reject `.git`, absolute/traversing paths, symlink components, binary
 or oversized reads, and non-regular mutations. Mutating file and command tools
 require the exact HEAD and SHA-256 status digest returned by inspection, so
-unobserved local movement blocks the operation. Command execution receives an
-explicit executable/argument array and a verified target cwd; it supports tests,
-Git inspection, commit, and push without changing the OpenCode project. The
-procedure requires proportional public-safe changes, diff/check inspection,
-independent remote readback, and immediate stop on ambiguous synchronization.
+unobserved local movement blocks the operation. `workspace_exec` runs the
+explicit executable/argument array inside a non-root Linux Bubblewrap namespace,
+not merely at a selected cwd. Only the verified worktree is writable; its exact
+Git common/worktree metadata and fixed system runtimes are read-only; network,
+the remaining host filesystem, inherited environment, credentials, and host temp
+state are absent. Repository-relative executables remain inside that namespace,
+and arbitrary Git options cannot reach foreign repositories or persist ref/config
+changes outside it.
+
+Commit/push is a separate fixed `workspace_publish` broker, not arbitrary Git
+authority. It rejects `main`, detached or unsynchronized branches, canonical-tip
+advance, alternate objects, replace refs, hooks, filters/encodings, signing,
+transport/config redirection, force updates, and agent-supplied Git arguments. It
+commits exactly the inspected non-main worktree state, pushes only the resulting
+commit to the matching branch/ref on the verified credential-free GitHub origin,
+and independently reads that ref back. Any post-commit failure writes the
+branch-owned synchronization marker. Host credential handling is confined to
+that broker's fixed Git invocation; sandboxed commands never receive it. Absolute
+local origins exist only behind an explicit host-registered temporary-fixture
+option used by adversarial tests.
 
 Registered access is technical capability only. A `main` worktree is inspectable
 and technically reachable when registered, but consequential main mutation or
@@ -110,8 +130,9 @@ The current authoritative branches satisfy that invariant as follows:
   workflow has read-only contents permission and does not persist checkout
   credentials.
 - `template-development`: `.github/workflows/validate-template-development.yml`
-  runs on pushes to `template-development` and reaches the ledger validator plus
-  `tests/change-package.test.mjs` through
+  runs on pushes to `template-development`, installs Bubblewrap plus the exact
+  pinned OpenCode runtime, and reaches ledger/package/containment fixtures plus a
+  real agent/plugin/skill/tool inventory check through
   `scripts/validate-template-development.sh`.
 
 The web-orchestrator template-maintenance Source carries the reusable invariant.
@@ -148,8 +169,8 @@ bases explicit in task records and package manifests.
 ## Change packages
 
 `scripts/create-change-package.mjs` produces one directory per task containing
-`manifest.json`, `developer.patch`, and `web-orchestration.patch`. New packages
-use manifest schema 2.
+`manifest.json`, `template-development.patch`, `developer.patch`, and
+`web-orchestration.patch`. New packages use manifest schema 3.
 
 Before output, the generator:
 
@@ -157,22 +178,29 @@ Before output, the generator:
    as the same canonical GitHub repository;
 2. creates a sterile temporary bare repository with isolated Git configuration
    and no interactive credential prompt;
-3. fetches current canonical `developer` and `web-orchestration` tips;
+3. fetches current canonical `template-development`, `developer`, and
+   `web-orchestration` tips;
 4. requires each exact supplied range base and reviewed head to resolve from the
    fetched canonical object database, requires the base to be an ancestor of the
    reviewed head, and requires the reviewed head to be an ancestor of/equal to
    the current branch tip; and
-5. generates range metadata and patch bytes only from fetched canonical objects,
+5. rejects a template-development range containing its own
+   `changes/<task-id>/**` storage path, so its reviewed head necessarily precedes
+   package storage; and
+6. generates range metadata and patch bytes only from fetched canonical objects,
    never caller-supplied objects and never by silently widening to unrelated later
    commits.
 
-The schema-2 manifest embeds the generation-time `source-lock.json` snapshot and
+The schema-3 manifest embeds the generation-time `source-lock.json` snapshot and
 digest as provenance context, observed canonical tips, reviewed-head relationship
 markers, exact task ranges, sorted changed paths, and per-patch SHA-256 values.
 The embedded source snapshot does not have to equal either package range base.
-`package_sha256` binds the stable manifest core plus both raw patch streams with a
-versioned domain separator. `scripts/change-package-lib.mjs` is the shared offline
-verifier used by generation, application, and ledger validation.
+It deliberately continues to contain only `main`, `developer`, and
+`web-orchestration`; it need not and cannot name the commit that will store itself
+or the package. `package_sha256` binds the stable manifest core plus all three raw
+patch streams with a versioned domain separator.
+`scripts/change-package-lib.mjs` is the shared offline verifier used by
+generation, application, and ledger validation.
 
 Historical schema-1 packages remain integrity-compatible only after their
 original range/per-patch checks pass and are explicitly not provenance-verified.
@@ -181,11 +209,13 @@ source snapshot as their range bases are a valid subset of the new independent-
 snapshot contract. Full 40-character commits remain mandatory. A non-empty output
 directory is refused. The generator never writes source branches.
 
-`scripts/apply-change-package.mjs` validates the package, requires the downstream
-checkout's exact matching branch and clean tree, and runs `git apply --check`.
-Only explicit `--apply` changes the working tree; it does not commit, push, merge,
-or promote. Patch conflict is an explicit adaptation task, never permission to
-silently alter canonical package contents.
+`scripts/apply-change-package.mjs` validates the package and supports all three
+matching downstream branches, including `template-development`. It requires the
+exact matching branch and a clean tree, then runs `git apply --check`. Only
+explicit `--apply` changes the working tree; it does not commit, push, merge, or
+promote. Every branch's own review/commit/push process remains authoritative.
+Patch conflict is an explicit adaptation task, never permission to silently alter
+canonical package contents.
 
 ## Synchronization
 
@@ -292,12 +322,14 @@ requested view. If that hardened runtime is unavailable, the orchestrator uses
 exact direct inspection rather than falling back to ordinary developer OpenCode
 or ref-owned instructions.
 
-Package schema 2 closes the complementary cross-branch provenance boundary:
-exact task bases plus exact reviewed heads define the package range; freshly
-fetched canonical history proves those endpoints and their ancestry without
-including later unrelated commits; fetched objects define patch bytes; and the
-package digest binds provenance context plus both patches. The source snapshot is
-useful generation-time context, not an authority that defines package membership.
+Package schema 3 closes the complementary cross-branch provenance boundary for
+all three ranges: exact task bases plus exact reviewed heads define package
+membership; freshly fetched canonical history proves those endpoints and their
+ancestry without including later unrelated commits; fetched objects define patch
+bytes; the template-development self-package guard avoids circular history; and
+the package digest binds provenance context plus all three patches. The source
+snapshot is useful generation-time context, not an authority that defines
+package membership or a self-referential commit identity.
 
 ## Verification
 
@@ -316,19 +348,24 @@ useful generation-time context, not an authority that defines package membership
   snapshot shape, task/archive rules, forbidden source-tree absence, executable
   bits, the Workspace Maintenance Agent/tool/instruction boundary, and committed
   change packages through the shared verifier.
-- `tests/change-package.test.mjs` covers deterministic schema-2 generation with a
-  source snapshot intentionally newer than package range bases, deceptive origin,
-  non-ancestor base rejection, forged-head rejection, later canonical branch
-  advance, provenance/patch/package tamper detection, schema-1 compatibility, and
-  downstream dry-run/application boundaries.
+- `tests/change-package.test.mjs` covers deterministic schema-3 three-range
+  generation with a source snapshot intentionally independent from range bases,
+  deceptive origin, wrong/non-ancestor bases, forged heads, later canonical
+  advance, self-package rejection, provenance/template-patch/package tampering,
+  schema-1 compatibility, and clean template/developer dry-run/application.
 - `tests/workspace-maintenance.test.mjs` creates harmless temporary canonical and
   foreign repositories plus registered worktrees. It proves registered developer
   and main access, stable template instruction root while operating on a target
-  with conflicting instruction files, exact preflight read/write/command/delete
-  capability, public path omission, and rejection of unregistered, foreign,
-  path-like, stale, and symlink-escaping targets.
-- `scripts/validate-template-development.sh` runs the ledger/package checks plus
-  `git diff --check`.
+  with conflicting instruction files, exact preflight read/write/delete, and
+  Bubblewrap-contained command execution. Harmless sentinels prove outside
+  read/write, foreign Git routing, symlink, injected-secret, network, local-origin,
+  main-publication, transport-redirection, and stale-remote boundaries.
+- `scripts/validate-workspace-opencode-runtime.mjs` starts real OpenCode `1.18.16`
+  with sterile local state and queries its agent, skill, and tool inventories. It
+  proves the rooted custom agent/plugin load and evaluates the runtime's ordered
+  permissions so forbidden tools and every other discovered skill resolve deny.
+- `scripts/validate-template-development.sh` runs the ledger/package/containment
+  and real-runtime checks plus `git diff --check`.
 
 Historical maintenance decisions and implementation exercises remain in their
 exact task records and Git history. This AS-BUILT describes the current system;

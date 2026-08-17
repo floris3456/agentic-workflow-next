@@ -1,9 +1,16 @@
 import { createHash } from "node:crypto";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
 
 const exactSha = /^[0-9a-f]{40}$/;
-const targets = ["developer", "web-orchestration"];
+const sourceLockTargets = ["developer", "web-orchestration"];
+const packageTargetsV2 = ["developer", "web-orchestration"];
+const packageTargetsV3 = ["template-development", ...packageTargetsV2];
+const patchNames = {
+  "template-development": "template-development.patch",
+  developer: "developer.patch",
+  "web-orchestration": "web-orchestration.patch",
+};
 
 export function sha256(input) {
   return createHash("sha256").update(input).digest("hex");
@@ -91,7 +98,11 @@ export function validateSourceLock(lock) {
   }
   const identity = canonicalRepositoryIdentity(lock.canonical_repository);
   if (!lock.sources || typeof lock.sources !== "object" || Array.isArray(lock.sources)) throw new Error("source-lock sources are missing");
-  for (const branch of ["main", ...targets]) {
+  const expected = ["main", ...sourceLockTargets];
+  if (Object.keys(lock.sources).sort().join("\0") !== [...expected].sort().join("\0")) {
+    throw new Error("source-lock sources must contain exactly main, developer, and web-orchestration");
+  }
+  for (const branch of expected) {
     if (!exactSha.test(lock.sources[branch] ?? "")) throw new Error(`source-lock ${branch} must be an exact SHA`);
   }
   return identity;
@@ -99,21 +110,33 @@ export function validateSourceLock(lock) {
 
 function validateRange(entry, target, directory) {
   if (!entry || typeof entry !== "object" || Array.isArray(entry)) throw new Error(`${target} range is missing`);
-  const expectedPatch = target === "developer" ? "developer.patch" : "web-orchestration.patch";
+  const expectedPatch = patchNames[target];
+  if (!expectedPatch) throw new Error(`${target} is not a supported package target`);
   if (entry.patch !== expectedPatch) throw new Error(`${target} patch name is invalid`);
   if (!exactSha.test(entry.base ?? "") || !exactSha.test(entry.head ?? "")) throw new Error(`${target} range is invalid`);
-  if (!Array.isArray(entry.changed_paths) || entry.changed_paths.some((path) => typeof path !== "string")) throw new Error(`${target} changed paths are invalid`);
+  if (!Array.isArray(entry.changed_paths) || entry.changed_paths.some((path) => typeof path !== "string"
+    || path.length === 0 || path.startsWith("/") || path.includes("\\") || path.includes("\0")
+    || path.split("/").some((part) => part === "" || part === "." || part === ".."))) {
+    throw new Error(`${target} changed paths are invalid`);
+  }
+  if (new Set(entry.changed_paths).size !== entry.changed_paths.length) throw new Error(`${target} changed paths must be unique`);
   if ([...entry.changed_paths].sort().join("\0") !== entry.changed_paths.join("\0")) throw new Error(`${target} changed paths must be sorted`);
   const patch = readFileSync(resolve(directory, expectedPatch));
   if (sha256(patch) !== entry.patch_sha256) throw new Error(`${target} patch digest is invalid`);
   return patch;
 }
 
-export function packageDigest(manifestWithoutDigest, developerPatch, webPatch) {
+export function packageDigest(manifestWithoutDigest, patches, legacyWebPatch) {
+  const targetOrder = manifestWithoutDigest.schema_version === 3 ? packageTargetsV3 : packageTargetsV2;
+  const patchMap = Buffer.isBuffer(patches)
+    ? { developer: patches, "web-orchestration": legacyWebPatch }
+    : patches;
   const hash = createHash("sha256");
-  hash.update("agentic-workflow-template-change-package-v2\0", "utf8");
+  hash.update(`agentic-workflow-template-change-package-v${manifestWithoutDigest.schema_version}\0`, "utf8");
   hash.update(stableJson(manifestWithoutDigest), "utf8");
-  for (const [target, patch] of [["developer", developerPatch], ["web-orchestration", webPatch]]) {
+  for (const target of targetOrder) {
+    const patch = patchMap?.[target];
+    if (!Buffer.isBuffer(patch)) throw new Error(`${target} package patch bytes are missing`);
     hash.update(`\0${target}\0${patch.length}\0`, "utf8");
     hash.update(patch);
   }
@@ -124,32 +147,62 @@ export function validateChangePackage(directory, expectedTaskId) {
   const manifest = JSON.parse(readFileSync(resolve(directory, "manifest.json"), "utf8"));
   if (typeof manifest.task_id !== "string" || manifest.task_id.length === 0) throw new Error("Package task_id is invalid");
   if (expectedTaskId && manifest.task_id !== expectedTaskId) throw new Error("Package task_id does not match its directory");
-  const developerPatch = validateRange(manifest.ranges?.developer, "developer", directory);
-  const webPatch = validateRange(manifest.ranges?.["web-orchestration"], "web-orchestration", directory);
+  if (![1, 2, 3].includes(manifest.schema_version)) throw new Error("Unsupported package manifest schema_version");
+  const targets = manifest.schema_version === 3 ? packageTargetsV3 : packageTargetsV2;
+  if (!manifest.ranges || typeof manifest.ranges !== "object" || Array.isArray(manifest.ranges)
+    || Object.keys(manifest.ranges).sort().join("\0") !== [...targets].sort().join("\0")) {
+    throw new Error("Package ranges do not match the manifest schema target inventory");
+  }
+  const patches = Object.fromEntries(targets.map((target) => [target, validateRange(manifest.ranges?.[target], target, directory)]));
+  const developerPatch = patches.developer;
+  const webPatch = patches["web-orchestration"];
 
   if (manifest.schema_version === 1) {
     canonicalRepositoryIdentity(manifest.canonical_repository);
-    return { manifest, schemaVersion: 1, provenanceVerified: false, developerPatch, webPatch };
+    return { manifest, schemaVersion: 1, provenanceVerified: false, patches, developerPatch, webPatch };
   }
-  if (manifest.schema_version !== 2) throw new Error("Unsupported package manifest schema_version");
   const canonical = canonicalRepositoryIdentity(manifest.canonical_repository);
   const provenance = manifest.provenance;
   if (!provenance || typeof provenance !== "object" || Array.isArray(provenance)) throw new Error("Package provenance is missing");
-  if (provenance.mode !== "canonical-remote-fetch-v1") throw new Error("Package provenance mode is invalid");
+  const expectedMode = manifest.schema_version === 3 ? "canonical-remote-fetch-v2" : "canonical-remote-fetch-v1";
+  if (provenance.mode !== expectedMode) throw new Error("Package provenance mode is invalid");
   const lock = provenance.source_lock;
   const lockIdentity = validateSourceLock(lock);
   if (lockIdentity.url !== canonical.url) throw new Error("Package source-lock canonical repository does not match manifest");
   if (provenance.source_lock_sha256 !== sourceLockDigest(lock)) throw new Error("Package source-lock digest is invalid");
+  for (const field of ["canonical_tips", "head_relations"]) {
+    if (!provenance[field] || typeof provenance[field] !== "object" || Array.isArray(provenance[field])
+      || Object.keys(provenance[field]).sort().join("\0") !== [...targets].sort().join("\0")) {
+      throw new Error(`Package provenance ${field} does not match the target inventory`);
+    }
+  }
   for (const target of targets) {
     if (!exactSha.test(provenance.canonical_tips?.[target] ?? "")) throw new Error(`${target} canonical tip is invalid`);
     if (provenance.head_relations?.[target] !== "reviewed-head-ancestor-of-canonical-tip") {
       throw new Error(`${target} reviewed-head relation is invalid`);
     }
   }
+  if (manifest.schema_version === 3) {
+    const files = readdirSync(resolve(directory)).sort();
+    const expectedFiles = ["manifest.json", ...targets.map((target) => patchNames[target])].sort();
+    if (files.join("\0") !== expectedFiles.join("\0")) throw new Error("Schema 3 package file inventory is invalid");
+    const packagePrefix = `changes/${manifest.task_id}/`;
+    if (manifest.ranges["template-development"].changed_paths.some((path) => path === packagePrefix.slice(0, -1) || path.startsWith(packagePrefix))) {
+      throw new Error("template-development range must end before its own generated package storage");
+    }
+  }
   if (!/^[0-9a-f]{64}$/.test(manifest.package_sha256 ?? "")) throw new Error("Package binding digest is invalid");
   const core = { ...manifest };
   delete core.package_sha256;
-  const expected = packageDigest(core, developerPatch, webPatch);
+  const expected = packageDigest(core, patches);
   if (expected !== manifest.package_sha256) throw new Error("Package binding digest does not match manifest and patch bytes");
-  return { manifest, schemaVersion: 2, provenanceVerified: true, developerPatch, webPatch };
+  return {
+    manifest,
+    schemaVersion: manifest.schema_version,
+    provenanceVerified: true,
+    patches,
+    templateDevelopmentPatch: patches["template-development"],
+    developerPatch,
+    webPatch,
+  };
 }

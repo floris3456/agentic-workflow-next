@@ -19,5 +19,8 @@ jobs:
       - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version: 22.13.0
+      - run: sudo apt-get update && sudo apt-get install --yes bubblewrap
+      - run: npm install --prefix .opencode --ignore-scripts --no-audit --no-fund
+      - run: node .opencode/node_modules/opencode-ai/postinstall.mjs
       - run: chmod +x .githooks/* scripts/*.sh scripts/*.mjs
       - run: ./scripts/validate-template-development.sh

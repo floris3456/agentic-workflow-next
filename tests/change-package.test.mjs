@@ -50,6 +50,12 @@ function fixture(context) {
   const developerTip = commit(source, "later-unrelated.txt", "later unrelated canonical work\n", "later canonical work");
   git(source, ["remote", "add", "fixture", remote]);
   git(source, ["push", "fixture", "developer"]);
+  git(source, ["checkout", "--orphan", "template-development"]);
+  git(source, ["rm", "-rf", "."]);
+  const templateBase = commit(source, "ledger-base.txt", "template base\n", "template base");
+  const templateHead = commit(source, "workspace-runtime.txt", "workspace runtime\n", "template implementation");
+  const templateTip = commit(source, "later-ledger.txt", "later package-independent ledger work\n", "later template ledger work");
+  git(source, ["push", "fixture", "template-development"]);
   git(source, ["checkout", "--orphan", "web-orchestration"]);
   git(source, ["rm", "-rf", "."]);
   const webBase = commit(source, "web-orchestration-only/base.md", "base\n", "web base");
@@ -78,13 +84,19 @@ function fixture(context) {
   writeFileSync(wrapper, `#!/usr/bin/env node\nimport { spawnSync } from "node:child_process";\nconst args=process.argv.slice(2).map((v)=>v===${JSON.stringify(canonicalUrl)}?${JSON.stringify(remote)}:v);\nconst r=spawnSync(${JSON.stringify(realGit)},args,{stdio:"inherit",env:process.env});\nprocess.exit(r.status ?? 1);\n`);
   chmodSync(wrapper, 0o755);
   const environment = { ...baseEnvironment, PATH: `${wrapperDir}:${baseEnvironment.PATH}` };
-  return { directory, remote, source, template, lock, developerBase, developerHead, developerTip, webBase, webHead, environment };
+  return {
+    directory, remote, source, template, lock,
+    templateBase, templateHead, templateTip,
+    developerBase, developerHead, developerTip, webBase, webHead, environment,
+  };
 }
 
 function createPackage(input, output, overrides = {}, expected = 0) {
   const args = [
     join(input.template, "scripts", "create-change-package.mjs"),
     "--repository", input.source, "--task-id", overrides.taskId ?? "TASK-001",
+    "--template-base", overrides.templateBase ?? input.templateBase,
+    "--template-head", overrides.templateHead ?? input.templateHead,
     "--developer-base", overrides.developerBase ?? input.developerBase,
     "--developer-head", overrides.developerHead ?? input.developerHead,
     "--web-base", overrides.webBase ?? input.webBase,
@@ -94,33 +106,40 @@ function createPackage(input, output, overrides = {}, expected = 0) {
   return run("node", args, root, expected, input.environment);
 }
 
-test("creates deterministic provenance schema 2 with source snapshot independent from range bases", (context) => {
+test("creates deterministic provenance schema 3 with all reviewed ranges and a non-self-referential source snapshot", (context) => {
   const input = fixture(context);
   const output = join(input.directory, "package");
   assert.notEqual(input.lock.sources.developer, input.developerBase);
   const result = createPackage(input, output);
   assert.match(result.stdout, /provenance-verified/);
   const checked = validateChangePackage(output, "TASK-001");
-  assert.equal(checked.schemaVersion, 2);
+  assert.equal(checked.schemaVersion, 3);
   assert.equal(checked.provenanceVerified, true);
   assert.equal(checked.manifest.provenance.source_lock.sources.developer, input.developerTip);
   assert.equal(checked.manifest.ranges.developer.base, input.developerBase);
   assert.equal(checked.manifest.provenance.canonical_tips.developer, input.developerTip);
   assert.equal(checked.manifest.ranges.developer.head, input.developerHead);
   assert.equal(checked.manifest.provenance.head_relations.developer, "reviewed-head-ancestor-of-canonical-tip");
+  assert.equal(checked.manifest.provenance.source_lock.sources["template-development"], undefined);
+  assert.equal(checked.manifest.ranges["template-development"].base, input.templateBase);
+  assert.equal(checked.manifest.provenance.canonical_tips["template-development"], input.templateTip);
+  assert.equal(checked.manifest.ranges["template-development"].head, input.templateHead);
+  assert.equal(checked.manifest.provenance.head_relations["template-development"], "reviewed-head-ancestor-of-canonical-tip");
   assert.equal(checked.manifest.created_at, "2026-01-01T00:00:00.000Z");
+  assert.deepEqual(checked.manifest.ranges["template-development"].changed_paths, ["workspace-runtime.txt"]);
   assert.deepEqual(checked.manifest.ranges.developer.changed_paths, ["developer-only.txt"]);
   assert.deepEqual(checked.manifest.ranges["web-orchestration"].changed_paths, ["web-orchestration-only/change.md"]);
   const second = join(input.directory, "package-two");
   createPackage(input, second);
   assert.equal(readFileSync(join(output, "manifest.json"), "utf8"), readFileSync(join(second, "manifest.json"), "utf8"));
+  assert.equal(readFileSync(join(output, "template-development.patch"), "utf8"), readFileSync(join(second, "template-development.patch"), "utf8"));
   assert.equal(readFileSync(join(output, "developer.patch"), "utf8"), readFileSync(join(second, "developer.patch"), "utf8"));
 });
 
 test("rejects deceptive local origin, non-ancestor range base, and forged local head", (context) => {
   const input = fixture(context);
   git(input.source, ["remote", "set-url", "origin", "https://github.com.evil.invalid/floris3456/agentic-workflow-template.git"]);
-  let result = spawnSync("node", [join(input.template, "scripts", "create-change-package.mjs"), "--repository", input.source, "--task-id", "TASK-BAD", "--developer-base", input.developerBase, "--developer-head", input.developerHead, "--web-base", input.webBase, "--web-head", input.webHead, "--output", join(input.directory, "bad-origin")], { cwd: root, env: input.environment, encoding: "utf8" });
+  let result = spawnSync("node", [join(input.template, "scripts", "create-change-package.mjs"), "--repository", input.source, "--task-id", "TASK-BAD", "--template-base", input.templateBase, "--template-head", input.templateHead, "--developer-base", input.developerBase, "--developer-head", input.developerHead, "--web-base", input.webBase, "--web-head", input.webHead, "--output", join(input.directory, "bad-origin")], { cwd: root, env: input.environment, encoding: "utf8" });
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /origin does not match/);
   git(input.source, ["remote", "set-url", "origin", canonicalUrl]);
@@ -128,13 +147,16 @@ test("rejects deceptive local origin, non-ancestor range base, and forged local 
   result = createPackage(input, join(input.directory, "bad-base"), { developerBase: input.webBase }, 1);
   assert.match(result.stderr, /range base is not an ancestor of canonical head/);
 
+  result = createPackage(input, join(input.directory, "bad-template-base"), { templateBase: input.webBase }, 1);
+  assert.match(result.stderr, /template-development range base is not an ancestor/);
+
   git(input.source, ["checkout", "developer"]);
   const forged = commit(input.source, "forged.txt", "local only\n", "forged local head");
   result = createPackage(input, join(input.directory, "forged-head"), { developerHead: forged }, 1);
   assert.match(result.stderr, /did not resolve exactly from canonical fetch|not an ancestor of the current canonical tip/);
 });
 
-test("schema 2 validation detects source-snapshot, patch, and package-binding tampering", (context) => {
+test("schema 3 validation detects source-snapshot, template patch, provenance, and package-binding tampering", (context) => {
   const input = fixture(context);
   const output = join(input.directory, "package");
   createPackage(input, output);
@@ -145,15 +167,41 @@ test("schema 2 validation detects source-snapshot, patch, and package-binding ta
   writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
   assert.throws(() => validateChangePackage(output), /source-lock digest/);
   writeFileSync(manifestPath, originalManifest);
-  writeFileSync(join(output, "developer.patch"), Buffer.concat([readFileSync(join(output, "developer.patch")), Buffer.from("tamper\n")]));
+  writeFileSync(join(output, "template-development.patch"), Buffer.concat([readFileSync(join(output, "template-development.patch")), Buffer.from("tamper\n")]));
   assert.throws(() => validateChangePackage(output), /patch digest/);
   createPackage(input, join(input.directory, "package-fresh"));
   const fresh = join(input.directory, "package-fresh");
   const freshManifestPath = join(fresh, "manifest.json");
   const bound = JSON.parse(readFileSync(freshManifestPath, "utf8"));
-  bound.created_at = "2030-01-01T00:00:00.000Z";
+  bound.provenance.canonical_tips["template-development"] = "2".repeat(40);
   writeFileSync(freshManifestPath, `${JSON.stringify(bound, null, 2)}\n`);
   assert.throws(() => validateChangePackage(fresh), /binding digest/);
+  createPackage(input, join(input.directory, "package-bound"));
+  const packageBound = join(input.directory, "package-bound");
+  const packageBoundManifest = join(packageBound, "manifest.json");
+  const createdAtTamper = JSON.parse(readFileSync(packageBoundManifest, "utf8"));
+  createdAtTamper.created_at = "2030-01-01T00:00:00.000Z";
+  writeFileSync(packageBoundManifest, `${JSON.stringify(createdAtTamper, null, 2)}\n`);
+  assert.throws(() => validateChangePackage(packageBound), /binding digest/);
+});
+
+test("schema 3 rejects a template-development range that contains its own package storage", (context) => {
+  const input = fixture(context);
+  git(input.source, ["checkout", "template-development"]);
+  const selfHead = commit(
+    input.source,
+    "changes/TASK-SELF/generated.txt",
+    "self-referential package bytes\n",
+    "Add forbidden package bytes to reviewed range",
+  );
+  git(input.source, ["remote", "add", "fixture", input.remote]);
+  git(input.source, ["push", "fixture", "template-development"]);
+  git(input.source, ["remote", "remove", "fixture"]);
+  const result = createPackage(input, join(input.directory, "self-package"), {
+    taskId: "TASK-SELF",
+    templateHead: selfHead,
+  }, 1);
+  assert.match(result.stderr, /must end before its own generated package storage/);
 });
 
 test("legacy schema 1 packages remain integrity-compatible but are not provenance verified", (context) => {
@@ -178,18 +226,37 @@ test("legacy schema 1 packages remain integrity-compatible but are not provenanc
   assert.equal(checked.provenanceVerified, false);
 });
 
-test("schema 2 package dry-run and apply preserve downstream branch and cleanliness boundaries", (context) => {
+test("schema 3 package dry-run and apply cover template-development and preserve branch and wrong-base boundaries", (context) => {
   const input = fixture(context);
   const output = join(input.directory, "package");
   createPackage(input, output);
+  const templateTarget = join(input.directory, "template-target");
+  mkdirSync(templateTarget);
+  git(templateTarget, ["init", "-b", "template-development"]);
+  commit(templateTarget, "ledger-base.txt", "template base\n", "target template base");
+  const templateDry = run("node", [applyScript, "--package", output, "--repository", templateTarget, "--target", "template-development"], root);
+  assert.match(templateDry.stdout, /Provenance schema 3 verified/);
+  assert.equal(existsSync(join(templateTarget, "workspace-runtime.txt")), false);
+  const templateApplied = run("node", [applyScript, "--package", output, "--repository", templateTarget, "--target", "template-development", "--apply"], root);
+  assert.match(templateApplied.stdout, /provenance schema 3 verified/);
+  assert.equal(readFileSync(join(templateTarget, "workspace-runtime.txt"), "utf8"), "workspace runtime\n");
+
+  const wrongBase = join(input.directory, "template-wrong-base");
+  mkdirSync(wrongBase);
+  git(wrongBase, ["init", "-b", "template-development"]);
+  commit(wrongBase, "ledger-base.txt", "incompatible base\n", "wrong template base");
+  commit(wrongBase, "workspace-runtime.txt", "conflicting runtime\n", "conflicting runtime");
+  const wrong = run("node", [applyScript, "--package", output, "--repository", wrongBase, "--target", "template-development"], root, 1);
+  assert.match(wrong.stderr, /patch failed|already exists in working directory/);
+
   const target = join(input.directory, "target");
   mkdirSync(target);
   git(target, ["init", "-b", "developer"]);
   commit(target, "shared.txt", "base\n", "target base");
   const dry = run("node", [applyScript, "--package", output, "--repository", target, "--target", "developer"], root);
-  assert.match(dry.stdout, /Provenance schema 2 verified/);
+  assert.match(dry.stdout, /Provenance schema 3 verified/);
   assert.equal(existsSync(join(target, "developer-only.txt")), false);
   const applied = run("node", [applyScript, "--package", output, "--repository", target, "--target", "developer", "--apply"], root);
-  assert.match(applied.stdout, /provenance schema 2 verified/);
+  assert.match(applied.stdout, /provenance schema 3 verified/);
   assert.equal(readFileSync(join(target, "developer-only.txt"), "utf8"), "developer change\n");
 });

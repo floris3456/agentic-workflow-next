@@ -26,7 +26,7 @@ function argumentsMap(argv) {
     const name = argv[index];
     const value = argv[index + 1];
     if (!name?.startsWith("--") || value === undefined || value.startsWith("--")) {
-      fail("Usage: create-change-package.mjs --repository <path> --task-id <id> --developer-base <sha> --developer-head <sha> --web-base <sha> --web-head <sha> --output <empty-directory>");
+      fail("Usage: create-change-package.mjs --repository <path> --task-id <id> --template-base <sha> --template-head <sha> --developer-base <sha> --developer-head <sha> --web-base <sha> --web-head <sha> --output <empty-directory>");
     }
     if (result.has(name)) fail(`Duplicate argument ${name}`);
     result.set(name, value);
@@ -96,7 +96,10 @@ function sterileGitEnvironment(directory) {
 }
 
 const values = argumentsMap(process.argv.slice(2));
-const known = new Set(["--repository", "--task-id", "--developer-base", "--developer-head", "--web-base", "--web-head", "--output"]);
+const known = new Set([
+  "--repository", "--task-id", "--template-base", "--template-head",
+  "--developer-base", "--developer-head", "--web-base", "--web-head", "--output",
+]);
 for (const name of values.keys()) if (!known.has(name)) fail(`Unknown argument ${name}`);
 
 const repository = resolve(required(values, "--repository"));
@@ -117,6 +120,8 @@ try {
   fail(error.message);
 }
 
+const templateBase = exact(required(values, "--template-base"), "template-base");
+const templateHead = exact(required(values, "--template-head"), "template-head");
 const developerBase = exact(required(values, "--developer-base"), "developer-base");
 const developerHead = exact(required(values, "--developer-head"), "developer-head");
 const webBase = exact(required(values, "--web-base"), "web-base");
@@ -135,12 +140,15 @@ try {
   runGit(canonicalRepo, ["init", "--bare"], { env });
   runGit(canonicalRepo, [
     "fetch", "--no-tags", "--force", lock.canonical_repository,
+    "+refs/heads/template-development:refs/remotes/canonical/template-development",
     "+refs/heads/developer:refs/remotes/canonical/developer",
     "+refs/heads/web-orchestration:refs/remotes/canonical/web-orchestration",
   ], { env });
+  const fetchedTemplate = runGit(canonicalRepo, ["rev-parse", "refs/remotes/canonical/template-development^{commit}"], { env }).trim();
   const fetchedDeveloper = runGit(canonicalRepo, ["rev-parse", "refs/remotes/canonical/developer^{commit}"], { env }).trim();
   const fetchedWeb = runGit(canonicalRepo, ["rev-parse", "refs/remotes/canonical/web-orchestration^{commit}"], { env }).trim();
   for (const [reviewedHead, canonicalTip, label] of [
+    [templateHead, fetchedTemplate, "template-development"],
     [developerHead, fetchedDeveloper, "developer"],
     [webHead, fetchedWeb, "web-orchestration"],
   ]) {
@@ -165,8 +173,14 @@ try {
     }
   }
 
+  const template = range(canonicalRepo, templateBase, templateHead, "template-development", env);
+  const packagePrefix = `changes/${taskId}/`;
+  if (template.paths.some((path) => path === packagePrefix.slice(0, -1) || path.startsWith(packagePrefix))) {
+    fail("template-development range must end before its own generated package storage");
+  }
   const developer = range(canonicalRepo, developerBase, developerHead, "developer", env);
   const web = range(canonicalRepo, webBase, webHead, "web-orchestration", env);
+  const templatePatch = Buffer.from(template.patch);
   const developerPatch = Buffer.from(developer.patch);
   const webPatch = Buffer.from(web.patch);
   const sourceDate = process.env.SOURCE_DATE_EPOCH;
@@ -174,24 +188,33 @@ try {
     ? new Date(Number(sourceDate) * 1000).toISOString()
     : new Date().toISOString();
   const core = {
-    schema_version: 2,
+    schema_version: 3,
     task_id: taskId,
     canonical_repository: lock.canonical_repository,
     created_at: createdAt,
     provenance: {
-      mode: "canonical-remote-fetch-v1",
+      mode: "canonical-remote-fetch-v2",
       source_lock: lock,
       source_lock_sha256: sourceLockDigest(lock),
       canonical_tips: {
+        "template-development": fetchedTemplate,
         developer: fetchedDeveloper,
         "web-orchestration": fetchedWeb,
       },
       head_relations: {
+        "template-development": "reviewed-head-ancestor-of-canonical-tip",
         developer: "reviewed-head-ancestor-of-canonical-tip",
         "web-orchestration": "reviewed-head-ancestor-of-canonical-tip",
       },
     },
     ranges: {
+      "template-development": {
+        base: templateBase,
+        head: templateHead,
+        changed_paths: template.paths,
+        patch: "template-development.patch",
+        patch_sha256: sha256(templatePatch),
+      },
       developer: {
         base: developerBase,
         head: developerHead,
@@ -208,14 +231,20 @@ try {
       },
     },
   };
-  const manifest = { ...core, package_sha256: packageDigest(core, developerPatch, webPatch) };
+  const patches = {
+    "template-development": templatePatch,
+    developer: developerPatch,
+    "web-orchestration": webPatch,
+  };
+  const manifest = { ...core, package_sha256: packageDigest(core, patches) };
   if (!existsSync(output)) mkdirSync(output, { recursive: true });
+  writeFileSync(resolve(output, "template-development.patch"), templatePatch);
   writeFileSync(resolve(output, "developer.patch"), developerPatch);
   writeFileSync(resolve(output, "web-orchestration.patch"), webPatch);
   writeFileSync(resolve(output, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
   const checked = validateChangePackage(output, taskId);
-  if (!checked.provenanceVerified) fail("newly generated package did not validate as provenance schema 2");
-  console.log(`Created provenance-verified template change package ${taskId}: developer ${developer.paths.length} path(s), web-orchestration ${web.paths.length} path(s).`);
+  if (!checked.provenanceVerified || checked.schemaVersion !== 3) fail("newly generated package did not validate as provenance schema 3");
+  console.log(`Created provenance-verified template change package ${taskId}: template-development ${template.paths.length} path(s), developer ${developer.paths.length} path(s), web-orchestration ${web.paths.length} path(s).`);
 } finally {
   rmSync(temporary, { recursive: true, force: true });
 }

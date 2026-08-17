@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { execFile } from "node:child_process";
 import { constants as fsConstants } from "node:fs";
 import {
+  access,
   lstat,
   mkdir,
   open,
@@ -9,12 +10,16 @@ import {
   realpath,
   readlink,
   unlink,
+  writeFile,
 } from "node:fs/promises";
-import { dirname, isAbsolute, relative, resolve, sep } from "node:path";
+import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 
 const MAX_FILE_BYTES = 1024 * 1024;
 const MAX_OUTPUT_BYTES = 128 * 1024;
 const MAX_RESULTS = 500;
+const GIT = "/usr/bin/git";
+const BWRAP = "/usr/bin/bwrap";
+const SYSTEM_PATH = "/usr/bin:/bin";
 
 function sha256(value) {
   return createHash("sha256").update(value).digest("hex");
@@ -40,13 +45,20 @@ function utf8(bytes, label, allowNul = false) {
   }
 }
 
-function processEnvironment() {
-  const environment = { GIT_TERMINAL_PROMPT: "0" };
-  for (const name of [
-    "HOME", "LANG", "LC_ALL", "LC_CTYPE", "LOGNAME", "PATH", "SHELL",
-    "SSH_AGENT_PID", "SSH_AUTH_SOCK", "TERM", "TMPDIR", "USER", "XDG_CONFIG_HOME",
-  ]) if (typeof process.env[name] === "string") environment[name] = process.env[name];
-  return environment;
+function safeEnvironment(extra = {}) {
+  return {
+    PATH: SYSTEM_PATH,
+    HOME: "/nonexistent",
+    LANG: "C.UTF-8",
+    LC_ALL: "C.UTF-8",
+    GIT_CONFIG_NOSYSTEM: "1",
+    GIT_CONFIG_GLOBAL: "/dev/null",
+    GIT_ATTR_NOSYSTEM: "1",
+    GIT_TERMINAL_PROMPT: "0",
+    GIT_NO_REPLACE_OBJECTS: "1",
+    GIT_OPTIONAL_LOCKS: "0",
+    ...extra,
+  };
 }
 
 function redactLocalPaths(value, pathsToRedact) {
@@ -67,14 +79,14 @@ export function publicWorkspaceError(error) {
   return message;
 }
 
-function run(command, args, cwd, timeout = 60_000) {
+function run(command, args, cwd, timeout = 60_000, env = safeEnvironment()) {
   return new Promise((resolvePromise, reject) => {
     execFile(command, args, {
       cwd,
       timeout,
       maxBuffer: 2 * 1024 * 1024,
       encoding: "buffer",
-      env: processEnvironment(),
+      env,
     }, (error, stdout, stderr) => {
       const output = Buffer.isBuffer(stdout) ? stdout : Buffer.from(stdout ?? "");
       const diagnostics = Buffer.isBuffer(stderr) ? stderr : Buffer.from(stderr ?? "");
@@ -91,16 +103,51 @@ function run(command, args, cwd, timeout = 60_000) {
   });
 }
 
-async function git(cwd, args, allowFailure = false) {
-  const result = await run("git", args, cwd);
+function gitArguments(args, credentialHelpers = []) {
+  return [
+    "--no-replace-objects",
+    "-c", "core.hooksPath=/dev/null",
+    "-c", "core.fsmonitor=false",
+    "-c", "core.attributesFile=/dev/null",
+    "-c", "commit.gpgsign=false",
+    "-c", "credential.helper=",
+    ...credentialHelpers.flatMap((helper) => ["-c", `credential.helper=${helper}`]),
+    "-c", "protocol.ext.allow=never",
+    ...args,
+  ];
+}
+
+async function gitRaw(cwd, args, allowFailure = false, options = {}) {
+  const result = await run(
+    GIT,
+    gitArguments(args, options.credentialHelpers ?? []),
+    cwd,
+    options.timeout ?? 60_000,
+    options.env ?? safeEnvironment(),
+  );
   if (result.exitCode !== 0 && !allowFailure) {
     throw new Error(`Git verification failed for ${args[0] ?? "operation"}`);
   }
+  return result;
+}
+
+async function git(cwd, args, allowFailure = false, options = {}) {
+  const result = await gitRaw(cwd, args, allowFailure, options);
   return {
     exitCode: result.exitCode,
     stdout: utf8(result.stdout, "Git output").replace(/[\r\n]+$/, ""),
     stderr: utf8(result.stderr, "Git diagnostics").replace(/[\r\n]+$/, ""),
   };
+}
+
+async function pathExists(path) {
+  try {
+    await lstat(path);
+    return true;
+  } catch (error) {
+    if (error?.code === "ENOENT") return false;
+    throw error;
+  }
 }
 
 export function parseWorktreePorcelain(value) {
@@ -213,7 +260,7 @@ async function symbolicBranch(worktree) {
 }
 
 async function status(worktree) {
-  const result = await run("git", ["status", "--porcelain=v1", "-z", "--untracked-files=all"], worktree);
+  const result = await gitRaw(worktree, ["status", "--porcelain=v1", "-z", "--untracked-files=all"]);
   if (result.exitCode !== 0) throw new Error("Git verification failed for status");
   const raw = result.stdout;
   const text = utf8(raw, "Git status", true).split("\0").filter(Boolean).join("\n");
@@ -286,9 +333,189 @@ async function openRegular(root, path, flags, mode) {
   }
 }
 
+async function gitDirectory(worktree) {
+  const output = (await git(worktree, ["rev-parse", "--absolute-git-dir"])).stdout;
+  return await canonicalDirectory(output, "Registered worktree Git directory");
+}
+
+async function systemMountArguments() {
+  if (process.platform !== "linux" || process.getuid?.() === 0) {
+    throw new Error("Workspace command sandbox requires a non-root Linux operator");
+  }
+  try {
+    await access(BWRAP, fsConstants.X_OK);
+  } catch {
+    throw new Error("Workspace command sandbox requires the fixed /usr/bin/bwrap runtime");
+  }
+  const result = [];
+  for (const path of ["/usr", "/bin", "/lib", "/lib64"]) {
+    let stat;
+    try {
+      stat = await lstat(path);
+    } catch (error) {
+      if (error?.code === "ENOENT") continue;
+      throw error;
+    }
+    if (stat.isSymbolicLink()) result.push("--symlink", await readlink(path), path);
+    else if (stat.isDirectory()) result.push("--ro-bind", path, path);
+    else throw new Error("Workspace command sandbox system runtime layout is unsupported");
+  }
+  return result;
+}
+
+async function sandboxCommand(verified, command, args, timeoutMs) {
+  const common = await commonDirectory(verified.worktree);
+  const worktreeGit = await gitDirectory(verified.worktree);
+  const gitEntry = resolve(verified.worktree, ".git");
+  const sandboxExecutable = command.includes("/") || command.includes("\\")
+    ? `/workspace/${relativePath(command).split(sep).join("/")}`
+    : command;
+  const bwrap = [
+    "--die-with-parent", "--new-session", "--unshare-all",
+    ...await systemMountArguments(),
+    "--proc", "/proc",
+    "--dev", "/dev",
+    "--tmpfs", "/tmp",
+    "--dir", "/tmp/user",
+    "--bind", verified.worktree, "/workspace",
+    "--ro-bind", gitEntry, "/workspace/.git",
+    "--ro-bind", common, "/repo.git",
+    "--ro-bind", worktreeGit, "/worktree.git",
+    "--chdir", "/workspace",
+    "--setenv", "HOME", "/tmp/user",
+    "--setenv", "XDG_CONFIG_HOME", "/tmp/config",
+    "--setenv", "XDG_DATA_HOME", "/tmp/data",
+    "--setenv", "XDG_CACHE_HOME", "/tmp/cache",
+    "--setenv", "TMPDIR", "/tmp",
+    "--setenv", "PATH", SYSTEM_PATH,
+    "--setenv", "LANG", "C.UTF-8",
+    "--setenv", "LC_ALL", "C.UTF-8",
+    "--setenv", "SHELL", "/bin/false",
+    "--setenv", "GIT_DIR", "/worktree.git",
+    "--setenv", "GIT_COMMON_DIR", "/repo.git",
+    "--setenv", "GIT_WORK_TREE", "/workspace",
+    "--setenv", "GIT_CONFIG_NOSYSTEM", "1",
+    "--setenv", "GIT_CONFIG_GLOBAL", "/dev/null",
+    "--setenv", "GIT_ATTR_NOSYSTEM", "1",
+    "--setenv", "GIT_TERMINAL_PROMPT", "0",
+    "--setenv", "GIT_NO_REPLACE_OBJECTS", "1",
+    "--setenv", "GIT_OPTIONAL_LOCKS", "0",
+    "--", sandboxExecutable, ...args,
+  ];
+  return await run(BWRAP, bwrap, verified.worktree, timeoutMs);
+}
+
+async function assertSafeGitMetadata(verified) {
+  const names = (await git(verified.worktree, ["config", "--local", "--name-only", "--list"], true)).stdout
+    .split(/\r?\n/)
+    .filter(Boolean)
+    .map((name) => name.toLowerCase());
+  const unsafe = names.find((name) => name === "include.path" || name.startsWith("includeif.")
+    || (name.startsWith("url.") && name.endsWith(".insteadof"))
+    || (name.startsWith("remote.") && [".pushurl", ".receivepack", ".uploadpack", ".proxy"].some((suffix) => name.endsWith(suffix)))
+    || name === "core.sshcommand" || name.startsWith("credential.") || name.startsWith("http."));
+  if (unsafe) throw new Error("Workspace publication rejects Git configuration that can redirect transport or execute helpers");
+  const common = await commonDirectory(verified.worktree);
+  if (await pathExists(join(common, "objects", "info", "alternates"))) {
+    throw new Error("Workspace publication rejects alternate Git object directories");
+  }
+  const replace = join(common, "refs", "replace");
+  if (await pathExists(replace) && (await readdir(replace)).length > 0) {
+    throw new Error("Workspace publication rejects Git replace refs");
+  }
+}
+
+async function assertNoGitFilters(verified) {
+  const files = (await paths(verified.worktree)).filter((entry) => !entry.directory && !entry.symlink);
+  for (let index = 0; index < files.length; index += 100) {
+    const names = files.slice(index, index + 100).map((entry) => entry.name);
+    const result = await gitRaw(verified.worktree, ["check-attr", "-z", "filter", "working-tree-encoding", "--", ...names]);
+    const fields = utf8(result.stdout, "Git attribute output", true).split("\0");
+    for (let field = 0; field + 2 < fields.length; field += 3) {
+      const attribute = fields[field + 1];
+      const value = fields[field + 2];
+      if (["filter", "working-tree-encoding"].includes(attribute) && !["unspecified", "unset"].includes(value)) {
+        throw new Error("Workspace publication rejects content filters and working-tree encodings");
+      }
+    }
+  }
+}
+
+async function commitIdentity(verified) {
+  const result = await gitRaw(verified.worktree, ["show", "-s", "--format=%an%x00%ae%x00%cn%x00%ce", "HEAD"]);
+  const [authorName, authorEmail, committerName, committerEmail] = utf8(result.stdout, "Git identity", true)
+    .replace(/[\r\n]+$/, "")
+    .split("\0");
+  for (const value of [authorName, authorEmail, committerName, committerEmail]) {
+    if (!value || /[\r\n\0]/.test(value)) throw new Error("Workspace publication could not derive a bounded public Git identity");
+  }
+  return { authorName, authorEmail, committerName, committerEmail };
+}
+
+async function credentialHelpers(worktree) {
+  if (typeof process.env.HOME !== "string" || process.env.HOME.length === 0) return [];
+  const environment = {
+    PATH: SYSTEM_PATH,
+    HOME: process.env.HOME,
+    LANG: "C.UTF-8",
+    LC_ALL: "C.UTF-8",
+    GIT_CONFIG_NOSYSTEM: "1",
+    GIT_TERMINAL_PROMPT: "0",
+  };
+  const result = await run(GIT, ["config", "--global", "--get-all", "credential.helper"], worktree, 60_000, environment);
+  if (result.exitCode !== 0) return [];
+  const helpers = utf8(result.stdout, "Git credential helper configuration")
+    .split(/\r?\n/)
+    .filter(Boolean);
+  const allowed = /^(?:store|cache|libsecret|manager|manager-core|osxkeychain|wincred)$/;
+  if (helpers.some((helper) => !allowed.test(helper))) {
+    throw new Error("Workspace publication rejects executable or parameterized credential helpers");
+  }
+  return helpers;
+}
+
+async function originForPublication(verified, fixtureOrigins) {
+  const origin = (await git(verified.worktree, ["remote", "get-url", "--all", "origin"])).stdout
+    .split(/\r?\n/)
+    .filter(Boolean);
+  if (origin.length !== 1) throw new Error("Workspace publication requires exactly one verified origin URL");
+  if (/^https:\/\//i.test(origin[0])) {
+    let url;
+    try {
+      url = new URL(origin[0]);
+    } catch {
+      throw new Error("Workspace publication origin is malformed");
+    }
+    if (url.username || url.password || url.search || url.hash) {
+      throw new Error("Workspace publication origin must not embed credentials or query data");
+    }
+    if (url.protocol !== "https:" || url.hostname.toLowerCase() !== "github.com" || url.port
+      || !/^\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\.git$/.test(url.pathname)) {
+      throw new Error("Workspace publication requires a canonical credential-free GitHub HTTPS origin");
+    }
+  } else {
+    const fixture = isAbsolute(origin[0]) ? resolve(origin[0]) : undefined;
+    if (!fixture || !fixtureOrigins.has(fixture)) {
+      throw new Error("Workspace publication supports local origins only when the host explicitly registers an exact test fixture");
+    }
+  }
+  return origin[0];
+}
+
+async function synchronizationMarker(verified, branch) {
+  const directory = await gitDirectory(verified.worktree);
+  const name = branch === "developer"
+    ? "agent-workflow-sync-failed"
+    : branch === "template-development"
+      ? "template-development-sync-failed"
+      : "workspace-maintenance-sync-failed";
+  return join(directory, name);
+}
+
 export class WorkspaceMaintenanceGate {
-  constructor(rootDirectory) {
+  constructor(rootDirectory, options = {}) {
     this.rootDirectory = resolve(rootDirectory);
+    this.fixtureOrigins = new Set((options.fixtureOrigins ?? []).map((origin) => resolve(origin)));
   }
 
   async inventory() {
@@ -298,7 +525,7 @@ export class WorkspaceMaintenanceGate {
     const common = await commonDirectory(root);
     const origin = (await git(root, ["remote", "get-url", "origin"])).stdout;
     if (!origin) throw new Error("Workspace-maintenance instruction root has no origin remote");
-    const raw = (await run("git", ["worktree", "list", "--porcelain", "-z"], root)).stdout;
+    const raw = (await gitRaw(root, ["worktree", "list", "--porcelain", "-z"])).stdout;
     const entries = parseWorktreePorcelain(utf8(raw, "Git worktree inventory", true));
     return { root, common, origin, entries };
   }
@@ -497,7 +724,7 @@ export class WorkspaceMaintenanceGate {
     } else if (!/^[A-Za-z0-9._+-]+$/.test(command)) {
       throw new Error("Workspace executable name is invalid");
     }
-    const result = await run(executable, args, verified.worktree, timeoutMs);
+    const result = await sandboxCommand(verified, command, args, timeoutMs);
     const after = await this.inspect(target);
     const origin = (await git(verified.worktree, ["remote", "get-url", "origin"])).stdout;
     const privatePaths = [
@@ -506,13 +733,111 @@ export class WorkspaceMaintenanceGate {
       await commonDirectory(verified.worktree),
       origin,
       process.env.HOME,
+      "/workspace",
+      "/repo.git",
+      "/worktree.git",
+      ...args.filter((value) => isAbsolute(value)),
     ];
     return {
       command,
+      containment: "bubblewrap-worktree-v1",
+      network: "denied",
+      git_metadata: "read-only",
       exit_code: result.exitCode,
       stdout: bounded(redactLocalPaths(utf8(result.stdout, "Workspace command output"), privatePaths)),
       stderr: bounded(redactLocalPaths(utf8(result.stderr, "Workspace command diagnostics"), privatePaths)),
       target_state: after,
+    };
+  }
+
+  async publish(target, message, expectedHead, expectedStatusDigest) {
+    const verified = await this.preflight(target, expectedHead, expectedStatusDigest);
+    if (!verified.entry.branch?.startsWith("refs/heads/")) {
+      throw new Error("Workspace publication requires an attached registered branch worktree");
+    }
+    const branch = verified.entry.branch.slice("refs/heads/".length);
+    if (branch === "main") {
+      throw new Error("Workspace publication mechanically denies main; exact-SHA human promotion remains separate");
+    }
+    if (typeof message !== "string" || message.length === 0 || message.length > 4_000 || message.includes("\0")) {
+      throw new Error("Workspace publication commit message must be bounded text");
+    }
+    if (verified.public.clean) throw new Error("Workspace publication requires inspected working-tree changes");
+    const marker = await synchronizationMarker(verified, branch);
+    if (await pathExists(marker)) throw new Error("Workspace publication is blocked by unresolved synchronization state");
+    if (verified.public.upstream !== `origin/${branch}` || verified.public.ahead !== 0 || verified.public.behind !== 0) {
+      throw new Error("Workspace publication requires an exactly synchronized origin tracking branch");
+    }
+    await assertSafeGitMetadata(verified);
+    await assertNoGitFilters(verified);
+    const origin = await originForPublication(verified, this.fixtureOrigins);
+    const helpers = /^https:\/\//i.test(origin) ? await credentialHelpers(verified.worktree) : [];
+    const pushEnvironment = safeEnvironment({
+      ...(typeof process.env.HOME === "string" ? { HOME: process.env.HOME } : {}),
+    });
+    const remoteRef = `refs/heads/${branch}`;
+    const before = await git(
+      verified.worktree,
+      ["ls-remote", "--heads", "--", origin, remoteRef],
+      false,
+      { env: pushEnvironment, credentialHelpers: helpers },
+    );
+    const remoteBefore = before.stdout ? before.stdout.split(/\s+/)[0] : undefined;
+    if (remoteBefore !== expectedHead) {
+      throw new Error("Workspace publication refuses a missing, stale, or advanced canonical branch head");
+    }
+    const identity = await commitIdentity(verified);
+    const commitEnvironment = safeEnvironment({
+      GIT_AUTHOR_NAME: identity.authorName,
+      GIT_AUTHOR_EMAIL: identity.authorEmail,
+      GIT_COMMITTER_NAME: identity.committerName,
+      GIT_COMMITTER_EMAIL: identity.committerEmail,
+    });
+    await git(verified.worktree, ["add", "--all", "--", "."], false, { env: commitEnvironment });
+    const staged = await git(verified.worktree, ["diff", "--cached", "--quiet", "--exit-code"], true, { env: commitEnvironment });
+    if (staged.exitCode === 0) throw new Error("Workspace publication found no staged content change");
+    if (staged.exitCode !== 1) throw new Error("Workspace publication could not verify staged content");
+    let committed;
+    let commitCreated = false;
+    try {
+      await git(verified.worktree, ["commit", "--no-verify", "--no-gpg-sign", "-m", message], false, { env: commitEnvironment });
+      commitCreated = true;
+      committed = await this.inspect(target);
+      if (committed.head === expectedHead || !committed.clean) {
+        throw new Error("Workspace publication did not produce one clean branch commit");
+      }
+      const pushed = await git(
+        verified.worktree,
+        ["push", "--porcelain", "--no-verify", "--no-recurse-submodules", "--", origin, `${committed.head}:${remoteRef}`],
+        true,
+        { env: pushEnvironment, credentialHelpers: helpers, timeout: 180_000 },
+      );
+      if (pushed.exitCode !== 0) throw new Error("Workspace publication push failed");
+      const after = await git(
+        verified.worktree,
+        ["ls-remote", "--heads", "--", origin, remoteRef],
+        false,
+        { env: pushEnvironment, credentialHelpers: helpers },
+      );
+      const remoteAfter = after.stdout ? after.stdout.split(/\s+/)[0] : undefined;
+      if (remoteAfter !== committed.head) throw new Error("Workspace publication remote readback was ambiguous");
+      const tracking = `refs/remotes/origin/${branch}`;
+      const priorTracking = await git(verified.worktree, ["rev-parse", "--verify", tracking], true);
+      if (priorTracking.exitCode === 0) {
+        await git(verified.worktree, ["update-ref", tracking, committed.head, priorTracking.stdout]);
+      }
+    } catch {
+      if (!commitCreated) throw new Error("Workspace publication failed before creating a commit; reinspect the target state");
+      const commit = committed?.head ?? (await git(verified.worktree, ["rev-parse", "HEAD"])).stdout;
+      await writeFile(marker, `${branch}\n${commit}\n${new Date().toISOString().replace(/\.\d{3}Z$/, "Z")}\n`, { mode: 0o600 });
+      throw new Error(`Workspace publication failed after local commit ${commit}; synchronization recovery is required`);
+    }
+    return {
+      target: branch,
+      commit: committed.head,
+      remote_ref: remoteRef,
+      remote_verified: true,
+      target_state: await this.inspect(target),
     };
   }
 }

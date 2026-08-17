@@ -12,6 +12,7 @@ import {
   writeFile,
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
+import { createServer } from "node:http";
 import { join } from "node:path";
 import test from "node:test";
 import {
@@ -118,7 +119,7 @@ test("workspace gate keeps template authority while safely maintaining exact reg
   await git(unregistered, "add", ".");
   await git(unregistered, "commit", "-m", "Create unregistered sibling");
 
-  const gate = new WorkspaceMaintenanceGate(template);
+  const gate = new WorkspaceMaintenanceGate(template, { fixtureOrigins: [origin] });
   const inventory = await gate.list();
   assert.equal(inventory.instruction_root, "template-development");
   assert.equal(inventory.rejected_registered_entries, 3);
@@ -176,6 +177,8 @@ test("workspace gate keeps template authority while safely maintaining exact reg
 
   const outside = join(fixture, "outside");
   await mkdir(outside);
+  const outsideSentinel = join(outside, "sentinel.txt");
+  await writeFile(outsideSentinel, "outside-original\n", "utf8");
   await symlink(outside, join(developer, "escape"), "dir");
   state = await gate.inspect("developer");
   await assert.rejects(
@@ -198,45 +201,172 @@ test("workspace gate keeps template authority while safely maintaining exact reg
   state = await gate.inspect("developer");
   const previousSecret = process.env.WORKSPACE_MAINTENANCE_TEST_SECRET;
   process.env.WORKSPACE_MAINTENANCE_TEST_SECRET = "must-not-cross-the-tool-boundary";
-  const commandResult = await gate.execute(
-    "developer",
-    "node",
-    [
-      "-e",
-      "require('node:fs').writeFileSync('command.txt', 'command cwd was verified\\n'); console.log(process.cwd()); console.error(process.env.WORKSPACE_MAINTENANCE_TEST_SECRET || 'secret-absent')",
-    ],
-    state.head,
-    state.status_digest,
-  );
-  if (previousSecret === undefined) delete process.env.WORKSPACE_MAINTENANCE_TEST_SECRET;
-  else process.env.WORKSPACE_MAINTENANCE_TEST_SECRET = previousSecret;
+  let commandResult;
+  try {
+    commandResult = await gate.execute(
+      "developer",
+      "node",
+      [
+        "-e",
+        "require('node:fs').writeFileSync('command.txt', 'command cwd was verified\\n'); console.log(process.cwd()); console.error(process.env.WORKSPACE_MAINTENANCE_TEST_SECRET || 'secret-absent')",
+      ],
+      state.head,
+      state.status_digest,
+    );
+  } finally {
+    if (previousSecret === undefined) delete process.env.WORKSPACE_MAINTENANCE_TEST_SECRET;
+    else process.env.WORKSPACE_MAINTENANCE_TEST_SECRET = previousSecret;
+  }
   assert.equal(commandResult.exit_code, 0);
   assert.equal(commandResult.stdout, "[local-path]\n");
   assert.equal(commandResult.stderr, "secret-absent\n");
+  assert.equal(commandResult.containment, "bubblewrap-worktree-v1");
+  assert.equal(commandResult.network, "denied");
+  assert.equal(commandResult.git_metadata, "read-only");
   assert.doesNotMatch(JSON.stringify(commandResult), new RegExp(fixture.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
 
   let commandState = commandResult.target_state;
-  const added = await gate.execute("developer", "git", ["add", "."], commandState.head, commandState.status_digest);
-  commandState = added.target_state;
-  const committed = await gate.execute(
+  const hostServer = createServer((_request, response) => response.end("unexpected-host-network"));
+  await new Promise((resolvePromise, reject) => {
+    hostServer.once("error", reject);
+    hostServer.listen(0, "127.0.0.1", resolvePromise);
+  });
+  const hostAddress = hostServer.address();
+  const hostPort = typeof hostAddress === "object" && hostAddress ? hostAddress.port : 0;
+  let networkResult;
+  try {
+    networkResult = await gate.execute(
+      "developer",
+      "node",
+      ["-e", "fetch(process.argv[1]).then(r=>r.text()).then(t=>process.stdout.write(t)).catch(()=>process.stdout.write('network-blocked'))", `http://127.0.0.1:${hostPort}`],
+      commandState.head,
+      commandState.status_digest,
+    );
+  } finally {
+    await new Promise((resolvePromise, reject) => hostServer.close((error) => error ? reject(error) : resolvePromise()));
+  }
+  assert.equal(networkResult.stdout, "network-blocked");
+  commandState = networkResult.target_state;
+  const outsideRead = await gate.execute(
     "developer",
-    "git",
-    ["commit", "-m", "Exercise verified workspace mutation"],
+    "node",
+    ["-e", "const fs=require('node:fs'); try { process.stdout.write(fs.readFileSync(process.argv[1], 'utf8')) } catch { process.stdout.write('outside-read-blocked') }", outsideSentinel],
     commandState.head,
     commandState.status_digest,
   );
-  assert.equal(committed.exit_code, 0);
-  assert.notEqual(committed.target_state.head, commandState.head);
-  assert.equal(committed.target_state.clean, true);
-  const pushed = await gate.execute(
+  assert.equal(outsideRead.stdout, "outside-read-blocked");
+  commandState = outsideRead.target_state;
+  const outsideWrite = await gate.execute(
+    "developer",
+    "node",
+    ["-e", "const fs=require('node:fs'); try { fs.writeFileSync(process.argv[1], 'escaped\\n'); process.stdout.write('unexpected-write') } catch { process.stdout.write('outside-write-blocked') }", outsideSentinel],
+    commandState.head,
+    commandState.status_digest,
+  );
+  assert.equal(outsideWrite.stdout, "outside-write-blocked");
+  commandState = outsideWrite.target_state;
+  const symlinkEscape = await gate.execute(
+    "developer",
+    "node",
+    ["-e", "const fs=require('node:fs'); try { fs.writeFileSync('/workspace/escape/sentinel.txt', 'escaped\\n'); process.stdout.write('unexpected-write') } catch { process.stdout.write('symlink-write-blocked') }"],
+    commandState.head,
+    commandState.status_digest,
+  );
+  assert.equal(symlinkEscape.stdout, "symlink-write-blocked");
+  commandState = symlinkEscape.target_state;
+  const foreignCwd = await gate.execute(
     "developer",
     "git",
-    ["push"],
-    committed.target_state.head,
-    committed.target_state.status_digest,
+    ["-C", unregistered, "status", "--porcelain"],
+    commandState.head,
+    commandState.status_digest,
   );
-  assert.equal(pushed.exit_code, 0);
-  assert.doesNotMatch(`${pushed.stdout}\n${pushed.stderr}`, new RegExp(fixture.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  assert.notEqual(foreignCwd.exit_code, 0);
+  assert.doesNotMatch(`${foreignCwd.stdout}\n${foreignCwd.stderr}`, new RegExp(fixture.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  commandState = foreignCwd.target_state;
+  const foreignGitDir = await gate.execute(
+    "developer",
+    "git",
+    ["--git-dir", join(unregistered, ".git"), "status", "--porcelain"],
+    commandState.head,
+    commandState.status_digest,
+  );
+  assert.notEqual(foreignGitDir.exit_code, 0);
+  commandState = foreignGitDir.target_state;
+  const mainHead = (await gate.inspect("main")).head;
+  const refEscape = await gate.execute(
+    "developer",
+    "git",
+    ["update-ref", "refs/heads/workspace-escape", commandState.head],
+    commandState.head,
+    commandState.status_digest,
+  );
+  let escapedRef;
+  try {
+    escapedRef = (await git(template, "show-ref", "--verify", "refs/heads/workspace-escape")).stdout;
+  } catch {
+    escapedRef = "absent";
+  }
+  assert.equal(escapedRef, "absent", JSON.stringify({ refEscape, escapedRef }));
+  assert.equal((await gate.inspect("main")).head, mainHead);
+  assert.equal(await readFile(outsideSentinel, "utf8"), "outside-original\n");
+  assert.equal(await readFile(join(unregistered, "foreign.txt"), "utf8"), "foreign\n");
+
+  commandState = refEscape.target_state;
+  const unbrokeredGate = new WorkspaceMaintenanceGate(template);
+  await assert.rejects(
+    () => unbrokeredGate.publish(
+      "developer",
+      "Reject an unregistered local publication origin",
+      commandState.head,
+      commandState.status_digest,
+    ),
+    /host explicitly registers an exact test fixture/,
+  );
+  assert.equal((await gate.inspect("developer")).head, commandState.head);
+  const published = await gate.publish(
+    "developer",
+    "Exercise contained workspace publication",
+    commandState.head,
+    commandState.status_digest,
+  );
+  assert.equal(published.remote_verified, true);
+  assert.equal(published.target_state.clean, true);
+  assert.notEqual(published.commit, commandState.head);
   const remoteDeveloper = (await git(template, "ls-remote", "origin", "refs/heads/developer")).stdout.split(/\s+/)[0];
-  assert.equal(remoteDeveloper, committed.target_state.head);
+  assert.equal(remoteDeveloper, published.commit);
+  assert.equal((await gate.inspect("main")).head, mainHead);
+
+  let deniedMain = await gate.inspect("main");
+  deniedMain = await gate.write("main", "not-published.txt", "must remain local\n", deniedMain.head, deniedMain.status_digest);
+  await assert.rejects(
+    () => gate.publish("main", "Forbidden main publication", deniedMain.head, deniedMain.status_digest),
+    /mechanically denies main/,
+  );
+
+  let redirected = await gate.inspect("developer");
+  redirected = await gate.write("developer", "redirect-test.txt", "must not publish\n", redirected.head, redirected.status_digest);
+  await git(template, "config", "remote.origin.pushurl", foreignOrigin);
+  await assert.rejects(
+    () => gate.publish("developer", "Reject foreign push redirection", redirected.head, redirected.status_digest),
+    /redirect transport/,
+  );
+  await git(template, "config", "--unset-all", "remote.origin.pushurl");
+  assert.equal((await git(template, "ls-remote", foreignOrigin, "refs/heads/developer")).stdout, "");
+
+  const advancer = join(fixture, "remote-advancer");
+  await git(fixture, "clone", "--branch", "developer", origin, advancer);
+  await configureRepository(advancer);
+  await writeFile(join(advancer, "canonical-advance.txt"), "advanced elsewhere\n", "utf8");
+  await git(advancer, "add", ".");
+  await git(advancer, "commit", "-m", "Advance canonical developer elsewhere");
+  await git(advancer, "push", "origin", "developer");
+  let stalePublication = await gate.inspect("developer");
+  stalePublication = await gate.write("developer", "stale-publication.txt", "must stay local\n", stalePublication.head, stalePublication.status_digest);
+  const staleHead = stalePublication.head;
+  await assert.rejects(
+    () => gate.publish("developer", "Reject stale canonical developer", stalePublication.head, stalePublication.status_digest),
+    /stale, or advanced canonical branch head/,
+  );
+  assert.equal((await gate.inspect("developer")).head, staleHead);
 });

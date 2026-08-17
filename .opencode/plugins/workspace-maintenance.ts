@@ -108,7 +108,7 @@ export default async function WorkspaceMaintenanceTools() {
         },
       }),
       workspace_exec: tool({
-        description: "Run one executable with explicit arguments from the root of a verified worktree after exact HEAD and status-digest preflight. The OpenCode project remains template-development.",
+        description: "Run one executable with explicit arguments inside a networkless Bubblewrap sandbox after exact target preflight. Only the verified worktree is writable; exact Git metadata and fixed system runtimes are read-only, and no host environment or credential is inherited.",
         args: {
           target,
           command: tool.schema.string().min(1).max(1000),
@@ -125,6 +125,23 @@ export default async function WorkspaceMaintenanceTools() {
             args.expected_head,
             args.expected_status_digest,
             args.timeout_ms,
+          )));
+        },
+      }),
+      workspace_publish: tool({
+        description: "Create one commit from the exactly inspected non-main worktree state and push only that commit to the same verified branch on its verified origin. Git redirection, hooks, filters, alternate objects, force updates, and arbitrary credential access are denied.",
+        args: {
+          target,
+          message: tool.schema.string().min(1).max(4000),
+          expected_head: expectedHead,
+          expected_status_digest: expectedStatusDigest,
+        },
+        async execute(args, context) {
+          return await publicResult(async () => json(await gate(context).publish(
+            args.target,
+            args.message,
+            args.expected_head,
+            args.expected_status_digest,
           )));
         },
       }),
