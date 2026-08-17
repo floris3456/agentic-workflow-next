@@ -6,7 +6,7 @@
 
 ## Status
 
-Implementation and requested validation complete; source correction ready to commit.
+Ready for handoff.
 
 ## Task-start developer SHA
 
@@ -26,7 +26,7 @@ Correct the confirmed same-session second-terminal lifecycle gap: only after pro
 
 ## Current position
 
-This same-task continuation started from synchronized developer `7bc274c4e54dbe0fda2f0cfdd397bb7b78f41e98`, after prior task handoff `5dad89af63057545677e47d546783184b5e8c65d`. The source correction now reactivates only the exact mapped task/session after successful follow-up prompt delivery, atomically updates the route agent where applicable, coalesces re-enrollment behind an ending prior observer, and prevents duplicate prior terminal delivery from undoing reactivation. All focused, full bridge, agent-system, bridge-package, and repository validation requested for this cycle passes.
+This same-task continuation started from synchronized developer `7bc274c4e54dbe0fda2f0cfdd397bb7b78f41e98`, after prior task handoff `5dad89af63057545677e47d546783184b5e8c65d`. The source correction is committed and pushed at developer `6527f78ac9735b038f2f3febad025eb626734b6d`. It reactivates only the exact mapped task/session after successful follow-up prompt delivery, atomically updates the route agent where applicable, coalesces re-enrollment behind an ending prior observer, and prevents duplicate prior terminal delivery from undoing reactivation. All focused, full bridge, agent-system, bridge-package, and repository validation requested for this cycle passes.
 
 ## Observed
 
@@ -79,11 +79,11 @@ None observed.
 
 ## Remaining work
 
-Commit and push the source correction with its implementation/task records, then update this record with the pushed source SHA and create/push a new task-record-only handoff snapshot.
+No implementation work remains. Create and push the required new task-record-only handoff snapshot.
 
 ## Next action
 
-Run final status/diff inspection, then commit and push the source correction.
+Run final task-record diff/status inspection, then create and push the handoff snapshot; do not edit or run another tool after its successful push in this cycle.
 
 ## Relevant durable records
 
