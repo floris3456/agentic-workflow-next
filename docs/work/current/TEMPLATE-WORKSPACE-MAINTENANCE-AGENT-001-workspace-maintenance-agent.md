@@ -6,10 +6,10 @@ TEMPLATE-WORKSPACE-MAINTENANCE-AGENT-001
 
 ## Status
 
-Correction cycle in progress after independent review; the earlier completed
-working-cycle state is retained below as historical evidence but is superseded
-until containment, package completeness, mechanical permission enforcement, and
-real pinned-runtime acceptance are corrected and re-reviewed
+Correction sources and real-runtime acceptance complete after independent
+review; the earlier completed working-cycle state is retained below as
+historical evidence but is superseded until the corrected schema-3 package and
+template-development handoff are pushed and independently verified
 
 ## Task-start template-development SHA
 
@@ -77,6 +77,16 @@ through the matching branch's normal workflow. The superseded schema-2 package
 was removed from the current tree before the corrected pre-package implementation
 head; its exact historical commit and digests remain below.
 
+The developer correction is now complete. Its tracked real-runtime harness is
+published at `f455d6269678dbbab3783fd845ef26e0227c7ed7`, the OAuth/provider
+precondition correction is published at
+`1b7fb2bce9d9bf23e107d808632066c62fe4c13c`, and the dedicated developer
+handoff is `3d3cbad9f423cc4d80aaff8a0fba86a16300c502`. A fresh credential-isolated
+OpenCode 1.18.16 lifecycle passed through the production bridge path with zero
+repository mutation. The exact source snapshot is now reconciled to that
+developer handoff plus unchanged main and web refs. Corrected package generation
+is the remaining implementation action.
+
 Historical position before review correction:
 
 Template-development commit `cd433706bfefebaf42a5de6ea1521ec61deb2c8a`
@@ -123,6 +133,15 @@ back. Only this dedicated handoff snapshot remains in the working cycle.
 - corrected template-development implementation: begins after
   `546ada45be5fb4317ea40cdf7b207b0174ebe0e3` and is pushed at
   `33227b741c0dc2909ed8ca8dc00ea1b28963febc`
+- developer correction implementation:
+  `183402e259a5f8367f3f4cc233fc8b3c490140c1..1b7fb2bce9d9bf23e107d808632066c62fe4c13c`
+- developer correction handoff:
+  `1b7fb2bce9d9bf23e107d808632066c62fe4c13c..3d3cbad9f423cc4d80aaff8a0fba86a16300c502`
+- corrected developer package range:
+  `ba73b3b54febfdeadbff66262acaa7be12e5760e..3d3cbad9f423cc4d80aaff8a0fba86a16300c502`
+- corrected template-development package range begins at
+  `7915a22248f11c8000622ffd761fb2a6e91e2359` and will end at the pushed
+  pre-package checkpoint containing this reconciled source snapshot
 
 ## Observed
 
@@ -152,6 +171,20 @@ back. Only this dedicated handoff snapshot remains in the working cycle.
 - Schema 3 keeps `source-lock.json` independent and three-source-only; the
   reviewed template-development head is proven from canonical history but must
   precede and exclude its own generated package path.
+- The successful live acceptance created a real OpenCode 1.18.16 workspace
+  session with template-development as project/directory and
+  `workspace-maintainer` as agent, proved the connected expected provider/model,
+  loaded workspace plugin/skill, and mechanically denied every other discovered
+  tool/skill.
+- The same mapped workspace session loaded `workspace-maintenance`, inspected
+  developer instructions as evidence only, used the four required workspace
+  tools, and ran only sandboxed `git status --short` against developer. Project,
+  session directory, and skill inventory remained template-rooted afterward.
+- Two meaningful workspace assistant phases reached terminal delivery through
+  canonical recovery and public projection with no host-local paths. A separate
+  real `small-developer` session then proved normal developer routing remained
+  independent. Both source worktrees remained clean and temporary runtime state
+  was removed.
 
 ## Interpretation
 
@@ -206,6 +239,26 @@ promote `main`; exact-SHA human approval remains unchanged.
     implementation as `33227b741c0dc2909ed8ca8dc00ea1b28963febc`, and
     independently read that exact canonical ref back with direct `ls-remote`;
     ancestry from the correction-cycle ledger checkpoint passed.
+16. Reopened the developer record at
+    `183402e259a5f8367f3f4cc233fc8b3c490140c1`, added and pushed the tracked real
+    bridge lifecycle harness at `f455d6269678dbbab3783fd845ef26e0227c7ed7`,
+    and recovered the hook's initial proxy-caused synchronization marker only
+    after exact remote readback proved that commit.
+17. A first full server attempt proved the project/agent/tool/skill inventory but
+    exposed that disabling OpenCode's bundled default integration prevented the
+    copied OAuth credential from connecting. It produced one inactive user
+    message, no assistant/tool/error message, no repository mutation, and its
+    isolated process/state were stopped and removed.
+18. Added an explicit provider/model connection gate and retained the bundled
+    authentication integration only for OAuth mode, while continuing to audit
+    every exposed tool/skill under the real agent's default-deny rules. Published
+    that correction at `1b7fb2bce9d9bf23e107d808632066c62fe4c13c`.
+19. Ran a fresh real OpenCode 1.18.16 acceptance successfully, repeated the full
+    developer validation set, and published the developer handoff snapshot
+    `3d3cbad9f423cc4d80aaff8a0fba86a16300c502`.
+20. Re-fetched all canonical refs, independently read them back, and reconciled
+    `source-lock.json` directly to the exact developer handoff plus unchanged
+    main and web refs without adding a self-referential template-development SHA.
 
 ## Changed approach
 
@@ -277,30 +330,48 @@ normal repository-owned path.
   `ls-remote` both returned `33227b741c0dc2909ed8ca8dc00ea1b28963febc`;
   the correction range is linear from
   `546ada45be5fb4317ea40cdf7b207b0174ebe0e3`.
+- Developer real-runtime harness implementation
+  `f455d6269678dbbab3783fd845ef26e0227c7ed7`, OAuth/provider-gate correction
+  `1b7fb2bce9d9bf23e107d808632066c62fe4c13c`, and handoff
+  `3d3cbad9f423cc4d80aaff8a0fba86a16300c502`: each pushed and independently
+  read back; correction history is linear from
+  `183402e259a5f8367f3f4cc233fc8b3c490140c1`.
+- Developer final-source focused workspace/protocol/state/recovery/projection/
+  scope tests: passed 68/68; complete bridge tests passed 113/113.
+- Developer final-source bridge validator, repository validator, bootstrap hook
+  check, and `git diff --check`: passed, including 8/8 branch-initialization
+  tests.
+- Real credential-isolated OpenCode 1.18.16 lifecycle smoke: passed with actual
+  provider/model connection, template project and agent, effective permissions,
+  workspace tool progress, evidence-only target instructions, same-session
+  terminal recovery/public delivery, separate normal developer routing, no
+  local-path projection, zero repository mutation, and complete temporary-state
+  cleanup.
+- Current canonical readback before source-lock mutation: template-development
+  `dfbfeaa2cdd513e7f5012b3829179c596d9c0d80`, developer
+  `3d3cbad9f423cc4d80aaff8a0fba86a16300c502`, main
+  `6127611113dfdb66f93a0cfd2d355359aa370833`, and web-orchestration
+  `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`.
 
 ## Blockers / required decisions
 
-No correction blocker is established yet. Completion remains gated on a real
-pinned OpenCode 1.18.16 lifecycle acceptance; if the environment cannot provide
-that dependency after all safe attempts, this task must remain explicitly
-blocked on that boundary. Any future `main` promotion still requires explicit
-human approval of an exact SHA.
+No correction blocker or decision remains. Any future `main` promotion still
+requires explicit human approval of an exact SHA and is outside this task.
 
 ## Remaining work
 
-1. Correct the developer-owned real pinned-runtime bridge acceptance path while
-   preserving the reviewed routing/lifecycle behavior and normal developer route.
-2. Run focused and complete source validation plus the real pinned-runtime
-   lifecycle acceptance, then independently verify pushed refs, ancestry, ranges,
-   package identity, and relevant CI.
-3. Regenerate the task package using only the corrected repository generator,
-   update durable records, and push a dedicated correction handoff snapshot.
+1. Validate and push this exact pre-package source-snapshot checkpoint.
+2. Regenerate the schema-3 package only with the repository-owned generator from
+   the exact reviewed template-development, developer, and unchanged web ranges.
+3. Validate/dry-run/apply-review the generated package, push package/ledger and
+   dedicated handoff commits, and independently verify remote refs, ancestry,
+   package identity, changed paths/digests/provenance, and relevant CI.
 
 ## Next action
 
-Enter the synchronized developer worktree under its own authoritative task
-workflow, reopen its matching task record for correction, and implement the real
-pinned-runtime lifecycle acceptance without changing the sound route semantics.
+Run template-development validation, commit/push this pre-package checkpoint,
+then use its exact SHA as the template-development reviewed range head for the
+repository-owned generator.
 
 ## Relevant durable records
 
@@ -317,6 +388,11 @@ pinned-runtime lifecycle acceptance without changing the sound route semantics.
   absent pending final reviewed source heads and repository-owned regeneration)
 - Corrected template-development implementation checkpoint
   `33227b741c0dc2909ed8ca8dc00ea1b28963febc`
+- Developer correction implementation checkpoints
+  `f455d6269678dbbab3783fd845ef26e0227c7ed7` and
+  `1b7fb2bce9d9bf23e107d808632066c62fe4c13c`
+- Developer correction handoff
+  `3d3cbad9f423cc4d80aaff8a0fba86a16300c502`
 
 ## Last handoff commit
 
