@@ -208,7 +208,7 @@ test("workspace gate keeps template authority while safely maintaining exact reg
       "node",
       [
         "-e",
-        "require('node:fs').writeFileSync('command.txt', 'command cwd was verified\\n'); console.log(process.cwd()); console.error(process.env.WORKSPACE_MAINTENANCE_TEST_SECRET || 'secret-absent')",
+        "require('node:fs').writeFileSync('command.txt', 'command cwd was verified\\n'); console.log(process.cwd()); console.log(process.execPath); console.error(process.env.WORKSPACE_MAINTENANCE_TEST_SECRET || 'secret-absent')",
       ],
       state.head,
       state.status_digest,
@@ -217,8 +217,8 @@ test("workspace gate keeps template authority while safely maintaining exact reg
     if (previousSecret === undefined) delete process.env.WORKSPACE_MAINTENANCE_TEST_SECRET;
     else process.env.WORKSPACE_MAINTENANCE_TEST_SECRET = previousSecret;
   }
-  assert.equal(commandResult.exit_code, 0);
-  assert.equal(commandResult.stdout, "[local-path]\n");
+  assert.equal(commandResult.exit_code, 0, commandResult.stderr);
+  assert.equal(commandResult.stdout, "[local-path]\n/runtime/node\n");
   assert.equal(commandResult.stderr, "secret-absent\n");
   assert.equal(commandResult.containment, "bubblewrap-worktree-v1");
   assert.equal(commandResult.network, "denied");

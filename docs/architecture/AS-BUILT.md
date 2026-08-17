@@ -87,11 +87,13 @@ require the exact HEAD and SHA-256 status digest returned by inspection, so
 unobserved local movement blocks the operation. `workspace_exec` runs the
 explicit executable/argument array inside a non-root Linux Bubblewrap namespace,
 not merely at a selected cwd. Only the verified worktree is writable; its exact
-Git common/worktree metadata and fixed system runtimes are read-only; network,
-the remaining host filesystem, inherited environment, credentials, and host temp
-state are absent. Repository-relative executables remain inside that namespace,
-and arbitrary Git options cannot reach foreign repositories or persist ref/config
-changes outside it.
+Git common/worktree metadata and fixed system roots are read-only. The exact Node
+executable already hosting the trusted gate is separately mounted read-only at
+`/runtime/node`, without exposing its host installation tree or host `PATH`.
+Network, the remaining host filesystem, inherited environment, credentials, and
+host temp state are absent. Repository-relative executables remain inside that
+namespace, and arbitrary Git options cannot reach foreign repositories or
+persist ref/config changes outside it.
 
 Commit/push is a separate fixed `workspace_publish` broker, not arbitrary Git
 authority. It rejects `main`, detached or unsynchronized branches, canonical-tip

@@ -20,6 +20,7 @@ const MAX_RESULTS = 500;
 const GIT = "/usr/bin/git";
 const BWRAP = "/usr/bin/bwrap";
 const SYSTEM_PATH = "/usr/bin:/bin";
+const SANDBOX_PATH = "/runtime:/usr/bin:/bin";
 
 function sha256(value) {
   return createHash("sha256").update(value).digest("hex");
@@ -363,6 +364,18 @@ async function systemMountArguments() {
   return result;
 }
 
+async function nodeRuntimeMountArguments() {
+  const executable = await realpath(process.execPath);
+  const stat = await lstat(executable);
+  if (!stat.isFile()) throw new Error("Workspace command sandbox Node runtime is not a regular file");
+  try {
+    await access(executable, fsConstants.X_OK);
+  } catch {
+    throw new Error("Workspace command sandbox Node runtime is not executable");
+  }
+  return ["--dir", "/runtime", "--ro-bind", executable, "/runtime/node"];
+}
+
 async function sandboxCommand(verified, command, args, timeoutMs) {
   const common = await commonDirectory(verified.worktree);
   const worktreeGit = await gitDirectory(verified.worktree);
@@ -373,6 +386,7 @@ async function sandboxCommand(verified, command, args, timeoutMs) {
   const bwrap = [
     "--die-with-parent", "--new-session", "--unshare-all",
     ...await systemMountArguments(),
+    ...await nodeRuntimeMountArguments(),
     "--proc", "/proc",
     "--dev", "/dev",
     "--tmpfs", "/tmp",
@@ -387,7 +401,7 @@ async function sandboxCommand(verified, command, args, timeoutMs) {
     "--setenv", "XDG_DATA_HOME", "/tmp/data",
     "--setenv", "XDG_CACHE_HOME", "/tmp/cache",
     "--setenv", "TMPDIR", "/tmp",
-    "--setenv", "PATH", SYSTEM_PATH,
+    "--setenv", "PATH", SANDBOX_PATH,
     "--setenv", "LANG", "C.UTF-8",
     "--setenv", "LC_ALL", "C.UTF-8",
     "--setenv", "SHELL", "/bin/false",

@@ -295,6 +295,13 @@ promote `main`; exact-SHA human approval remains unchanged.
     adversarial test executes instead of being skipped. Removed only the
     superseded generated package from the current tree; its exact bytes remain
     recoverable at the historical package commit.
+26. Remote run 32081677444 proved the ephemeral-runner namespace prerequisite
+    succeeded, then exposed that `actions/setup-node` keeps the pinned runtime
+    outside the deliberately mounted `/usr` and `/bin` roots. Kept the host
+    runtime tree and `PATH` hidden: the gate now resolves and mounts only its own
+    already-running Node executable read-only at fixed `/runtime/node`. The
+    containment fixture proves that fixed in-sandbox path and reports sandbox
+    diagnostics on failure.
 
 ## Changed approach
 
@@ -428,6 +435,11 @@ normal repository-owned path.
   `tests/workspace-maintenance.test.mjs` line 220 because the first Bubblewrap
   command exited 1 on the Ubuntu 24.04 runner; package tests passed 6/6 before
   that failure. This is the active CI correction, not completion evidence.
+- Template GitHub Actions run 32081677444: its Bubblewrap installation and
+  one-boot namespace prerequisite both passed; validation then failed at the
+  same first command because the pinned setup-node executable lived outside the
+  fixed system mounts. The follow-up exposes only that one executable at the
+  fixed read-only sandbox path, not the hosted tool-cache tree or host `PATH`.
 
 ## Blockers / required decisions
 
