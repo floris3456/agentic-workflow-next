@@ -6,7 +6,7 @@
 
 ## Status
 
-Implementation and requested validation complete; substantive correction ready to commit.
+Ready for handoff.
 
 ## Task-start developer SHA
 
@@ -26,7 +26,7 @@ Correct the confirmed Scout session-persistence lifecycle gap by preserving priv
 
 ## Current position
 
-This same-task continuation started from exact synchronized developer and prior handoff `9ca25b8b6f9036744cb61845039f9185deb9e78f`. The Scout installer now derives a sibling persistence root, preserves only XDG data/state there across complete trusted-runtime replacement, keeps HOME/config/cache/tmp/PATH authority in the replaceable runtime, validates persistence containment and filesystem structure, and migrates legacy isolated OAuth into the persistent auth location. All requested focused/full, real-runtime smoke, agent-system, bridge-package, and repository validation passes.
+This same-task continuation started from exact synchronized developer and prior handoff `9ca25b8b6f9036744cb61845039f9185deb9e78f`. The Scout persistence correction and its tests/durable records are committed and pushed at developer `14b1bc2a6ec95dac3e932881c2ca6a649a199064`. The installer derives a sibling persistence root, preserves only XDG data/state there across complete trusted-runtime replacement, keeps HOME/config/cache/tmp/PATH authority in the replaceable runtime, validates persistence containment, filesystem structure, and the exclusive credential boundary, and migrates legacy isolated OAuth into the persistent auth location. All requested focused/full, real-runtime smoke, agent-system, bridge-package, and repository validation passes.
 
 ## Observed
 
@@ -98,11 +98,11 @@ None observed.
 
 ## Remaining work
 
-Commit and push the substantive correction with its tests and durable records, then update this record with the pushed source SHA and create/push a new task-record-only handoff snapshot.
+No implementation work remains. Create and push the required new task-record-only handoff snapshot.
 
 ## Next action
 
-Run final status/diff inspection, then commit and push the substantive correction.
+Run final task-record diff/status inspection, then create and push the handoff snapshot; do not edit or run another tool after its successful push in this cycle.
 
 ## Relevant durable records
 
