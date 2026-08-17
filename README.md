@@ -20,6 +20,11 @@ the ChatGPT Project package.
   review.
 - `scripts/`: deterministic package, application, synchronization, and
   validation tools.
+- `.opencode/agents/workspace-maintainer.md`, its dedicated skill, and the
+  repository-owned `workspace_*` plugin: a template-rooted operator for verified
+  registered worktrees without target-instruction takeover or host-path
+  publication. Its adjacent package manifest pins the plugin helper API while
+  installed dependencies and lockfiles remain local generated state.
 
 Actual component truth stays with the code it describes. A bridge change updates
 the component AS-BUILT on `developer`; a Project-package change updates its
@@ -43,6 +48,11 @@ refs and the overall maintenance task without duplicating either tree.
 7. Reconcile this ledger and archive the exact approved maintenance task record.
 
 Never merge this branch into `developer`, `web-orchestration`, or `main`.
+
+For an explicitly routed repository-wide maintenance operation, start
+`workspace-maintainer` with this worktree as the OpenCode directory. It discovers
+targets from Git and keeps target instructions as evidence; it does not turn a
+target into the OpenCode project or weaken human authority over `main`.
 
 ## Generated projects
 

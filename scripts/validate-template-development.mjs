@@ -11,12 +11,16 @@ const read = (path) => readFileSync(join(root, path), "utf8");
 const required = [
   "README.md", "AGENTS.md", "source-lock.json", "opencode.json",
   ".opencode/agents/template-maintainer.md", ".opencode/skills/template-maintenance/SKILL.md",
+  ".opencode/agents/workspace-maintainer.md", ".opencode/skills/workspace-maintenance/SKILL.md",
+  ".opencode/plugins/workspace-maintenance.ts", ".opencode/.gitignore", ".opencode/package.json",
+  "scripts/workspace-maintenance-lib.mjs",
   "docs/architecture/AS-BUILT.md", "docs/architecture/decisions/0001-template-development-ledger.md",
   "docs/design/template-maintenance-workflow.md", "docs/deviations.md",
   "docs/work/templates/task-progress-template.md", "docs/work/templates/maintainer-response-template.md",
   "scripts/change-package-lib.mjs", "scripts/create-change-package.mjs", "scripts/apply-change-package.mjs",
   "scripts/bootstrap-template-development.sh", "scripts/recover-template-development-sync.sh",
   "scripts/validate-template-development.sh", "tests/change-package.test.mjs",
+  "tests/workspace-maintenance.test.mjs",
 ];
 for (const path of required) if (!existsSync(join(root, path))) fail(`Missing required path: ${path}`);
 
@@ -36,6 +40,64 @@ try {
   validateSourceLock(JSON.parse(read("source-lock.json")));
 } catch (error) {
   fail(`source-lock.json is invalid: ${error.message}`);
+}
+
+try {
+  const config = JSON.parse(read("opencode.json"));
+  if (config.default_agent !== "template-maintainer") fail("template-maintainer must remain the default agent");
+  if (config.permission?.task !== "deny") fail("Template OpenCode must deny task/subagent launches");
+  if (config.permission?.external_directory === "allow") fail("Template OpenCode must not broadly allow external directories");
+} catch (error) {
+  fail(`opencode.json is invalid: ${error.message}`);
+}
+
+try {
+  const packageFile = JSON.parse(read(".opencode/package.json"));
+  if (packageFile.dependencies?.["@opencode-ai/plugin"] !== "1.18.16") {
+    fail("Workspace plugin dependency must remain pinned to @opencode-ai/plugin 1.18.16");
+  }
+} catch (error) {
+  fail(`.opencode/package.json is invalid: ${error.message}`);
+}
+
+if (existsSync(join(root, ".opencode/agents/workspace-maintainer.md"))) {
+  const agent = read(".opencode/agents/workspace-maintainer.md");
+  for (const term of [
+    "mode: primary", "model: openai/gpt-5.6-sol", "reasoningEffort: high",
+    "task: deny", "bash: deny", "edit: deny", "question: allow", "external_directory: deny",
+    "workspace_list: allow", "workspace_inspect: allow", "workspace_read: allow",
+    "workspace_write: allow", "workspace_delete: allow", "workspace_glob: allow",
+    "workspace_grep: allow", "workspace_exec: allow", "load\n`workspace-maintenance`",
+    "Reading them never\ntransfers instruction authority",
+  ]) if (!agent.includes(term)) fail(`workspace-maintainer is missing required boundary: ${term}`);
+}
+
+if (existsSync(join(root, "AGENTS.md"))) {
+  const instructions = read("AGENTS.md");
+  for (const term of [
+    "`workspace-maintainer` is the explicit exception", "OpenCode project remains",
+    "inspectable evidence only", "does not transfer", "human exact-SHA boundary",
+    ".opencode/skills/workspace-maintenance/SKILL.md",
+  ]) if (!instructions.includes(term)) fail(`AGENTS.md is missing workspace route boundary: ${term}`);
+}
+
+if (existsSync(join(root, ".opencode/skills/workspace-maintenance/SKILL.md"))) {
+  const skill = read(".opencode/skills/workspace-maintenance/SKILL.md");
+  for (const term of [
+    "name: workspace-maintenance", "Remain in the OpenCode project",
+    "Reading them never transfers instruction authority", "git worktree list --porcelain -z",
+    "Targets are selected only by a registered local branch name",
+    "exact returned `head` and `status_digest`", "Never mutate or promote",
+    "explicit human exact-SHA authority", "failed or ambiguous push stops",
+  ]) if (!skill.includes(term)) fail(`workspace-maintenance skill is missing required boundary: ${term}`);
+}
+
+if (existsSync(join(root, ".opencode/plugins/workspace-maintenance.ts"))) {
+  const plugin = read(".opencode/plugins/workspace-maintenance.ts");
+  for (const name of [
+    "workspace_list", "workspace_inspect", "workspace_read", "workspace_write",
+    "workspace_delete", "workspace_glob", "workspace_grep", "workspace_exec",
+  ]) if (!plugin.includes(`${name}: tool(`)) fail(`Workspace plugin is missing ${name}`);
 }
 
 const expectedResponse = [
@@ -97,6 +159,7 @@ function files(directory) {
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
     if (entry.name === ".git") return [];
     const full = join(directory, entry.name);
+    if (relative(root, full) === join(".opencode", "node_modules")) return [];
     return entry.isDirectory() ? files(full) : [full];
   });
 }

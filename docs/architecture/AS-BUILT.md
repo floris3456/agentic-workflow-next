@@ -46,6 +46,50 @@ the hardened Scout boundary is ready. Each source branch keeps its own task,
 AS-BUILT/deviation, synchronization, and validation contract. Every changed source
 range is independently reviewed against exact remote GitHub.
 
+## Workspace Maintenance Agent
+
+`workspace-maintainer` is a dedicated Sol/high primary agent whose OpenCode
+project remains the registered `template-development` worktree for its whole
+session. Unlike the generic `template-maintainer` source route, it does not enter
+another worktree's OpenCode context or inherit that target's agent workflow. Its
+stable repository instruction authority is the template-development root
+`AGENTS.md`, its own agent definition, and the `workspace-maintenance` skill.
+Target `AGENTS.md`, skills, agents, and other instruction-shaped files remain
+inspectable compatibility evidence only.
+
+The template-development-owned OpenCode plugin exposes `workspace_list`,
+`workspace_inspect`, `workspace_read`, `workspace_write`, `workspace_delete`,
+`workspace_glob`, `workspace_grep`, and `workspace_exec`. The agent denies
+`external_directory`, `task`, built-in shell, and built-in edits; it allows these
+repository-scoped tools plus structured questions. No parent-directory allow rule
+or host-specific path is tracked. `.opencode/package.json` pins the local plugin
+helper API to `@opencode-ai/plugin` `1.18.16`; generated dependencies and lockfiles
+remain ignored.
+
+Every tool invocation starts from the active template-development directory and
+derives NUL-delimited porcelain inventory from `git worktree list`. Eligibility
+requires a real non-symlink registered worktree, the same canonical Git common
+directory and exact origin as the instruction root, matching inventory/current
+branch and HEAD, and readable status/upstream state. Target inputs are branch
+names or unambiguous exact detached HEADs, never paths. Stale, foreign,
+unregistered, similarly named, symlinked, escaping, and ambiguous targets fail
+closed. Public tool results identify targets by branch/ref and SHA and omit
+host-local worktree paths.
+
+File tools reject `.git`, absolute/traversing paths, symlink components, binary
+or oversized reads, and non-regular mutations. Mutating file and command tools
+require the exact HEAD and SHA-256 status digest returned by inspection, so
+unobserved local movement blocks the operation. Command execution receives an
+explicit executable/argument array and a verified target cwd; it supports tests,
+Git inspection, commit, and push without changing the OpenCode project. The
+procedure requires proportional public-safe changes, diff/check inspection,
+independent remote readback, and immediate stop on ambiguous synchronization.
+
+Registered access is technical capability only. A `main` worktree is inspectable
+and technically reachable when registered, but consequential main mutation or
+promotion still requires the repository's existing explicit human exact-SHA
+authority.
+
 ## Acceptance-test CI reachability
 
 Acceptance-critical executable tests owned by an authoritative branch are
@@ -270,12 +314,19 @@ useful generation-time context, not an authority that defines package membership
   through the same canonical push validation path.
 - `scripts/validate-template-development.mjs` validates ledger structure, source
   snapshot shape, task/archive rules, forbidden source-tree absence, executable
-  bits, and committed change packages through the shared verifier.
+  bits, the Workspace Maintenance Agent/tool/instruction boundary, and committed
+  change packages through the shared verifier.
 - `tests/change-package.test.mjs` covers deterministic schema-2 generation with a
   source snapshot intentionally newer than package range bases, deceptive origin,
   non-ancestor base rejection, forged-head rejection, later canonical branch
   advance, provenance/patch/package tamper detection, schema-1 compatibility, and
   downstream dry-run/application boundaries.
+- `tests/workspace-maintenance.test.mjs` creates harmless temporary canonical and
+  foreign repositories plus registered worktrees. It proves registered developer
+  and main access, stable template instruction root while operating on a target
+  with conflicting instruction files, exact preflight read/write/command/delete
+  capability, public path omission, and rejection of unregistered, foreign,
+  path-like, stale, and symlink-escaping targets.
 - `scripts/validate-template-development.sh` runs the ledger/package checks plus
   `git diff --check`.
 
