@@ -26,7 +26,7 @@ Prove the final reviewed Scout-persistence correction is installed by the normal
 
 ## Current position
 
-Fresh canonical refs are developer `ba73b3b54febfdeadbff66262acaa7be12e5760e`, web-orchestration `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`, and main `6127611113dfdb66f93a0cfd2d355359aa370833`. Template-development was `ed501942dec87af9dca67ef29d0c200145d171fc` immediately before this ledger update.
+Fresh canonical refs are developer `ba73b3b54febfdeadbff66262acaa7be12e5760e`, web-orchestration `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`, and main `6127611113dfdb66f93a0cfd2d355359aa370833`. Template-development was `a858b0b993d41d2e0d88393773c44015f06a1372` immediately before this disposition ledger update.
 
 Canonical source issue #49 remains the one lifecycle control issue and stays bound to the original mapped developer session `session-81`; no replacement start/session occurred. Initial canonical developer-terminal/new-Scout recovery landed at `9c1ae8a445cbf53db7af3905aefd471470c6cac6`, evidence-method metadata correction at `0362e24a363d9f905234283666b3f840983a6ef1`, second-terminal substantive correction at `6527f78ac9735b038f2f3febad025eb626734b6d`, and its task-record-only handoff at `9ca25b8b6f9036744cb61845039f9185deb9e78f`.
 
@@ -40,7 +40,7 @@ Independent review then found one bounded evidence gap: the first real Scout run
 
 The bridge independently published terminal developer response `message-359` with `finish: stop`, a completion timestamp, exact handoff `ba73b3b54febfdeadbff66262acaa7be12e5760e`, and no blockers. Final read-only sequence 54 succeeded with inactive `{}`; a sequence-free `command.status` read independently found sequence 54 durable and succeeded. The developer source route is therefore terminal and absorbed.
 
-The three historical promotion-review Scouts remain unreplayed: #46 request `2bab872f-8e36-4ff2-a6cd-5cb8e6c9631d`, #47 request `2d97c6f4-029e-49ed-8d99-61f3ccaacb5d`, #48 request `b8c8c6eb-c49c-43ac-a29c-09154fc52cc5`. Their pre-fix OpenCode session history may already have been erased and must not be recreated under the old request identities.
+The three historical promotion-review Scouts were never replayed: #46 request `2bab872f-8e36-4ff2-a6cd-5cb8e6c9631d`, #47 request `2d97c6f4-029e-49ed-8d99-61f3ccaacb5d`, #48 request `b8c8c6eb-c49c-43ac-a29c-09154fc52cc5`. Fresh issue reconciliation found no late original terminal result. Each issue now records that the original result is unavailable because of the confirmed pre-fix Scout session-store loss; each bridge-control label was removed and each issue was closed `not_planned`. No request/session was replayed or reconstructed and no terminal Scout result was inferred.
 
 ## Source ranges
 
@@ -69,14 +69,14 @@ The lifecycle task remains intentionally split because the separate pagination c
 - Source commit `1a779434...` is proof-only: three paths changed and no runtime implementation code changed.
 - GitHub repository validation succeeded for persistence source `14b1bc2...`, handoff `fc2cdb9...`, real-smoke correction `1a779434...`, and final handoff `ba73b3b...`.
 - Final same-session developer response is terminal and final sequence 54 is durably succeeded.
-- Historical Scout starts have never been replayed.
+- Historical Scout starts were never replayed; #46-#48 are now explicitly dispositioned as unavailable original results and closed without inferring terminal responses.
 - Recurring wrong sibling-path synthesis and the Node runtime-floor mismatch remain separate promotion blockers.
 
 ## Interpretation
 
 The source defect is now corrected with both unit-level canonical recovery evidence and a real pinned-OpenCode persistence proof. The remaining lifecycle acceptance boundary is deployment: connected GitHub cannot prove the host-local synchronization watcher has installed final handoff `ba73b3b54febfdeadbff66262acaa7be12e5760e`. Once installed-sha/HEAD/origin-developer are proven equal to that handoff and the bridge is healthy, one fresh bounded Scout may be started specifically to prove current adapter/runtime completion. That acceptance Scout must use a new task/request identity and is not a replay of #46-#48.
 
-Historical #46-#48 should be dispositioned as unavailable historical results if their original session evidence remains absent; their original promotion-review scopes can later be covered by exact direct GitHub review or separately scoped fresh review, but never by pretending the original Scout executions were recovered.
+Historical #46-#48 are now dispositioned as unavailable original results caused by the confirmed pre-fix state-loss defect. Their original promotion-review scopes remain uncovered by those Scout executions and can later be covered by exact direct GitHub review or separately scoped fresh review, never by pretending the original Scout executions were recovered.
 
 Packaging remains non-contiguous because pagination is interleaved between lifecycle ranges A and B. The current one-range package generator/validator cannot represent these lifecycle segments without either absorbing unrelated pagination history or a repository-owned multi-range representation. Do not hand-build or widen a package.
 
@@ -88,11 +88,12 @@ Packaging remains non-contiguous because pagination is interleaved between lifec
 4. The same mapped session was routed to Sol without replacement; Sol implemented second-terminal recovery.
 5. A >100-comment pagination/cache defect was isolated, fixed, reviewed, and accepted without replaying the original route marker.
 6. Exact source, CI, handoff separation, and terminal responses through `9ca25b8b...` were independently reviewed.
-7. Fresh synchronized-runtime observation at `9ca25b8b...` plus original #46 status reproduced the historical Scout durability failure.
+7. Fresh synchronized-runtime observation at `9ca25b8...` plus original #46 status reproduced the historical Scout durability failure.
 8. Source tracing identified runtime-root replacement deleting Scout OpenCode data/state.
 9. Same-session Sol sequence 29 implemented derived private persistence at `14b1bc2...`; source and handoff were independently reviewed.
 10. Independent review found the real-runtime smoke proof gap and same-session sequence 49 narrowed correction to that evidence only.
 11. `1a779434...` added real no-model OpenCode session persistence proof; CI passed; `ba73b3b...` provided the task-record-only handoff; terminal `message-359` and sequence 54 were reconciled.
+12. #46-#48 were reconciled against their original request/session evidence, explicitly marked unavailable without replay, had `agentic-bridge` removed, and were closed `not_planned`.
 
 ## Changed approach
 
@@ -110,27 +111,27 @@ Source implementation is complete. Keep issue #49 open only through runtime-inst
 - `1a779434... -> ba73b3b...` verified task-record-only handoff.
 - Bridge-published `message-359` is terminal `finish: stop` and names exact handoff `ba73b3b...`.
 - Sequence 54 succeeded with `{}` and sequence-free `command.status` independently returned `found: true`, `state: succeeded`, and the same known result.
+- #46, #47, and #48 each received a public-safe unavailable-result disposition, had the bridge-control label removed, and were independently read back closed `not_planned` without any replayed Scout start.
 - Main remains unchanged at `6127611113dfdb66f93a0cfd2d355359aa370833`; web-orchestration remains unchanged at `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`.
 
 ## Blockers / required decisions
 
 No human product/design decision is needed. The current lifecycle blocker is only host-local runtime-install proof followed by one fresh bounded Scout acceptance.
 
-Historical #46-#48 results remain unavailable unless their original persisted evidence unexpectedly reappears; replay is prohibited.
+Historical #46-#48 original results are unavailable and their original review scopes remain uncovered by those executions; replay is prohibited.
 
 Packaging still requires a repository-owned representation for multiple disjoint lifecycle ranges; no package has been hand-built or widened.
 
-Promotion remains blocked independently by runtime acceptance, historical Scout disposition, recurring wrong-sibling path synthesis, Node runtime-floor mismatch, package/finalization work, and a later full `main -> developer` promotion review.
+Promotion remains blocked independently by runtime acceptance, uncovered review scope from the lost historical Scouts, recurring wrong-sibling path synthesis, Node runtime-floor mismatch, package/finalization work, and a later full `main -> developer` promotion review.
 
 ## Remaining work
 
 1. Obtain a read-only host snapshot proving local HEAD, origin/developer, installed-sha, and synchronization state are exactly `ba73b3b54febfdeadbff66262acaa7be12e5760e`, with healthy bridge queues/services.
 2. After installation is proven, launch one fresh bounded Scout acceptance under a new task/request identity; verify start admission, meaningful lifecycle progress, terminal response/publication, exact session continuity, and no new recovery/permission regression. Do not relaunch #46-#48.
 3. Close #49 only after the fresh acceptance is terminal/absorbed and no source defect remains.
-4. Disposition #46-#48 without replay; mark original results unavailable due the confirmed pre-fix state-loss defect if no original evidence exists.
-5. Resolve repository-owned multi-range package representation and generate/validate lifecycle and pagination packages in maintenance order without absorbing unrelated source.
-6. Separately resolve wrong-sibling path synthesis and Node runtime-floor mismatch.
-7. Reconcile source-lock/template finalization and repeat full `main -> developer` promotion review before any human exact-SHA acceptance request.
+4. Resolve repository-owned multi-range package representation and generate/validate lifecycle and pagination packages in maintenance order without absorbing unrelated source.
+5. Separately resolve wrong-sibling path synthesis and Node runtime-floor mismatch.
+6. Reconcile source-lock/template finalization and repeat full `main -> developer` promotion review before any human exact-SHA acceptance request.
 
 ## Next action
 
