@@ -15,7 +15,7 @@
     "task_id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" },
     "kind": {
       "enum": [
-        "start", "status", "steer", "route", "permission.reply", "question.reply", "abort",
+        "start", "workspace.start", "status", "steer", "route", "permission.reply", "question.reply", "abort",
         "events.page", "pty.create", "pty.input", "pty.read", "pty.resize", "pty.remove",
         "finalize", "sync.recover", "promotion.apply", "opencode.request"
       ]
@@ -26,6 +26,7 @@
       "additionalProperties": false,
       "properties": {
         "developer_sha": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+        "template_development_sha": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
         "ref": { "type": "string", "minLength": 1, "maxLength": 255 }
       }
     }
@@ -41,7 +42,24 @@
         "properties": {
           "expected": {
             "required": ["developer_sha", "ref"],
+            "not": { "required": ["template_development_sha"] },
             "properties": { "ref": { "const": "developer" } }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "kind": { "const": "workspace.start" } },
+        "required": ["kind"]
+      },
+      "then": {
+        "required": ["expected"],
+        "properties": {
+          "expected": {
+            "required": ["template_development_sha", "ref"],
+            "not": { "required": ["developer_sha"] },
+            "properties": { "ref": { "const": "template-development" } }
           }
         }
       }

@@ -9,6 +9,7 @@ import {
   DeveloperResponseTransport,
   queueDeveloperResponseEvent,
   queueScoutResponseEvent,
+  queueWorkspaceResponseEvent,
   ScoutResponseTransport,
 } from "./handoff.js";
 import { Manifest } from "./manifest.js";
@@ -23,9 +24,10 @@ import {
   ScoutServerProcess,
 } from "./scout-server.js";
 import { BridgeState } from "./state.js";
-import type { JsonValue, TaskSession } from "./types.js";
+import type { JsonValue, TaskSession, TaskSessionKind } from "./types.js";
 import { ensurePrivateDirectory, errorMessage, sleep } from "./util.js";
 import { assertRepositoryRemote, githubRepositoryIdentity } from "./repository-identity.js";
+import { TemplateDevelopmentWorktreeResolver } from "./workspace.js";
 
 const labelDefinitions = [
   ["bridge-status:active", "fbca04", "Bridge command or task is active"],
@@ -185,6 +187,13 @@ function terminalSessionState(value: string): boolean {
   return /session\.(?:idle|error)/i.test(value);
 }
 
+interface WorkspaceRuntime {
+  directory: string;
+  client: OpenCodeClient;
+  recovery: RecoveryCoordinator;
+  responses: DeveloperResponseTransport;
+}
+
 export class BridgeService {
   private readonly config: BridgeConfig;
   private readonly signal: AbortSignal;
@@ -203,6 +212,8 @@ export class BridgeService {
   private readonly outbox: GitHubOutbox;
   private readonly control: GitHubControlLoop;
   private readonly sessionRuns: RecoveryObserverRegistry;
+  private readonly templateWorktrees: TemplateDevelopmentWorktreeResolver;
+  private workspaceRuntimePromise: Promise<WorkspaceRuntime> | undefined;
   private readonly controlStop = new AbortController();
   private readonly controlStopped: Promise<void>;
   private resolveControlStopped!: () => void;
@@ -220,6 +231,15 @@ export class BridgeService {
     this.manifest = manifest;
     this.client = opencode(config, manifest);
     this.projection = new PublicProjection({ state: this.state, privateRoots: config.privateRoots });
+    this.templateWorktrees = new TemplateDevelopmentWorktreeResolver({
+      repositoryRoot: config.repositoryRoot,
+      identity: githubRepositoryIdentity({
+        apiBaseUrl: config.github.apiBaseUrl,
+        gitHost: config.github.gitHost,
+        owner: config.github.owner,
+        repository: config.github.repository,
+      }),
+    });
     this.sessionRuns = new RecoveryObserverRegistry(signal, (error) => {
       this.state.setMeta("service.last_error", this.projection.safeText(errorMessage(error)));
     });
@@ -236,6 +256,7 @@ export class BridgeService {
       state: this.state,
       onPersistedEvent: (event) => this.publishEvent(event),
       onError: (error) => this.state.setMeta("service.last_error", this.projection.safeText(errorMessage(error))),
+      taskSessionKind: "developer",
     });
     this.responses = new DeveloperResponseTransport({
       client: this.client,
@@ -267,6 +288,15 @@ export class BridgeService {
       signal,
       ptyEnabled: config.policy.ptyEnabled,
       currentGitState: () => synchronizedGitState(config),
+      workspaceRuntime: async () => {
+        const runtime = await this.workspaceRuntime();
+        return {
+          client: runtime.client,
+          recovery: runtime.recovery,
+          currentGitState: async () => await this.templateWorktrees.synchronizedState(runtime.directory),
+        };
+      },
+      workspaceAgent: "workspace-maintainer",
       ...(config.policy.promotionEnabled ? { runPromotion: promotion(config) } : {}),
       onSessionStarted: (taskId) => this.startSessionRecovery(taskId),
       onSessionContinued: (taskId, sessionId) => this.reenrollSessionRecovery(taskId, sessionId),
@@ -304,6 +334,42 @@ export class BridgeService {
     });
   }
 
+  private async createWorkspaceRuntime(): Promise<WorkspaceRuntime> {
+    const resolved = await this.templateWorktrees.resolveRuntime();
+    this.projection.addPrivateRoot(resolved.directory);
+    const client = opencode(this.config, this.manifest, resolved.directory);
+    const recovery = new RecoveryCoordinator({
+      client,
+      state: this.state,
+      taskSessionKind: "workspace",
+      onPersistedEvent: (event) => this.publishEvent(event),
+      onError: (error) => this.state.setMeta("service.last_error", this.projection.safeText(errorMessage(error))),
+    });
+    const responses = new DeveloperResponseTransport({
+      client,
+      state: this.state,
+      projection: this.projection,
+      deliveryKind: "workspace",
+      onError: (message) => this.state.setMeta("service.last_error", message),
+    });
+    return { directory: resolved.directory, client, recovery, responses };
+  }
+
+  private async workspaceRuntime(): Promise<WorkspaceRuntime> {
+    const pending = (this.workspaceRuntimePromise ??= this.createWorkspaceRuntime());
+    let runtime: WorkspaceRuntime;
+    try {
+      runtime = await pending;
+    } catch (error) {
+      if (this.workspaceRuntimePromise === pending) this.workspaceRuntimePromise = undefined;
+      throw error;
+    }
+    await this.templateWorktrees.resolveRuntime(runtime.directory);
+    this.projection.addPrivateRoot(runtime.directory);
+    this.sessionRuns.start("workspace:global", async () => await runtime.recovery.run(this.signal));
+    return runtime;
+  }
+
   async drainControl(): Promise<void> {
     this.state.setMeta("service.draining", "true");
     this.controlStop.abort(new Error("Bridge control loop draining"));
@@ -318,6 +384,11 @@ export class BridgeService {
     if (terminalSessionEvent(event) && event.sessionId) {
       if (event.requestId) {
         await this.scoutResponses.deliver(queueScoutResponseEvent(this.state, event));
+        return;
+      }
+      if (event.sessionKind === "workspace") {
+        const runtime = await this.workspaceRuntime();
+        await runtime.responses.deliver(queueWorkspaceResponseEvent(this.state, event));
         return;
       }
       await this.responses.deliver(queueDeveloperResponseEvent(this.state, event));
@@ -336,6 +407,11 @@ export class BridgeService {
           await this.scoutResponses.deliver(delivery);
           continue;
         }
+        if (delivery.deliveryKind === "workspace") {
+          const runtime = await this.workspaceRuntime();
+          await runtime.responses.deliver(delivery);
+          continue;
+        }
         await this.responses.deliver(delivery);
       }
       try {
@@ -346,25 +422,39 @@ export class BridgeService {
     }
   }
 
-  private developerRecoveryFactory(taskId: string, sessionId: string): () => Promise<void> {
+  private taskRecoveryFactory(
+    taskId: string,
+    sessionId: string,
+    sessionKind: TaskSessionKind,
+  ): () => Promise<void> {
     return async () => {
       const current = this.state.getTaskSession(taskId);
-      if (!current || current.sessionId !== sessionId || terminalSessionState(current.sessionState)) return;
-      await this.recovery.runSession(current, this.signal);
+      if (!current || current.sessionId !== sessionId || current.sessionKind !== sessionKind
+        || terminalSessionState(current.sessionState)) return;
+      const recovery = sessionKind === "workspace"
+        ? (await this.workspaceRuntime()).recovery
+        : this.recovery;
+      await recovery.runSession(current, this.signal);
     };
   }
 
   private startSessionRecovery(taskId: string): void {
-    const key = `developer:${taskId}`;
     const session = this.state.getTaskSession(taskId);
     if (!session || terminalSessionState(session.sessionState)) return;
-    this.sessionRuns.start(key, this.developerRecoveryFactory(taskId, session.sessionId));
+    const key = `${session.sessionKind}:${taskId}`;
+    this.sessionRuns.start(
+      key,
+      this.taskRecoveryFactory(taskId, session.sessionId, session.sessionKind),
+    );
   }
 
   private reenrollSessionRecovery(taskId: string, sessionId: string): void {
     const session = this.state.getTaskSession(taskId);
     if (!session || session.sessionId !== sessionId || terminalSessionState(session.sessionState)) return;
-    this.sessionRuns.reenroll(`developer:${taskId}`, this.developerRecoveryFactory(taskId, sessionId));
+    this.sessionRuns.reenroll(
+      `${session.sessionKind}:${taskId}`,
+      this.taskRecoveryFactory(taskId, sessionId, session.sessionKind),
+    );
   }
 
   private startScoutRecovery(requestId: string): void {

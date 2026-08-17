@@ -34,7 +34,7 @@ test("SQLite state creates private durable files and metadata", (context) => {
   const { state, path } = stateForTest(context);
   assert.equal(statSync(path).mode & 0o777, 0o600);
   assert.equal(statSync(join(path, "..")).mode & 0o777, 0o700);
-  assert.equal(state.getMeta("schema_version"), "4");
+  assert.equal(state.getMeta("schema_version"), "5");
   state.setMeta("instance", "project-one");
   assert.equal(state.getMeta("instance"), "project-one");
 });
@@ -137,6 +137,24 @@ test("mandatory Git guards reject durably before consuming sequence", (context) 
   });
   assert.equal(state.acceptCommand(promotion, 10).disposition, "rejected");
   assert.match(state.commandRejection(promotion.command_id)?.reason ?? "", /top-level expected/);
+
+  const wrongWorkspace = envelope("58585858-5858-4585-8585-585858585858", 1, {
+    task_id: "TASK-WORKSPACE",
+    kind: "workspace.start",
+    arguments: { brief: "Wrong workspace guard" },
+    expected: { developer_sha: "b".repeat(40), ref: "developer" },
+  });
+  assert.equal(state.acceptCommand(wrongWorkspace, 11).disposition, "rejected");
+  assert.match(state.commandRejection(wrongWorkspace.command_id)?.reason ?? "", /template_development_sha/);
+
+  const validWorkspace = envelope("68686868-6868-4686-8686-686868686868", 1, {
+    task_id: "TASK-WORKSPACE",
+    kind: "workspace.start",
+    arguments: { brief: "Canonical workspace guard" },
+    expected: { template_development_sha: "b".repeat(40), ref: "template-development" },
+  });
+  assert.equal(state.acceptCommand(validWorkspace, 11).disposition, "new");
+  assert.equal(state.taskKind("TASK-WORKSPACE"), "workspace");
 });
 
 test("an interrupted applying command remains non-reissuable after restart", (context) => {
@@ -271,7 +289,7 @@ test("schema migration replaces global alias identity with task-bound scope", (c
     migrated.close();
     rmSync(root, { recursive: true, force: true });
   });
-  assert.equal(migrated.getMeta("schema_version"), "4");
+  assert.equal(migrated.getMeta("schema_version"), "5");
   assert.equal(migrated.ensureAlias("workspace", "wrk_shared", "TASK-1"), "workspace-1");
   const second = migrated.ensureAlias("workspace", "wrk_shared", "TASK-2");
   assert.equal(second, "workspace-2");
@@ -309,7 +327,7 @@ test("schema migration extends v2 events and response deliveries for Scout corre
     migrated.close();
     rmSync(root, { recursive: true, force: true });
   });
-  assert.equal(migrated.getMeta("schema_version"), "4");
+  assert.equal(migrated.getMeta("schema_version"), "5");
   assert.equal(migrated.pendingResponseDeliveries()[0]?.deliveryKind, "developer");
 
   const requestId = "88888888-8888-4888-8888-888888888888";
@@ -343,6 +361,60 @@ test("schema migration extends v2 events and response deliveries for Scout corre
   const scoutDelivery = migrated.pendingResponseDeliveries().find((entry) => entry.eventId === "evt_scout_idle");
   assert.equal(scoutDelivery?.deliveryKind, "scout");
   assert.equal(scoutDelivery?.requestId, requestId);
+});
+
+
+test("task-session kind migration is durable and rejects unknown stored runtimes", (context) => {
+  const root = mkdtempSync(join(tmpdir(), "opencode-bridge-session-kind-"));
+  const path = join(root, "bridge.sqlite");
+  context.after(() => rmSync(root, { recursive: true, force: true }));
+
+  const legacy = new DatabaseSync(path);
+  legacy.exec(`
+    CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at INTEGER NOT NULL);
+    INSERT INTO meta(key, value, updated_at) VALUES ('schema_version', '4', 0);
+    CREATE TABLE task_sessions (
+      task_id TEXT PRIMARY KEY, session_id TEXT NOT NULL UNIQUE,
+      issue_number INTEGER NOT NULL, agent TEXT NOT NULL,
+      session_state TEXT NOT NULL DEFAULT 'unknown',
+      latest_response_json TEXT, latest_event_id TEXT,
+      created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL
+    );
+    INSERT INTO task_sessions(
+      task_id, session_id, issue_number, agent, session_state, created_at, updated_at
+    ) VALUES ('TASK-LEGACY', 'ses_legacy_task', 40, 'small-developer', 'starting', 1, 1);
+  `);
+  legacy.close();
+  chmodSync(path, 0o600);
+
+  const migrated = new BridgeState(path);
+  assert.equal(migrated.getTaskSession("TASK-LEGACY")?.sessionKind, "developer");
+  migrated.mapTaskSession("TASK-WORKSPACE", "ses_workspace_task", 41, "workspace-maintainer", "workspace");
+  assert.equal(migrated.getTaskSession("TASK-WORKSPACE")?.sessionKind, "workspace");
+  migrated.close();
+
+  const reopened = new BridgeState(path);
+  assert.equal(reopened.getTaskSession("TASK-WORKSPACE")?.sessionKind, "workspace");
+  assert.equal(reopened.sessionBindingForInternal("ses_workspace_task")?.sessionKind, "workspace");
+  reopened.close();
+
+  const invalidPath = join(root, "invalid.sqlite");
+  const invalid = new DatabaseSync(invalidPath);
+  invalid.exec(`
+    CREATE TABLE task_sessions (
+      task_id TEXT PRIMARY KEY, session_id TEXT NOT NULL UNIQUE,
+      issue_number INTEGER NOT NULL, agent TEXT NOT NULL, session_kind TEXT NOT NULL,
+      session_state TEXT NOT NULL DEFAULT 'unknown',
+      latest_response_json TEXT, latest_event_id TEXT,
+      created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL
+    );
+    INSERT INTO task_sessions(
+      task_id, session_id, issue_number, agent, session_kind, session_state, created_at, updated_at
+    ) VALUES ('TASK-INVALID', 'ses_invalid', 42, 'unknown', 'foreign', 'starting', 1, 1);
+  `);
+  invalid.close();
+  chmodSync(invalidPath, 0o600);
+  assert.throws(() => new BridgeState(invalidPath), /invalid task session kind/i);
 });
 
 test("outbox retries idempotently and compatibility records remain queryable", (context) => {

@@ -4,15 +4,30 @@ import { commandStatusComment } from "./protocol.js";
 import { OperationPolicy, PublicProjection } from "./projection.js";
 import { RecoveryCoordinator, type ContinuationReplyBaseline } from "./recovery.js";
 import { BridgeState } from "./state.js";
-import type { CommandEnvelope, InteractionKind, JsonValue, OperationArguments, StoredCommand } from "./types.js";
+import type {
+  CommandEnvelope,
+  InteractionKind,
+  JsonValue,
+  OperationArguments,
+  StoredCommand,
+  TaskSessionKind,
+} from "./types.js";
 import { asJson, asRecord, errorMessage, isRecord } from "./util.js";
 
 type AgentRoute = "luna" | "sol";
 
 export interface GitState {
-  developerSha: string;
+  developerSha?: string;
+  templateDevelopmentSha?: string;
   ref: string;
   clean: boolean;
+}
+
+export interface CommandRuntime {
+  client: OpenCodeClient;
+  recovery: RecoveryCoordinator;
+  sessionKind: TaskSessionKind;
+  currentGitState?: () => Promise<GitState>;
 }
 
 export interface PtyManagerOptions {
@@ -85,6 +100,8 @@ export interface CommandExecutorOptions {
   agents?: { luna: string; sol: string };
   ptyEnabled?: boolean;
   currentGitState?: () => Promise<GitState>;
+  workspaceRuntime?: () => Promise<Omit<CommandRuntime, "sessionKind">>;
+  workspaceAgent?: string;
   runPromotion?: (approvedSha: string) => Promise<JsonValue>;
   onSessionStarted?: (taskId: string) => void;
   onSessionContinued?: (taskId: string, sessionId: string) => void;
@@ -163,6 +180,8 @@ export class CommandExecutor {
   private readonly agents: { luna: string; sol: string };
   private readonly ptyEnabled: boolean;
   private readonly currentGitState: (() => Promise<GitState>) | undefined;
+  private readonly workspaceRuntime: (() => Promise<Omit<CommandRuntime, "sessionKind">>) | undefined;
+  private readonly workspaceAgent: string;
   private readonly runPromotion: ((approvedSha: string) => Promise<JsonValue>) | undefined;
   private readonly onSessionStarted: ((taskId: string) => void) | undefined;
   private readonly onSessionContinued: ((taskId: string, sessionId: string) => void) | undefined;
@@ -179,6 +198,8 @@ export class CommandExecutor {
     this.agents = options.agents ?? { luna: "small-developer", sol: "large-developer" };
     this.ptyEnabled = options.ptyEnabled === true;
     this.currentGitState = options.currentGitState;
+    this.workspaceRuntime = options.workspaceRuntime;
+    this.workspaceAgent = options.workspaceAgent ?? "workspace-maintainer";
     this.runPromotion = options.runPromotion;
     this.onSessionStarted = options.onSessionStarted;
     this.onSessionContinued = options.onSessionContinued;
@@ -186,14 +207,72 @@ export class CommandExecutor {
     this.ptys = new PtyManager({ client: options.client, state: options.state, signal: options.signal });
   }
 
-  private async guardExpected(envelope: CommandEnvelope, required: boolean): Promise<void> {
-    if (required && (!envelope.expected?.developer_sha || !envelope.expected.ref)) {
-      throw new Error(`${envelope.kind} requires top-level expected.developer_sha and expected.ref`);
+  private runtimeKind(command: StoredCommand): TaskSessionKind {
+    const persisted = this.state.taskKind(command.taskId);
+    if (command.kind === "workspace.start") {
+      if (persisted && persisted !== "workspace") throw new Error("Task runtime cannot change from developer to workspace");
+      return "workspace";
+    }
+    if (command.kind === "start") {
+      if (persisted && persisted !== "developer") throw new Error("Task runtime cannot change from workspace to developer");
+      return "developer";
+    }
+    if (command.kind === "promotion.apply") return "developer";
+    return persisted ?? "developer";
+  }
+
+  private async runtime(command: StoredCommand): Promise<CommandRuntime> {
+    if (this.runtimeKind(command) === "workspace") {
+      if (!this.workspaceRuntime) throw new Error("Workspace command runtime is unavailable");
+      return { ...(await this.workspaceRuntime()), sessionKind: "workspace" };
+    }
+    return {
+      client: this.client,
+      recovery: this.recovery,
+      sessionKind: "developer",
+      ...(this.currentGitState ? { currentGitState: this.currentGitState } : {}),
+    };
+  }
+
+  private async guardExpected(
+    envelope: CommandEnvelope,
+    runtime: CommandRuntime,
+    required: boolean,
+  ): Promise<void> {
+    if (runtime.sessionKind === "workspace") {
+      if (required && (!envelope.expected?.template_development_sha || !envelope.expected.ref
+        || envelope.expected.developer_sha !== undefined)) {
+        throw new Error("workspace.start requires only top-level expected.template_development_sha and expected.ref");
+      }
+      if (required && envelope.expected?.ref !== "template-development") {
+        throw new Error("workspace.start requires expected.ref template-development");
+      }
+      if (!envelope.expected) return;
+      if (envelope.expected.developer_sha !== undefined) throw new Error("Workspace commands do not accept expected.developer_sha");
+      if (!runtime.currentGitState) throw new Error("Workspace Git expected-state checking is unavailable");
+      const actual = await runtime.currentGitState();
+      if (envelope.expected.template_development_sha
+        && actual.templateDevelopmentSha !== envelope.expected.template_development_sha) {
+        throw new Error("Expected template-development SHA does not match the synchronized registered worktree");
+      }
+      if (envelope.expected.ref && actual.ref !== envelope.expected.ref) {
+        throw new Error("Expected template-development ref does not match the registered worktree");
+      }
+      if (required && !actual.clean) throw new Error("workspace.start requires a clean synchronized checkout");
+      return;
+    }
+
+    if (required && (!envelope.expected?.developer_sha || !envelope.expected.ref
+      || envelope.expected.template_development_sha !== undefined)) {
+      throw new Error(`${envelope.kind} requires only top-level expected.developer_sha and expected.ref`);
     }
     if (required && envelope.expected?.ref !== "developer") throw new Error(`${envelope.kind} requires expected.ref developer`);
     if (!envelope.expected) return;
-    if (!this.currentGitState) throw new Error("Git expected-state checking is unavailable");
-    const actual = await this.currentGitState();
+    if (envelope.expected.template_development_sha !== undefined) {
+      throw new Error("Developer commands do not accept expected.template_development_sha");
+    }
+    if (!runtime.currentGitState) throw new Error("Git expected-state checking is unavailable");
+    const actual = await runtime.currentGitState();
     if (envelope.expected.developer_sha && actual.developerSha !== envelope.expected.developer_sha) {
       throw new Error("Expected developer SHA does not match the synchronized local checkout");
     }
@@ -201,61 +280,87 @@ export class CommandExecutor {
     if (required && !actual.clean) throw new Error(`${envelope.kind} requires a clean synchronized checkout`);
   }
 
-  private async requireCompatibility(): Promise<void> {
-    const result = await this.client.compatibility();
+  private async requireCompatibility(client: OpenCodeClient): Promise<void> {
+    const result = await client.compatibility();
     this.state.recordCompatibility(this.instanceId, result);
     if (!result.compatible) throw new Error("Consequential OpenCode command blocked by compatibility drift");
   }
 
-  private task(command: StoredCommand) {
+  private task(command: StoredCommand, runtime: CommandRuntime) {
     const session = this.state.getTaskSession(command.taskId);
     if (!session) throw new Error(`Task ${command.taskId} has no mapped OpenCode session`);
+    if (session.sessionKind !== runtime.sessionKind) throw new Error("Task session is mapped to a different runtime");
     return session;
   }
 
-  private async start(command: StoredCommand, markMutation: () => void): Promise<JsonValue> {
+  private async start(
+    command: StoredCommand,
+    runtime: CommandRuntime,
+    markMutation: () => void,
+  ): Promise<JsonValue> {
     const input = command.envelope.arguments;
-    keys(input, ["brief", "agent", "title"]);
+    const workspace = runtime.sessionKind === "workspace";
+    keys(input, workspace ? ["brief", "title"] : ["brief", "agent", "title"]);
     if (this.state.getTaskSession(command.taskId)) throw new Error(`Task ${command.taskId} already has an OpenCode session`);
     const brief = text(input, "brief");
-    const selected = route(input);
+    const selected = workspace ? undefined : route(input);
+    const agent = workspace ? this.workspaceAgent : this.agents[selected!];
     const title = optionalText(input, "title", 200) ?? command.taskId;
     markMutation();
-    const created = await this.client.request("session.create", { body: { title, agent: this.agents[selected] } });
+    const created = await runtime.client.request("session.create", { body: { title, agent } });
     const sessionId = idFromResult(created, "OpenCode session creation");
-    this.state.mapTaskSession(command.taskId, sessionId, command.issueNumber, this.agents[selected]);
+    this.state.mapTaskSession(command.taskId, sessionId, command.issueNumber, agent, runtime.sessionKind);
     const alias = this.state.ensureAlias("session", sessionId, command.taskId);
     try {
-      await this.client.request("session.prompt_async", {
+      await runtime.client.request("session.prompt_async", {
         path: { sessionID: sessionId },
-        body: { agent: this.agents[selected], parts: [{ type: "text", text: brief }] },
+        body: { agent, parts: [{ type: "text", text: brief }] },
       });
     } catch (error) {
       throw new IndeterminateCommandError(`Session ${alias} was created, but initial prompt delivery was not proven: ${errorMessage(error)}`, created);
     }
     this.onSessionStarted?.(command.taskId);
-    return { status: "started", session: sessionId, agent: selected, created: created ?? null };
+    return {
+      status: "started",
+      session: sessionId,
+      session_kind: runtime.sessionKind,
+      agent: workspace ? this.workspaceAgent : selected!,
+      created: created ?? null,
+    };
   }
 
-  private async status(command: StoredCommand): Promise<JsonValue> {
+  private async status(command: StoredCommand, runtime: CommandRuntime): Promise<JsonValue> {
     keys(command.envelope.arguments, []);
     const session = this.state.getTaskSession(command.taskId);
     if (!session) return { task_id: command.taskId, session: null, state: command.state };
+    if (session.sessionKind !== runtime.sessionKind) throw new Error("Task session is mapped to a different runtime");
     const [status, messages] = await Promise.all([
-      this.client.request("session.status"),
-      this.client.request("session.messages", { path: { sessionID: session.sessionId }, query: { limit: 20 } }),
+      runtime.client.request("session.status"),
+      runtime.client.request("session.messages", { path: { sessionID: session.sessionId }, query: { limit: 20 } }),
     ]);
     const taskStatus = isRecord(status) ? asJson(status[session.sessionId] ?? null) : status ?? null;
-    return { task_id: command.taskId, session: session.sessionId, agent: session.agent, status: taskStatus, recent_messages: messages ?? null };
+    return {
+      task_id: command.taskId,
+      session: session.sessionId,
+      session_kind: session.sessionKind,
+      agent: session.agent,
+      status: taskStatus,
+      recent_messages: messages ?? null,
+    };
   }
 
-  private async prompt(command: StoredCommand, kind: "steer" | "finalize", markMutation: () => void): Promise<JsonValue> {
+  private async prompt(
+    command: StoredCommand,
+    runtime: CommandRuntime,
+    kind: "steer" | "finalize",
+    markMutation: () => void,
+  ): Promise<JsonValue> {
     const input = command.envelope.arguments;
     keys(input, ["message"]);
     const message = text(input, "message");
-    const session = this.task(command);
+    const session = this.task(command, runtime);
     markMutation();
-    await this.client.request("session.prompt_async", {
+    await runtime.client.request("session.prompt_async", {
       path: { sessionID: session.sessionId },
       body: { agent: session.agent, parts: [{ type: "text", text: message }] },
     });
@@ -264,15 +369,20 @@ export class CommandExecutor {
     return { status: kind === "steer" ? "steering-delivered" : "finalization-delivered", session: session.sessionId };
   }
 
-  private async changeRoute(command: StoredCommand, markMutation: () => void): Promise<JsonValue> {
+  private async changeRoute(
+    command: StoredCommand,
+    runtime: CommandRuntime,
+    markMutation: () => void,
+  ): Promise<JsonValue> {
+    if (runtime.sessionKind === "workspace") throw new Error("Workspace tasks keep the fixed workspace-maintainer route");
     const input = command.envelope.arguments;
     keys(input, ["agent", "message"]);
     const selected = route(input);
-    const session = this.task(command);
+    const session = this.task(command, runtime);
     const agent = this.agents[selected];
     const message = optionalText(input, "message", 65_536) ?? "Continue this task using the newly selected agent route.";
     markMutation();
-    await this.client.request("session.prompt_async", {
+    await runtime.client.request("session.prompt_async", {
       path: { sessionID: session.sessionId },
       body: { agent, parts: [{ type: "text", text: message }] },
     });
@@ -281,7 +391,11 @@ export class CommandExecutor {
     return { status: "route-changed", agent: selected, session: session.sessionId };
   }
 
-  private async permissionReply(command: StoredCommand, markMutation: () => void): Promise<JsonValue> {
+  private async permissionReply(
+    command: StoredCommand,
+    runtime: CommandRuntime,
+    markMutation: () => void,
+  ): Promise<JsonValue> {
     const input = command.envelope.arguments;
     keys(input, ["permission", "reply", "message"]);
     const alias = text(input, "permission", 200);
@@ -289,17 +403,21 @@ export class CommandExecutor {
     if (reply !== "once" && reply !== "always" && reply !== "reject") throw new TypeError("reply must be once, always, or reject");
     const message = optionalText(input, "message", 2_000);
     const requestId = this.state.resolveAlias(alias, "permission", command.taskId);
-    const baseline = await this.captureContinuationBaseline(command.taskId, requestId, "permission");
+    const baseline = await this.captureContinuationBaseline(runtime.recovery, command.taskId, requestId, "permission");
     markMutation();
-    await this.client.request("permission.reply", {
+    await runtime.client.request("permission.reply", {
       path: { requestID: requestId },
       body: { reply, ...(message ? { message } : {}) },
     });
-    const continuation = await this.recoverAfterInteraction(command.taskId, requestId, "permission", baseline);
+    const continuation = await this.recoverAfterInteraction(runtime.recovery, command.taskId, requestId, "permission", baseline);
     return { status: "permission-replied", permission: alias, reply, continuation_recovery: continuation };
   }
 
-  private async questionReply(command: StoredCommand, markMutation: () => void): Promise<JsonValue> {
+  private async questionReply(
+    command: StoredCommand,
+    runtime: CommandRuntime,
+    markMutation: () => void,
+  ): Promise<JsonValue> {
     const input = command.envelope.arguments;
     keys(input, ["question", "answers"]);
     const alias = text(input, "question", 200);
@@ -307,39 +425,41 @@ export class CommandExecutor {
       throw new TypeError("answers must be an array of string arrays");
     }
     const requestId = this.state.resolveAlias(alias, "question", command.taskId);
-    const baseline = await this.captureContinuationBaseline(command.taskId, requestId, "question");
+    const baseline = await this.captureContinuationBaseline(runtime.recovery, command.taskId, requestId, "question");
     markMutation();
-    await this.client.request("question.reply", {
+    await runtime.client.request("question.reply", {
       path: { requestID: requestId },
       body: { answers: input.answers },
     });
-    const continuation = await this.recoverAfterInteraction(command.taskId, requestId, "question", baseline);
+    const continuation = await this.recoverAfterInteraction(runtime.recovery, command.taskId, requestId, "question", baseline);
     return { status: "question-replied", question: alias, continuation_recovery: continuation };
   }
 
   private async captureContinuationBaseline(
+    recovery: RecoveryCoordinator,
     taskId: string,
     interactionId: string,
     kind: InteractionKind,
   ): Promise<ContinuationReplyBaseline | null | undefined> {
-    if (typeof this.recovery.captureContinuationBaseline !== "function") return undefined;
+    if (typeof recovery.captureContinuationBaseline !== "function") return undefined;
     try {
-      return await this.recovery.captureContinuationBaseline(taskId, interactionId, kind);
+      return await recovery.captureContinuationBaseline(taskId, interactionId, kind);
     } catch {
       return null;
     }
   }
 
   private async recoverAfterInteraction(
+    recovery: RecoveryCoordinator,
     taskId: string,
     interactionId: string,
     kind: InteractionKind,
     baseline?: ContinuationReplyBaseline | null,
   ): Promise<JsonValue> {
-    if (typeof this.recovery.continueAfterInteraction !== "function") {
+    if (typeof recovery.continueAfterInteraction !== "function") {
       return { outcome: "blocked", reason: "continuation-recovery-unavailable" };
     }
-    return asJson(await this.recovery.continueAfterInteraction(taskId, interactionId, kind, baseline));
+    return asJson(await recovery.continueAfterInteraction(taskId, interactionId, kind, baseline));
   }
 
   private events(command: StoredCommand): JsonValue {
@@ -420,18 +540,22 @@ export class CommandExecutor {
     return { status: "pty-removed", pty: alias };
   }
 
-  private async generic(command: StoredCommand, markMutation: () => void): Promise<{ raw: JsonValue; localSecret: boolean }> {
+  private async generic(
+    command: StoredCommand,
+    runtime: CommandRuntime,
+    markMutation: () => void,
+  ): Promise<{ raw: JsonValue; localSecret: boolean }> {
     const input = command.envelope.arguments;
     keys(input, ["operation_id", "request"]);
     const operationId = text(input, "operation_id", 300);
     const prepared = this.operationPolicy.prepare(operationId, requestArguments(input.request), command.taskId);
     if (prepared.operation.effect !== "read" && prepared.operation.effect !== "subscribe") {
-      await this.requireCompatibility();
+      await this.requireCompatibility(runtime.client);
       markMutation();
     }
     let result: JsonValue | undefined;
     try {
-      result = await this.client.request(operationId, prepared.args);
+      result = await runtime.client.request(operationId, prepared.args);
     } catch (error) {
       if (prepared.operation.policy === "local-secret") {
         throw new IndeterminateCommandError(`${operationId} failed; sensitive detail retained locally`, { error: errorMessage(error) });
@@ -446,20 +570,28 @@ export class CommandExecutor {
 
   private async apply(command: StoredCommand, markMutation: () => void): Promise<{ raw: JsonValue; publicOverride?: JsonValue }> {
     const kind = command.kind;
-    await this.guardExpected(command.envelope, kind === "start" || kind === "promotion.apply");
-    if (kind === "status") return { raw: await this.status(command) };
+    const runtime = await this.runtime(command);
+    await this.guardExpected(
+      command.envelope,
+      runtime,
+      kind === "start" || kind === "workspace.start" || kind === "promotion.apply",
+    );
+    if (runtime.sessionKind === "workspace" && kind.startsWith("pty.")) {
+      throw new Error("Workspace tasks do not expose bridge PTYs");
+    }
+    if (kind === "status") return { raw: await this.status(command, runtime) };
     if (kind === "events.page") return { raw: this.events(command) };
     if (kind === "pty.read") return { raw: this.ptyRead(command) };
     if (kind === "sync.recover") {
       keys(command.envelope.arguments, []);
-      await this.recovery.recoverOnce();
-      return { raw: { status: "recovered" } };
+      await runtime.recovery.recoverOnce();
+      return { raw: { status: "recovered", session_kind: runtime.sessionKind } };
     }
     if (kind === "opencode.request") {
       const operationId = command.envelope.arguments.operation_id;
       if (typeof operationId !== "string") throw new TypeError("operation_id must be a string");
-      this.client.manifest.require(operationId, "http");
-      const result = await this.generic(command, markMutation);
+      runtime.client.manifest.require(operationId, "http");
+      const result = await this.generic(command, runtime, markMutation);
       return {
         raw: result.raw,
         ...(result.localSecret ? { publicOverride: { operator_action: "Complete any required authorization through the local OpenCode TUI; sensitive result retained locally" } } : {}),
@@ -467,6 +599,9 @@ export class CommandExecutor {
     }
 
     if (kind === "promotion.apply") {
+      if (this.state.taskKind(command.taskId) === "workspace") {
+        throw new Error("Workspace tasks cannot invoke main promotion");
+      }
       const input = command.envelope.arguments;
       keys(input, ["approved_sha"]);
       const approved = text(input, "approved_sha", 40);
@@ -478,17 +613,21 @@ export class CommandExecutor {
       return { raw: await this.runPromotion(approved) };
     }
 
-    await this.requireCompatibility();
-    if (kind === "start") return { raw: await this.start(command, markMutation) };
-    if (kind === "steer" || kind === "finalize") return { raw: await this.prompt(command, kind, markMutation) };
-    if (kind === "route") return { raw: await this.changeRoute(command, markMutation) };
-    if (kind === "permission.reply") return { raw: await this.permissionReply(command, markMutation) };
-    if (kind === "question.reply") return { raw: await this.questionReply(command, markMutation) };
+    await this.requireCompatibility(runtime.client);
+    if (kind === "start" || kind === "workspace.start") {
+      return { raw: await this.start(command, runtime, markMutation) };
+    }
+    if (kind === "steer" || kind === "finalize") {
+      return { raw: await this.prompt(command, runtime, kind, markMutation) };
+    }
+    if (kind === "route") return { raw: await this.changeRoute(command, runtime, markMutation) };
+    if (kind === "permission.reply") return { raw: await this.permissionReply(command, runtime, markMutation) };
+    if (kind === "question.reply") return { raw: await this.questionReply(command, runtime, markMutation) };
     if (kind === "abort") {
       keys(command.envelope.arguments, []);
-      const session = this.task(command);
+      const session = this.task(command, runtime);
       markMutation();
-      const result = await this.client.request("session.abort", { path: { sessionID: session.sessionId } });
+      const result = await runtime.client.request("session.abort", { path: { sessionID: session.sessionId } });
       return { raw: { status: "aborted", session: session.sessionId, result: result ?? null } };
     }
     if (kind === "pty.create") return { raw: await this.createPty(command, markMutation) };

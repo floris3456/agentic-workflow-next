@@ -2,7 +2,7 @@ import { OpenCodeClient } from "./opencode.js";
 import { PublicProjection } from "./projection.js";
 import type { PersistedOpenCodeEvent } from "./recovery.js";
 import { BridgeState } from "./state.js";
-import type { JsonValue, ResponseDelivery, ResponseDeliveryInput } from "./types.js";
+import type { JsonValue, ResponseDelivery, ResponseDeliveryInput, TaskSessionKind } from "./types.js";
 import { asJson, errorMessage, isRecord } from "./util.js";
 
 export function latestAssistantMessage(value: JsonValue | undefined): JsonValue {
@@ -38,14 +38,16 @@ export function terminalResponseDelivery(
     };
   }
   const issueNumber = state.issueForTask(event.taskId);
-  if (issueNumber === undefined) return undefined;
+  const session = state.getTaskSession(event.taskId);
+  if (issueNumber === undefined || !session || session.sessionId !== event.sessionId) return undefined;
+  if (event.sessionKind && event.sessionKind !== session.sessionKind) return undefined;
   return {
     eventId: event.eventId,
     taskId: event.taskId,
     sessionId: event.sessionId,
     issueNumber,
     eventType: event.eventType,
-    deliveryKind: "developer",
+    deliveryKind: session.sessionKind,
   };
 }
 
@@ -57,6 +59,16 @@ export function queueDeveloperResponseEvent(
   if (!delivery || delivery.deliveryKind !== "developer") return undefined;
   state.queueResponseDelivery(delivery);
   return state.pendingResponseDeliveries(100).find((delivery) => delivery.eventId === event.eventId);
+}
+
+export function queueWorkspaceResponseEvent(
+  state: BridgeState,
+  event: PersistedOpenCodeEvent,
+): ResponseDelivery | undefined {
+  const delivery = terminalResponseDelivery(state, event);
+  if (!delivery || delivery.deliveryKind !== "workspace") return undefined;
+  state.queueResponseDelivery(delivery);
+  return state.pendingResponseDeliveries(100).find((entry) => entry.eventId === event.eventId);
 }
 
 export function queueScoutResponseEvent(
@@ -74,6 +86,7 @@ export interface DeveloperResponseTransportOptions {
   state: BridgeState;
   projection: PublicProjection;
   onError?: (error: string) => void;
+  deliveryKind?: TaskSessionKind;
 }
 
 export class DeveloperResponseTransport {
@@ -81,17 +94,21 @@ export class DeveloperResponseTransport {
   private readonly state: BridgeState;
   private readonly projection: PublicProjection;
   private readonly onError: ((error: string) => void) | undefined;
+  private readonly deliveryKind: TaskSessionKind;
 
   constructor(options: DeveloperResponseTransportOptions) {
     this.client = options.client;
     this.state = options.state;
     this.projection = options.projection;
     this.onError = options.onError;
+    this.deliveryKind = options.deliveryKind ?? "developer";
   }
 
   async deliver(delivery: ResponseDelivery | undefined): Promise<void> {
     if (!delivery) return;
-    if (delivery.deliveryKind !== "developer") throw new Error("Developer response transport received a non-developer delivery");
+    if (delivery.deliveryKind !== this.deliveryKind) {
+      throw new Error("Task response transport received a delivery for a different runtime");
+    }
     try {
       const messages = await this.client.request("session.messages", {
         path: { sessionID: delivery.sessionId },
@@ -99,12 +116,21 @@ export class DeveloperResponseTransport {
       });
       const projected = this.projection.project(latestAssistantMessage(messages), delivery.taskId);
       this.state.updateTaskLatestResponse(delivery.taskId, projected, delivery.eventId);
-      this.state.enqueue(`developer-response:${delivery.eventId}`, "issue-comment", delivery.issueNumber, {
-        body: `OpenCode developer response:\n\n${this.projection.comment({
-          task_id: delivery.taskId,
-          session_state: delivery.eventType,
-          latest_developer_response: projected,
-        })}`,
+      const response = this.deliveryKind === "developer"
+        ? {
+            task_id: delivery.taskId,
+            session_kind: this.deliveryKind,
+            session_state: delivery.eventType,
+            latest_developer_response: projected,
+          }
+        : {
+            task_id: delivery.taskId,
+            session_kind: this.deliveryKind,
+            session_state: delivery.eventType,
+            latest_workspace_response: projected,
+          };
+      this.state.enqueue(`${this.deliveryKind}-response:${delivery.eventId}`, "issue-comment", delivery.issueNumber, {
+        body: `OpenCode ${this.deliveryKind} response:\n\n${this.projection.comment(response)}`,
       });
       this.state.completeResponseDelivery(delivery.eventId);
     } catch (error) {

@@ -6,7 +6,7 @@
 
 ## Status
 
-Paused at a requested continuation boundary; bridge source remains pending.
+Implementation complete and validated; source publication and ledger reconciliation are in progress.
 
 ## Task-start developer SHA
 
@@ -273,205 +273,127 @@ If implementation reveals a material design conflict that cannot safely be resol
 
 ## Current objective
 
-Continue from the pushed template-owned Workspace Maintenance Agent/gate and
-implement the smallest explicit template-development-rooted bridge lifecycle on
-`developer`, preserving normal developer behavior and all existing recovery and
-human-authority boundaries.
+Complete and publish the explicit template-development-rooted bridge lifecycle
+on `developer`, then reconcile the canonical template-maintenance ledger and
+deterministic change package without changing `main`.
 
 ## Current position
 
-The template-owned implementation is pushed and independently read back at
-template-development `cd433706bfefebaf42a5de6ea1521ec61deb2c8a`. It adds the
-`workspace-maintainer` primary agent, stable-authority skill and root routing,
-the pinned `workspace_*` OpenCode plugin, a registered-worktree gate, fixture
-tests, validator coverage, and matching template AS-BUILT facts. Its focused
-fixture tests passed 2/2 and full template validation passed 7/7.
+The template-owned agent, instruction route, stable workspace skill, verified
+`workspace_*` gate, tests, and AS-BUILT remain remotely verified at
+template-development `cd433706bfefebaf42a5de6ea1521ec61deb2c8a`.
 
-Developer remains clean and synchronized at the task-record-only SHA
-`217bee68d877926d5bea5b8e9a77a71b44cc6610` before this handoff snapshot. No
-bridge implementation change is retained. An interdependent workspace-session
-routing refactor was explored, then deliberately restored before this requested
-new-chat handoff rather than publishing a partial, non-compiling bridge state.
-Web-orchestration remains `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`
-and main remains `6127611113dfdb66f93a0cfd2d355359aa370833`.
+The developer implementation is complete in the verified worktree based on
+`11f1f1178394bd0ff80116f4acf67958cdc08ace`. It adds the explicit
+`workspace.start` protocol and fixed workspace runtime, focused integration and
+migration coverage, and current protocol/architecture/component AS-BUILT facts.
+The complete required validation set passes on this exact tree; immediate source commit/push is in progress.
+
+Main remains `6127611113dfdb66f93a0cfd2d355359aa370833` and
+web-orchestration remains `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`.
+Neither branch has been modified.
 
 ## Observed
 
-- The active OpenCode session is rooted in the synchronized developer worktree,
-  so the current developer instructions remain authoritative for this source
-  implementation; the requested template-rooted isolation is not assumed.
-- The canonical template-maintenance ledger is an independent branch/worktree
-  and already owns cross-branch continuity and source locks.
-- Existing normal bridge behavior uses the developer repository root and
-  developer agents.
-- `CommandEnvelope.expected`, command schema/admission, and `CommandExecutor`
-  currently guard only `developer_sha`/`developer`; GitHub issue admission treats
-  only `start` as the first mutating command.
-- `BridgeService` owns one developer-directory `OpenCodeClient`, one developer
-  recovery coordinator, and one developer response transport. `TaskSession`,
-  session bindings, event kinds, and terminal response deliveries do not persist
-  a workspace task-session kind.
-- Continuation steering, finalization, question/permission replies, canonical
-  interaction recovery, terminal recovery, and response delivery all reuse the
-  mapped task session. They can support workspace sessions safely only if client
-  selection is based on a durable session kind rather than an agent-name guess.
-- `PublicProjection` already redacts configured roots and generic absolute paths;
-  a lazily discovered template worktree should still be registered as an
-  additional private root before any workspace result is projected.
-- The template-development worktree must be discovered from NUL-delimited
-  `git worktree list --porcelain -z`, then proven real/non-symlink, same common
-  Git directory, exact configured GitHub repository, branch/ref/HEAD/status, and
-  remote relationship. No tracked configuration path is needed.
+- Ordinary network `git fetch --prune origin` was attempted twice and failed
+  before ref mutation with an HTTP CONNECT 403 from the execution environment.
+  Authenticated GitHub ref reads independently returned exactly the four expected
+  branch heads, and local tracking refs matched all four; no stale branch ref was
+  present to prune.
+- The bridge now discovers `refs/heads/template-development` only from
+  NUL-delimited registered Git worktree inventory and rejects missing, duplicate,
+  stale, bare, symlinked, foreign-repository, origin-mismatched, branch-mismatched,
+  or changed registrations using fixed public-safe errors.
+- Workspace start fetches the explicit remote ref and requires a clean registered
+  worktree at the exact lowercase expected template-development SHA/ref. Runtime
+  and restart re-proof allow expected post-start dirt or advancement while keeping
+  the same canonical registered worktree.
+- SQLite schema version 5 persists fail-closed `developer` or `workspace` task
+  session kind; legacy rows migrate to developer and null/unknown kinds are
+  rejected.
+- The fixed `workspace-maintainer` client handles start, live status,
+  steer/finalize, generic operations, permission/question replies and
+  continuation recovery, abort, durable/canonical recovery, and terminal
+  response delivery. Global and per-session recovery are kind-filtered.
+- Workspace route changes, all bridge PTYs, main promotion, caller agent
+  overrides, and cross-kind restart attempts are rejected. Normal developer
+  start/routing and exact-SHA human authority over `main` remain unchanged.
+- The discovered private root is registered dynamically with public projection;
+  focused output and error tests prove that no local absolute worktree path is
+  published.
+- Issues #49 and #53 and preserved session-86 were not read, modified, replayed,
+  replaced, aborted, or reinterpreted.
 
 ## Interpretation
 
-This source task should add a separate, explicit workspace lifecycle rather than
-widening or overloading normal developer semantics. The implementation must keep
-target selection behind a same-repository registered-worktree gate and keep
-template-development as the session/instruction root. A dedicated
-`workspace.start` command with
-`expected.template_development_sha`/`expected.ref: template-development` is the
-clearest bounded contract. The service should resolve and cache the private
-template worktree lazily so ordinary developer service startup remains unchanged
-when that worktree is unavailable. Workspace start should require clean,
-synchronized exact template state; same-session recovery/continuation after start
-must allow the agent's expected dirty or advanced state while re-proving the same
-registered worktree and instruction root.
+The implementation matches the accepted architecture in the prior handoff. No
+deviation record is required. Durable session kind is the sole runtime selector
+after the first accepted start, while exact Git identity and worktree registration
+remain the technical target gate. Neither capability grants promotion authority.
 
 ## Attempts
 
-- A partial cross-file draft added a workspace session kind to bridge types/state,
-  a `workspace.start` protocol shape, and workspace recovery/response hooks.
-  Because the user requested an immediate new-chat handoff before command/service
-  routing, migration tests, and component records could be completed, that draft
-  was abandoned and all bridge source/schema edits were restored. Reuse the
-  architecture below, but do not assume any of that partial code exists.
+- The ordinary fetch/prune route was retried once, then replaced only for
+  independent read verification by authenticated GitHub ref inspection.
+- A build exposed that one gated edit had read only the first 500 lines of
+  `service.ts`. The omitted unchanged tail was restored from the exact committed
+  blob through the verified gate before rebuilding; subsequent compilation and
+  focused execution passed.
 
 ## Changed approach
 
-The supplied start-state description said the active worktree was
-template-development, while direct Git evidence established that this OpenCode
-session is rooted in the developer worktree. Existing governing developer and
-template-maintenance procedures are therefore being followed explicitly: ledger
-continuity was created first in the separate verified template-development
-worktree, and source work remains on synchronized `developer`. The user then
-requested updated task files and a new-chat continuation prompt. The working tree
-was returned to a coherent source baseline; only this handoff record is retained
-on developer for the boundary.
+No material architecture change was made. Review added two fail-closed
+hardenings: lazy workspace initialization retries after transient resolution
+failure, and the first accepted start kind permanently fixes the task runtime even
+when that start fails before session creation.
 
 ## Checks
 
-- `git fetch origin --prune`: completed.
-- `git ls-remote --heads origin`: template-development, developer,
-  web-orchestration, and main matched the supplied exact refs.
-- Developer `HEAD` and `origin/developer` both equal the task-start SHA; working
-  tree clean.
-- Template-development local worktree safely fast-forwarded 13 commits to its
-  remote without rewriting history; hooks and full ledger validation passed.
-- Initial template-development record commit was independently read back from
-  the remote at `bb1592291da426441a47729c6c8ef1df5e0fadb9`.
-- `./scripts/bootstrap-agent-workflow.sh --check`: tracked developer hooks active.
-- Template-development gate commit
-  `cd433706bfefebaf42a5de6ea1521ec61deb2c8a` was pushed and independently read
-  from `origin/template-development`.
-- `node --test tests/workspace-maintenance.test.mjs` on template-development:
-  passed 2/2, including registered developer/main/detached access, foreign,
-  unregistered, stale, path-like, and symlink rejection, stable root authority,
-  exact preflight file/command/commit/push capability, and host-path omission.
-- Direct Bun import resolved 8/8 custom tools against pinned
-  `@opencode-ai/plugin` `1.18.16`; OpenCode config/server inspection resolved the
-  Sol/high primary agent, skill, permissions, and all eight tool IDs.
-- `./scripts/validate-template-development.sh`: passed 7/7 tests plus ledger and
-  diff checks before the template implementation commit.
-- Fresh developer-side `git fetch origin --prune` and exact ref reads found
-  developer `217bee68d877926d5bea5b8e9a77a71b44cc6610`, template-development
+- Remote ref inspection: developer
+  `11f1f1178394bd0ff80116f4acf67958cdc08ace`, template-development
   `cd433706bfefebaf42a5de6ea1521ec61deb2c8a`, web-orchestration
   `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`, and main
-  `6127611113dfdb66f93a0cfd2d355359aa370833`.
-- `./scripts/validate-repository.sh`: passed at the handoff boundary, including
-  104/104 existing bridge tests, 8/8 template-branch tests, structure, links,
-  agent-system, research, bridge contracts/build, hooks, and diff checks.
-- `./scripts/bootstrap-agent-workflow.sh --check`: passed again at handoff;
-  `git diff --check` produced no findings.
+  `6127611113dfdb66f93a0cfd2d355359aa370833`; all matched local tracking refs.
+- `npm --prefix tools/opencode-bridge run build`: passed.
+- Focused protocol/GitHub/state/workspace suite: passed 36/36.
+- Complete `npm --prefix tools/opencode-bridge test`: passed 113/113.
+- `./scripts/validate-opencode-bridge.sh`: passed bridge contracts, build,
+  113/113 bridge tests, and 8/8 branch-initialization tests.
+- `./scripts/validate-repository.sh`: passed structure, links, agent-system,
+  research, bridge contracts/build/tests, 8/8 branch tests, hooks, and diff
+  checks.
+- `./scripts/bootstrap-agent-workflow.sh --check`: tracked hooks active.
+- `git diff --check`: passed.
 
 ## Blockers / required decisions
 
-No technical decision is pending. Implementation is intentionally paused only
-because the user requested continuation in a new chat. The next developer must
-independently fetch/recheck refs and continue without touching issue #49, issue
-#53, or preserved `session-86`.
+No technical decision is pending. Ordinary Git network transport is unavailable
+in this environment; publishing will use the bounded connected-GitHub route only
+if the normal immediate push retry remains unavailable, followed by independent
+exact remote ref and tree verification.
 
 ## Remaining work
 
-1. Add a bridge-owned template-worktree resolver with harmless fixture tests. It
-   should lazily discover `refs/heads/template-development`, reject missing,
-   ambiguous, stale, foreign, unregistered, or symlinked entries, verify exact
-   GitHub identity/common directory, and expose no path publicly.
-2. Add `workspace.start` plus an explicit lowercase 40-character
-   `expected.template_development_sha` and exact
-   `expected.ref: template-development` to parser, JSON schema, state admission,
-   GitHub first-mutating-command logic, and protocol documentation. Keep ordinary
-   `start`/promotion guards unchanged.
-3. Persist `TaskSession.sessionKind` (`developer` or `workspace`) through a
-   fail-safe SQLite migration. Propagate it through session bindings, event
-   correlation, task status, terminal-delivery recovery, and response kind.
-4. Route workspace start/create/prompt, live status, steer/finalize, abort,
-   generic requests, structured replies, continuation proof/nudge, durable and
-   canonical recovery, and terminal message delivery through an OpenCode client
-   whose fixed directory is the verified template worktree. Keep the selected
-   agent fixed at `workspace-maintainer`; reject workspace route changes and
-   workspace PTYs unless a separately justified safe design is implemented.
-5. Resolve/cache that workspace runtime lazily in `BridgeService`, register its
-   directory with public projection, and use session-kind-filtered recovery so a
-   developer client never recovers a workspace session or vice versa. On restart,
-   re-prove the current registered template worktree without requiring it to be
-   clean or still at the start SHA.
-6. Add focused command, protocol/GitHub, state-migration, projection, recovery,
-   handoff, service/routing, and harmless registered-worktree integration tests.
-   Prove unchanged normal developer routing and exact same-session terminal flow.
-7. Update `contracts/opencode-bridge/protocol.md`,
-   `docs/architecture/opencode-bridge.md`, `tools/opencode-bridge/AS-BUILT.md`,
-   this task record, and a deviation record only if implementation materially
-   differs from the accepted architecture.
-8. Run the focused bridge suite, `npm run build`,
-   `./scripts/validate-opencode-bridge.sh`, `./scripts/validate-repository.sh`,
-   and `git diff --check`; then commit/push implementation and the required
-   handoff snapshot, independently inspect the remote source range, and return to
-   template-development for source-lock/package/handoff reconciliation.
+1. Commit and immediately publish the coherent developer implementation and
+   current records; independently inspect the remote source range.
+2. Add the exact developer handoff snapshot, publish and verify it, then return
+   to template-development for source-lock/change-package/handoff reconciliation.
 
 ## Next action
 
-In the new chat, resume this exact task from the latest synchronized
-`origin/developer` containing this record. Load the required repository skills,
-read the original brief and this continuation state, independently verify all
-four refs, inspect template-development commit
-`cd433706bfefebaf42a5de6ea1521ec61deb2c8a`, then implement Remaining work item 1
-without replaying or altering the preserved Scout task.
+Create and immediately publish the validated developer source implementation
+commit, then independently verify the exact remote result.
 
 ## Continuation prompt
 
-Continue task `TEMPLATE-WORKSPACE-MAINTENANCE-AGENT-001` in the canonical
-`developer` worktree. Follow root `AGENTS.md`; load `task-workflow`,
-`implementation-records`, and `git-sync-and-handoff`; do not launch subagents or
-inspect `web-orchestration`. Fetch/prune and independently verify current refs
-before editing. Read this entire task record first. The template-owned agent,
-skill, plugin, verified worktree gate, tests, and AS-BUILT are already pushed at
-template-development `cd433706bfefebaf42a5de6ea1521ec61deb2c8a`. Developer has
-no retained bridge implementation from the prior partial draft: begin from the
-clean synchronized source represented by the latest `origin/developer` containing
-this handoff record. Implement the explicit `workspace.start` architecture in
-Remaining work as one coherent, tested change, keeping normal developer routing,
-same-session interaction/recovery/terminal delivery, public path redaction,
-subagent denial, and human exact-SHA authority over `main` unchanged. Do not
-modify issues #49/#53 or replay/replace/abort/reinterpret `session-86`. Keep
-component AS-BUILT and this task record atomic with source facts, push every
-commit immediately, and finish with the required developer handoff snapshot.
+None. This session is actively completing the task.
 
 ## Relevant durable records
 
 - `docs/architecture/AS-BUILT.md`
 - `docs/architecture/agent-system.md`
 - `docs/architecture/opencode-bridge.md`
+- `contracts/opencode-bridge/protocol.md`
 - `tools/opencode-bridge/AS-BUILT.md`
 - `docs/architecture/deviations.md`
 - template-development

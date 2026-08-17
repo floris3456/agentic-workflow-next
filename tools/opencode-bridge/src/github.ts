@@ -5,6 +5,7 @@ import {
   invalidCommandComment,
   invalidRequestComment,
   requestStatusComment,
+  isTaskStartKind,
   scanCommandEnvelopes,
   scanRequestEnvelopes,
 } from "./protocol.js";
@@ -400,9 +401,9 @@ export class GitHubCommandPoller {
             );
             continue;
           }
-          if (bound === undefined && envelope.kind !== "start") {
+          if (bound === undefined && !isTaskStartKind(envelope.kind)) {
             rejected++;
-            this.rejectCommand(issue.number, item.markerHash, envelope, "The first command for an issue must be start");
+            this.rejectCommand(issue.number, item.markerHash, envelope, "The first command for an issue must be start or workspace.start");
             continue;
           }
           if (bound !== undefined && bound !== envelope.task_id) {
@@ -410,9 +411,9 @@ export class GitHubCommandPoller {
             this.rejectCommand(issue.number, item.markerHash, envelope, "Command task does not match the issue binding");
             continue;
           }
-          if (bound !== undefined && !this.state.hasMutatingTask(bound) && envelope.kind !== "start") {
+          if (bound !== undefined && !this.state.hasMutatingTask(bound) && !isTaskStartKind(envelope.kind)) {
             rejected++;
-            this.rejectCommand(issue.number, item.markerHash, envelope, "The first mutating-task command must be start");
+            this.rejectCommand(issue.number, item.markerHash, envelope, "The first mutating-task command must be start or workspace.start");
             continue;
           }
           if (mutationBlocked && !this.state.getCommand(envelope.command_id) && !this.state.commandRejection(envelope.command_id)) {
@@ -420,7 +421,7 @@ export class GitHubCommandPoller {
             this.rejectCommand(issue.number, item.markerHash, envelope, "Repository mutation dispatch is frozen while multiple mapped mutating control issues are open");
             continue;
           }
-          if (envelope.kind === "start" && !this.state.hasMutatingTask(envelope.task_id)
+          if (isTaskStartKind(envelope.kind) && !this.state.hasMutatingTask(envelope.task_id)
             && [...openMutatingIssues].some((number) => number !== issue.number)) {
             rejected++;
             this.rejectCommand(issue.number, item.markerHash, envelope, "Another mutating bridge task issue is already open for this repository");
@@ -432,7 +433,7 @@ export class GitHubCommandPoller {
           const accepted: AcceptedCommand = this.state.acceptCommand(envelope, issue.number);
           if (accepted.disposition === "new") {
             commands.push(accepted.command!);
-            if (envelope.kind === "start") openMutatingIssues.add(issue.number);
+            if (isTaskStartKind(envelope.kind)) openMutatingIssues.add(issue.number);
             this.enqueueComment(issue.number, `command-ack:${envelope.command_id}`, commandStatusComment(accepted.command!));
           } else if (accepted.disposition === "conflict") {
             rejected++;

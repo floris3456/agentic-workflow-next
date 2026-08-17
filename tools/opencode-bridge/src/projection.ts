@@ -164,6 +164,12 @@ export class PublicProjection {
     return { retained_locally: true, truncated: true, reason: "Projected result exceeds the GitHub publication limit" };
   }
 
+  addPrivateRoot(root: string): void {
+    if (root.length <= 1 || this.roots.includes(root)) return;
+    this.roots.push(root);
+    this.roots.sort((left, right) => right.length - left.length);
+  }
+
   safeText(value: string, taskId?: string): string {
     return redactText(this.aliasPrivateIds(value, taskId), this.roots).replace(/[\r\n]+/g, " ").replace(/[@<>`]/g, "?").slice(0, 500);
   }

@@ -21,6 +21,7 @@ import type {
   StoredCommand,
   StoredRequest,
   TaskSession,
+  TaskSessionKind,
 } from "./types.js";
 import { asJson, ensureParent, now, stableJson } from "./util.js";
 
@@ -29,6 +30,11 @@ const taskBoundAliasKinds = new Set(["session", "pty", "permission", "question",
 
 function parseJson(value: unknown): JsonValue {
   return asJson(JSON.parse(String(value)));
+}
+
+function taskSessionKind(value: unknown): TaskSessionKind {
+  if (value !== "developer" && value !== "workspace") throw new Error("Task session kind is invalid");
+  return value;
 }
 
 function commandFromRow(row: Row): StoredCommand {
@@ -70,6 +76,7 @@ function taskSessionFromRow(row: Row): TaskSession {
     sessionId: String(row.session_id),
     issueNumber: Number(row.issue_number),
     agent: String(row.agent),
+    sessionKind: taskSessionKind(row.session_kind),
     sessionState: String(row.session_state ?? "unknown"),
     ...(row.latest_response_json === null || row.latest_response_json === undefined
       ? {}
@@ -132,7 +139,12 @@ export class BridgeState {
     this.db = new DatabaseSync(path);
     chmodSync(path, 0o600);
     this.db.exec("PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;");
-    this.migrate();
+    try {
+      this.migrate();
+    } catch (error) {
+      this.db.close();
+      throw error;
+    }
   }
 
   private migrate(): void {
@@ -175,6 +187,7 @@ export class BridgeState {
         session_id TEXT NOT NULL UNIQUE,
         issue_number INTEGER NOT NULL,
         agent TEXT NOT NULL,
+        session_kind TEXT NOT NULL DEFAULT 'developer' CHECK(session_kind IN ('developer', 'workspace')),
         session_state TEXT NOT NULL DEFAULT 'unknown',
         latest_response_json TEXT,
         latest_event_id TEXT,
@@ -322,9 +335,14 @@ export class BridgeState {
       );
     `);
     const taskColumns = new Set((this.db.prepare("PRAGMA table_info(task_sessions)").all() as Row[]).map((row) => String(row.name)));
+    if (!taskColumns.has("session_kind")) {
+      this.db.exec("ALTER TABLE task_sessions ADD COLUMN session_kind TEXT NOT NULL DEFAULT 'developer' CHECK(session_kind IN ('developer', 'workspace'))");
+    }
     if (!taskColumns.has("session_state")) this.db.exec("ALTER TABLE task_sessions ADD COLUMN session_state TEXT NOT NULL DEFAULT 'unknown'");
     if (!taskColumns.has("latest_response_json")) this.db.exec("ALTER TABLE task_sessions ADD COLUMN latest_response_json TEXT");
     if (!taskColumns.has("latest_event_id")) this.db.exec("ALTER TABLE task_sessions ADD COLUMN latest_event_id TEXT");
+    const invalidTaskKind = this.db.prepare("SELECT task_id FROM task_sessions WHERE session_kind IS NULL OR session_kind NOT IN ('developer', 'workspace') LIMIT 1").get();
+    if (invalidTaskKind) throw new Error("Bridge state contains an invalid task session kind");
 
     const eventColumns = new Set((this.db.prepare("PRAGMA table_info(events)").all() as Row[]).map((row) => String(row.name)));
     if (!eventColumns.has("request_id")) this.db.exec("ALTER TABLE events ADD COLUMN request_id TEXT");
@@ -353,7 +371,7 @@ export class BridgeState {
       `);
     }
     this.db.exec("CREATE UNIQUE INDEX IF NOT EXISTS aliases_kind_internal_scope ON aliases(kind, internal_id, scope)");
-    this.setMeta("schema_version", "4");
+    this.setMeta("schema_version", "5");
   }
 
   private transaction<T>(operation: () => T): T {
@@ -417,10 +435,17 @@ export class BridgeState {
       } else if (nonterminal) {
         rejection = `Task already has nonterminal command ${String(nonterminal.command_id)} in state ${String(nonterminal.state)}`;
       } else if ((envelope.kind === "start" || envelope.kind === "promotion.apply")
-        && (!envelope.expected?.developer_sha || !envelope.expected.ref)) {
-        rejection = `${envelope.kind} requires top-level expected.developer_sha and expected.ref`;
+        && (!envelope.expected?.developer_sha || !envelope.expected.ref
+          || envelope.expected.template_development_sha !== undefined)) {
+        rejection = `${envelope.kind} requires only top-level expected.developer_sha and expected.ref`;
       } else if ((envelope.kind === "start" || envelope.kind === "promotion.apply") && envelope.expected?.ref !== "developer") {
         rejection = `${envelope.kind} requires expected.ref developer`;
+      } else if (envelope.kind === "workspace.start"
+        && (!envelope.expected?.template_development_sha || !envelope.expected.ref
+          || envelope.expected.developer_sha !== undefined)) {
+        rejection = "workspace.start requires only top-level expected.template_development_sha and expected.ref";
+      } else if (envelope.kind === "workspace.start" && envelope.expected?.ref !== "template-development") {
+        rejection = "workspace.start requires expected.ref template-development";
       }
       if (rejection) {
         this.db.prepare(`
@@ -501,17 +526,26 @@ export class BridgeState {
     return command;
   }
 
-  mapTaskSession(taskId: string, sessionId: string, issueNumber: number, agent: string): void {
+  mapTaskSession(
+    taskId: string,
+    sessionId: string,
+    issueNumber: number,
+    agent: string,
+    sessionKind: TaskSessionKind = "developer",
+  ): void {
+    if (sessionKind !== "developer" && sessionKind !== "workspace") throw new Error("Task session kind is invalid");
     const timestamp = now();
     this.transaction(() => {
       const scout = this.scoutSessionForInternal(sessionId);
-      if (scout) throw new Error(`Developer session ID conflicts with Scout request ${scout.requestId}`);
+      if (scout) throw new Error(`Task session ID conflicts with Scout request ${scout.requestId}`);
       this.db.prepare(`
-        INSERT INTO task_sessions(task_id, session_id, issue_number, agent, session_state, created_at, updated_at)
-        VALUES (?, ?, ?, ?, 'starting', ?, ?)
+        INSERT INTO task_sessions(
+          task_id, session_id, issue_number, agent, session_kind, session_state, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, 'starting', ?, ?)
         ON CONFLICT(task_id) DO UPDATE SET session_id=excluded.session_id, issue_number=excluded.issue_number,
-          agent=excluded.agent, session_state=excluded.session_state, updated_at=excluded.updated_at
-      `).run(taskId, sessionId, issueNumber, agent, timestamp, timestamp);
+          agent=excluded.agent, session_kind=excluded.session_kind, session_state=excluded.session_state,
+          updated_at=excluded.updated_at
+      `).run(taskId, sessionId, issueNumber, agent, sessionKind, timestamp, timestamp);
       this.db.prepare(`
         INSERT INTO issue_tasks(issue_number, task_id, updated_at) VALUES (?, ?, ?)
         ON CONFLICT(task_id) DO UPDATE SET issue_number=excluded.issue_number, updated_at=excluded.updated_at
@@ -527,6 +561,14 @@ export class BridgeState {
   taskSessionForInternal(sessionId: string): TaskSession | undefined {
     const row = this.db.prepare("SELECT * FROM task_sessions WHERE session_id=?").get(sessionId) as Row | undefined;
     return row ? taskSessionFromRow(row) : undefined;
+  }
+
+  taskKind(taskId: string): TaskSessionKind | undefined {
+    const session = this.getTaskSession(taskId);
+    if (session) return session.sessionKind;
+    const first = this.db.prepare("SELECT kind FROM commands WHERE task_id=? ORDER BY sequence LIMIT 1").get(taskId) as Row | undefined;
+    if (!first) return undefined;
+    return String(first.kind) === "workspace.start" ? "workspace" : "developer";
   }
 
   mapScoutSession(input: {
@@ -580,7 +622,7 @@ export class BridgeState {
 
   sessionBindingForInternal(sessionId: string): SessionBinding | undefined {
     const developer = this.taskSessionForInternal(sessionId);
-    if (developer) return { taskId: developer.taskId, sessionId, sessionKind: "developer" };
+    if (developer) return { taskId: developer.taskId, sessionId, sessionKind: developer.sessionKind };
     const scout = this.scoutSessionForInternal(sessionId);
     return scout
       ? { taskId: scout.taskId, sessionId, sessionKind: "scout", requestId: scout.requestId }
@@ -789,7 +831,7 @@ export class BridgeState {
       UPDATE task_sessions SET session_state='starting', agent=COALESCE(?, agent), updated_at=?
       WHERE task_id=? AND session_id=?
     `).run(agent ?? null, now(), taskId, sessionId);
-    if (result.changes !== 1) throw new Error(`Task ${taskId} does not map exact developer session ${sessionId}`);
+    if (result.changes !== 1) throw new Error(`Task ${taskId} does not map exact task session ${sessionId}`);
   }
 
   updateTaskSessionState(taskId: string, sessionState: string, eventId: string): void {
@@ -847,7 +889,7 @@ export class BridgeState {
 
   recordEvent(input: {
     eventKey: string; source: string; eventType: string; payload: JsonValue; taskId?: string; sessionId?: string;
-    requestId?: string; sessionKind?: "developer" | "scout"; aggregateId?: string; durableSeq?: number;
+    requestId?: string; sessionKind?: TaskSessionKind | "scout"; aggregateId?: string; durableSeq?: number;
     interaction?: InteractionBinding;
   }, responseDelivery?: ResponseDeliveryInput): boolean {
     return this.transaction(() => {
@@ -959,7 +1001,7 @@ export class BridgeState {
         const session = this.getTaskSession(taskId);
         if (issueNumber === undefined || !session || session.sessionId !== sessionId) continue;
         if (this.queueResponseDeliveryRecord({
-          eventId, taskId, sessionId, eventType, issueNumber, deliveryKind: "developer",
+          eventId, taskId, sessionId, eventType, issueNumber, deliveryKind: session.sessionKind,
         })) recovered++;
       }
       return recovered;

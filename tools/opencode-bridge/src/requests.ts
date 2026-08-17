@@ -96,6 +96,8 @@ export class RequestExecutor {
         task_id: request.taskId,
         mapped: false,
         session_state: "unmapped",
+        session_kind: null,
+        latest_projected_response: null,
         latest_projected_developer_response: null,
       };
     }
@@ -104,8 +106,10 @@ export class RequestExecutor {
       mapped: true,
       session: this.state.ensureAlias("session", session.sessionId, request.taskId),
       agent: session.agent,
+      session_kind: session.sessionKind,
       session_state: session.sessionState,
-      latest_projected_developer_response: session.latestResponse ?? null,
+      latest_projected_response: session.latestResponse ?? null,
+      latest_projected_developer_response: session.sessionKind === "developer" ? session.latestResponse ?? null : null,
       latest_event_id: session.latestEventId
         ? this.state.ensureAlias("event", session.latestEventId, request.taskId)
         : null,

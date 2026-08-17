@@ -15,6 +15,7 @@ const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-
 const taskId = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
 const allowedKinds = new Set([
   "start",
+  "workspace.start",
   "status",
   "steer",
   "route",
@@ -41,6 +42,10 @@ export type ScannedCommand =
 export type ScannedRequest =
   | { valid: true; envelope: RequestEnvelope; markerHash: string }
   | { valid: false; error: string; markerHash: string };
+
+export function isTaskStartKind(kind: string): boolean {
+  return kind === "start" || kind === "workspace.start";
+}
 
 function rejectUnknownKeys(record: Record<string, unknown>, allowed: Set<string>, label: string): void {
   const unknown = Object.keys(record).filter((key) => !allowed.has(key));
@@ -69,15 +74,22 @@ export function parseCommandEnvelope(value: unknown): CommandEnvelope {
   let expected: CommandEnvelope["expected"];
   if (input.expected !== undefined) {
     const candidate = asRecord(input.expected, "command expected guard");
-    rejectUnknownKeys(candidate, new Set(["developer_sha", "ref"]), "Command expected guard");
+    rejectUnknownKeys(candidate, new Set(["developer_sha", "template_development_sha", "ref"]), "Command expected guard");
     if (candidate.developer_sha !== undefined && (typeof candidate.developer_sha !== "string" || !/^[0-9a-f]{40}$/.test(candidate.developer_sha))) {
       throw new TypeError("Expected developer SHA must be 40 lowercase hexadecimal characters");
+    }
+    if (candidate.template_development_sha !== undefined
+      && (typeof candidate.template_development_sha !== "string" || !/^[0-9a-f]{40}$/.test(candidate.template_development_sha))) {
+      throw new TypeError("Expected template-development SHA must be 40 lowercase hexadecimal characters");
     }
     if (candidate.ref !== undefined && (typeof candidate.ref !== "string" || !validRef(candidate.ref))) {
       throw new TypeError("Expected ref is invalid");
     }
     expected = {
       ...(candidate.developer_sha === undefined ? {} : { developer_sha: candidate.developer_sha as string }),
+      ...(candidate.template_development_sha === undefined
+        ? {}
+        : { template_development_sha: candidate.template_development_sha as string }),
       ...(candidate.ref === undefined ? {} : { ref: candidate.ref as string }),
     };
   }

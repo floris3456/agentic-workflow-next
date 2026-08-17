@@ -54,7 +54,11 @@ function envelope(commandId: string, sequence: number, kind = "status", task = "
     task_id: task,
     kind,
     arguments: {},
-    ...(kind === "start" ? { expected: { developer_sha: "a".repeat(40), ref: "developer" } } : {}),
+    ...(kind === "start"
+      ? { expected: { developer_sha: "a".repeat(40), ref: "developer" } }
+      : kind === "workspace.start"
+        ? { expected: { template_development_sha: "b".repeat(40), ref: "template-development" } }
+        : {}),
   };
 }
 
@@ -93,6 +97,19 @@ test("protocol scanner validates complete envelopes and isolates malformed marke
   assert.throws(() => parseCommandEnvelope({ ...command, extra: true }), /unknown field/);
   assert.throws(() => parseCommandEnvelope({ ...command, expected: { developer_sha: "A".repeat(40) } }), /lowercase hexadecimal/);
   assert.throws(() => parseCommandEnvelope({ ...command, expected: { ref: "refs/heads/../main" } }), /ref is invalid/);
+
+  const workspace = {
+    ...envelope("abababab-abab-4bab-8bab-abababababab", 1, "workspace.start", "WORKSPACE-1"),
+    arguments: { brief: "Maintain a verified repository worktree" },
+  };
+  assert.deepEqual(parseCommandEnvelope(workspace), workspace);
+  assert.throws(
+    () => parseCommandEnvelope({
+      ...workspace,
+      expected: { template_development_sha: "B".repeat(40), ref: "template-development" },
+    }),
+    /template-development SHA.*lowercase hexadecimal/,
+  );
 });
 
 test("sequence-free request scanner validates durable read request envelopes", () => {
@@ -170,6 +187,37 @@ test("poller durably rejects a nested start guard without consuming sequence one
   assert.deepEqual(result.commands.map((command) => command.commandId), [valid.command_id]);
   assert.match(state.commandRejection(invalid.command_id)?.reason ?? "", /top-level expected/);
   assert.equal(state.getCommand(valid.command_id)?.sequence, 1);
+});
+
+
+test("poller admits workspace.start as the first mutating command with its independent template guard", async (context) => {
+  const state = stateForTest(context);
+  const workspace = {
+    ...envelope("45454545-4545-4454-8454-454545454545", 1, "workspace.start", "TASK-WORKSPACE"),
+    arguments: { brief: "Maintain developer from the stable template instruction root" },
+  };
+  const github = new GitHubClient({
+    owner: "acme",
+    repository: "demo",
+    tokens: new FakeTokens(),
+    state,
+    apiBaseUrl: "https://api.github.test",
+    fetch: asFetch((request) => {
+      const path = new URL(request.url).pathname;
+      if (path === "/repos/acme/demo/issues") {
+        return Response.json([{ number: 8, body: "Workspace task", labels: [{ name: "agentic-bridge" }], ...actor("alice", "OWNER") }]);
+      }
+      if (path === "/repos/acme/demo/issues/8/comments") {
+        return Response.json([{ id: 3, body: commandMarker(workspace), ...actor("alice", "COLLABORATOR") }]);
+      }
+      return new Response("not found", { status: 404 });
+    }),
+  });
+  const poller = new GitHubCommandPoller({ github, state, allowedAuthors: ["alice"] });
+  const result = await poller.pollOnce();
+  assert.deepEqual(result.commands.map((entry) => entry.commandId), [workspace.command_id]);
+  assert.equal(state.taskForIssue(8), "TASK-WORKSPACE");
+  assert.equal(state.taskKind("TASK-WORKSPACE"), "workspace");
 });
 
 test("status projection never includes command arguments and neutralizes active Markdown", () => {

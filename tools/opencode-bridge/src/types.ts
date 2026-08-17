@@ -4,6 +4,7 @@ export type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue
 export type OperationTransport = "http" | "sse" | "websocket";
 export type OperationEffect = "read" | "mutation" | "subscribe" | "consume";
 export type OperationPolicy = "read" | "expert" | "local-secret" | "blocked-web";
+export type TaskSessionKind = "developer" | "workspace";
 
 export interface OperationParameter {
   name: string;
@@ -54,6 +55,7 @@ export interface CommandEnvelope {
   arguments: Record<string, JsonValue>;
   expected?: {
     developer_sha?: string;
+    template_development_sha?: string;
     ref?: string;
   };
 }
@@ -133,6 +135,7 @@ export interface TaskSession {
   sessionId: string;
   issueNumber: number;
   agent: string;
+  sessionKind: TaskSessionKind;
   sessionState: string;
   latestResponse?: JsonValue;
   latestEventId?: string;
@@ -157,7 +160,7 @@ export interface ScoutSession {
 export interface SessionBinding {
   taskId: string;
   sessionId: string;
-  sessionKind: "developer" | "scout";
+  sessionKind: TaskSessionKind | "scout";
   requestId?: string;
 }
 
@@ -187,7 +190,7 @@ export interface ResponseDelivery {
   sessionId: string;
   issueNumber: number;
   eventType: string;
-  deliveryKind: "developer" | "scout";
+  deliveryKind: TaskSessionKind | "scout";
   requestId?: string;
   attempts: number;
   createdAt: number;
@@ -200,7 +203,7 @@ export interface ResponseDeliveryInput {
   sessionId: string;
   issueNumber: number;
   eventType: string;
-  deliveryKind?: "developer" | "scout";
+  deliveryKind?: TaskSessionKind | "scout";
   requestId?: string;
 }
 

@@ -12,23 +12,29 @@ Commands are JSON inside a hidden Markdown marker:
 -->
 ```
 
-The bridge accepts markers only from an exact configured GitHub login whose current repository association is `OWNER`, `MEMBER`, or `COLLABORATOR`. It scans both the issue body and every comment by design for compatibility and recovery. The generalized Project package deliberately publishes every command, including the initial `start`, as a fresh comment and keeps the editable issue body command-free. Repeated scans are safe because command UUID and task-sequence uniqueness provide durable idempotency. One task ID binds to exactly one issue, and only one mapped mutating control issue may remain open per repository. A marker on a second issue that repeats an already-bound task ID is rejected locally; it cannot replace the binding or abort polling of other issues. The first valid issue command must be `start`; that permanently binds the issue and task locally. Its sequence is exactly `1`, every later command is exactly the prior accepted sequence plus one, and a task cannot admit another command while one is `accepted` or `applying`. Every authenticated, parse-valid command rejected before the command ledger is recorded by UUID without consuming sequence, including duplicate issue/task binding, unbound/mismatched-task commands, a non-`start` first mutation, the one-open-mutating-issue gate, sequence/nonterminal failures, and mandatory-guard failures. A later scan returns that same rejection; a corrected command uses a fresh UUID and the still-expected sequence.
+The bridge accepts markers only from an exact configured GitHub login whose current repository association is `OWNER`, `MEMBER`, or `COLLABORATOR`. It scans both the issue body and every comment by design for compatibility and recovery. The generalized Project package deliberately publishes every command, including the initial `start`, as a fresh comment and keeps the editable issue body command-free. Repeated scans are safe because command UUID and task-sequence uniqueness provide durable idempotency. One task ID binds to exactly one issue, and only one mapped mutating control issue may remain open per repository. A marker on a second issue that repeats an already-bound task ID is rejected locally; it cannot replace the binding or abort polling of other issues. The first valid issue command must be either `start` or `workspace.start`; that permanently binds the issue and task locally. Its sequence is exactly `1`, every later command is exactly the prior accepted sequence plus one, and a task cannot admit another command while one is `accepted` or `applying`. Every authenticated, parse-valid command rejected before the command ledger is recorded by UUID without consuming sequence, including duplicate issue/task binding, unbound/mismatched-task commands, a first mutation other than `start` or `workspace.start`, the one-open-mutating-issue gate, sequence/nonterminal failures, and mandatory-guard failures. A later scan returns that same rejection; a corrected command uses a fresh UUID and the still-expected sequence.
 
 The bridge queues and attempts to publish `applying` before entering the command handler. While a command is `applying`, wait: it is pre-indeterminate and must not be reissued. If the bridge restarts before recording a terminal state, recovery changes it to `indeterminate` and never automatically reissues it.
 
-`start` and `promotion.apply` require both fields in top-level `expected`, with
-`expected.ref` equal to `developer`, and a clean checkout. A missing or misplaced
-mandatory guard is a durable pre-ledger rejection and does not consume sequence;
-the corrected command uses a fresh UUID. Other commands may include expected
-guards while implementation files are dirty. Expected state is checked against a
-freshly fetched, synchronized local `developer` checkout before consequential
-work.
+`start` and `promotion.apply` require `expected.developer_sha` plus
+`expected.ref: developer`, and a clean synchronized developer checkout.
+`workspace.start` instead requires `expected.template_development_sha` plus
+`expected.ref: template-development`. Before that start, the bridge explicitly
+fetches the template-development remote ref and discovers exactly one registered,
+real, non-symlink worktree on that branch. It proves the shared Git common
+directory, exact configured GitHub repository identity, branch, HEAD, upstream
+when present, clean state, and equality with the fetched remote ref. No public
+command or tracked configuration carries the private worktree path. A missing or
+misplaced mandatory guard is a durable pre-ledger rejection and does not consume
+sequence; the corrected command uses a fresh UUID. Other commands may include
+runtime-appropriate expected guards while implementation files are dirty.
 
 ## Commands
 
 | Kind | Arguments |
 | --- | --- |
 | `start` | `brief` string; optional `agent` (`luna` or `sol`) and `title` |
+| `workspace.start` | `brief` string; optional `title`; route is fixed to `workspace-maintainer` |
 | `status` | none |
 | `steer` | `message` |
 | `route` | `agent`; optional continuation `message` |
@@ -76,7 +82,7 @@ binding and unrelated poll work continue.
 | Kind | Arguments | Durable result |
 | --- | --- | --- |
 | `command.status` | exact `command_id` UUID | matching task's exact ledger or pre-ledger-rejection state, known projected result/error, timestamps, applying age, and service heartbeat |
-| `task.status` | none | mapped session alias/agent/state and latest projected developer response plus event/update timestamps |
+| `task.status` | none | mapped session kind/alias/agent/state and latest projected task response plus event/update timestamps; the legacy developer-response field remains populated only for developer sessions |
 | `scout.start` | exactly four fields: focused string `question`, exact lowercase 40-character SHA in `ref`, bounded string `scope`, and string `expected_evidence` | one dedicated-runtime Luna/high session over the immutable exact-tree snapshot, or an explicit fail-closed runtime/probe error; UUID admission/no-replay semantics remain durable |
 | `scout.status` | exact `scout_request_id` UUID | matching task/request start state, exact ref, session state, and latest projected Scout response |
 
@@ -142,15 +148,15 @@ The bridge first queues an accepted ACK, then `applying`, then a terminal status
 
 Raw OpenCode results and events remain in the mode-restricted local database. GitHub projection replaces private session, PTY, permission, question, message, workspace, and event IDs, including embedded text and object-key occurrences, with globally unique task-scoped aliases, redacts secret-like fields and text, removes local paths, neutralizes active Markdown, limits depth/collections/strings, and retains oversized results locally. Local-secret failures publish fixed non-sensitive text while detailed upstream errors remain local.
 
-After a mapped developer session emits `session.idle` or `session.error`, the
-event journal row, durable cursor, session state, and response-delivery row commit
-in one SQLite transaction. The bridge structurally
-selects the latest assistant message, applies the existing public projection,
-stores that projected response with the mapped task, and queues it to the bound
-issue. Retrieval/publication failures remain pending and retry idempotently. The
-bridge does not parse, validate, approve, reject, or otherwise interpret handoff
-fields. `task.status` returns the same latest projected value for missed-result
-recovery.
+After a mapped developer or workspace session emits `session.idle` or
+`session.error`, the event journal row, durable cursor, session kind/state, and
+response-delivery row commit in one SQLite transaction. The bridge structurally
+selects the latest assistant message through the client pinned to that session
+runtime, applies the existing public projection, stores that projected response
+with the mapped task, and queues it to the bound issue. Retrieval/publication
+failures remain pending and retry idempotently. The bridge does not parse,
+validate, approve, reject, or otherwise interpret handoff fields. `task.status`
+returns the same latest projected value for missed-result recovery.
 
 After a mapped Scout session idles or errors, the same committed-event,
 atomic-delivery, and public-projection path selects its latest assistant response,
@@ -173,7 +179,8 @@ After a successful `permission.reply` or `question.reply`, the bridge records
 the resolved interaction in the private state database. Before sending that
 reply, it captures the exact mapped session's activity timestamp and latest
 assistant-message completion evidence. It then validates both pending
-interaction lists, the mapped developer session status/activity, and (when the
+interaction lists, the mapped task session status/activity on its persisted
+runtime, and (when the
 baseline is available) the latest assistant-message evidence. A changed
 post-reply activity timestamp or changed terminal assistant message is clean
 continuation, including when the completed session is absent from
@@ -181,8 +188,9 @@ continuation, including when the completed session is absent from
 bounded one-second grace before all evidence is read again. Any `busy`/`retry`
 status or changed activity timestamp is clean continuation; only unchanged live
 session activity with no outstanding interaction can reach the durable claim for
-one fixed same-session continuation nudge using the existing agent and configured
-directory. Missing or malformed baseline/live session evidence fails closed. The public
+one fixed same-session continuation nudge using the existing agent and the fixed
+directory for that runtime. Missing or malformed baseline/live session evidence
+fails closed. The public
 command result includes `continuation_recovery.outcome`:
 `recovered` means the nudge was sent, `clean` means the session was already
 progressing, `blocked` means safety proof or delivery was unavailable, and
@@ -191,6 +199,16 @@ recorded before the request, so an uncertain request is never replayed. The
 bridge never calls `session.create`, `start`, or route changes on this path.
 Outstanding interactions, missing mappings/status, malformed lists, and API
 errors fail closed with no nudge.
+
+Workspace sessions persist `session_kind: workspace` and use a lazily created
+OpenCode client whose fixed directory is the verified template-development
+worktree. Status, steer/finalize, generic requests, structured replies,
+same-session continuation proof/nudge, abort, durable/canonical recovery, and
+terminal delivery all select that client from the durable session kind. Restart
+re-proves the same registered worktree and repository identity without requiring
+the worktree to remain clean or at its start SHA. Workspace route changes,
+bridge PTYs, and `promotion.apply` are denied; normal developer routing and the
+human exact-SHA authority over `main` are unchanged.
 
 The normal developer config leaves in-worktree read/edit/shell defaults intact
 and sets `external_directory` to `ask`. It does not add a broad external-path

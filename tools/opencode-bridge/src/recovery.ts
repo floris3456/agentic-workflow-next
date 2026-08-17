@@ -8,6 +8,7 @@ import type {
   JsonValue,
   ScoutSession,
   TaskSession,
+  TaskSessionKind,
 } from "./types.js";
 import { asJson, asRecord, backoff, isRecord, sha256, sleep, stableJson } from "./util.js";
 
@@ -19,7 +20,7 @@ export interface PersistedOpenCodeEvent {
   taskId?: string;
   sessionId?: string;
   requestId?: string;
-  sessionKind?: "developer" | "scout";
+  sessionKind?: TaskSessionKind | "scout";
   aggregateId?: string;
   sequence?: number;
   interaction?: InteractionBinding;
@@ -30,6 +31,7 @@ export interface RecoveryCoordinatorOptions {
   state: BridgeState;
   onPersistedEvent?: (event: PersistedOpenCodeEvent) => void | Promise<void>;
   onError?: (error: unknown) => void | Promise<void>;
+  taskSessionKind?: TaskSessionKind;
 }
 
 function stringField(record: Record<string, unknown>, name: string): string | undefined {
@@ -185,7 +187,7 @@ function normalizeSession(value: unknown, session: RecoverableSession): Persiste
     payload: asJson(record),
     taskId: session.taskId,
     sessionId: session.sessionId,
-    sessionKind: "requestId" in session ? "scout" : "developer",
+    sessionKind: "requestId" in session ? "scout" : session.sessionKind,
     ...("requestId" in session ? { requestId: session.requestId } : {}),
     aggregateId,
     sequence,
@@ -329,12 +331,14 @@ export class RecoveryCoordinator {
   private readonly state: BridgeState;
   private readonly onPersistedEvent?: RecoveryCoordinatorOptions["onPersistedEvent"];
   private readonly onError?: RecoveryCoordinatorOptions["onError"];
+  private readonly taskSessionKind: TaskSessionKind;
 
   constructor(options: RecoveryCoordinatorOptions) {
     this.client = options.client;
     this.state = options.state;
     this.onPersistedEvent = options.onPersistedEvent;
     this.onError = options.onError;
+    this.taskSessionKind = options.taskSessionKind ?? "developer";
   }
 
   private async proveContinuationState(sessionId: string, includeAssistantMessage = false): Promise<ContinuationProof> {
@@ -365,7 +369,7 @@ export class RecoveryCoordinator {
     kind: InteractionKind,
   ): Promise<ContinuationReplyBaseline | null> {
     const session = this.state.getTaskSession(taskId);
-    if (!session) return null;
+    if (!session || session.sessionKind !== this.taskSessionKind) return null;
     try {
       const interaction = this.state.interaction(interactionId, taskId, kind);
       if (!interaction || interaction.sessionId !== session.sessionId
@@ -410,7 +414,9 @@ export class RecoveryCoordinator {
     baseline?: ContinuationReplyBaseline | null,
   ): Promise<ContinuationRecoveryResult> {
     const session = this.state.getTaskSession(taskId);
-    if (!session) return { outcome: "blocked", reason: "missing-session-state" };
+    if (!session || session.sessionKind !== this.taskSessionKind) {
+      return { outcome: "blocked", reason: "missing-session-state" };
+    }
 
     let interaction;
     try {
@@ -505,7 +511,11 @@ export class RecoveryCoordinator {
     const response = await this.client.request("sync.history.list", { body: this.state.durableCursors("sync-history") });
     if (!Array.isArray(response)) throw new TypeError("Sync history response is not an array");
     let inserted = 0;
-    for (const value of response) if (await this.persist(normalizeSync(value, this.state))) inserted++;
+    for (const value of response) {
+      const event = normalizeSync(value, this.state);
+      if (event.sessionKind && event.sessionKind !== this.taskSessionKind) continue;
+      if (await this.persist(event)) inserted++;
+    }
     return inserted;
   }
 
@@ -568,8 +578,9 @@ export class RecoveryCoordinator {
 
   async recoverDeveloperCanonical(session: TaskSession): Promise<boolean> {
     const current = this.state.getTaskSession(session.taskId);
-    if (!current || current.taskId !== session.taskId || current.sessionId !== session.sessionId) {
-      throw new Error("Developer recovery mapping is missing or inconsistent");
+    if (!current || current.taskId !== session.taskId || current.sessionId !== session.sessionId
+      || current.sessionKind !== this.taskSessionKind || session.sessionKind !== this.taskSessionKind) {
+      throw new Error("Task recovery mapping is missing or assigned to a different runtime");
     }
     if (terminalSessionState(current.sessionState)) return false;
 
@@ -607,7 +618,7 @@ export class RecoveryCoordinator {
       eventType: terminal.eventType,
       taskId: session.taskId,
       sessionId: session.sessionId,
-      sessionKind: "developer",
+      sessionKind: session.sessionKind,
       payload: {
         id: eventId,
         type: terminal.eventType,
@@ -635,7 +646,7 @@ export class RecoveryCoordinator {
         const sessionId = stringField(interaction, "sessionID");
         if (!interactionId || !sessionId) throw new TypeError(`OpenCode ${group.eventType} recovery item is missing id or sessionID`);
         const binding = this.state.sessionBindingForInternal(sessionId);
-        if (!binding) continue;
+        if (!binding || binding.sessionKind !== this.taskSessionKind) continue;
         const eventId = interactionEventId(group.eventType, interaction, sessionId, interactionId);
         if (await this.persist({
           eventId,
@@ -660,7 +671,7 @@ export class RecoveryCoordinator {
 
   async recoverOnce(): Promise<void> {
     await this.recoverSyncHistory();
-    for (const session of this.state.listTaskSessions()) {
+    for (const session of this.state.listTaskSessions().filter((entry) => entry.sessionKind === this.taskSessionKind)) {
       try {
         await this.recoverSessionHistory(session);
       } catch (error) {
@@ -688,6 +699,7 @@ export class RecoveryCoordinator {
           attempt = 0;
           const normalized = normalizeLegacy(event.data, event.id);
           const session = normalized.sessionId ? this.state.sessionBindingForInternal(normalized.sessionId) : undefined;
+          if (session && session.sessionKind !== this.taskSessionKind) continue;
           await this.persist({
             ...normalized,
             ...(session ? {
@@ -707,6 +719,9 @@ export class RecoveryCoordinator {
   }
 
   async runSession(session: RecoverableSession, signal: AbortSignal, random = Math.random): Promise<void> {
+    if (!("requestId" in session) && session.sessionKind !== this.taskSessionKind) {
+      throw new Error("Task session kind does not match its recovery runtime");
+    }
     let attempt = 0;
     while (!signal.aborted) {
       try {

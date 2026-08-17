@@ -1,6 +1,6 @@
 # AS-BUILT: repository workflow
 
-**Status:** Template baseline with implemented GitHub-mediated OpenCode bridge and migrated web-orchestration installation package
+**Status:** Template baseline with implemented GitHub-mediated OpenCode bridge, verified template-development workspace route, and migrated web-orchestration installation package
 
 ## Purpose
 
@@ -26,6 +26,18 @@ This repository is a reusable workflow template rather than a product implementa
 - No ref-owned `repository-scout` agent is tracked. Concurrent Scout requests use a bridge-installed external OpenCode `1.18.16` runtime on a distinct authenticated loopback endpoint. Trusted runtime/config/binaries are replaceable and read-only; a derived sibling persistence root keeps private OpenCode data/state and mapped-session evidence across reinstall without becoming HOME/config/cache/temp/PATH/plugin/instruction authority. Canonical `origin/developer` snapshots use Git object plumbing without checkout/worktree, reject gitlinks, strip regular-file write/execute bits, preserve symlinks as inert evidence, and fully re-hash reuse. The Luna/high prompt and only allowed tools (`scout_read`, `scout_glob`, `scout_grep`) are bridge-owned; sterile launch, read-only config, persistence/snapshot realpath containment, active probes, and no normal-server fallback fail closed independently. LSP is excluded.
 - Local agents deny subagent/task launches and do not perform orchestration, acceptance, or independent review.
 - `tools/opencode-bridge/` implements pinned OpenCode `1.18.16` HTTP/SSE/PTY transports, durable recovery/state, GitHub App polling/outbox, strict command and sequence-free recovery/Scout protocols, public projection, developer/Scout response delivery, external Scout runtime installation/launch/probe, exact-tree snapshots, default-deny policy, and foreground CLI. It enforces ledger-derived contiguous sequence, one nonterminal mutation per task, ambiguity freeze with read recovery, durable rejections, task-scoped aliases, atomic terminal-event/cursor/delivery persistence, pre-reply continuation evidence plus persisted one-shot post-interaction continuation claims reached only after post-reply progress/completion proof and a bounded live-activity recheck, separate endpoint recovery, restart-recomputed status, and no replay of uncertain work. The developer config retains in-worktree defaults and keeps `external_directory` at approval (`ask`) rather than broadly allowing outside paths. Repository bootstrap authenticates exact Git host plus owner/repository across supported HTTPS/SSH forms; public/Enterprise API hosts derive unambiguously and custom API layouts require explicit `github.git_host`. `contracts/opencode-bridge/` records its exact 188-operation compatibility boundary and public protocol.
+- An explicit `workspace.start` first command uses
+  `expected.template_development_sha` plus
+  `expected.ref: template-development`. A lazy bridge-owned resolver fetches the
+  explicit remote ref and proves exactly one real registered template-development
+  worktree in the same repository/common Git directory before starting the fixed
+  `workspace-maintainer` agent there. Durable developer/workspace session kind
+  keeps later status, prompts, structured interactions, generic operations,
+  continuation recovery, abort, canonical recovery, and terminal response on the
+  original runtime. Public projection dynamically redacts the private root;
+  restart re-proves it without requiring post-start cleanliness. Workspace route
+  changes, PTYs, and main promotion are denied, preserving normal developer
+  behavior and human exact-SHA promotion authority.
 - The bridge keeps normal developer OpenCode loopback-only and separately attachable by the normal TUI; its dedicated Scout process/port/root/auth do not alter normal developer configuration or availability. Hardened Scout hosts are currently non-root Linux only. No inbound webhook, tunnel, custom ChatGPT MCP, self-hosted runner, or mandatory OS service is required.
 - `scripts/initialize-template-branches.sh` repairs only provably fresh unrelated generated `main`/`developer` roots with matching metadata/tree shape, records a local old-root backup, and uses a hook-validated tree-preserving `force-with-lease`; valid ancestry no-ops and established ambiguity is refused.
 - Tracked hooks enforce checks against direct `main` changes, branch deletion, non-fast-forward pushes, and continued work after failed synchronization within a configured local checkout. They are advisory client-side defense in depth rather than a server-side boundary; operators should also restrict `main` through a GitHub ruleset.
