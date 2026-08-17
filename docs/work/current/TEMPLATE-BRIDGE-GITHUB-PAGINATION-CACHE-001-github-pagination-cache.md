@@ -6,7 +6,7 @@ TEMPLATE-BRIDGE-GITHUB-PAGINATION-CACHE-001
 
 ## Status
 
-Blocked on local runtime-load proof
+Source correction complete, independently reviewed, and accepted against the real page-boundary failure; package pending
 
 ## Task-start template-development SHA
 
@@ -18,104 +18,86 @@ ed821a140707b13084f8c62e743442dacf4b4201
 
 ## Public-safe task brief
 
-Repair a bridge GitHub issue-comment pagination/cache defect that can hide newly created comments after an issue crosses a pagination boundary. Keep the fix bounded to control-plane retrieval/cache behavior and focused regression coverage. Do not modify or promote main or change web-orchestration. Preserve the parked lifecycle task and never replay its unadmitted route command.
+Repair a bridge GitHub issue-comment pagination/cache defect that can hide newly created comments after an issue crosses a pagination boundary. Keep the fix bounded to control-plane retrieval/cache behavior and focused regression coverage. Do not modify or promote main or change web-orchestration. Preserve the lifecycle task and never replay an uncertain mutation.
 
 ## Current objective
 
-Prove the reviewed pagination fix is loaded by the local bridge and makes the original page-2 sequence-22 marker on lifecycle issue #49 discoverable exactly once without reposting it.
+Package the already reviewed and runtime-accepted pagination correction through the tracked template-maintenance generator without widening its exact developer range.
 
 ## Current position
 
-Fresh canonical refs at task start were developer `5dad89af63057545677e47d546783184b5e8c65d`, template-development `ed821a140707b13084f8c62e743442dacf4b4201`, web-orchestration `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`, and main `6127611113dfdb66f93a0cfd2d355359aa370833`.
+Developer task-start record commit is `30e0c897255d39cb76a6f02895f58a478d3fa842`. Sol implementation is `3f6eae08bbbe34a966f0d074e0a43771ddbeb2c4`; task-record-only handoff is `7bc274c4e54dbe0fda2f0cfdd397bb7b78f41e98`. The exact task package range is `5dad89af63057545677e47d546783184b5e8c65d..7bc274c4e54dbe0fda2f0cfdd397bb7b78f41e98`; web-orchestration is unchanged.
 
-Canonical lifecycle issue #49 contains route sequence 22 / command `e9a777cb-8e35-4a33-985a-52e553bc05e2`. The marker was published once and remained unacknowledged while a fresh local status observation proved bridge heartbeat and GitHub polling were advancing after publication with no pending command/request/outbox. Issue #49 had crossed the 100-comment page boundary.
+Independent review confirmed the bounded 304/full-page continuation logic, its exact 100-to-101 regression, AS-BUILT atomicity, and successful source/handoff CI. The fix is also proven against the original real failure: after the fixed runtime was installed, lifecycle issue #49's previously invisible page-2 sequence-22 UUID `e9a777cb-8e35-4a33-985a-52e553bc05e2` was discovered by the bridge. A sequence-free `command.status` read proved that exact UUID existed durably as sequence 22 and was `pre-ledger-rejected` only because the temporary pagination source issue #52 was still open; therefore the pagination handler found the page-2 marker and no underlying route handler ran. After #52 closed, recovery used a fresh UUID at the still-next sequence 22, preserving the same task/session, and the route was admitted normally.
 
-The pagination repair used isolated canonical issue #52 after #49 was parked by temporarily removing only its `agentic-bridge` label. Developer task-start record commit is `30e0c897255d39cb76a6f02895f58a478d3fa842`. Sol implemented the bounded source correction at `3f6eae08bbbe34a966f0d074e0a43771ddbeb2c4` and pushed task-record-only handoff `7bc274c4e54dbe0fda2f0cfdd397bb7b78f41e98`. Issue #52 published the completed six-field OpenCode handoff, both implementation and handoff repository Actions succeeded, and #52 is closed completed.
-
-Independent review confirms the exact `30e0c897... -> 7bc274c4...` range is two commits and four affected files: the developer task record, `tools/opencode-bridge/src/github.ts`, `tools/opencode-bridge/tests/protocol-github.test.ts`, and `tools/opencode-bridge/AS-BUILT.md`. The implementation preserves explicit current/cached next links and only derives a next-page probe on HTTP 304 when the cached page exactly fills one validated positive safe-integer `per_page`; page arithmetic is safe-integer bounded and the existing pagination origin/loop checks remain authoritative. The focused regression caches exactly 100 comments with no next link, receives 304 on page 1, exposes command-bearing comment 101 on page 2, and proves discovery. Existing ordinary multi-page ETag coverage remains.
-
-After review, #49's `agentic-bridge` label was restored without changing or reposting sequence 22. A bridge diagnostic initially reported multiple open mapped mutating issues because #52 was still open; #52 was then closed, leaving #49 as the sole open mutating control task. Subsequent GitHub reads still show the original sequence-22 marker without accepted/rejected/applying/terminal acknowledgement. A sequence-free status read on #52 proves the bridge heartbeat continued after #49 was relabeled, but remote evidence cannot identify which developer runtime fingerprint/SHA that live bridge process has installed.
+Issue #52 is closed completed. Lifecycle issue #49 later completed its separate source correction and is also closed. Fresh canonical refs at the adjacent lifecycle checkpoint are developer `9ca25b8b6f9036744cb61845039f9185deb9e78f`, web-orchestration `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`, and main `6127611113dfdb66f93a0cfd2d355359aa370833`; this pagination task retains its exact earlier package head `7bc274c4...` rather than widening to later developer work.
 
 ## Source ranges
 
-- developer: `5dad89af63057545677e47d546783184b5e8c65d..7bc274c4e54dbe0fda2f0cfdd397bb7b78f41e98`
-- implementation: `30e0c897255d39cb76a6f02895f58a478d3fa842..3f6eae08bbbe34a966f0d074e0a43771ddbeb2c4`
+- developer package range: `5dad89af63057545677e47d546783184b5e8c65d..7bc274c4e54dbe0fda2f0cfdd397bb7b78f41e98`
+- task-start/implementation range: `30e0c897255d39cb76a6f02895f58a478d3fa842..3f6eae08bbbe34a966f0d074e0a43771ddbeb2c4`
 - handoff: `3f6eae08bbbe34a966f0d074e0a43771ddbeb2c4..7bc274c4e54dbe0fda2f0cfdd397bb7b78f41e98`
-- web-orchestration: no source change
+- web-orchestration: empty at `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`
 - main: unchanged at `6127611113dfdb66f93a0cfd2d355359aa370833`
 
 ## Observed
 
-- Pre-fix `GitHubClient.cachedPage()` reused cached page data and cached `next` topology on HTTP 304; `paginate()` stopped when cached `next` was absent.
-- Control issues and issue comments are the current pagination callers and use `per_page=100`.
-- A cached exactly-full final page can remain body-identical while a newly created next page appears, making body ETag validity insufficient to prove pagination topology.
-- The fix prioritizes current 304 Link metadata, then cached explicit next metadata, then an exactly-full validated next-page probe.
-- The new regression observes pages `1`, `1`, `2`, retains conditional ETag reuse on page 1, and discovers command marker 101.
-- Focused protocol/GitHub tests passed 16/16; full bridge tests passed 100/100; agent-system, bridge, repository validators and `git diff --check` passed according to the developer record.
-- GitHub repository Actions succeeded for implementation `3f6eae08...` and handoff `7bc274c4...`.
-- #52 is terminal, absorbed, independently reviewed, and closed completed.
-- #49 is again labeled for bridge control and is the only open mutating control task; promotion-review issues #46-#48 are Scout-only.
-- The original #49 sequence-22 marker has not been replayed, replaced, edited, or duplicated.
-- A fresh bridge heartbeat after relabel proves a running process, but GitHub does not expose the sync watcher's installed developer SHA/runtime fingerprint.
+- Pre-fix `GitHubClient.cachedPage()` reused cached data and cached no-next topology on HTTP 304, allowing a new page to remain undiscoverable.
+- The fix keeps current/cached explicit `Link` next authoritative and only derives one next-page probe when cached data exactly fills one validated positive safe-integer `per_page`.
+- Existing origin/loop bounds remain in `paginate()`.
+- Focused regression caches exactly 100 comments with no next, receives page-1 304, exposes comment 101 on page 2, and proves the command marker is discovered.
+- Focused protocol/GitHub tests passed 16/16 and full bridge tests passed 100/100 according to the developer record.
+- GitHub Actions succeeded for implementation `3f6eae08...` and handoff `7bc274c4...`.
+- The real previously invisible page-2 sequence-22 marker was later discovered by the fixed runtime; durable command status proves the marker entered pre-ledger rejection rather than remaining invisible.
+- Its pre-ledger rejection was caused by the separate one-open-mutating-issue gate, not by pagination, and no handler ran.
 
 ## Interpretation
 
-The tracked source defect is fixed and independently reviewed. The remaining acceptance uncertainty is local deployment state, not source-review uncertainty: the running bridge may still be the pre-fix process if the developer synchronization watcher has not completed its drain/bootstrap/restart cycle. Replaying sequence 22 would destroy the strongest acceptance evidence and is prohibited. The next safe observation is the Git-private developer-sync status/installed SHA plus current bridge status.
-
-If the local installed SHA is `7bc274c4e54dbe0fda2f0cfdd397bb7b78f41e98` (or a later descendant containing the fix) and the bridge has polled after #52 closure while sequence 22 remains invisible, the pagination repair is insufficient and needs further source diagnosis. If the installed SHA is older, allow/repair the normal sync watcher deployment first; do not manually replay sequence 22.
+The pagination defect is source-complete, independently reviewed, and runtime-accepted. No further source mutation is justified for this task. Its remaining maintenance work is deterministic provenance packaging of the exact historical range; the later lifecycle commits must not widen this package.
 
 ## Attempts
 
-1. Reconciled sequence 22 repeatedly without replay; GitHub showed only the original source marker.
-2. Fresh local operator status proved the bridge was healthy and polling after sequence 22 was posted.
-3. Read pre-fix `github.ts` and identified cached `next` reuse on 304 as the matching pagination-boundary mechanism.
-4. Parked #49 by removing only its control label; did not close the issue or change/repost sequence 22.
-5. Created the required template and developer task records, then delegated the bounded source repair to Sol on isolated issue #52.
-6. Independently reviewed implementation `3f6eae08...`, handoff `7bc274c4...`, exact changed paths, focused regression, and successful GitHub Actions.
-7. Restored #49's label without replay. An initial multi-mutating-issue freeze was reconciled by closing completed #52; #49 is now the sole mutating issue.
-8. Sequence 22 remains unacknowledged after a fresh remote bridge heartbeat, leaving local runtime-load state as the unresolved fact.
+1. Reconciled the original page-2 route marker without replay and proved the bridge was polling while it remained invisible.
+2. Identified stale 304 pagination topology as the matching source mechanism.
+3. Parked the lifecycle issue and delegated an isolated Sol correction on #52.
+4. Independently reviewed the source/handoff and CI.
+5. Restored the lifecycle issue without reposting the old marker.
+6. The fixed runtime discovered that exact old marker; `command.status` proved pre-ledger rejection due only to temporary concurrent mutating issue #52.
+7. Closed #52 and resumed lifecycle recovery with a fresh UUID only after exact proof the old route handler never ran.
 
 ## Changed approach
 
-The lifecycle source task remains paused at its exact original sequence-22 marker. The poller repair is source-complete, but maintenance completion waits for real adapter acceptance against that same marker and for the runtime-load state to be proven locally.
+Runtime acceptance is complete. Preserve the historical range and proceed only through the tracked package generator/validator on an authorized maintainer execution surface.
 
 ## Checks
 
-- Exact source refs and task bindings independently reread during the repair.
-- Exact `30e0c897... -> 7bc274c4...` developer range reviewed: two commits, four intended files only.
-- Implementation and handoff GitHub Actions concluded success.
-- #52 terminal OpenCode response independently reconciled to exact handoff `7bc274c4...`.
-- #52 closed completed only after route terminal/absorbed and independent source review.
-- #49 relabel restored; no sequence-22 replay or replacement occurred.
-- Open control issues reconciled: #49 is the only mutating task; #46-#48 are Scout-only.
+- Exact `30e0c897... -> 7bc274c4...` range reviewed remotely.
+- Source and handoff CI succeeded.
+- Runtime acceptance against the original page-2 marker established from bridge durable state.
+- No sequence-22 mutation replay occurred; the old rejected UUID was retired and later recovery used a fresh UUID after duplicate effects were excluded.
 
 ## Blockers / required decisions
 
-Local runtime-load proof is required because connected GitHub cannot read the Git-private developer-sync installed SHA/status. No human decision is required; this is an observation/capability boundary.
-
-`source-lock.json` remains intentionally unchanged until real acceptance and maintenance packaging/finalization are resolved; this task owns its exact source range independently.
+No human decision. Package generation requires the tracked generator on a maintainer execution surface with canonical Git fetch access. `source-lock.json` should be reconciled only through that repository-owned package step.
 
 ## Remaining work
 
-1. Read the local developer-sync `status` and `installed-sha`, local HEAD/origin-developer, and current bridge status without restarting or mutating anything.
-2. If the installed runtime is old, let the normal watcher safely synchronize/rebootstrap/restart; diagnose only if its status says blocked/error.
-3. Once the installed runtime contains `7bc274c4...`, observe #49. The original sequence-22 marker must be accepted/applied exactly once without reposting.
-4. Reconcile that same-session Sol route and complete the remaining lifecycle second-terminal correction.
-5. Package this pagination correction on template-development in maintenance order only after real acceptance; do not hand-build provenance.
-6. Continue separate lifecycle/path-synthesis/Node-floor/finalization promotion blockers afterward.
+1. Generate `changes/TEMPLATE-BRIDGE-GITHUB-PAGINATION-CACHE-001` from developer `5dad89af... -> 7bc274c4...` and empty web range at `7e29c07e...` using `scripts/create-change-package.mjs`.
+2. Validate the package and full template-development branch, inspect manifest/digests, reconcile source lock per repository contract, and push a dedicated template-development handoff snapshot.
+3. Finalize/archive only after required downstream/application review under the maintenance contract.
 
 ## Next action
 
-Obtain one fresh local developer-sync/runtime snapshot; do not restart the bridge or replay sequence 22 before that observation.
+Run the tracked pagination change-package generator on the synchronized template-development maintainer surface with the exact reviewed range above.
 
 ## Relevant durable records
 
 - Pagination source issue #52 (closed completed)
-- Pagination implementation `3f6eae08bbbe34a966f0d074e0a43771ddbeb2c4`
-- Pagination developer handoff `7bc274c4e54dbe0fda2f0cfdd397bb7b78f41e98`
-- Canonical lifecycle issue #49 and original sequence-22 command `e9a777cb-8e35-4a33-985a-52e553bc05e2`
-- Current web-orchestration `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`
-- Current main `6127611113dfdb66f93a0cfd2d355359aa370833`
+- Implementation `3f6eae08bbbe34a966f0d074e0a43771ddbeb2c4`
+- Developer handoff `7bc274c4e54dbe0fda2f0cfdd397bb7b78f41e98`
+- Lifecycle issue #49 durable proof for original old route UUID `e9a777cb-8e35-4a33-985a-52e553bc05e2`
+- Web-orchestration `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`
+- Main `6127611113dfdb66f93a0cfd2d355359aa370833`
 
 ## Last handoff commit
 
