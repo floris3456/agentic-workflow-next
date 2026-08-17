@@ -6,7 +6,7 @@
 
 ## Status
 
-Implementation complete and validated; source publication and ledger reconciliation are in progress.
+Source implementation is pushed and remotely verified; the developer handoff snapshot and ledger reconciliation are in progress.
 
 ## Task-start developer SHA
 
@@ -287,7 +287,7 @@ The developer implementation is complete in the verified worktree based on
 `11f1f1178394bd0ff80116f4acf67958cdc08ace`. It adds the explicit
 `workspace.start` protocol and fixed workspace runtime, focused integration and
 migration coverage, and current protocol/architecture/component AS-BUILT facts.
-The complete required validation set passes on this exact tree; immediate source commit/push is in progress.
+The complete required validation set passed on the published source tree. Developer source commit `f76dfbd2c103ae43605939ec999f7f846acf7286` is remotely verified; the separate handoff snapshot is in progress.
 
 Main remains `6127611113dfdb66f93a0cfd2d355359aa370833` and
 web-orchestration remains `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`.
@@ -364,6 +364,13 @@ when that start fails before session creation.
   checks.
 - `./scripts/bootstrap-agent-workflow.sh --check`: tracked hooks active.
 - `git diff --check`: passed.
+- Published developer source commit
+  `f76dfbd2c103ae43605939ec999f7f846acf7286`: remote ref, exact
+  parent `11f1f1178394bd0ff80116f4acf67958cdc08ace`, exact tree
+  `a2bceb33fc6213911cce87996f7cf7e29ad83ccb`, message, and local
+  clean reconstruction all matched.
+- Independent remote compare: ahead by one, behind by zero, one commit, and
+  exactly the intended 20-file source/record range.
 
 ## Blockers / required decisions
 
@@ -374,15 +381,15 @@ exact remote ref and tree verification.
 
 ## Remaining work
 
-1. Commit and immediately publish the coherent developer implementation and
-   current records; independently inspect the remote source range.
-2. Add the exact developer handoff snapshot, publish and verify it, then return
-   to template-development for source-lock/change-package/handoff reconciliation.
+1. Commit, immediately publish, and independently verify this exact developer
+   handoff snapshot.
+2. Return to template-development for source-lock/change-package/handoff
+   reconciliation.
 
 ## Next action
 
-Create and immediately publish the validated developer source implementation
-commit, then independently verify the exact remote result.
+Create and immediately publish this developer handoff snapshot, then verify its
+exact remote parent/tree and return to the template-maintenance ledger.
 
 ## Continuation prompt
 
@@ -403,4 +410,4 @@ None. This session is actively completing the task.
 
 ## Last handoff commit
 
-None
+`f76dfbd2c103ae43605939ec999f7f846acf7286`
