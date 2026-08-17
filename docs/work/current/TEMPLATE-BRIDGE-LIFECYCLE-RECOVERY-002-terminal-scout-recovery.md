@@ -6,7 +6,7 @@ TEMPLATE-BRIDGE-LIFECYCLE-RECOVERY-002
 
 ## Status
 
-Source correction complete and independently reviewed; runtime installation proven; fresh Scout acceptance pending
+Paused; waiting for human-provided local diagnostic evidence
 
 ## Task-start template-development SHA
 
@@ -22,7 +22,9 @@ Correct bridge lifecycle defects found during full promotion review: recover mis
 
 ## Current objective
 
-Run one fresh bounded Scout acceptance against the proven installed runtime. The fresh Scout is acceptance evidence for the corrected runtime and must not relaunch, reconstruct, or replace historical promotion-review Scouts #46-#48.
+Preserve the fresh Scout exactly as observed while waiting for human-provided
+local diagnostic evidence. Do not replay, replace, abort, reinterpret, or use it
+as acceptance for another task.
 
 ## Current position
 
@@ -47,6 +49,13 @@ A fresh read-only host snapshot at `2026-08-17T13:35:42+02:00` proved local `HEA
 That snapshot also exposed `service.last_error = OpenCode session.messages ... Session not found: session-82`. No current pending bridge work existed, all services were active, control polling/heartbeat advanced, and repository search found no recent public control issue/comment bound to `session-82`. Current source also shows the control loop clears `service.last_error` on successful polls while independent recovery observers may set it afterward. This error is recorded as stale background recovery noise, not evidence of an unresolved current command or request; the fresh acceptance remains responsible for proving current Scout start/progress/terminal behavior despite that historical noise.
 
 Fresh Scout-only acceptance issue #53 now exists with no control label yet. Task ID `SCOUT-RUNTIME-ACCEPTANCE-20260817T1136Z-BA73B3B`, exact ref `ba73b3b54febfdeadbff66262acaa7be12e5760e`, and pending request ID `ba57a03f-30c7-4beb-a454-34a02fc045ba` are fixed before request publication. The issue authorizes no repository mutation and exists only to prove one new Scout lifecycle on the corrected runtime.
+
+The request was subsequently published and created `session-86`. Its public
+projection remained `starting` with no terminal event while bridge heartbeats
+continued advancing. The human explicitly paused this diagnosis pending local
+diagnostic output and prioritized
+`TEMPLATE-WORKSPACE-MAINTENANCE-AGENT-001`. Issues #49 and #53 and the existing
+Scout remain open and unchanged by that new task.
 
 ## Source ranges
 
@@ -108,6 +117,10 @@ Packaging remains non-contiguous because pagination is interleaved between lifec
 
 Source implementation and installation proof are complete. Keep issue #49 open only through the fresh acceptance. Use #53 solely for one new bounded Scout acceptance and absorb it without touching historical #46-#48. Do not create another developer route unless fresh acceptance exposes a concrete source defect.
 
+Human steering pauses the acceptance diagnosis while awaiting local diagnostic
+evidence and prioritizes the separate Workspace Maintenance Agent task. No Scout
+or issue lifecycle action is authorized by that priority change.
+
 ## Checks
 
 - Current developer, main, web-orchestration, and template-development refs independently reread during this cycle.
@@ -126,7 +139,9 @@ Source implementation and installation proof are complete. Keep issue #49 open o
 
 ## Blockers / required decisions
 
-No human product/design decision is needed. The current lifecycle blocker is only the fresh bounded Scout acceptance.
+Human-provided local diagnostic evidence is required before this lifecycle task
+continues. The current `session-86` projection alone must not be reinterpreted as
+terminal or replay authorization.
 
 Historical #46-#48 original results are unavailable and their original review scopes remain uncovered by those executions; replay is prohibited.
 
@@ -145,7 +160,9 @@ Promotion remains blocked independently by fresh runtime acceptance, uncovered r
 
 ## Next action
 
-Apply `agentic-bridge` to #53 and publish the one persisted fresh Scout request. Do not touch historical #46-#48.
+After the human supplies the requested local diagnostic output, resume exact
+evidence reconciliation for the existing issue #53/request/session. Until then,
+do not touch issues #49 or #53 or historical #46-#48.
 
 ## Relevant durable records
 
