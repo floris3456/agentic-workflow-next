@@ -121,8 +121,8 @@ back. Only this dedicated handoff snapshot remains in the working cycle.
 - correction-cycle ledger reopen:
   `fb903dafdb2713621abbfe86b220f26c8d26a6e0..546ada45be5fb4317ea40cdf7b207b0174ebe0e3`
 - corrected template-development implementation: begins after
-  `546ada45be5fb4317ea40cdf7b207b0174ebe0e3`; exact pushed head will be appended
-  after this implementation checkpoint
+  `546ada45be5fb4317ea40cdf7b207b0174ebe0e3` and is pushed at
+  `33227b741c0dc2909ed8ca8dc00ea1b28963febc`
 
 ## Observed
 
@@ -202,6 +202,10 @@ promote `main`; exact-SHA human approval remains unchanged.
 14. Updated ADR-0001, current AS-BUILT/design/deviation records, maintenance
     instructions, and repository documentation to state the branch's intentional
     rooted-runtime role and three-range transfer boundary.
+15. Ran the complete template-development validation, committed the corrected
+    implementation as `33227b741c0dc2909ed8ca8dc00ea1b28963febc`, and
+    independently read that exact canonical ref back with direct `ls-remote`;
+    ancestry from the correction-cycle ledger checkpoint passed.
 
 ## Changed approach
 
@@ -265,6 +269,14 @@ normal repository-owned path.
   forbidden effective permissions passed.
 - Corrected structural template-development validation: passed before this
   implementation checkpoint.
+- Complete corrected `./scripts/validate-template-development.sh`: passed 8/8
+  fixtures, real pinned runtime inventory, structural validation, and
+  `git diff --check` on implementation commit
+  `33227b741c0dc2909ed8ca8dc00ea1b28963febc`.
+- Independent canonical readback: `origin/template-development` and direct
+  `ls-remote` both returned `33227b741c0dc2909ed8ca8dc00ea1b28963febc`;
+  the correction range is linear from
+  `546ada45be5fb4317ea40cdf7b207b0174ebe0e3`.
 
 ## Blockers / required decisions
 
@@ -276,21 +288,19 @@ human approval of an exact SHA.
 
 ## Remaining work
 
-1. Push and independently read back the corrected template-development
-   implementation checkpoint, then record its exact SHA.
-2. Correct the developer-owned real pinned-runtime bridge acceptance path while
+1. Correct the developer-owned real pinned-runtime bridge acceptance path while
    preserving the reviewed routing/lifecycle behavior and normal developer route.
-3. Run focused and complete source validation plus the real pinned-runtime
+2. Run focused and complete source validation plus the real pinned-runtime
    lifecycle acceptance, then independently verify pushed refs, ancestry, ranges,
    package identity, and relevant CI.
-4. Regenerate the task package using only the corrected repository generator,
+3. Regenerate the task package using only the corrected repository generator,
    update durable records, and push a dedicated correction handoff snapshot.
 
 ## Next action
 
-Run the complete corrected template-development validation, commit and
-immediately push this implementation checkpoint, independently read it back, and
-then continue on the synchronized developer worktree.
+Enter the synchronized developer worktree under its own authoritative task
+workflow, reopen its matching task record for correction, and implement the real
+pinned-runtime lifecycle acceptance without changing the sound route semantics.
 
 ## Relevant durable records
 
@@ -305,6 +315,8 @@ then continue on the synchronized developer worktree.
 - Corrected schema-3 package path
   `changes/TEMPLATE-WORKSPACE-MAINTENANCE-AGENT-001/manifest.json` (currently
   absent pending final reviewed source heads and repository-owned regeneration)
+- Corrected template-development implementation checkpoint
+  `33227b741c0dc2909ed8ca8dc00ea1b28963febc`
 
 ## Last handoff commit
 
