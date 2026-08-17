@@ -187,5 +187,8 @@ OAuth document or, alternatively, `OPENCODE_WORKSPACE_API_KEY_FILE`. It copies
 that one credential into temporary sterile runtime state, drives the production
 bridge through workspace and normal developer lifecycle paths, performs only a
 read-only bounded developer operation, rejects path leakage, and removes the
-temporary state. Live App registration and native ChatGPT GitHub write actions
-remain operator-owned external checks.
+temporary state. OAuth mode keeps OpenCode's bundled authentication integration
+but the live gate still checks every exposed tool/skill against the workspace
+agent's effective default-deny policy; API-key mode disables default plugins.
+Live App registration and native ChatGPT GitHub write actions remain
+operator-owned external checks.

@@ -260,7 +260,6 @@ try {
     LANG: "C.UTF-8",
     LC_ALL: "C.UTF-8",
     NO_PROXY: "127.0.0.1,localhost",
-    OPENCODE_DISABLE_DEFAULT_PLUGINS: "1",
     OPENCODE_DISABLE_EXTERNAL_SKILLS: "1",
     OPENCODE_DISABLE_CLAUDE_CODE_SKILLS: "1",
     OPENCODE_DISABLE_WATCHER: "1",
@@ -284,6 +283,7 @@ try {
     const apiKey = readFileSync(apiKeyFile, "utf8").replace(/[\r\n]+$/, "");
     assert(apiKey.length > 0 && !apiKey.includes("\0"), "Workspace smoke API key file is invalid");
     childEnvironment.OPENAI_API_KEY = apiKey;
+    childEnvironment.OPENCODE_DISABLE_DEFAULT_PLUGINS = "1";
   }
 
   const port = await availablePort();
@@ -337,11 +337,12 @@ try {
     `Pinned OpenCode did not become healthy: ${diagnostics}`);
   process.stdout.write("Pinned OpenCode 1.18.16 server ready.\n");
 
-  const [agentsValue, skillsValue, toolsValue, projectValue] = await Promise.all([
+  const [agentsValue, skillsValue, toolsValue, projectValue, providersValue] = await Promise.all([
     workspaceClient.request("app.agents"),
     workspaceClient.request("app.skills"),
     workspaceClient.request("tool.ids"),
     workspaceClient.request("project.current"),
+    workspaceClient.request("provider.list"),
   ]);
   const agents = records(agentsValue, "OpenCode agent inventory");
   const skills = records(skillsValue, "OpenCode skill inventory");
@@ -369,7 +370,14 @@ try {
     "workspace-maintenance was not loaded from template-development");
   assert(projectValue && typeof projectValue === "object" && !Array.isArray(projectValue)
     && resolve(projectValue.worktree) === template.directory, "OpenCode project root is not template-development");
-  process.stdout.write("Workspace agent, project, tool, and skill inventory verified.\n");
+  assert(providersValue && typeof providersValue === "object" && !Array.isArray(providersValue)
+    && Array.isArray(providersValue.all) && Array.isArray(providersValue.connected),
+  "OpenCode provider inventory is invalid");
+  const openai = providersValue.all.find((provider) => provider?.id === "openai");
+  assert(openai && openai.models && typeof openai.models === "object"
+    && Object.hasOwn(openai.models, "gpt-5.6-sol") && providersValue.connected.includes("openai"),
+  "OpenAI gpt-5.6-sol is not connected in the isolated runtime");
+  process.stdout.write("Workspace agent, project, provider, tool, and skill inventory verified.\n");
 
   state = new BridgeState(join(temporary, "bridge", "state.sqlite"));
   const projection = new PublicProjection({ state, privateRoots: privatePaths.filter(Boolean) });

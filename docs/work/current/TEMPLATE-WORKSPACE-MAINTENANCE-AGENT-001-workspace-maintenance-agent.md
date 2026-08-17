@@ -298,10 +298,12 @@ The prior developer implementation remains published at
 `d24b67d78d58bd0c217530545ab0b548b64e2485`. The correction-cycle reopening
 record is published at `183402e259a5f8367f3f4cc233fc8b3c490140c1`.
 A tracked real-runtime acceptance harness and its architecture, component,
-operator, and validator records are now implemented on top of that synchronized
-checkpoint. The implementation is ready for its immediate source commit/push;
-the live credentialed acceptance deliberately follows that checkpoint so the
-developer worktree can be proved clean and equal to `origin/developer`.
+operator, and validator records were published at
+`f455d6269678dbbab3783fd845ef26e0227c7ed7`. Its first model-backed attempt
+exposed a missing OAuth-provider precondition; the smallest launcher/gate
+correction is now ready for its immediate commit/push. The live credentialed
+acceptance deliberately follows each checkpoint so the developer worktree can
+be proved clean and equal to `origin/developer`.
 
 Main remains `6127611113dfdb66f93a0cfd2d355359aa370833` and
 web-orchestration remains `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`.
@@ -383,13 +385,26 @@ required.
   displayed output budget. The complete resulting file was independently read,
   syntax-checked, hardened, and included in the structural validator before any
   commit.
+- The first live launch could not derive the absent installed Scout-runtime
+  binary and therefore never started a server. The next launch used the exact
+  pinned installation already validated from template-development.
+- That launch proved the real project/agent/tool/skill inventory, but its copied
+  OAuth credential was not connected because the sterile launcher had disabled
+  OpenCode's bundled default authentication integration. It created one
+  inactive user message and no assistant/tool/error message; the isolated
+  process and its temporary state were stopped and removed. The launcher now
+  retains bundled authentication only in OAuth mode, asserts the expected
+  provider/model connection before prompting, and still audits every exposed
+  tool/skill against the effective default-deny policy.
 
 ## Changed approach
 
 No bridge route architecture changed. The correction adds one tracked,
 credentialed, operator-run acceptance route. It is intentionally excluded from
 the ordinary no-credential deterministic suite while remaining required by the
-task acceptance boundary.
+task acceptance boundary. OAuth mode needs OpenCode's bundled authentication
+integration inside the otherwise sterile runtime; this does not grant a tool or
+skill because the real effective permission inventory remains default-deny.
 
 ## Checks
 
@@ -417,8 +432,15 @@ task acceptance boundary.
   harness and sterile-environment assertions.
 - `node --check tools/opencode-bridge/scripts/smoke-workspace-runtime.mjs`:
   passed.
+- Developer acceptance-harness implementation
+  `f455d6269678dbbab3783fd845ef26e0227c7ed7`: an initial hook auto-push failed
+  through the intercepted proxy, the explicit proxy-free push succeeded, and
+  `recover-remote-sync.sh` independently proved the exact remote commit before
+  clearing the synchronization marker.
 - Real pinned-runtime lifecycle smoke: pending the synchronized implementation
-  checkpoint required by its own clean-worktree precondition.
+  checkpoint required by its own clean-worktree precondition. The first server
+  attempt failed before assistant execution and produced no repository mutation;
+  its provider-connection gap is now explicitly gated.
 
 ## Blockers / required decisions
 
@@ -430,7 +452,7 @@ fails after safe local attempts, the task remains blocked on that exact boundary
 
 ## Remaining work
 
-1. Commit and immediately push the developer acceptance-harness implementation.
+1. Commit and immediately push the OAuth-provider precondition correction.
 2. Execute one fresh real pinned-runtime lifecycle acceptance on the clean,
    synchronized checkpoint and correct only evidence-backed harness defects.
 3. Publish a dedicated developer handoff snapshot, then return to
@@ -439,8 +461,8 @@ fails after safe local attempts, the task remains blocked on that exact boundary
 
 ## Next action
 
-Inspect the exact implementation diff, commit/push it, independently read back
-the remote, and run the real pinned-runtime smoke.
+Validate the focused launcher correction, commit/push it, independently read
+back the remote, and re-run the real pinned-runtime smoke.
 
 ## Continuation prompt
 

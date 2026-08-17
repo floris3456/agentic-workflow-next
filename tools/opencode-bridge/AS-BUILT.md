@@ -60,6 +60,10 @@ and effective denials, a bounded read-only developer operation, evidence-only
 target instructions, meaningful tool progress, same-session continuation,
 terminal delivery without private paths, and a separate normal developer route.
 It leaves both source worktrees unchanged and never targets `main`.
+OAuth mode retains OpenCode's bundled authentication integration inside that
+sterile state; the live inventory must prove the expected provider connection,
+and every tool or skill it introduces remains subject to the agent's effective
+default-deny permission audit. API-key mode disables default plugins.
 
 ## GitHub control plane
 

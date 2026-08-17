@@ -114,6 +114,7 @@ try {
     '"workspace_exec"',
     "recoverDeveloperCanonical",
     "DeveloperResponseTransport",
+    '"provider.list"',
     '"small-developer"',
     "TARGET_INSTRUCTIONS_EVIDENCE_ONLY",
   ]) assert(workspaceSmoke.includes(term), `Workspace real-runtime smoke is missing ${term}`);
