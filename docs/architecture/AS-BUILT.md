@@ -38,6 +38,12 @@ This repository is a reusable workflow template rather than a product implementa
   restart re-proves it without requiring post-start cleanliness. Workspace route
   changes, PTYs, and main promotion are denied, preserving normal developer
   behavior and human exact-SHA promotion authority.
+- A tracked operator-run acceptance starts real pinned OpenCode `1.18.16` with
+  sterile temporary state and one explicit private credential source, then uses
+  the production bridge path to prove template-rooted workspace discovery,
+  effective tool/skill denial, a bounded non-main operation, same-session
+  terminal recovery/public projection, and an independent normal developer
+  route without mutating either worktree.
 - The bridge keeps normal developer OpenCode loopback-only and separately attachable by the normal TUI; its dedicated Scout process/port/root/auth do not alter normal developer configuration or availability. Hardened Scout hosts are currently non-root Linux only. No inbound webhook, tunnel, custom ChatGPT MCP, self-hosted runner, or mandatory OS service is required.
 - `scripts/initialize-template-branches.sh` repairs only provably fresh unrelated generated `main`/`developer` roots with matching metadata/tree shape, records a local old-root backup, and uses a hook-validated tree-preserving `force-with-lease`; valid ancestry no-ops and established ambiguity is refused.
 - Tracked hooks enforce checks against direct `main` changes, branch deletion, non-fast-forward pushes, and continued work after failed synchronization within a configured local checkout. They are advisory client-side defense in depth rather than a server-side boundary; operators should also restrict `main` through a GitHub ruleset.

@@ -105,6 +105,14 @@ post-start worktree to remain clean or at the original SHA. The agent remains
 fixed to `workspace-maintainer`; route changes, bridge PTYs, and main promotion
 are denied for workspace tasks.
 
+The operator-run workspace lifecycle acceptance uses a fresh real pinned
+OpenCode process with sterile temporary state and an explicitly supplied private
+OpenAI credential file. It drives the production bridge start, continuation,
+canonical recovery, projection, and terminal transport, observes bounded
+workspace tool progress against a verified non-main worktree, and independently
+proves the normal developer route. The tracked harness publishes neither runtime
+paths nor credentials and must leave both worktrees unchanged.
+
 The normal developer OpenCode configuration relies on the pinned server's
 current-working-directory defaults for contained work and sets
 `external_directory` to `ask`, without a broad allow rule. Small-developer

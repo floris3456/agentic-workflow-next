@@ -13,6 +13,7 @@
     "build": "tsc -p tsconfig.json",
     "test": "npm run build && node --test --test-concurrency=1 dist/tests/*.test.js",
     "test:scout-runtime-smoke": "npm run build && node scripts/smoke-scout-runtime.mjs",
+    "test:workspace-runtime-smoke": "npm run build && node scripts/smoke-workspace-runtime.mjs",
     "check": "npm run build && node --test --test-concurrency=1 dist/tests/*.test.js",
     "generate-manifest": "node scripts/generate-manifest.mjs",
     "start": "node dist/src/cli.js run"

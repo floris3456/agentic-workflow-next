@@ -173,11 +173,19 @@ See [`../../contracts/opencode-bridge/protocol.md`](../../contracts/opencode-bri
 npm ci
 npm test
 npm run test:scout-runtime-smoke
+OPENCODE_1_18_16_BIN="$PINNED_OPENCODE_BIN" \
+  OPENCODE_WORKSPACE_OAUTH_FILE="$PRIVATE_OPENCODE_OAUTH_FILE" \
+  npm run test:workspace-runtime-smoke
 ../../scripts/validate-opencode-bridge.sh
 ```
 
 The ordinary suite uses deterministic GitHub/OpenCode doubles. The Scout runtime
 smoke performs a temporary locked install outside the repository and starts/probes
-real OpenCode `1.18.16` without sending a model request. Live App registration,
-native ChatGPT GitHub write actions, and human acceptance remain operator-owned
-external checks.
+real OpenCode `1.18.16` without sending a model request. The workspace smoke
+requires an exact executable regular file plus exactly one mode-private OpenAI
+OAuth document or, alternatively, `OPENCODE_WORKSPACE_API_KEY_FILE`. It copies
+that one credential into temporary sterile runtime state, drives the production
+bridge through workspace and normal developer lifecycle paths, performs only a
+read-only bounded developer operation, rejects path leakage, and removes the
+temporary state. Live App registration and native ChatGPT GitHub write actions
+remain operator-owned external checks.

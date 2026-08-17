@@ -293,24 +293,27 @@ through the reviewed correction ledger/runtime work and is now
 implementation checkpoint is
 `33227b741c0dc2909ed8ca8dc00ea1b28963febc`.
 
-The developer implementation is complete in the verified worktree based on
-`11f1f1178394bd0ff80116f4acf67958cdc08ace`. It adds the explicit
-`workspace.start` protocol and fixed workspace runtime, focused integration and
-migration coverage, and current protocol/architecture/component AS-BUILT facts.
-The complete required validation set passed on the published source tree. Developer source commit `f76dfbd2c103ae43605939ec999f7f846acf7286` is remotely verified; the separate handoff snapshot is in progress.
+The prior developer implementation remains published at
+`f76dfbd2c103ae43605939ec999f7f846acf7286`, with its historical handoff at
+`d24b67d78d58bd0c217530545ab0b548b64e2485`. The correction-cycle reopening
+record is published at `183402e259a5f8367f3f4cc233fc8b3c490140c1`.
+A tracked real-runtime acceptance harness and its architecture, component,
+operator, and validator records are now implemented on top of that synchronized
+checkpoint. The implementation is ready for its immediate source commit/push;
+the live credentialed acceptance deliberately follows that checkpoint so the
+developer worktree can be proved clean and equal to `origin/developer`.
 
 Main remains `6127611113dfdb66f93a0cfd2d355359aa370833` and
 web-orchestration remains `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`.
 Neither branch has been modified.
 
 Independent review accepted the core bridge routing but found the lifecycle
-suite relied on fake OpenCode clients. This correction must use the real pinned
-OpenCode 1.18.16 server to prove the workspace project directory, selected agent,
-loaded workspace surface and denied tools/skills, one harmless bounded non-main
-operation, target-instruction non-takeover, meaningful progress, terminal
-response, same mapped session, public path redaction, and an independent normal
-developer route. Fake-client tests remain useful focused coverage but are not the
-acceptance authority.
+suite relied on fake OpenCode clients. The new operator-run harness starts a
+fresh exact OpenCode 1.18.16 process with sterile temporary HOME/XDG state and
+exactly one explicitly supplied private OpenAI credential source. It uses the
+production bridge executor, clients, durable state, recovery, projection, and
+response transport; deterministic doubles remain focused regression coverage,
+not the live acceptance authority.
 
 ## Observed
 
@@ -344,14 +347,29 @@ acceptance authority.
   replaced, aborted, or reinterpreted.
 - A fresh proxy-bypassed canonical fetch plus independent `ls-remote` readback
   established all four current refs before correction mutation; the developer
-  worktree is clean, on `developer`, synchronized, and has active tracked hooks.
+  worktree was clean, on `developer`, synchronized, and had active tracked hooks.
+- The runtime smoke queries the actual agent, skill, tool, and project inventories
+  from template-development before creating the bridge task. Effective
+  last-match permissions must deny every discovered tool except the bounded
+  workspace surface and question, and must deny every discovered skill except
+  `workspace-maintenance`.
+- Its workspace command performs only `git status --short` through
+  `workspace_exec` against the verified developer worktree. The harness proves
+  meaningful workspace tool progress, target instructions as evidence only,
+  same-session steering, canonical terminal recovery, response transport, and
+  public path redaction, then proves an independent normal developer session.
+- The runtime receives neither the host environment nor general host credential
+  state. One mode-private credential file is validated, copied into temporary
+  runtime state, and removed afterward. Helper Git reads use fixed arguments and
+  sterile global/system configuration.
 
 ## Interpretation
 
-The implementation matches the accepted architecture in the prior handoff. No
-deviation record is required. Durable session kind is the sole runtime selector
-after the first accepted start, while exact Git identity and worktree registration
-remain the technical target gate. Neither capability grants promotion authority.
+The harness adds acceptance evidence without changing route semantics. Durable
+session kind remains the sole runtime selector after the first accepted start,
+while exact Git identity and worktree registration remain the technical target
+gate. Neither capability grants promotion authority. No deviation record is
+required.
 
 ## Attempts
 
@@ -361,23 +379,32 @@ remain the technical target gate. Neither capability grants promotion authority.
   `service.ts`. The omitted unchanged tail was restored from the exact committed
   blob through the verified gate before rebuilding; subsequent compilation and
   focused execution passed.
+- The first large patch that added the acceptance harness exceeded the tool's
+  displayed output budget. The complete resulting file was independently read,
+  syntax-checked, hardened, and included in the structural validator before any
+  commit.
 
 ## Changed approach
 
-No material architecture change was made. Review added two fail-closed
-hardenings: lazy workspace initialization retries after transient resolution
-failure, and the first accepted start kind permanently fixes the task runtime even
-when that start fails before session creation.
+No bridge route architecture changed. The correction adds one tracked,
+credentialed, operator-run acceptance route. It is intentionally excluded from
+the ordinary no-credential deterministic suite while remaining required by the
+task acceptance boundary.
 
 ## Checks
 
-- Remote ref inspection: developer
-  `11f1f1178394bd0ff80116f4acf67958cdc08ace`, template-development
-  `cd433706bfefebaf42a5de6ea1521ec61deb2c8a`, web-orchestration
+- Correction-cycle remote read: developer
+  `d24b67d78d58bd0c217530545ab0b548b64e2485`, template-development
+  `fb903dafdb2713621abbfe86b220f26c8d26a6e0`, web-orchestration
   `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`, and main
-  `6127611113dfdb66f93a0cfd2d355359aa370833`; all matched local tracking refs.
+  `6127611113dfdb66f93a0cfd2d355359aa370833` before correction commits.
+- Template-development correction checkpoints
+  `546ada45be5fb4317ea40cdf7b207b0174ebe0e3`,
+  `33227b741c0dc2909ed8ca8dc00ea1b28963febc`, and
+  `dfbfeaa2cdd513e7f5012b3829179c596d9c0d80` were independently read back
+  after each immediate push.
 - `npm --prefix tools/opencode-bridge run build`: passed.
-- Focused protocol/GitHub/state/workspace suite: passed 36/36.
+- Focused workspace/protocol/state/recovery/projection/scope suite: passed 68/68.
 - Complete `npm --prefix tools/opencode-bridge test`: passed 113/113.
 - `./scripts/validate-opencode-bridge.sh`: passed bridge contracts, build,
   113/113 bridge tests, and 8/8 branch-initialization tests.
@@ -386,37 +413,34 @@ when that start fails before session creation.
   checks.
 - `./scripts/bootstrap-agent-workflow.sh --check`: tracked hooks active.
 - `git diff --check`: passed.
-- Published developer source commit
-  `f76dfbd2c103ae43605939ec999f7f846acf7286`: remote ref, exact
-  parent `11f1f1178394bd0ff80116f4acf67958cdc08ace`, exact tree
-  `a2bceb33fc6213911cce87996f7cf7e29ad83ccb`, message, and local
-  clean reconstruction all matched.
-- Independent remote compare: ahead by one, behind by zero, one commit, and
-  exactly the intended 20-file source/record range.
+- `node scripts/validate-opencode-bridge.mjs`: passed with the tracked real-runtime
+  harness and sterile-environment assertions.
+- `node --check tools/opencode-bridge/scripts/smoke-workspace-runtime.mjs`:
+  passed.
+- Real pinned-runtime lifecycle smoke: pending the synchronized implementation
+  checkpoint required by its own clean-worktree precondition.
 
 ## Blockers / required decisions
 
 No technical decision is pending. Direct Git transport works with the execution
 environment's intercepting proxy variables removed. Completion remains gated on
-one successful real OpenCode 1.18.16 workspace lifecycle acceptance; if model
-authentication or another external runtime dependency cannot be provided after
-safe local attempts, the task must remain blocked on that exact boundary.
+one successful real OpenCode 1.18.16 workspace lifecycle acceptance; if the
+privately available model credential or another external runtime dependency
+fails after safe local attempts, the task remains blocked on that exact boundary.
 
 ## Remaining work
 
-1. Inspect the existing bridge runtime/client and add the smallest tracked real
-   OpenCode acceptance harness without changing route semantics.
-2. Run focused tests, full bridge tests, bridge/repository validators, bootstrap
-   check, and diff checks; execute one fresh real pinned-runtime acceptance.
-3. Commit/push the developer correction and a dedicated handoff snapshot, then
-   return to template-development for the final three-range package and ledger
+1. Commit and immediately push the developer acceptance-harness implementation.
+2. Execute one fresh real pinned-runtime lifecycle acceptance on the clean,
+   synchronized checkpoint and correct only evidence-backed harness defects.
+3. Publish a dedicated developer handoff snapshot, then return to
+   template-development for the final three-range package and ledger
    reconciliation.
 
 ## Next action
 
-Commit and immediately push this correction-cycle reopening record, then inspect
-the existing real-runtime launcher/client and workspace route before implementing
-the acceptance harness.
+Inspect the exact implementation diff, commit/push it, independently read back
+the remote, and run the real pinned-runtime smoke.
 
 ## Continuation prompt
 

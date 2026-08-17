@@ -24,6 +24,7 @@ const required = [
   "tools/opencode-bridge/AS-BUILT.md",
   "tools/opencode-bridge/src/repository-identity.ts",
   "tools/opencode-bridge/src/scout-server.ts",
+  "tools/opencode-bridge/scripts/smoke-workspace-runtime.mjs",
   "tools/opencode-bridge/scout-runtime/package-lock.json",
   "tools/opencode-bridge/scout-runtime/opencode.json",
   "tools/opencode-bridge/scout-runtime/plugins/scout-tools.mjs",
@@ -67,6 +68,11 @@ try {
   );
   assert(scoutStart?.then?.properties?.arguments?.properties?.ref?.pattern === "^[0-9a-f]{40}$", "Scout ref must be an exact lowercase SHA");
   assert(packageDocument.engines?.node === ">=22.13.0", "Bridge minimum Node version must be explicit");
+  assert(
+    packageDocument.scripts?.["test:workspace-runtime-smoke"]
+      === "npm run build && node scripts/smoke-workspace-runtime.mjs",
+    "Workspace real-runtime smoke command is missing",
+  );
   assert(packageLock.packages?.[""]?.dependencies?.["@opencode-ai/sdk"] === "1.18.16", "Lockfile SDK version is not exact");
   assert(example.schema_version === 1 && example.policy?.pty_enabled === false && example.policy?.promotion_enabled === false, "Example config must default-deny PTY and promotion");
   assert(example.opencode?.scout_base_url && example.opencode.scout_base_url !== example.opencode.base_url, "Example config must use a distinct Scout endpoint");
@@ -95,6 +101,33 @@ try {
   for (const term of ["api.github.com", "/api/v3", "git_host", "ssh://", "git@host", "userinfo"]) {
     assert(identity.includes(term), `Repository identity boundary is missing ${term}`);
   }
+  const workspaceSmoke = read("tools/opencode-bridge/scripts/smoke-workspace-runtime.mjs");
+  for (const term of [
+    "1.18.16",
+    "CommandExecutor",
+    "TemplateDevelopmentWorktreeResolver",
+    '"workspace.start"',
+    '"workspace-maintainer"',
+    '"workspace_list"',
+    '"workspace_inspect"',
+    '"workspace_read"',
+    '"workspace_exec"',
+    "recoverDeveloperCanonical",
+    "DeveloperResponseTransport",
+    '"small-developer"',
+    "TARGET_INSTRUCTIONS_EVIDENCE_ONLY",
+  ]) assert(workspaceSmoke.includes(term), `Workspace real-runtime smoke is missing ${term}`);
+  assert(
+    workspaceSmoke.includes('permissionAction(workspaceAgent.permission, tool)')
+      && workspaceSmoke.includes('permissionAction(workspaceAgent.permission, "skill", skill.name)'),
+    "Workspace real-runtime smoke must inspect effective tool and skill permissions",
+  );
+  assert(
+    workspaceSmoke.includes("OPENCODE_DISABLE_EXTERNAL_SKILLS")
+      && workspaceSmoke.includes("GIT_CONFIG_GLOBAL: \"/dev/null\"")
+      && !workspaceSmoke.includes("...process.env"),
+    "Workspace real-runtime smoke must launch with an explicit sterile environment",
+  );
 } catch (error) {
   failures.push(`Bridge JSON validation failed: ${error.message}`);
 }

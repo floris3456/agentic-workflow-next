@@ -51,6 +51,16 @@ allows expected post-start dirt or advancement. Workspace route changes, bridge
 PTYs, and main promotion are denied. The normal developer route and human
 exact-SHA main authority are unchanged.
 
+A tracked credentialed runtime smoke starts an exact caller-supplied OpenCode
+`1.18.16` executable with a sterile temporary HOME/XDG state and only one
+explicit private OpenAI credential source. Through the production bridge
+executor, clients, state, recovery, projection, and response transport it checks
+the template-development project root, fixed agent, actual tool/skill inventory
+and effective denials, a bounded read-only developer operation, evidence-only
+target instructions, meaningful tool progress, same-session continuation,
+terminal delivery without private paths, and a separate normal developer route.
+It leaves both source worktrees unchanged and never targets `main`.
+
 ## GitHub control plane
 
 The foreground service authenticates as a GitHub App by signed JWT, requests a one-repository installation token downscoped to Issues write and Contents read, rejects broader/insufficient returned permissions, caches until near expiry, and refreshes once after `401`. REST uses version `2026-03-10`, strictly parsed HTTPS-only credential-free API URLs, serial pagination with origin/loop limits, persisted ETags, and primary/secondary rate-limit timing. Explicit current or cached next links remain authoritative after `304`; when both are absent and the cached page exactly fills one validated `per_page`, the client probes the immediately following validated page so growth across exact page boundaries remains discoverable without disabling ETag reuse. Public `api.github.com` derives `github.com`; an Enterprise `/api/v3` base derives its same host; any other supported custom API path requires explicit `github.git_host`, and a conflicting explicit host is rejected. Bootstrap parses only credential-free HTTPS, `ssh://git@`, or scp-style `git@host:` origins and exactly authenticates host plus case-insensitive owner/repository. Userinfo, suffix hosts, extra/malformed/encoded paths, unsupported schemes, and ambiguous host derivation fail closed.
