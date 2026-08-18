@@ -64,12 +64,11 @@ bootstrap checkpoint. The working tree contains the bounded split-route edit:
 `small-workspace-maintainer` is the Gemini Flash route. No source tree or
 downstream branch was copied or changed.
 
-The pinned OpenCode `1.18.16` provider inventory parsed both agent definitions,
-but the small route initially named `cliproxyapi/gemini-3.7-flash`; that provider
-is not present in the inventory. The inventory does contain active
-`llmgateway/gemini-3.7-flash` with reasoning and a `high` variant. The bounded
-correction changed the small route to that exact available model and the focused
-runtime check now resolves the expected provider/model and high reasoning tier.
+An earlier sterile OpenCode `1.18.16` catalog probe parsed both agent
+definitions, but it did not include the configured `cliproxyapi` provider and
+instead exposed catalog-only `llmgateway/gemini-3.7-flash`. That insufficient
+probe led to the invalid intermediate correction recorded below; it did not
+establish a usable configured provider/model route.
 The remaining split-route working-tree changes are not claimed as completed by
 this narrow correction.
 
