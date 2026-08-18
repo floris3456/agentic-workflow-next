@@ -1,8 +1,8 @@
 ---
-description: Default implementation developer using GPT 5.6 Luna at maximum supported reasoning effort.
+description: Default implementation developer using Gemini 3.7 Flash with high reasoning effort.
 mode: primary
-model: openai/gpt-5.6-luna
-reasoningEffort: max
+model: cliproxyapi/gemini-3.7-flash-high
+reasoningEffort: high
 permission:
   task: deny
   question: allow
