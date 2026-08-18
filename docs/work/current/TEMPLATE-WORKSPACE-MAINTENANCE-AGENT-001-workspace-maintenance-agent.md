@@ -7,7 +7,7 @@ TEMPLATE-WORKSPACE-MAINTENANCE-AGENT-001
 ## Status
 
 Security source correction implemented and independently reviewed at exact remote
-`template-development` head `9d119a2432eacfe7c4655f18f6d40ebc34d1e2ef`.
+implementation head `9d119a2432eacfe7c4655f18f6d40ebc34d1e2ef`.
 The task is **not complete**: exact push-triggered CI result evidence for the new
 head is not available through the current connector surface, and same-task
 schema-3 package supersession is not defined by the tracked generator after the
@@ -40,14 +40,20 @@ existing developer bridge implementation, exact-SHA human authority over `main`,
 and the schema-3 three-source package model. Keep protected issues #49/#53 and
 their historical Scout state untouched.
 
-## Current exact remote state
+## Re-established source state before record checkpoint
 
-Re-established after the source correction:
+Immediately after the source correction and before the later task-record-only
+checkpoint, independent remote readback established:
 
-- template-development: `9d119a2432eacfe7c4655f18f6d40ebc34d1e2ef`
+- template-development implementation head:
+  `9d119a2432eacfe7c4655f18f6d40ebc34d1e2ef`
 - developer: `3d3cbad9f423cc4d80aaff8a0fba86a16300c502`
 - main: `6127611113dfdb66f93a0cfd2d355359aa370833`
 - web-orchestration: `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`
+
+The task record is intentionally updated after that source head, so the current
+`template-development` tip must always be obtained by remote readback rather than
+inferred from the implementation SHA recorded above.
 
 `source-lock.json` remains unchanged and still exactly matches the live
 main/developer/web heads. Issue #49 remains open with 254 comments and unchanged
@@ -93,7 +99,7 @@ Previous schema-3 package:
 
 ## Current correction range
 
-Exact independently compared range:
+Exact independently compared implementation range:
 
 `7cf68d1937b6d21a54bb022e67dec17e5f7b293b..9d119a2432eacfe7c4655f18f6d40ebc34d1e2ef`
 
@@ -107,7 +113,7 @@ It is linear, nine commits ahead, zero behind, and changes exactly six files:
 - `tests/workspace-maintenance-security.test.mjs`
 
 No package bytes, `source-lock.json`, developer source, `main`, or web-orchestration
-content changed in this range.
+content changed in this implementation range.
 
 ## Implemented correction
 
@@ -136,7 +142,7 @@ Independent review found and corrected two secondary issues before freezing this
 range: the first modular refactor had temporarily omitted `secureParent` from
 repository-relative executable validation, and the first sanitized snapshot
 copied every `sharedindex.*` file rather than only the current referenced split
-index. Both are corrected in the exact current head.
+index. Both are corrected in the exact implementation head.
 
 ### Workspace publication
 
@@ -200,8 +206,8 @@ enables unprivileged namespaces, and executes the tracked full validator. The
 current connected GitHub tool surface exposes workflow jobs only when a run ID is
 already known and exposes commit-associated workflow discovery only for PR runs;
 it does not expose push-triggered run listing or check-run lookup. Exact CI
-success for `9d119a2432eacfe7c4655f18f6d40ebc34d1e2ef` is therefore **UNKNOWN**, not
-inferred from the workflow definition.
+success for the corrected implementation and subsequent record-only checkpoint is
+therefore **UNKNOWN**, not inferred from the workflow definition.
 
 Historical successful workflow runs `32081956594`, `32082204637`, and
 `32082313822` remain historical evidence only and do not prove this new range.
@@ -232,7 +238,8 @@ unchanged historical evidence.
 ## Attempts / route decisions
 
 - Re-established all four exact refs before relying on the prior handoff.
-- Reopened this same task in its canonical current record at `7cf68d1937b6d21a54bb022e67dec17e5f7b293b`.
+- Reopened this same task in its canonical current record at
+  `7cf68d1937b6d21a54bb022e67dec17e5f7b293b`.
 - Created public-safe issue #54 under the same task ID; it remains intentionally
   unlabelled for bridge control.
 - Did not touch protected #49/#53 or the historical stuck Scout request/session.
@@ -268,7 +275,8 @@ not authorized here.
 ## Remaining work
 
 1. Obtain exact successful full template-development validation for the final
-   package-free correction head; correct only evidence-backed failures if any.
+   package-free correction/record head; correct only evidence-backed failures if
+   any.
 2. Decide and implement a repository-owned safe same-task package-supersession
    rule, or otherwise provide an authorized package path that preserves the full
    original feature plus these corrections without self-reference.
