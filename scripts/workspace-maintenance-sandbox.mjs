@@ -1,9 +1,9 @@
 import { createWriteStream } from "node:fs";
-import { copyFile, lstat, mkdir, mkdtemp, readdir, realpath, rename, rm, writeFile } from "node:fs/promises";
+import { copyFile, lstat, mkdir, mkdtemp, realpath, rename, rm, writeFile } from "node:fs/promises";
 import { spawn } from "node:child_process";
 import { tmpdir } from "node:os";
 import { finished } from "node:stream/promises";
-import { dirname, isAbsolute, join, resolve } from "node:path";
+import { basename, dirname, isAbsolute, join, resolve } from "node:path";
 import {
   BWRAP,
   GIT,
@@ -121,12 +121,17 @@ async function createGitSnapshot(verified) {
       const stat = await lstat(index);
       if (!stat.isFile() || stat.isSymbolicLink()) throw new Error("Workspace Git index is not a regular file");
       await copyFile(index, join(view, "index"));
-      for (const name of await readdir(realGit)) {
-        if (!/^sharedindex\.[0-9a-f]{40,64}$/.test(name)) continue;
-        const source = join(realGit, name);
-        const shared = await lstat(source);
-        if (!shared.isFile() || shared.isSymbolicLink()) throw new Error("Workspace shared Git index is not a regular file");
-        await copyFile(source, join(view, name));
+      const sharedIndexResult = await git(verified.worktree, ["rev-parse", "--path-format=absolute", "--shared-index-path"], true);
+      if (sharedIndexResult.exitCode !== 0) throw new Error("Workspace Git shared-index state could not be inspected safely");
+      if (sharedIndexResult.stdout) {
+        const sharedIndex = await realpath(sharedIndexResult.stdout);
+        const name = basename(sharedIndex);
+        if (!inside(realGit, sharedIndex) || !new RegExp(`^sharedindex\\.[0-9a-f]{${oidLength}}$`).test(name)) {
+          throw new Error("Workspace Git shared index is outside the selected worktree Git directory");
+        }
+        const sharedStat = await lstat(sharedIndex);
+        if (!sharedStat.isFile() || sharedStat.isSymbolicLink()) throw new Error("Workspace shared Git index is not a regular file");
+        await copyFile(sharedIndex, join(view, name));
       }
     }
 
