@@ -71,6 +71,26 @@ export function parseCommandEnvelope(value: unknown): CommandEnvelope {
   if (typeof input.task_id !== "string" || !taskId.test(input.task_id)) throw new TypeError("Task ID is invalid");
   if (typeof input.kind !== "string" || !allowedKinds.has(input.kind)) throw new TypeError("Command kind is unsupported");
   const argumentsRecord = asRecord(input.arguments, "command arguments");
+  if (input.kind === "start" || input.kind === "workspace.start") {
+    rejectUnknownKeys(argumentsRecord, new Set(["brief", "agent", "title"]), `${input.kind} arguments`);
+    if (typeof argumentsRecord.brief !== "string" || argumentsRecord.brief.length === 0 || Buffer.byteLength(argumentsRecord.brief, "utf8") > 65_536) {
+      throw new TypeError(`${input.kind} brief must be a non-empty string no larger than 65536 bytes`);
+    }
+    if (argumentsRecord.agent !== undefined && argumentsRecord.agent !== "small" && argumentsRecord.agent !== "heavy") {
+      throw new TypeError(`${input.kind} agent must be small or heavy`);
+    }
+    if (argumentsRecord.title !== undefined && (typeof argumentsRecord.title !== "string" || argumentsRecord.title.length === 0 || Buffer.byteLength(argumentsRecord.title, "utf8") > 200)) {
+      throw new TypeError(`${input.kind} title must be a non-empty string of at most 200 bytes`);
+    }
+  } else if (input.kind === "route") {
+    rejectUnknownKeys(argumentsRecord, new Set(["agent", "message"]), "route arguments");
+    if (argumentsRecord.agent !== "small" && argumentsRecord.agent !== "heavy") {
+      throw new TypeError("route agent must be small or heavy");
+    }
+    if (argumentsRecord.message !== undefined && (typeof argumentsRecord.message !== "string" || argumentsRecord.message.length === 0 || Buffer.byteLength(argumentsRecord.message, "utf8") > 65_536)) {
+      throw new TypeError("route message must be a non-empty string no larger than 65536 bytes");
+    }
+  }
   let expected: CommandEnvelope["expected"];
   if (input.expected !== undefined) {
     const candidate = asRecord(input.expected, "command expected guard");

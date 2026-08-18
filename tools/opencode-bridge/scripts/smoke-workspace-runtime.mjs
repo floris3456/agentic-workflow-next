@@ -347,28 +347,46 @@ try {
   const agents = records(agentsValue, "OpenCode agent inventory");
   const skills = records(skillsValue, "OpenCode skill inventory");
   assert(Array.isArray(toolsValue), "OpenCode tool inventory is not an array");
-  const workspaceAgent = agents.find((agent) => agent.name === "small-workspace-maintainer") ?? agents.find((agent) => agent.name === "workspace-maintainer");
-  assert(workspaceAgent && workspaceAgent.mode === "primary", "small-workspace-maintainer was not loaded as a primary agent");
+  const smallWorkspaceAgent = agents.find((agent) => agent.name === "small-workspace-maintainer");
+  assert(smallWorkspaceAgent && smallWorkspaceAgent.mode === "primary", "small-workspace-maintainer was not loaded as a primary agent");
   assert(
-    (workspaceAgent.model?.providerID === "cliproxyapi" && workspaceAgent.model?.modelID === "gemini-3.7-flash-high")
-    || (workspaceAgent.model?.providerID === "openai" && (workspaceAgent.model?.modelID === "gpt-5.6-sol" || workspaceAgent.model?.modelID === "gpt-5.6-luna")),
-    "small-workspace-maintainer model contract is incorrect",
+    smallWorkspaceAgent.model?.providerID === "cliproxyapi" && smallWorkspaceAgent.model?.modelID === "gemini-3.7-flash-high",
+    "small-workspace-maintainer model contract must be cliproxyapi/gemini-3.7-flash-high",
   );
-  assert(Array.isArray(workspaceAgent.permission), "small-workspace-maintainer permission inventory is absent");
+  assert(
+    smallWorkspaceAgent.reasoningEffort === "high" || smallWorkspaceAgent.options?.reasoningEffort === "high",
+    "small-workspace-maintainer reasoningEffort must be high",
+  );
+  assert(Array.isArray(smallWorkspaceAgent.permission), "small-workspace-maintainer permission inventory is absent");
+
+  const heavyWorkspaceAgent = agents.find((agent) => agent.name === "heavy-workspace-maintainer");
+  assert(heavyWorkspaceAgent && heavyWorkspaceAgent.mode === "primary", "heavy-workspace-maintainer was not loaded as a primary agent");
+  assert(
+    heavyWorkspaceAgent.model?.providerID === "openai" && heavyWorkspaceAgent.model?.modelID === "gpt-5.6-sol",
+    "heavy-workspace-maintainer model contract must be openai/gpt-5.6-sol",
+  );
+  assert(
+    heavyWorkspaceAgent.reasoningEffort === "max" || heavyWorkspaceAgent.options?.reasoningEffort === "max",
+    "heavy-workspace-maintainer reasoningEffort must be max",
+  );
+  assert(Array.isArray(heavyWorkspaceAgent.permission), "heavy-workspace-maintainer permission inventory is absent");
+
   const allowedTools = new Set([
     "question", "workspace_list", "workspace_inspect", "workspace_read", "workspace_write",
     "workspace_delete", "workspace_glob", "workspace_grep", "workspace_exec", "workspace_publish",
   ]);
-  for (const tool of toolsValue) {
-    if (tool === "skill") continue;
-    assert.equal(permissionAction(workspaceAgent.permission, tool), allowedTools.has(tool) ? "allow" : "deny",
-      `${tool} effective permission is incorrect`);
+  for (const workspaceAgent of [smallWorkspaceAgent, heavyWorkspaceAgent]) {
+    for (const tool of toolsValue) {
+      if (tool === "skill") continue;
+      assert.equal(permissionAction(workspaceAgent.permission, tool), allowedTools.has(tool) ? "allow" : "deny",
+        `${workspaceAgent.name} ${tool} effective permission is incorrect`);
+    }
+    for (const skill of skills) {
+      assert.equal(permissionAction(workspaceAgent.permission, "skill", skill.name),
+        skill.name === "workspace-maintenance" ? "allow" : "deny", `${workspaceAgent.name} ${skill.name} skill permission is incorrect`);
+    }
   }
   for (const expected of [...allowedTools, "skill"]) assert(toolsValue.includes(expected), `${expected} tool was not loaded`);
-  for (const skill of skills) {
-    assert.equal(permissionAction(workspaceAgent.permission, "skill", skill.name),
-      skill.name === "workspace-maintenance" ? "allow" : "deny", `${skill.name} skill permission is incorrect`);
-  }
   assert(skills.some((skill) => skill.name === "workspace-maintenance" && resolve(skill.location) === join(template.directory, ".opencode", "skills", "workspace-maintenance", "SKILL.md")),
     "workspace-maintenance was not loaded from template-development");
   assert(projectValue && typeof projectValue === "object" && !Array.isArray(projectValue)
@@ -376,8 +394,12 @@ try {
   assert(providersValue && typeof providersValue === "object" && !Array.isArray(providersValue)
     && Array.isArray(providersValue.all) && Array.isArray(providersValue.connected),
   "OpenCode provider inventory is invalid");
-  const connectedProvider = providersValue.connected.find((id) => id === "cliproxyapi" || id === "openai");
-  assert(connectedProvider, "Expected provider is not connected in the isolated runtime");
+  const cliproxy = providersValue.all.find((provider) => provider?.id === "cliproxyapi");
+  const openai = providersValue.all.find((provider) => provider?.id === "openai");
+  assert(cliproxy && providersValue.connected.includes("cliproxyapi"), "cliproxyapi is not connected in the isolated runtime");
+  assert(openai && openai.models && typeof openai.models === "object"
+    && Object.hasOwn(openai.models, "gpt-5.6-sol") && providersValue.connected.includes("openai"),
+    "OpenAI gpt-5.6-sol is not connected in the isolated runtime");
   process.stdout.write("Workspace agent, project, provider, tool, and skill inventory verified.\n");
 
   state = new BridgeState(join(temporary, "bridge", "state.sqlite"));
@@ -411,17 +433,17 @@ try {
     "Conclude the phase with WORKSPACE_PHASE_ONE_OK and say TARGET_INSTRUCTIONS_EVIDENCE_ONLY. Do not expose any local path.",
   ].join(" ");
   const workspaceStart = accepted(state, command(
-    "RUNTIME-WORKSPACE",
+    "RUNTIME-WORKSPACE-SMALL",
     1,
     "workspace.start",
-    { brief: workspaceBrief, agent: "small", title: "Workspace runtime acceptance" },
+    { brief: workspaceBrief, title: "Workspace runtime acceptance" },
     { template_development_sha: template.templateDevelopmentSha, ref: "template-development" },
   ), 91_001);
   const started = await executor.execute(workspaceStart);
-  assert.equal(started.state, "succeeded", "Real workspace.start did not succeed");
-  const workspaceSession = state.getTaskSession("RUNTIME-WORKSPACE");
+  assert.equal(started.state, "succeeded", "Real workspace.start (small default) did not succeed");
+  const workspaceSession = state.getTaskSession("RUNTIME-WORKSPACE-SMALL");
   assert(workspaceSession && workspaceSession.sessionKind === "workspace"
-    && (workspaceSession.agent === "small-workspace-maintainer" || workspaceSession.agent === "workspace-maintainer"), "Workspace session mapping is incorrect");
+    && workspaceSession.agent === "small-workspace-maintainer", "Small workspace session mapping is incorrect");
   assert(!JSON.stringify(started.publicResult).includes(template.directory)
     && !JSON.stringify(started.publicResult).includes(repositoryRoot), "workspace.start public projection leaked a local path");
   const workspaceSessionValue = await workspaceClient.request("session.get", { path: { sessionID: workspaceSession.sessionId } });
@@ -434,8 +456,7 @@ try {
   const firstText = messageText(first.terminal);
   assert.match(firstText, /WORKSPACE_PHASE_ONE_OK/);
   assert.match(firstText, /TARGET_INSTRUCTIONS_EVIDENCE_ONLY/);
-  const [skillsAfterValue, projectAfterValue, sessionAfterValue] = await Promise.all([
-    workspaceClient.request("app.skills"),
+  const [skillsAfterValue, projectAfterValue, sessionAfterValue] = await Promise.all([\n    workspaceClient.request("app.skills"),
     workspaceClient.request("project.current"),
     workspaceClient.request("session.get", { path: { sessionID: workspaceSession.sessionId } }),
   ]);
@@ -453,7 +474,7 @@ try {
 
   const firstInfo = messageInfo(first.terminal);
   const steer = accepted(state, command(
-    "RUNTIME-WORKSPACE",
+    "RUNTIME-WORKSPACE-SMALL",
     2,
     "steer",
     {
@@ -462,7 +483,7 @@ try {
   ), 91_001);
   const steered = await executor.execute(steer);
   assert.equal(steered.state, "succeeded", "Real workspace steer did not succeed");
-  assert.equal(state.getTaskSession("RUNTIME-WORKSPACE")?.sessionId, workspaceSession.sessionId,
+  assert.equal(state.getTaskSession("RUNTIME-WORKSPACE-SMALL")?.sessionId, workspaceSession.sessionId,
     "Workspace steer changed the mapped session");
   const second = await waitForTerminal(workspaceClient, workspaceSession.sessionId, firstInfo.id);
   const terminalText = messageText(second.terminal);
@@ -471,7 +492,7 @@ try {
   assert.match(terminalText, /Workspace root:/i);
   assert.doesNotMatch(terminalText, /Handoff developer SHA:/i);
 
-  assert.equal(await workspaceRecovery.recoverDeveloperCanonical(state.getTaskSession("RUNTIME-WORKSPACE")), true,
+  assert.equal(await workspaceRecovery.recoverDeveloperCanonical(state.getTaskSession("RUNTIME-WORKSPACE-SMALL")), true,
     "Workspace canonical terminal recovery failed");
   const workspaceDelivery = state.pendingResponseDeliveries().find((delivery) => delivery.deliveryKind === "workspace");
   assert(workspaceDelivery && workspaceDelivery.sessionId === workspaceSession.sessionId,
@@ -491,6 +512,28 @@ try {
   assert.doesNotMatch(workspacePublication, /\/home\/[A-Za-z0-9._-]+\//, "Workspace public delivery leaked another host-local path");
   process.stdout.write("Workspace progress, same-session steer, terminal recovery, and public delivery verified.\n");
 
+  const heavyWorkspaceBrief = [
+    "Perform a read-only Heavy Workspace Maintenance Agent acceptance check.",
+    "Load workspace-maintenance. Remain rooted in template-development.",
+    "Do not write, delete, commit, push, ask a question, or access main.",
+    "Conclude with HEAVY_WORKSPACE_START_OK. Do not expose any local path.",
+  ].join(" ");
+  const heavyWorkspaceStart = accepted(state, command(
+    "RUNTIME-WORKSPACE-HEAVY",
+    1,
+    "workspace.start",
+    { brief: heavyWorkspaceBrief, agent: "heavy", title: "Heavy workspace runtime acceptance" },
+    { template_development_sha: template.templateDevelopmentSha, ref: "template-development" },
+  ), 91_002);
+  const heavyStarted = await executor.execute(heavyWorkspaceStart);
+  assert.equal(heavyStarted.state, "succeeded", "Real workspace.start (heavy) did not succeed");
+  const heavyWorkspaceSession = state.getTaskSession("RUNTIME-WORKSPACE-HEAVY");
+  assert(heavyWorkspaceSession && heavyWorkspaceSession.sessionKind === "workspace"
+    && heavyWorkspaceSession.agent === "heavy-workspace-maintainer", "Heavy workspace session mapping is incorrect");
+  const heavyTerminal = await waitForTerminal(workspaceClient, heavyWorkspaceSession.sessionId, undefined);
+  assert.match(messageText(heavyTerminal.terminal), /HEAVY_WORKSPACE_START_OK/);
+  process.stdout.write("Heavy workspace maintainer start and execution verified.\n");
+
   const developerBefore = developerState();
   assert(developerBefore.clean, "Developer worktree changed during workspace acceptance");
   const developerStart = accepted(state, command(
@@ -503,7 +546,7 @@ try {
       title: "Developer route acceptance",
     },
     { developer_sha: developerBefore.developerSha, ref: "developer" },
-  ), 91_002);
+  ), 91_003);
   const developerStarted = await executor.execute(developerStart);
   assert.equal(developerStarted.state, "succeeded", "Normal real developer start did not succeed");
   const developerSession = state.getTaskSession("RUNTIME-DEVELOPER");
@@ -533,9 +576,11 @@ try {
   process.stdout.write(`${JSON.stringify({
     version: "1.18.16",
     workspace: {
-      start: "succeeded",
+      small_start: "succeeded",
+      heavy_start: "succeeded",
       project: "template-development",
-      agent: workspaceSession.agent,
+      small_agent: "small-workspace-maintainer",
+      heavy_agent: "heavy-workspace-maintainer",
       tools: "bounded-operation-observed",
       target_instructions: "evidence-only",
       same_session_steer: true,

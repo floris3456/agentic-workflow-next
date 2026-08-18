@@ -38,10 +38,12 @@ stakes.
 
 The current approved implementation agents are:
 
-- `small-developer`: default, configured-provider Gemini 3.7 Flash (`cliproxyapi/gemini-3.7-flash-high`) at `high` reasoning effort;
-- `large-developer`: exceptional path, configured-provider GPT 5.6 Sol (`openai/gpt-5.6-sol`) at `high` reasoning effort.
+- `small-developer`: default developer route, configured-provider Gemini 3.7 Flash (`cliproxyapi/gemini-3.7-flash-high`) at `high` reasoning effort;
+- `large-developer`: exceptional developer route, configured-provider GPT 5.6 Sol (`openai/gpt-5.6-sol`) at `high` reasoning effort;
+- `small-workspace-maintainer`: default workspace maintainer route, configured-provider Gemini 3.7 Flash (`cliproxyapi/gemini-3.7-flash-high`) at `high` reasoning effort;
+- `heavy-workspace-maintainer`: heavy workspace maintainer route, configured-provider GPT 5.6 Sol (`openai/gpt-5.6-sol`) at `max` reasoning effort.
 
-Public selector vocabulary for developer and workspace routes is model-agnostic `small` (default) or `heavy`.
+Public selector vocabulary for developer and workspace starts is model-agnostic `small` (default) or `heavy`. Developer route changes use `small|heavy`.
 
 No ref-owned `repository-scout` agent is tracked. The Luna/high non-implementation
 role is owned by an externally installed bridge runtime and exposes only contained

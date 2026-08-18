@@ -30,7 +30,8 @@ This repository is a reusable workflow template rather than a product implementa
   `expected.template_development_sha` plus
   `expected.ref: template-development`, and accepts an optional model-agnostic
   `small|heavy` selector (default `small`) mapped to `small-workspace-maintainer`
-  and `heavy-workspace-maintainer`. A lazy bridge-owned resolver fetches the
+  (Gemini 3.7 Flash high) and `heavy-workspace-maintainer` (GPT 5.6 Sol max).
+  A lazy bridge-owned resolver fetches the
   explicit remote ref and proves exactly one real registered template-development
   worktree in the same repository/common Git directory before starting the selected
   agent there. Durable developer/workspace session kind
@@ -40,10 +41,11 @@ This repository is a reusable workflow template rather than a product implementa
   restart re-proves it without requiring post-start cleanliness. Workspace route
   changes, PTYs, and main promotion are denied, preserving normal developer
   behavior and human exact-SHA promotion authority.
-- A tracked operator-run acceptance starts real pinned OpenCode `1.18.16` with
-  sterile temporary state and one explicit private credential source, then uses
-  the production bridge path to prove template-rooted workspace discovery,
-  effective tool/skill denial, a bounded non-main operation, same-session
+- A tracked operator-run acceptance harness starts real pinned OpenCode `1.18.16` with
+  sterile temporary state and one explicit private credential source, requiring
+  exact `small-workspace-maintainer` (Gemini 3.7 Flash high) and
+  `heavy-workspace-maintainer` (GPT 5.6 Sol max), verifying both tool/skill
+  permissions, default-small and explicit-heavy starts, same-session
   terminal recovery/public projection, and an independent normal developer
   route without mutating either worktree.
 - The bridge keeps normal developer OpenCode loopback-only and separately attachable by the normal TUI; its dedicated Scout process/port/root/auth do not alter normal developer configuration or availability. Hardened Scout hosts are currently non-root Linux only. No inbound webhook, tunnel, custom ChatGPT MCP, self-hosted runner, or mandatory OS service is required.

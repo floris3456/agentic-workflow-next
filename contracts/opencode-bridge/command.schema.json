@@ -63,6 +63,45 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "properties": { "kind": { "enum": ["start", "workspace.start"] } },
+        "required": ["kind"]
+      },
+      "then": {
+        "properties": {
+          "arguments": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["brief"],
+            "properties": {
+              "brief": { "type": "string", "minLength": 1, "maxLength": 65536 },
+              "agent": { "enum": ["small", "heavy"] },
+              "title": { "type": "string", "minLength": 1, "maxLength": 200 }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "kind": { "const": "route" } },
+        "required": ["kind"]
+      },
+      "then": {
+        "properties": {
+          "arguments": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["agent"],
+            "properties": {
+              "agent": { "enum": ["small", "heavy"] },
+              "message": { "type": "string", "minLength": 1, "maxLength": 65536 }
+            }
+          }
+        }
+      }
     }
   ]
 }

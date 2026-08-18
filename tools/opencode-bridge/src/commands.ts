@@ -99,11 +99,9 @@ export interface CommandExecutorOptions {
   signal: AbortSignal;
   developerAgents?: { small: string; heavy: string };
   workspaceAgents?: { small: string; heavy: string };
-  agents?: { small: string; heavy: string };
   ptyEnabled?: boolean;
   currentGitState?: () => Promise<GitState>;
   workspaceRuntime?: () => Promise<Omit<CommandRuntime, "sessionKind">>;
-  workspaceAgent?: string;
   runPromotion?: (approvedSha: string) => Promise<JsonValue>;
   onSessionStarted?: (taskId: string) => void;
   onSessionContinued?: (taskId: string, sessionId: string) => void;
@@ -197,8 +195,8 @@ export class CommandExecutor {
     this.projection = options.projection;
     this.operationPolicy = options.operationPolicy;
     this.instanceId = options.instanceId;
-    this.developerAgents = options.developerAgents ?? options.agents ?? { small: "small-developer", heavy: "large-developer" };
-    this.workspaceAgents = options.workspaceAgents ?? (options.workspaceAgent ? { small: options.workspaceAgent, heavy: options.workspaceAgent } : { small: "small-workspace-maintainer", heavy: "heavy-workspace-maintainer" });
+    this.developerAgents = options.developerAgents ?? { small: "small-developer", heavy: "large-developer" };
+    this.workspaceAgents = options.workspaceAgents ?? { small: "small-workspace-maintainer", heavy: "heavy-workspace-maintainer" };
     this.ptyEnabled = options.ptyEnabled === true;
     this.currentGitState = options.currentGitState;
     this.workspaceRuntime = options.workspaceRuntime;

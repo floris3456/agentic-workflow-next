@@ -53,7 +53,7 @@ function envelope(commandId: string, sequence: number, kind = "status", task = "
     command_id: commandId,
     task_id: task,
     kind,
-    arguments: {},
+    arguments: kind === "start" || kind === "workspace.start" ? { brief: "Implement the task" } : kind === "route" ? { agent: "small" } : {},
     ...(kind === "start"
       ? { expected: { developer_sha: "a".repeat(40), ref: "developer" } }
       : kind === "workspace.start"
@@ -77,7 +77,7 @@ function actor(login: string, association: string) {
 test("protocol scanner validates complete envelopes and isolates malformed markers", () => {
   const command = {
     ...envelope("11111111-1111-4111-8111-111111111111", 1, "start"),
-    arguments: { prompt: "Implement the task" },
+    arguments: { brief: "Implement the task", agent: "small" },
     expected: { developer_sha: "a".repeat(40), ref: "refs/heads/developer" },
   };
   assert.deepEqual(parseCommandEnvelope(command), command);
@@ -98,6 +98,14 @@ test("protocol scanner validates complete envelopes and isolates malformed marke
   assert.throws(() => parseCommandEnvelope({ ...command, expected: { developer_sha: "A".repeat(40) } }), /lowercase hexadecimal/);
   assert.throws(() => parseCommandEnvelope({ ...command, expected: { ref: "refs/heads/../main" } }), /ref is invalid/);
 
+  // Closed selector and argument validation for start
+  assert.throws(() => parseCommandEnvelope({ ...command, arguments: { brief: "task", agent: "luna" } }), /start agent must be small or heavy/);
+  assert.throws(() => parseCommandEnvelope({ ...command, arguments: { brief: "task", agent: "sol" } }), /start agent must be small or heavy/);
+  assert.throws(() => parseCommandEnvelope({ ...command, arguments: { brief: "task", unknown_field: true } }), /start arguments contains unknown field/);
+  assert.throws(() => parseCommandEnvelope({ ...command, arguments: { brief: "" } }), /start brief must be a non-empty string/);
+  assert.deepEqual(parseCommandEnvelope({ ...command, arguments: { brief: "task", agent: "heavy" } }).arguments, { brief: "task", agent: "heavy" });
+
+  // Closed selector and argument validation for workspace.start
   const workspace = {
     ...envelope("abababab-abab-4bab-8bab-abababababab", 1, "workspace.start", "WORKSPACE-1"),
     arguments: { brief: "Maintain a verified repository worktree" },
@@ -110,6 +118,21 @@ test("protocol scanner validates complete envelopes and isolates malformed marke
     }),
     /template-development SHA.*lowercase hexadecimal/,
   );
+  assert.throws(() => parseCommandEnvelope({ ...workspace, arguments: { brief: "task", agent: "luna" } }), /workspace\.start agent must be small or heavy/);
+  assert.throws(() => parseCommandEnvelope({ ...workspace, arguments: { brief: "task", agent: "sol" } }), /workspace\.start agent must be small or heavy/);
+  assert.throws(() => parseCommandEnvelope({ ...workspace, arguments: { brief: "task", unexpected: "field" } }), /workspace\.start arguments contains unknown field/);
+  assert.deepEqual(parseCommandEnvelope({ ...workspace, arguments: { brief: "task", agent: "heavy" } }).arguments, { brief: "task", agent: "heavy" });
+
+  // Closed selector and argument validation for route
+  const routeCommand = {
+    ...envelope("cdcdcdcd-cdcd-4dcd-8dcd-cdcdcdcdcdcd", 2, "route", "TASK-1"),
+    arguments: { agent: "heavy", message: "Escalate to heavy route" },
+  };
+  assert.deepEqual(parseCommandEnvelope(routeCommand), routeCommand);
+  assert.throws(() => parseCommandEnvelope({ ...routeCommand, arguments: { agent: "sol" } }), /route agent must be small or heavy/);
+  assert.throws(() => parseCommandEnvelope({ ...routeCommand, arguments: { agent: "luna" } }), /route agent must be small or heavy/);
+  assert.throws(() => parseCommandEnvelope({ ...routeCommand, arguments: {} }), /route agent must be small or heavy/);
+  assert.throws(() => parseCommandEnvelope({ ...routeCommand, arguments: { agent: "small", extra: true } }), /route arguments contains unknown field/);
 });
 
 test("sequence-free request scanner validates durable read request envelopes", () => {
@@ -152,10 +175,7 @@ test("poller durably rejects a nested start guard without consuming sequence one
   const state = stateForTest(context);
   const invalid = {
     ...envelope("12121212-1212-4121-8121-121212121212", 1, "start"),
-    arguments: {
-      brief: "Do not execute this malformed probe",
-      expected: { developer_sha: "a".repeat(40), ref: "developer" },
-    },
+    arguments: { brief: "Do not execute this missing guard start" },
     expected: undefined,
   } as unknown as CommandEnvelope;
   const valid = {
@@ -187,6 +207,57 @@ test("poller durably rejects a nested start guard without consuming sequence one
   assert.deepEqual(result.commands.map((command) => command.commandId), [valid.command_id]);
   assert.match(state.commandRejection(invalid.command_id)?.reason ?? "", /top-level expected/);
   assert.equal(state.getCommand(valid.command_id)?.sequence, 1);
+});
+
+
+test("poller durably rejects legacy luna and sol selectors and malformed arguments pre-ledger without consuming sequence one", async (context) => {
+  const state = stateForTest(context);
+  const legacyLuna = {
+    ...envelope("13131313-1313-4313-8313-131313131313", 1, "start", "TASK-SELECTORS"),
+    arguments: { brief: "Legacy luna start", agent: "luna" },
+  };
+  const legacySol = {
+    ...envelope("14141414-1414-4414-8414-141414141414", 1, "workspace.start", "TASK-SELECTORS"),
+    arguments: { brief: "Legacy sol workspace start", agent: "sol" },
+  };
+  const unknownField = {
+    ...envelope("15151515-1515-4515-8515-151515151515", 1, "start", "TASK-SELECTORS"),
+    arguments: { brief: "Unknown field start", extra: true },
+  };
+  const validSmall = {
+    ...envelope("16161616-1616-4616-8616-161616161616", 1, "start", "TASK-SELECTORS"),
+    arguments: { brief: "Valid model-agnostic small start", agent: "small" },
+  };
+  const github = new GitHubClient({
+    owner: "acme",
+    repository: "demo",
+    tokens: new FakeTokens(),
+    state,
+    apiBaseUrl: "https://api.github.test",
+    fetch: asFetch((request) => {
+      const path = new URL(request.url).pathname;
+      if (path === "/repos/acme/demo/issues") {
+        return Response.json([{ number: 9, body: "Selector probe", labels: [{ name: "agentic-bridge" }], ...actor("alice", "OWNER") }]);
+      }
+      if (path === "/repos/acme/demo/issues/9/comments") {
+        return Response.json([
+          { id: 1, body: commandMarker(legacyLuna), ...actor("alice", "COLLABORATOR") },
+          { id: 2, body: commandMarker(legacySol), ...actor("alice", "COLLABORATOR") },
+          { id: 3, body: commandMarker(unknownField), ...actor("alice", "COLLABORATOR") },
+          { id: 4, body: commandMarker(validSmall), ...actor("alice", "COLLABORATOR") },
+        ]);
+      }
+      return new Response("not found", { status: 404 });
+    }),
+  });
+  const poller = new GitHubCommandPoller({ github, state, allowedAuthors: ["alice"] });
+  const result = await poller.pollOnce();
+  assert.deepEqual(result.commands.map((command) => command.commandId), [validSmall.command_id]);
+  const outbox = state.pendingOutbox(Date.now() + 1_000).map((item) => JSON.stringify(item.payload));
+  assert.ok(outbox.some((body) => /start agent must be small or heavy/.test(body)));
+  assert.ok(outbox.some((body) => /workspace\.start agent must be small or heavy/.test(body)));
+  assert.ok(outbox.some((body) => /unknown field extra/.test(body)));
+  assert.equal(state.getCommand(validSmall.command_id)?.sequence, 1);
 });
 
 

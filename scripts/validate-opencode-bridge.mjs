@@ -108,6 +108,9 @@ try {
     "TemplateDevelopmentWorktreeResolver",
     '"workspace.start"',
     '"small-workspace-maintainer"',
+    '"heavy-workspace-maintainer"',
+    "cliproxyapi/gemini-3.7-flash-high",
+    "openai/gpt-5.6-sol",
     '"workspace_list"',
     '"workspace_inspect"',
     '"workspace_read"',
@@ -129,6 +132,17 @@ try {
       && !workspaceSmoke.includes("...process.env"),
     "Workspace real-runtime smoke must launch with an explicit sterile environment",
   );
+  const commandsSource = read("tools/opencode-bridge/src/commands.ts");
+  assert(commandsSource.includes("developerAgents") && commandsSource.includes("workspaceAgents"), "Command executor must define distinct developerAgents and workspaceAgents");
+  assert(!/\bworkspaceAgent\b/.test(commandsSource), "Legacy workspaceAgent compatibility option must be removed");
+  assert(!commandsSource.includes('"luna"') && !commandsSource.includes('"sol"'), "Legacy luna/sol agent route names must be removed from command routing");
+  assert(commandsSource.includes("agent must be small or heavy"), "Command executor must enforce closed agent must be small or heavy error");
+  const protocolSource = read("tools/opencode-bridge/src/protocol.ts");
+  assert(protocolSource.includes("agent must be small or heavy"), "Protocol envelope parser must enforce closed agent must be small or heavy error");
+  const startSchema = command.allOf?.find((entry) => entry.then?.properties?.arguments?.properties?.agent && entry.if?.properties?.kind?.enum?.includes("start"));
+  assert(JSON.stringify(startSchema?.then?.properties?.arguments?.properties?.agent?.enum) === JSON.stringify(["small", "heavy"]), "Start command schema must restrict agent to small|heavy");
+  const routeSchema = command.allOf?.find((entry) => entry.if?.properties?.kind?.const === "route");
+  assert(JSON.stringify(routeSchema?.then?.properties?.arguments?.properties?.agent?.enum) === JSON.stringify(["small", "heavy"]), "Route command schema must restrict agent to small|heavy");
 } catch (error) {
   failures.push(`Bridge JSON validation failed: ${error.message}`);
 }

@@ -69,21 +69,26 @@ if (!suppliedRoot) {
 
 const webRoot = path.resolve(suppliedRoot);
 const projectRoot = path.join(webRoot, "chatgpt-project");
-const workflowPath = path.join(projectRoot, "skill-mcp-on-workflow.md");
-const scoutingPath = path.join(projectRoot, "skill-mcp-on-scouting.md");
-const recoveryPath = path.join(projectRoot, "skill-mcp-on-recovery.md");
-const workflow = read(workflowPath, "MCP-ON workflow Source");
-const scouting = read(scoutingPath, "MCP-ON scouting Source");
-const recovery = read(recoveryPath, "MCP-ON recovery Source");
+
+function resolveProjectSource(...names) {
+  for (const name of names) {
+    const filePath = path.join(projectRoot, name);
+    if (fs.existsSync(filePath)) return { name, path: filePath, content: read(filePath, name) };
+  }
+  return { name: names[0], path: path.join(projectRoot, names[0]), content: read(path.join(projectRoot, names[0]), names[0]) };
+}
+
+const workflowSource = resolveProjectSource("source-workflow-mcp-on.md", "source-mcp-on-workflow.md", "skill-mcp-on-workflow.md");
+const scoutingSource = resolveProjectSource("source-scouting-mcp-on.md", "source-mcp-on-scouting.md", "skill-mcp-on-scouting.md");
+const workflow = workflowSource.content;
+const scouting = scoutingSource.content;
 
 try {
-  execFileSync(process.execPath, [path.join(webRoot, "validate-package.mjs")], {
-    cwd: path.dirname(webRoot),
+  execFileSync(process.execPath, [path.join(webRoot, "validate-package.mjs")], {\n    cwd: path.dirname(webRoot),
     encoding: "utf8",
     stdio: "pipe",
   });
-} catch (error) {
-  fail(`Independent Project package validator failed: ${String(error.stderr || error.message).trim()}`);
+} catch (error) {\n  fail(`Independent Project package validator failed: ${String(error.stderr || error.message).trim()}`);
 }
 
 const commandSchema = parse(
@@ -100,7 +105,7 @@ const resultSchema = parse(
 );
 const protocol = commandSchema.properties?.protocol?.const;
 
-const commands = markerValues(workflow, "agentic-bridge-command", "MCP-ON workflow Source");
+const commands = markerValues(workflow, "agentic-bridge-command", workflowSource.name);
 if (commands.length !== 1) fail(`Project package must contain one canonical command example; found ${commands.length}`);
 for (const command of commands) {
   validateObjectShape(command, commandSchema, "Project command example");
@@ -120,10 +125,8 @@ for (const command of commands) {
   }
 }
 
-const requests = [
-  ...markerValues(scouting, "agentic-bridge-request", "MCP-ON scouting Source"),
-  ...markerValues(recovery, "agentic-bridge-request", "MCP-ON recovery Source"),
-];
+const projectFiles = fs.existsSync(projectRoot) ? fs.readdirSync(projectRoot).filter((file) => file.endsWith(".md")) : [];
+const requests = projectFiles.flatMap((file) => markerValues(read(path.join(projectRoot, file), file), "agentic-bridge-request", file));
 const expectedRequestKinds = requestSchema.properties?.kind?.enum ?? [];
 if (!sameMembers(requests.map((request) => request.kind), expectedRequestKinds)) {
   fail("Project request examples and developer request-kind inventory differ");
@@ -187,9 +190,11 @@ const bridgeProtocol = read(
   "developer protocol documentation",
 );
 
-if (!/One task ID binds to exactly one issue/i.test(bridgeProtocol)
-  || !/One task ID has one canonical issue/i.test(recovery)
-  || !/post nothing on any later issue/i.test(recovery)) {
+const hasContainment = projectFiles.some((file) => {
+  const content = read(path.join(projectRoot, file), file);
+  return /One task ID has one canonical issue/i.test(content) && /post nothing on any later issue/i.test(content);
+});
+if (!/One task ID binds to exactly one issue/i.test(bridgeProtocol) || !hasContainment) {
   fail("Developer protocol and Project recovery disagree on duplicate task-issue containment");
 }
 
