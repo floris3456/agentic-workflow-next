@@ -73,6 +73,18 @@ runtime check now resolves the expected provider/model and high reasoning tier.
 The remaining split-route working-tree changes are not claimed as completed by
 this narrow correction.
 
+A subsequent probe of the configured provider inventory found the actual usable
+route is `cliproxyapi/gemini-3.7-flash-high`; the plain `gemini-3.7-flash` model
+ID is absent there, while the `-high` model is active and exposes low, medium,
+and high variants. The earlier `llmgateway` correction was therefore invalid and
+is being superseded. `reasoningEffort: high` remains valid because it is passed
+through as the provider option for the model's high variant.
+
+The corrected configured runtime now resolves the small agent to
+`cliproxyapi/gemini-3.7-flash-high`. A no-tool smoke request using that agent and
+the `high` variant completed with normal start, text, and finish events and no
+error event.
+
 ## Re-established source state before record checkpoint
 
 At the model-routing bootstrap start, independent remote readback established:
@@ -242,14 +254,17 @@ therefore **UNKNOWN**, not inferred from the workflow definition.
 Historical successful workflow runs `32081956594`, `32082204637`, and
 `32082313822` remain historical evidence only and do not prove this new range.
 
-Focused continuation checks for the narrow small-agent correction passed:
+The earlier focused check for the narrow small-agent correction is superseded:
 
-- pinned OpenCode `1.18.16` discovered `small-workspace-maintainer` as a primary
-  agent with `llmgateway/gemini-3.7-flash` and high reasoning;
-- the same runtime resolved active `llmgateway/gemini-3.7-flash` with a high
-  reasoning variant and verified the default-deny workspace permission surface;
+- the configured pinned OpenCode inventory now identifies
+  `cliproxyapi/gemini-3.7-flash-high` as the exact active model, with low,
+  medium, and high variants;
+- the OpenCode agent documentation confirms `reasoningEffort: high` is a valid
+  additional provider option, not a boolean capability flag;
+- the configured runtime discovered the corrected agent/model pair and the
+  no-tool smoke completed with `step_start`, `text`, and `step_finish` events;
 - `git diff --check` passed; commit `4fcd483872bb747a8dadd53adb3360a369dac5b1`
-  was pushed and exact remote readback matched it.
+  contained the invalid `llmgateway` reference and is superseded by this fix.
 
 The focused checks do not claim that the broader split-route bootstrap, bridge,
 validator, package, or CI work is complete.

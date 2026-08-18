@@ -1,7 +1,7 @@
 ---
 description: Maintains verified worktrees across the exact repository while remaining rooted in template-development.
 mode: primary
-model: llmgateway/gemini-3.7-flash
+model: cliproxyapi/gemini-3.7-flash-high
 reasoningEffort: high
 permission:
   "*": deny
