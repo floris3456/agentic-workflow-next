@@ -242,6 +242,18 @@ therefore **UNKNOWN**, not inferred from the workflow definition.
 Historical successful workflow runs `32081956594`, `32082204637`, and
 `32082313822` remain historical evidence only and do not prove this new range.
 
+Focused continuation checks for the narrow small-agent correction passed:
+
+- pinned OpenCode `1.18.16` discovered `small-workspace-maintainer` as a primary
+  agent with `llmgateway/gemini-3.7-flash` and high reasoning;
+- the same runtime resolved active `llmgateway/gemini-3.7-flash` with a high
+  reasoning variant and verified the default-deny workspace permission surface;
+- `git diff --check` passed; commit `4fcd483872bb747a8dadd53adb3360a369dac5b1`
+  was pushed and exact remote readback matched it.
+
+The focused checks do not claim that the broader split-route bootstrap, bridge,
+validator, package, or CI work is complete.
+
 ## Package supersession blocker discovered in this cycle
 
 The existing schema-3 package is a full task package whose template range is
@@ -296,13 +308,10 @@ scope.
 
 ## Blockers / required decisions
 
-1. **Model identity probe:** the exact Gemini Flash provider/model identifier in
-   the real pinned OpenCode runtime is not yet independently established. The
-   workspace route must inspect and prove it before editing model declarations.
-2. **Exact current CI proof:** full push-triggered validation evidence for the
+1. **Exact current CI proof:** full push-triggered validation evidence for the
    earlier corrected template head remains UNKNOWN through the current connected
    check surface.
-3. **Same-task schema-3 package supersession:** repository-owned behavior remains
+2. **Same-task schema-3 package supersession:** repository-owned behavior remains
    undefined after prior package storage. Do not replace or hand-build package
    bytes during the model-routing bootstrap.
 
@@ -312,11 +321,10 @@ not authorized here.
 
 ## Remaining work
 
-1. Run the existing Workspace Maintenance Agent for the bounded model-routing
-   bootstrap: prove the Gemini Flash model identity; implement small/heavy
-   developer and workspace-maintainer routes; update necessary bridge/runtime,
-   schemas, validators, tests, and durable records; run proportional checks; push
-   exact affected non-main branches.
+1. Complete the remaining bounded model-routing bootstrap: implement the
+   small/heavy developer and workspace-maintainer routes; update necessary
+   bridge/runtime, schemas, validators, tests, and durable records; run
+   proportional checks; and push exact affected non-main branches.
 2. Independently review every pushed range and correct only evidence-backed
    bootstrap defects.
 3. After the bootstrap, address the broader security/authority/package findings
