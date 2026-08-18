@@ -65,11 +65,13 @@ bootstrap checkpoint. The working tree contains the bounded split-route edit:
 downstream branch was copied or changed.
 
 The pinned OpenCode `1.18.16` provider inventory parsed both agent definitions,
-but the small route currently names `cliproxyapi/gemini-3.7-flash`; that provider
+but the small route initially named `cliproxyapi/gemini-3.7-flash`; that provider
 is not present in the inventory. The inventory does contain active
-`llmgateway/gemini-3.7-flash` with reasoning and a `high` variant. The next
-bounded action is to correct that model reference, then run the focused runtime
-and repository checks without widening the bootstrap.
+`llmgateway/gemini-3.7-flash` with reasoning and a `high` variant. The bounded
+correction changed the small route to that exact available model and the focused
+runtime check now resolves the expected provider/model and high reasoning tier.
+The remaining split-route working-tree changes are not claimed as completed by
+this narrow correction.
 
 ## Re-established source state before record checkpoint
 
