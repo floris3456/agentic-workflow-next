@@ -13,12 +13,14 @@ import { join, resolve } from "node:path";
 import { execFileSync } from "node:child_process";
 import test, { type TestContext } from "node:test";
 import { CommandExecutor } from "../src/commands.js";
+import { loadBridgeConfig, type BridgeConfig } from "../src/config.js";
 import { DeveloperResponseTransport, terminalResponseDelivery } from "../src/handoff.js";
 import { Manifest } from "../src/manifest.js";
 import { OpenCodeClient } from "../src/opencode.js";
 import { OperationPolicy, PublicProjection } from "../src/projection.js";
 import { RecoveryCoordinator } from "../src/recovery.js";
 import { githubRepositoryIdentity } from "../src/repository-identity.js";
+import { bridgeStatus, refreshOpenCodeInstances } from "../src/service.js";
 import { BridgeState } from "../src/state.js";
 import type {
   CommandEnvelope,
@@ -521,4 +523,209 @@ test("workspace recovery and terminal delivery retain session kind, client, corr
     "session.status",
     "session.messages",
   ]);
+});
+
+function bridgeConfigFixture(context: TestContext, repo: RepositoryFixture): { config: BridgeConfig; configFile: string; state: BridgeState } {
+  const privateDirectory = join(repo.root, "private");
+  mkdirSync(privateDirectory, { mode: 0o700 });
+  const stateFile = join(repo.developer, ".git", "bridge", "state.sqlite");
+  mkdirSync(join(repo.developer, ".git", "bridge"), { recursive: true, mode: 0o700 });
+  const passwordFile = join(privateDirectory, "opencode-password");
+  const scoutPasswordFile = join(privateDirectory, "scout-password");
+  const privateKeyFile = join(privateDirectory, "github.pem");
+  const secretFile = join(privateDirectory, "provider-token");
+  writeFileSync(passwordFile, "local-password\n", { mode: 0o600 });
+  writeFileSync(scoutPasswordFile, "scout-password\n", { mode: 0o600 });
+  writeFileSync(privateKeyFile, "-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----\n", { mode: 0o600 });
+  writeFileSync(secretFile, "provider-value\n", { mode: 0o600 });
+  const manifestFile = resolve(import.meta.dirname, "../../../../contracts/opencode-bridge/operation-manifest.json");
+
+  const document = {
+    schema_version: 1,
+    instance_id: "test-instance",
+    repository_root: repo.developer,
+    manifest_file: manifestFile,
+    state_file: stateFile,
+    opencode: {
+      base_url: "http://127.0.0.1:44123",
+      scout_base_url: "http://127.0.0.1:44124",
+      username: "opencode",
+      password_file: passwordFile,
+      scout_password_file: scoutPasswordFile,
+      scout_runtime_root: join(privateDirectory, "scout-runtime"),
+      scout_provider_api_key_file: secretFile,
+    },
+    github: {
+      app_id: "12345",
+      installation_id: 67890,
+      private_key_file: privateKeyFile,
+      owner: "floris3456",
+      repository: "agentic-workflow-template",
+      control_label: "agentic-bridge",
+      allowed_authors: ["floris3456"],
+      comment_author: "test-app[bot]",
+      active_interval_ms: 5000,
+      idle_interval_ms: 15000,
+    },
+    policy: {
+      pty_enabled: false,
+      promotion_enabled: false,
+    },
+  };
+  const configFile = join(privateDirectory, "bridge-config.json");
+  writeFileSync(configFile, `${JSON.stringify(document, null, 2)}\n`, { mode: 0o600 });
+  const config = loadBridgeConfig(configFile);
+  const state = new BridgeState(stateFile);
+  context.after(() => {
+    state.close();
+  });
+  return { config, configFile, state };
+}
+
+test("refreshOpenCodeInstances fails closed when a developer or workspace task session is nonterminal even if command queue is empty", async (context) => {
+  const repo = repositoryFixture(context);
+  const { config, state } = bridgeConfigFixture(context, repo);
+
+  // Map a developer session that is currently starting (nonterminal)
+  state.mapTaskSession("TASK-DEV", "ses_dev_busy", 80, "small-developer", "developer");
+
+  const originalFetch = globalThis.fetch;
+  const disposeCalls: string[] = [];
+  globalThis.fetch = (async (input: string | URL | Request, init?: RequestInit) => {
+    const url = new URL(typeof input === "string" ? input : input instanceof Request ? input.url : input.toString());
+    if (url.pathname === "/session/status") {
+      return Response.json({});
+    }
+    if (url.pathname === "/instance/dispose") {
+      disposeCalls.push(url.searchParams.get("directory") ?? "");
+      return Response.json(true);
+    }
+    return originalFetch(input, init);
+  }) as typeof fetch;
+  context.after(() => {
+    globalThis.fetch = originalFetch;
+  });
+
+  // Verify bridgeStatus reports 1 active task session, 0 pending commands, 0 pending requests
+  const status = bridgeStatus(config) as Record<string, unknown>;
+  assert.equal(status.pending_commands, 0);
+  assert.equal(status.pending_requests, 0);
+  assert.equal(status.active_task_sessions, 1);
+  assert.equal(status.active_developer_sessions, 1);
+  assert.equal(status.active_workspace_sessions, 0);
+
+  // refreshOpenCodeInstances must fail closed and NOT call /instance/dispose
+  await assert.rejects(
+    () => refreshOpenCodeInstances(config),
+    /Cannot refresh OpenCode instance for developer: active nonterminal session\(s\) present: TASK-DEV/,
+  );
+  assert.equal(disposeCalls.length, 0);
+
+  // Now mark developer session terminal (session.idle), and map a workspace session that is starting
+  state.queueResponseDelivery({
+    eventId: "evt-dev-idle",
+    taskId: "TASK-DEV",
+    sessionId: "ses_dev_busy",
+    issueNumber: 80,
+    eventType: "session.idle",
+    deliveryKind: "developer",
+  });
+  state.completeResponseDelivery("evt-dev-idle");
+  state.mapTaskSession("TASK-WS", "ses_ws_busy", 81, "small-workspace-maintainer", "workspace");
+
+  const statusWs = bridgeStatus(config) as Record<string, unknown>;
+  assert.equal(statusWs.pending_commands, 0);
+  assert.equal(statusWs.active_task_sessions, 1);
+  assert.equal(statusWs.active_developer_sessions, 0);
+  assert.equal(statusWs.active_workspace_sessions, 1);
+
+  await assert.rejects(
+    () => refreshOpenCodeInstances(config),
+    /Cannot refresh OpenCode instance for workspace: active nonterminal session\(s\) present: TASK-WS/,
+  );
+  assert.equal(disposeCalls.length, 0);
+});
+
+test("refreshOpenCodeInstances fails closed when OpenCode session.status is busy even if not in BridgeState", async (context) => {
+  const repo = repositoryFixture(context);
+  const { config } = bridgeConfigFixture(context, repo);
+
+  const originalFetch = globalThis.fetch;
+  const disposeCalls: string[] = [];
+  globalThis.fetch = (async (input: string | URL | Request, init?: RequestInit) => {
+    const url = new URL(typeof input === "string" ? input : input instanceof Request ? input.url : input.toString());
+    if (url.pathname === "/session/status") {
+      return Response.json({ ses_external_busy: { type: "busy" } });
+    }
+    if (url.pathname === "/instance/dispose") {
+      disposeCalls.push(url.searchParams.get("directory") ?? "");
+      return Response.json(true);
+    }
+    return originalFetch(input, init);
+  }) as typeof fetch;
+  context.after(() => {
+    globalThis.fetch = originalFetch;
+  });
+
+  await assert.rejects(
+    () => refreshOpenCodeInstances(config),
+    /Cannot refresh OpenCode instance: OpenCode session ses_external_busy is currently busy/,
+  );
+  assert.equal(disposeCalls.length, 0);
+});
+
+test("refreshOpenCodeInstances succeeds and disposes registered worktrees for truly quiescent instances", async (context) => {
+  const repo = repositoryFixture(context);
+  const { config, state } = bridgeConfigFixture(context, repo);
+
+  // Map developer and workspace sessions that are terminal
+  state.mapTaskSession("TASK-DEV", "ses_dev_done", 80, "small-developer", "developer");
+  state.queueResponseDelivery({
+    eventId: "evt-dev-idle",
+    taskId: "TASK-DEV",
+    sessionId: "ses_dev_done",
+    issueNumber: 80,
+    eventType: "session.idle",
+    deliveryKind: "developer",
+  });
+  state.mapTaskSession("TASK-WS", "ses_ws_done", 81, "small-workspace-maintainer", "workspace");
+  state.queueResponseDelivery({
+    eventId: "evt-ws-idle",
+    taskId: "TASK-WS",
+    sessionId: "ses_ws_done",
+    issueNumber: 81,
+    eventType: "session.idle",
+    deliveryKind: "workspace",
+  });
+  state.completeResponseDelivery("evt-dev-idle");
+  state.completeResponseDelivery("evt-ws-idle");
+
+  const originalFetch = globalThis.fetch;
+  const disposeCalls: string[] = [];
+  globalThis.fetch = (async (input: string | URL | Request, init?: RequestInit) => {
+    const url = new URL(typeof input === "string" ? input : input instanceof Request ? input.url : input.toString());
+    if (url.pathname === "/session/status") {
+      return Response.json({
+        ses_dev_done: { type: "idle" },
+        ses_ws_done: { type: "idle" },
+      });
+    }
+    if (url.pathname === "/instance/dispose") {
+      disposeCalls.push(url.searchParams.get("directory") ?? "");
+      return Response.json(true);
+    }
+    return originalFetch(input, init);
+  }) as typeof fetch;
+  context.after(() => {
+    globalThis.fetch = originalFetch;
+  });
+
+  const status = bridgeStatus(config) as Record<string, unknown>;
+  assert.equal(status.active_task_sessions, 0);
+  assert.equal(status.active_developer_sessions, 0);
+  assert.equal(status.active_workspace_sessions, 0);
+
+  const result = await refreshOpenCodeInstances(config);
+  assert.deepEqual(result.disposed, [repo.developer, repo.template]);
+  assert.deepEqual(disposeCalls, [repo.developer, repo.template]);
 });

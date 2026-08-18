@@ -143,6 +143,15 @@ try {
   assert(JSON.stringify(startSchema?.then?.properties?.arguments?.properties?.agent?.enum) === JSON.stringify(["small", "heavy"]), "Start command schema must restrict agent to small|heavy");
   const routeSchema = command.allOf?.find((entry) => entry.if?.properties?.kind?.const === "route");
   assert(JSON.stringify(routeSchema?.then?.properties?.arguments?.properties?.agent?.enum) === JSON.stringify(["small", "heavy"]), "Route command schema must restrict agent to small|heavy");
+
+  const serviceSource = read("tools/opencode-bridge/src/service.ts");
+  assert(serviceSource.includes("refreshOpenCodeInstances") && serviceSource.includes("active_task_sessions"), "Service must implement refreshOpenCodeInstances and active_task_sessions status");
+  const cliSource = read("tools/opencode-bridge/src/cli.ts");
+  assert(cliSource.includes('"refresh-instances"'), "CLI must define refresh-instances command");
+  const bootstrapSource = read("scripts/bootstrap-opencode-bridge.sh");
+  assert(bootstrapSource.includes("refresh-instances"), "Bootstrap script must invoke CLI refresh-instances");
+  const watcherSource = read("scripts/watch-developer-sync.sh");
+  assert(watcherSource.includes("active_task_sessions"), "Developer sync watcher must check active_task_sessions");
 } catch (error) {
   failures.push(`Bridge JSON validation failed: ${error.message}`);
 }

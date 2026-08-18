@@ -23,7 +23,7 @@ import type {
   TaskSession,
   TaskSessionKind,
 } from "./types.js";
-import { asJson, ensureParent, now, stableJson } from "./util.js";
+import { asJson, ensureParent, now, stableJson, terminalSessionState } from "./util.js";
 
 type Row = Record<string, unknown>;
 const taskBoundAliasKinds = new Set(["session", "pty", "permission", "question", "message", "part", "workspace", "event", "project"]);
@@ -620,6 +620,10 @@ export class BridgeState {
     return rows.map(scoutSessionFromRow);
   }
 
+  listActiveScoutSessions(taskId?: string): ScoutSession[] {
+    return this.listScoutSessions(taskId).filter((session) => !terminalSessionState(session.sessionState));
+  }
+
   sessionBindingForInternal(sessionId: string): SessionBinding | undefined {
     const developer = this.taskSessionForInternal(sessionId);
     if (developer) return { taskId: developer.taskId, sessionId, sessionKind: developer.sessionKind };
@@ -658,6 +662,16 @@ export class BridgeState {
 
   listTaskSessions(): TaskSession[] {
     return (this.db.prepare("SELECT * FROM task_sessions ORDER BY task_id").all() as Row[]).map(taskSessionFromRow);
+  }
+
+  listActiveTaskSessions(sessionKind?: TaskSessionKind): TaskSession[] {
+    const query = sessionKind
+      ? "SELECT * FROM task_sessions WHERE session_kind=? ORDER BY task_id"
+      : "SELECT * FROM task_sessions ORDER BY task_id";
+    const rows = (sessionKind
+      ? this.db.prepare(query).all(sessionKind)
+      : this.db.prepare(query).all()) as Row[];
+    return rows.map(taskSessionFromRow).filter((session) => !terminalSessionState(session.sessionState));
   }
 
   private upsertInteraction(input: {

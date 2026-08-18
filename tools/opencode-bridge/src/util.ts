@@ -78,6 +78,10 @@ export function now(): number {
   return Date.now();
 }
 
+export function terminalSessionState(value: string): boolean {
+  return /session\.(?:idle|error)/i.test(value);
+}
+
 export function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }

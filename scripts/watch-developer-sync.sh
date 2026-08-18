@@ -59,7 +59,11 @@ bridge_pending() {
   output="$("$repo_root/scripts/opencode-bridge-status.sh" --config "$config" 2>/dev/null)" || return 2
   BRIDGE_STATUS="$output" node -e '
     const status = JSON.parse(process.env.BRIDGE_STATUS);
-    const pending = Number(status.pending_commands || 0) + Number(status.pending_requests || 0);
+    const pending = Number(status.pending_commands || 0) +
+      Number(status.pending_requests || 0) +
+      Number(status.pending_response_deliveries || 0) +
+      Number(status.pending_outbox || 0) +
+      Number(status.active_task_sessions || 0);
     process.stdout.write(String(pending));
   '
 }
@@ -135,7 +139,7 @@ sync_once() {
     *) record_status blocked "bridge status is unavailable; refusing source replacement or restart"; return ;;
   esac
   if (( pending > 0 )); then
-    record_status deferred "bridge has accepted or applying work; synchronization deferred"
+    record_status deferred "bridge has active sessions or pending work; synchronization deferred"
     return
   fi
 
@@ -154,7 +158,7 @@ sync_once() {
     return
   }
   if (( pending > 0 )); then
-    record_status blocked "bridge stopped with accepted or applying work still durable"
+    record_status blocked "bridge stopped with active sessions or pending work still durable"
     return
   fi
 

@@ -10,7 +10,7 @@ import type {
   TaskSession,
   TaskSessionKind,
 } from "./types.js";
-import { asJson, asRecord, backoff, isRecord, sha256, sleep, stableJson } from "./util.js";
+import { asJson, asRecord, backoff, isRecord, sha256, sleep, stableJson, terminalSessionState } from "./util.js";
 
 export interface PersistedOpenCodeEvent {
   eventId: string;
@@ -106,10 +106,6 @@ function normalizeLegacy(value: unknown, streamId?: string): PersistedOpenCodeEv
 }
 
 type RecoverableSession = TaskSession | ScoutSession;
-
-function terminalSessionState(value: string): boolean {
-  return /session\.(?:idle|error)/i.test(value);
-}
 
 function canonicalScoutTerminal(
   statusValue: JsonValue | undefined,

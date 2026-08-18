@@ -460,3 +460,55 @@ test("PTY output is durably cursor-addressed and bounded", (context) => {
   state.updatePty("pty-1", "disconnected");
   assert.equal(state.pty("pty-1")?.status, "disconnected");
 });
+
+test("active task and Scout session querying filters out terminal states", (context) => {
+  const { state } = stateForTest(context);
+  state.mapTaskSession("TASK-1", "ses-1", 101, "small-developer", "developer");
+  state.mapTaskSession("TASK-2", "ses-2", 102, "small-workspace-maintainer", "workspace");
+  state.mapScoutSession({
+    requestId: "req-1",
+    taskId: "TASK-SCOUT",
+    sessionId: "ses-scout-1",
+    issueNumber: 103,
+    refSha: "0".repeat(40),
+    workspacePath: "/tmp/scout-1",
+  });
+
+  assert.equal(state.listActiveTaskSessions().length, 2);
+  assert.equal(state.listActiveTaskSessions("developer").length, 1);
+  assert.equal(state.listActiveTaskSessions("workspace").length, 1);
+  assert.equal(state.listActiveScoutSessions().length, 1);
+
+  // Transition TASK-1 to terminal session.idle
+  state.queueResponseDelivery({
+    eventId: "evt-1",
+    taskId: "TASK-1",
+    sessionId: "ses-1",
+    issueNumber: 101,
+    eventType: "session.idle",
+    deliveryKind: "developer",
+  });
+
+  assert.equal(state.listActiveTaskSessions().length, 1);
+  assert.equal(state.listActiveTaskSessions("developer").length, 0);
+  assert.equal(state.listActiveTaskSessions("workspace").length, 1);
+
+  // Transition TASK-2 to terminal session.error
+  state.queueResponseDelivery({
+    eventId: "evt-2",
+    taskId: "TASK-2",
+    sessionId: "ses-2",
+    issueNumber: 102,
+    eventType: "session.error",
+    deliveryKind: "workspace",
+  });
+
+  assert.equal(state.listActiveTaskSessions().length, 0);
+  assert.equal(state.listActiveTaskSessions("workspace").length, 0);
+
+  // Reactivate TASK-1 (e.g. via steer)
+  state.reactivateTaskSession("TASK-1", "ses-1");
+  assert.equal(state.listActiveTaskSessions().length, 1);
+  assert.equal(state.listActiveTaskSessions("developer").length, 1);
+  assert.equal(state.getTaskSession("TASK-1")?.sessionState, "starting");
+});

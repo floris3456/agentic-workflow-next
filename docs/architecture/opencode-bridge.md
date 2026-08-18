@@ -118,7 +118,12 @@ The normal developer OpenCode configuration relies on the pinned server's
 current-working-directory defaults for contained work and sets
 `external_directory` to `ask`, without a broad allow rule. Small-developer
 guidance requires repository-relative paths and forbids parent/sibling walks or
-scope widening when a path is absent.
+scope widening when a path is absent. Apply bootstrap and background watcher
+synchronization execute fail-closed instance cache refresh (`refresh-instances`)
+only when directory instances are proven quiescent (0 pending commands/requests,
+0 pending response deliveries, 0 active nonterminal developer/workspace task
+sessions, and no busy/retry sessions on the OpenCode server); active sessions
+fail closed to prevent disruptive instance disposal.
 
 Mapped Scout state and projected responses retain task, request, and exact-ref
 correlation. Terminal recovery and response retrieval use only the dedicated

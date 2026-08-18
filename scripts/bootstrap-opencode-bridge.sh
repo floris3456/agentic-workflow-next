@@ -19,44 +19,7 @@ node -e 'const [major, minor] = process.versions.node.split(".").map(Number); if
 
 refresh_opencode_instances() {
   local config_file="$1"
-  BRIDGE_CONFIG="$config_file" node --input-type=module <<'NODE'
-import fs from "node:fs";
-import { execFileSync } from "node:child_process";
-
-const configPath = process.env.BRIDGE_CONFIG;
-if (!configPath) throw new Error("BRIDGE_CONFIG is required");
-const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
-const baseUrl = config.opencode?.base_url;
-const username = config.opencode?.username;
-const passwordFile = config.opencode?.password_file;
-const repositoryRoot = config.repository_root;
-for (const [name, value] of Object.entries({ baseUrl, username, passwordFile, repositoryRoot })) {
-  if (typeof value !== "string" || value.length === 0) throw new Error(`Bridge config is missing ${name}`);
-}
-const password = fs.readFileSync(passwordFile, "utf8").trimEnd();
-const authorization = Buffer.from(`${username}:${password}`).toString("base64");
-const targets = new Set([repositoryRoot]);
-const listing = execFileSync("git", ["-C", repositoryRoot, "worktree", "list", "--porcelain"], { encoding: "utf8" });
-for (const block of listing.trim().split(/\n\n+/)) {
-  const lines = block.split("\n");
-  const worktree = lines.find((line) => line.startsWith("worktree "))?.slice("worktree ".length);
-  const branch = lines.find((line) => line.startsWith("branch "))?.slice("branch ".length);
-  if (worktree && branch === "refs/heads/template-development") targets.add(worktree);
-}
-for (const directory of targets) {
-  const endpoint = new URL("/instance/dispose", baseUrl);
-  endpoint.searchParams.set("directory", directory);
-  const response = await fetch(endpoint, {
-    method: "POST",
-    headers: { authorization: `Basic ${authorization}` },
-  });
-  if (!response.ok) {
-    throw new Error(`OpenCode instance refresh failed for a registered worktree with HTTP ${response.status}`);
-  }
-  const result = await response.json();
-  if (result !== true) throw new Error("OpenCode instance refresh did not return true");
-}
-NODE
+  node "$package/dist/src/cli.js" refresh-instances --config "$config_file"
 }
 
 if [[ "$mode" == "apply" ]]; then

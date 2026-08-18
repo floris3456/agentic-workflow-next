@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 import { spawn } from "node:child_process";
 import { loadBridgeConfig } from "./config.js";
-import { BridgeService, bridgeStatus, checkBridge, synchronizedGitState } from "./service.js";
+import { BridgeService, bridgeStatus, checkBridge, refreshOpenCodeInstances, synchronizedGitState } from "./service.js";
 import { installScoutRuntime } from "./scout-server.js";
 import { errorMessage } from "./util.js";
 
 function usage(): never {
-  process.stderr.write("Usage: opencode-bridge <run|bootstrap|status|attach|install-scout-runtime> [--config <file>] [--check]\n       opencode-bridge app-registration-url --repository <owner/name> [--name <app-name>]\n");
+  process.stderr.write("Usage: opencode-bridge <run|bootstrap|status|attach|install-scout-runtime|refresh-instances> [--config <file>] [--check]\n       opencode-bridge app-registration-url --repository <owner/name> [--name <app-name>]\n");
   process.exit(2);
 }
 
@@ -100,6 +100,11 @@ async function main(): Promise<void> {
     if (checkOnly) usage();
     await installScoutRuntime(config);
     json({ installed: true, runtime: config.opencode.scoutRuntimeRoot, version: "1.18.16" });
+    return;
+  }
+  if (command === "refresh-instances") {
+    if (checkOnly) usage();
+    json(await refreshOpenCodeInstances(config));
     return;
   }
   if (command === "bootstrap") {

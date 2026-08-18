@@ -25,7 +25,7 @@ import {
 } from "./scout-server.js";
 import { BridgeState } from "./state.js";
 import type { JsonValue, TaskSession, TaskSessionKind } from "./types.js";
-import { ensurePrivateDirectory, errorMessage, sleep } from "./util.js";
+import { ensurePrivateDirectory, errorMessage, isRecord, sleep, terminalSessionState } from "./util.js";
 import { assertRepositoryRemote, githubRepositoryIdentity } from "./repository-identity.js";
 import { TemplateDevelopmentWorktreeResolver } from "./workspace.js";
 
@@ -181,10 +181,6 @@ function visibleEvent(event: PersistedOpenCodeEvent): boolean {
 
 function terminalSessionEvent(event: PersistedOpenCodeEvent): boolean {
   return /session\.(?:idle|error)/i.test(event.eventType);
-}
-
-function terminalSessionState(value: string): boolean {
-  return /session\.(?:idle|error)/i.test(value);
 }
 
 interface WorkspaceRuntime {
@@ -635,6 +631,9 @@ export function bridgeStatus(config: BridgeConfig): JsonValue {
       pending_requests: state.listRequests(["accepted", "applying"]).length,
       draining: state.getMeta("service.draining") === "true",
       pending_response_deliveries: state.pendingResponseDeliveries(100).length,
+      active_task_sessions: state.listActiveTaskSessions().length,
+      active_developer_sessions: state.listActiveTaskSessions("developer").length,
+      active_workspace_sessions: state.listActiveTaskSessions("workspace").length,
       scout_sessions: state.listScoutSessions().length,
       scout_runtime: {
         ...installed,
@@ -656,4 +655,91 @@ export function taskSession(config: BridgeConfig, taskId: string): TaskSession |
   } finally {
     state.close();
   }
+}
+
+export async function refreshOpenCodeInstances(config: BridgeConfig): Promise<{ disposed: string[] }> {
+  await verifyRepositoryIdentity(config);
+  const targets: Array<{ directory: string; sessionKind: TaskSessionKind }> = [
+    { directory: config.repositoryRoot, sessionKind: "developer" },
+  ];
+  const resolver = new TemplateDevelopmentWorktreeResolver({
+    repositoryRoot: config.repositoryRoot,
+    identity: githubRepositoryIdentity({
+      apiBaseUrl: config.github.apiBaseUrl,
+      gitHost: config.github.gitHost,
+      owner: config.github.owner,
+      repository: config.github.repository,
+    }),
+    fetchRemote: false,
+  });
+  try {
+    const resolved = await resolver.resolveRuntime();
+    targets.push({ directory: resolved.directory, sessionKind: "workspace" });
+  } catch {
+    // template-development worktree may not be registered, which is acceptable
+  }
+
+  if (existsSync(config.stateFile)) {
+    const state = new BridgeState(config.stateFile);
+    try {
+      const pendingCommands = state.listCommands(["accepted", "applying"]);
+      if (pendingCommands.length > 0) {
+        throw new Error(`Cannot refresh OpenCode instance: ${pendingCommands.length} command(s) are pending execution`);
+      }
+      const pendingRequests = state.listRequests(["accepted", "applying"]);
+      if (pendingRequests.length > 0) {
+        throw new Error(`Cannot refresh OpenCode instance: ${pendingRequests.length} request(s) are pending execution`);
+      }
+      const pendingDeliveries = state.pendingResponseDeliveries(100);
+      if (pendingDeliveries.length > 0) {
+        throw new Error(`Cannot refresh OpenCode instance: ${pendingDeliveries.length} response delivery item(s) are pending`);
+      }
+
+      for (const target of targets) {
+        const activeSessions = state.listActiveTaskSessions(target.sessionKind);
+        if (activeSessions.length > 0) {
+          const sessionDetails = activeSessions.map((s) => `${s.taskId} (${s.sessionId}, state: ${s.sessionState})`).join(", ");
+          throw new Error(
+            `Cannot refresh OpenCode instance for ${target.sessionKind}: active nonterminal session(s) present: ${sessionDetails}`,
+          );
+        }
+      }
+    } finally {
+      state.close();
+    }
+  }
+
+  const manifest = Manifest.load(config.manifestFile);
+  const client = opencode(config, manifest);
+  let statuses: Record<string, unknown> = {};
+  try {
+    const statusResult = await client.request("session.status");
+    if (isRecord(statusResult)) {
+      statuses = statusResult as Record<string, unknown>;
+    }
+  } catch (error) {
+    throw new Error(`Failed to query OpenCode session status: ${errorMessage(error)}`);
+  }
+
+  for (const [sessionId, status] of Object.entries(statuses)) {
+    if (isRecord(status)) {
+      const type = status.type;
+      if (type === "busy" || type === "retry") {
+        throw new Error(`Cannot refresh OpenCode instance: OpenCode session ${sessionId} is currently ${type}`);
+      }
+    }
+  }
+
+  const disposed: string[] = [];
+  for (const target of targets) {
+    const result = await client.request("instance.dispose", {
+      query: { directory: target.directory },
+    });
+    if (result !== true) {
+      throw new Error(`OpenCode instance refresh did not return true for ${target.sessionKind}`);
+    }
+    disposed.push(target.directory);
+  }
+
+  return { disposed };
 }
