@@ -8,10 +8,12 @@ TEMPLATE-WORKSPACE-MAINTENANCE-AGENT-001
 
 Security source correction implemented and independently reviewed at exact remote
 implementation head `9d119a2432eacfe7c4655f18f6d40ebc34d1e2ef`.
-The task is **not complete**: exact push-triggered CI result evidence for the new
-head is not available through the current connector surface, and same-task
-schema-3 package supersession is not defined by the tracked generator after the
-old package bytes already entered template history. No `main` promotion is
+The task remains **not complete**. A bounded model-routing bootstrap is now
+explicitly authorized before the remaining security/package corrections: use the
+existing Workspace Maintenance Agent once to replace the slow default Luna tier
+with a verified Gemini Flash/high small tier, retain a Sol heavy tier, and add
+small/heavy workspace-maintainer routes. Exact current CI evidence and safe
+same-task package supersession remain unresolved. No `main` promotion is
 authorized.
 
 ## Task-start template-development SHA
@@ -28,38 +30,48 @@ Review-reopen checkpoint:
 
 ## Public-safe task brief
 
-Continue the same Workspace Maintenance Agent task and correct two independent
-security findings without changing the task ID:
+Continue the same Workspace Maintenance Agent task without changing the task ID.
+The already-reviewed security correction remains historical implementation
+evidence. Before addressing the broader follow-up findings, perform one bounded
+bootstrap change with the existing workspace-maintainer so future implementation
+can use a faster small model by default:
 
-1. arbitrary `workspace_exec` commands must not receive private/common Git state;
-2. `workspace_publish` must reject dangerous effective repository/worktree Git
-   configuration before any foreign-push or credential-program side effect.
+1. replace Luna-backed developer/model roles with a verified Gemini Flash model at
+   high reasoning for the small/default tier;
+2. retain Sol as the heavy developer tier;
+3. introduce distinct small and heavy Workspace Maintenance Agent routes, with
+   Gemini Flash/high as small/default and Sol as heavy;
+4. update the bridge/runtime/schema/tests/docs/validators needed for those routes
+   to be real rather than documentation-only;
+5. preserve independent web-orchestrator review and every existing exact-SHA
+   human boundary over `main`.
 
-Preserve useful read-only Git inspection, default-deny agent authority, the
-existing developer bridge implementation, exact-SHA human authority over `main`,
-and the schema-3 three-source package model. Keep protected issues #49/#53 and
-their historical Scout state untouched.
+Do not guess the Gemini provider/model identifier. Inspect the real pinned
+OpenCode runtime/provider inventory and use the exact available identifier that
+corresponds to the intended Gemini Flash model. If no suitable Gemini Flash model
+is actually available, stop with evidence instead of substituting another model.
+
+Keep the bootstrap single-writer and bounded. Do not treat it as resolving the
+remaining workspace security findings, package supersession, branch protection,
+or CI observability problems.
 
 ## Re-established source state before record checkpoint
 
-Immediately after the source correction and before the later task-record-only
-checkpoint, independent remote readback established:
+At the model-routing bootstrap start, independent remote readback established:
 
-- template-development implementation head:
-  `9d119a2432eacfe7c4655f18f6d40ebc34d1e2ef`
+- template-development: `b0cc4af37cd012e1bef6ae383aafdb0ae012b9e0`
 - developer: `3d3cbad9f423cc4d80aaff8a0fba86a16300c502`
 - main: `6127611113dfdb66f93a0cfd2d355359aa370833`
 - web-orchestration: `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`
 
-The task record is intentionally updated after that source head, so the current
-`template-development` tip must always be obtained by remote readback rather than
-inferred from the implementation SHA recorded above.
-
-`source-lock.json` remains unchanged and still exactly matches the live
-main/developer/web heads. Issue #49 remains open with 254 comments and unchanged
-`updated_at=2026-08-17T02:02:28Z`. Issue #53 remains open with 12 comments and
-unchanged `updated_at=2026-08-17T11:45:43Z`. Issue #54 is this task's public-safe
-continuation journal, remains open and unlabelled, and has no bridge activity.
+`source-lock.json` still exactly matches the live main/developer/web refs. Issue
+#49 was independently reconciled as terminal: its mapped developer response was
+`completed`, the session was idle, the exact handoff
+`ba73b3b54febfdeadbff66262acaa7be12e5760e` exists remotely, and it reported no
+blockers. The stale open issue was therefore closed as completed to release the
+single mutating bridge lane without replay. Issue #53 remains the untouched
+historical Scout-only acceptance issue. Issue #54 remains this task's canonical
+public-safe continuation/control journal.
 
 ## Historical reviewed evidence
 
@@ -240,59 +252,67 @@ unchanged historical evidence.
 - Re-established all four exact refs before relying on the prior handoff.
 - Reopened this same task in its canonical current record at
   `7cf68d1937b6d21a54bb022e67dec17e5f7b293b`.
-- Created public-safe issue #54 under the same task ID; it remains intentionally
-  unlabelled for bridge control.
-- Did not touch protected #49/#53 or the historical stuck Scout request/session.
-- The workspace/OpenCode mutating lane remains unavailable without disturbing the
-  protected open bridge-control state, so the source correction used bounded
-  connected-GitHub contents writes with exact readback.
-- An attempted atomic Git-tree publication was refused by the connector before any
-  tree/ref mutation; exact readback proved no branch effect, so it was not replayed.
-  The correction was then published as bounded linear contents commits.
+- Created public-safe issue #54 under the same task ID; it is the canonical
+  continuation/control journal for this task.
+- Reconciled historical mutating issue #49 from durable public evidence: the
+  mapped developer was idle with a correlated `completed` response, exact pushed
+  handoff `ba73b3b54febfdeadbff66262acaa7be12e5760e` exists remotely, and no blocker
+  remained. #49 was closed as completed without replay or implementation change.
+- Issue #53 remains untouched as historical Scout-only evidence.
+- The original security correction used bounded connected-GitHub contents writes
+  while #49 still occupied the mutating bridge lane.
+- The next mutation route is now deliberately the existing Workspace Maintenance
+  Agent on this same task, used only for the bounded model-routing bootstrap.
+
+## Model-routing bootstrap acceptance boundary
+
+This one bootstrap use of the current workspace-maintainer is accepted only under
+a single-writer, clean/synchronized-target assumption. It does **not** resolve or
+waive the broader independent-review findings around content-bound preflight,
+canonical-origin binding, nested Git/special-file containment, pre-sandbox Git
+behavior, publication ordering/locking, bridge-private state isolation, server-side
+branch protection, or package supersession. Any unexpected target dirtiness,
+branch movement, origin/config discrepancy, unrelated path, or inability to prove
+the intended Gemini model identity must stop the bootstrap rather than widening
+scope.
 
 ## Blockers / required decisions
 
-1. **Exact current CI proof:** the full push-triggered validation result for the
-   corrected head must be obtained from a surface that can read GitHub Actions
-   check/run state for this push. CI success is currently UNKNOWN.
-2. **Same-task schema-3 package supersession:** repository-owned behavior must be
-   defined before changing generator/validator semantics or replacing the old
-   package. The current tracked contract has no safe same-ID supersession path
-   after package storage is already in history. A delta-only replacement is not
-   accepted by inference.
-3. Package generation itself must still run through the tracked generator on an
-   authorized maintainer execution surface; hand-building package bytes is
-   prohibited.
+1. **Model identity probe:** the exact Gemini Flash provider/model identifier in
+   the real pinned OpenCode runtime is not yet independently established. The
+   workspace route must inspect and prove it before editing model declarations.
+2. **Exact current CI proof:** full push-triggered validation evidence for the
+   earlier corrected template head remains UNKNOWN through the current connected
+   check surface.
+3. **Same-task schema-3 package supersession:** repository-owned behavior remains
+   undefined after prior package storage. Do not replace or hand-build package
+   bytes during the model-routing bootstrap.
 
-No human decision is needed about the two original security corrections; their
-source implementation is complete. A human/repository-level design decision is
-required before changing the package format/provenance contract to solve the
-same-task supersession ambiguity.
-
+No further human decision is required to perform the bounded bootstrap itself.
 Any `main` promotion remains a separate explicit exact-SHA human decision and is
 not authorized here.
 
 ## Remaining work
 
-1. Obtain exact successful full template-development validation for the final
-   package-free correction/record head; correct only evidence-backed failures if
-   any.
-2. Decide and implement a repository-owned safe same-task package-supersession
-   rule, or otherwise provide an authorized package path that preserves the full
-   original feature plus these corrections without self-reference.
-3. Generate the schema-3 package through the tracked generator on an authorized
-   maintainer execution surface.
-4. Validate and independently review exact package bytes, manifest provenance,
-   source ranges, and canonical-tip relations.
-5. Publish a dedicated final template-development handoff only after those steps.
-6. Only after another clean independent review consider archival, downstream
-   application, or any separately human-approved promotion workflow.
+1. Run the existing Workspace Maintenance Agent for the bounded model-routing
+   bootstrap: prove the Gemini Flash model identity; implement small/heavy
+   developer and workspace-maintainer routes; update necessary bridge/runtime,
+   schemas, validators, tests, and durable records; run proportional checks; push
+   exact affected non-main branches.
+2. Independently review every pushed range and correct only evidence-backed
+   bootstrap defects.
+3. After the bootstrap, address the broader security/authority/package findings
+   with the faster small route plus heavy escalation when appropriate.
+4. Resolve same-task package supersession before claiming portable task
+   completion or replacing the historical package.
+5. Obtain exact current CI evidence when the connected surface can prove it.
 
 ## Next action
 
-Do not archive or promote. Resolve exact CI evidence and the same-task package
-supersession contract while keeping the corrected source range, historical package,
-protected issues, developer, main, and web-orchestration unchanged.
+Use issue #54 as the canonical control issue for this same task. Apply the bridge
+control label, start the template-development-rooted Workspace Maintenance Agent
+from exact current `template-development`, and keep the route bounded to the
+model-routing bootstrap above. Do not archive, package, or promote `main`.
 
 ## Last historical handoff commit
 
