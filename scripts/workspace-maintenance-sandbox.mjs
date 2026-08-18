@@ -21,6 +21,7 @@ import {
   redactLocalPaths,
   run,
   safeEnvironment,
+  secureParent,
   systemMountArguments,
   utf8,
 } from "./workspace-maintenance-common.mjs";
@@ -204,7 +205,7 @@ export async function executeWorkspaceCommand(gate, target, command, args, expec
   if (command.includes("/") || command.includes("\\")) {
     const normalized = command.split(/[\\/]+/).filter((part) => part.length > 0 && part !== ".");
     if (normalized.length === 0 || normalized.includes("..") || normalized[0] === ".git") throw new Error("Workspace executable path escapes the tracked working tree");
-    const candidate = resolve(verified.worktree, ...normalized);
+    const candidate = await secureParent(verified.worktree, normalized.join("/"), false);
     if (!inside(verified.worktree, candidate)) throw new Error("Workspace executable path escapes the tracked working tree");
     const stat = await lstat(candidate);
     if (!stat.isFile() || stat.isSymbolicLink() || !inside(verified.worktree, await realpath(candidate))) {
