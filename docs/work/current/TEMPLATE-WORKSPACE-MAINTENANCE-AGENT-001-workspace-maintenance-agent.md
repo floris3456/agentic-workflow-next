@@ -6,10 +6,10 @@ TEMPLATE-WORKSPACE-MAINTENANCE-AGENT-001
 
 ## Status
 
-Completed correction cycle after independent review: corrected sources,
-real-runtime acceptance, final schema-3 package, package application proof,
-remote readback, and relevant source/package CI are complete; the earlier
-working-cycle state remains below only as historical evidence
+Blocked in independent review pending a second security-correction cycle. The prior
+completed handoff remains historical implementation evidence but is superseded by
+new findings against the exact pushed implementation. No `main` promotion is
+authorized.
 
 ## Task-start template-development SHA
 
@@ -17,529 +17,251 @@ working-cycle state remains below only as historical evidence
 
 ## Review-base template-development SHA
 
-7915a22248f11c8000622ffd761fb2a6e91e2359
+1f539586f382149a5d5a23bb62771165b880df0c
 
 ## Public-safe task brief
 
-Add a dedicated Workspace Maintenance Agent whose OpenCode session remains
-rooted in the canonical `template-development` worktree while it performs
-bounded maintenance in any worktree proven by Git to belong to the same
-canonical repository. Give the agent one stable instruction authority from
-`template-development`, reject unregistered, foreign, stale, or escaping target
-paths, keep subagents denied and exact-SHA human authority over `main`, and add a
-separate bridge route with explicit template-development ref guarding,
-lifecycle/interaction continuity, public-safe projection, and unchanged normal
-developer routing. Implement focused integration coverage without mutating
-`main` or replaying the separate stuck Scout acceptance.
-
-The earlier `TEMPLATE-BRIDGE-LIFECYCLE-RECOVERY-002` maintenance task remains
-paused with its protected issue and Scout state unchanged. This task did not
-replay, replace, abort, close, or reinterpret that work.
+Continue the existing Workspace Maintenance Agent template task without changing
+its task ID. Correct two independently reproduced security gaps: arbitrary
+`workspace_exec` commands must not receive the repository's private Git-common
+state, and `workspace_publish` must reject dangerous effective repository/worktree
+Git configuration before any credential-program or foreign-push side effect.
+Preserve useful read-only Git inspection, default-deny agent authority, normal
+developer routing, exact-SHA human authority over `main`, and the existing
+three-source schema-3 package model. Keep `main`, `web-orchestration`, the paused
+lifecycle task, protected control issues #49/#53, and their historical Scout state
+unchanged.
 
 ## Current objective
 
-Correct the reviewed workspace-maintenance security and transfer defects without
-rewriting the already-sound routing/lifecycle behavior, regenerate the complete
-portable package from exact reviewed ranges, and hand off independently verified
-pushed source and ledger SHAs. No `main` promotion is authorized.
+Produce a package-free corrected `template-development` head that closes both
+security blockers with adversarial tests, run the complete relevant template
+validation, independently review the exact pushed range, then regenerate and
+verify the schema-3 package from the corrected reviewed template head and the
+exact live source handoffs.
 
 ## Current position
 
-Independent review reopened this task at remote heads template-development
-`fb903dafdb2713621abbfe86b220f26c8d26a6e0`, developer
-`d24b67d78d58bd0c217530545ab0b548b64e2485`, main
-`6127611113dfdb66f93a0cfd2d355359aa370833`, and web-orchestration
-`7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`. A fresh canonical fetch and a
-separate connected-GitHub readback established those exact refs before this
-correction-cycle mutation. The existing package remains historical review
-evidence and must not be presented as the final portable package after source
-corrections.
+Independent remote readback on 2026-08-18 re-established the exact canonical
+heads before this cycle:
 
-Review found four required correction areas: general `workspace_exec` is not a
-filesystem containment boundary; the agent's stated instruction/tool boundary
-is not fully mechanical; schema-2 packages omit the template-development-owned
-runtime assets; and fake-client bridge tests do not prove the real pinned
-OpenCode lifecycle. The correction must keep the workspace runtime rooted in
-template-development, preserve ordinary developer routing and exact-SHA human
-authority over `main`, and leave web-orchestration plus the protected paused
-Scout/#49/#53 state unchanged unless a separately proved dependency requires
-otherwise.
+- template-development: `1f539586f382149a5d5a23bb62771165b880df0c`
+- developer: `3d3cbad9f423cc4d80aaff8a0fba86a16300c502`
+- main: `6127611113dfdb66f93a0cfd2d355359aa370833`
+- web-orchestration: `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`
 
-The template-development correction tree now replaces cwd-only execution with a
-non-root Linux Bubblewrap boundary, splits commit/push into a fixed non-main
-publication broker, and uses the exact OpenCode 1.18.16 ordered-permission syntax
-to default-deny tools and skills before allowing only the workspace surface and
-`workspace-maintenance`. A real pinned server inventory check proves that
-effective boundary. Package schema 3 now carries a canonical
-template-development range as well as developer and web ranges, binds all three
-patches/tips/relationships, rejects self-package history, and applies each range
-through the matching branch's normal workflow. The superseded schema-2 package
-was removed from the current tree before the corrected pre-package implementation
-head; its exact historical commit and digests remain below.
+`source-lock.json` exactly matches the live main/developer/web heads above and is
+therefore not moved by this reopen checkpoint.
 
-The developer correction is now complete. Its tracked real-runtime harness is
-published at `f455d6269678dbbab3783fd845ef26e0227c7ed7`, the OAuth/provider
-precondition correction is published at
-`1b7fb2bce9d9bf23e107d808632066c62fe4c13c`, and the dedicated developer
-handoff is `3d3cbad9f423cc4d80aaff8a0fba86a16300c502`. A fresh credential-isolated
-OpenCode 1.18.16 lifecycle passed through the production bridge path with zero
-repository mutation. The exact source snapshot is now reconciled to that
-developer handoff plus unchanged main and web refs. Corrected package generation
-used the pushed pre-package template-development head
-`1e8ac4a276eb8e6a2687495aa51b4e5767f04cfa`. The resulting schema-3 package was
-deterministically validated and stored at
-`18747555881db600ee033dd93b7fc53e1f7d8f12`, but GitHub's Ubuntu 24.04 runner
-then exposed an unprivileged-user-namespace precondition before the first
-Bubblewrap command. That package commit remains exact historical evidence, but
-its generated bytes were removed from the current tree before the CI/runtime
-portability correction. The final package-free reviewed head is now
-`d509bf3fd0d3a4622d080f920aca6c122f77624d`; remote run 32081956594 passed,
-including real Bubblewrap containment and the pinned OpenCode inventory. The
-repository-owned generator has regenerated the final package from that exact
-head and the unchanged exact developer/web ranges. Final package/ledger commit
-`66a8289fc112de4546ea9cee1933a8c056fd0ba7` is pushed, independently fetched
-and byte-verified, and green in template-development CI run 32082204637.
+The previous correction fixed the earlier four review findings: Bubblewrap
+containment replaced cwd-only host execution; publication became a separate fixed
+broker; workspace-maintainer became mechanically default-deny; and a real pinned
+OpenCode 1.18.16 lifecycle harness exercised the production bridge route. The
+schema-3 package was generated and validated from exact reviewed ranges.
 
-Historical position before review correction:
+A deeper independent review then found two new blockers in the exact live
+`scripts/workspace-maintenance-lib.mjs`:
 
-Template-development commit `cd433706bfefebaf42a5de6ea1521ec61deb2c8a`
-owns the primary `workspace-maintainer`, its stable-authority skill, the pinned
-OpenCode plugin, repository-scoped worktree gate, focused fixtures, validator
-coverage, and matching AS-BUILT facts.
+1. `sandboxCommand` read-only binds the complete real common Git directory to
+   `/repo.git` and sets `GIT_COMMON_DIR=/repo.git`. That exposes private bridge
+   state stored beneath the common `.git` as well as broader local-only Git state
+   to arbitrary allowed workspace commands. Existing containment fixtures only
+   use a sentinel outside the repository and do not cover this confidentiality
+   boundary.
+2. `assertSafeGitMetadata` reads only `git config --local --name-only --list`.
+   It does not reject `url.*.pushInsteadOf` or `core.askPass`, and it misses
+   worktree-specific settings when `extensions.worktreeConfig=true`. A canonical
+   post-push readback is too late because a foreign push or askpass execution may
+   already have happened.
 
-Developer implementation `f76dfbd2c103ae43605939ec999f7f846acf7286`
-and task-record handoff `d24b67d78d58bd0c217530545ab0b548b64e2485`
-are pushed. The bridge now accepts only explicit `workspace.start`, proves and
-pins the registered template-development worktree and exact guarded ref, stores
-a fail-closed durable workspace session kind, and routes the full session
-lifecycle through the workspace runtime. Ordinary developer starts retain their
-existing route. Runtime switching, caller agent override, alternate PTYs,
-subagent delegation, and workspace attempts to promote `main` are denied.
-Recovery, question/permission replies, steering, abort/finalize, and terminal
-delivery stay in the original workspace session and re-prove the canonical
-runtime. Public projections expose only repository-relative task evidence and
-generic failures; host paths do not cross the public boundary.
-
-The tracked generator fetched canonical history and created
-`changes/TEMPLATE-WORKSPACE-MAINTENANCE-AGENT-001/manifest.json` for exactly the
-reviewed task range. Schema-2 provenance validation succeeds. The package
-SHA-256 is `79815d273f90870b6e7acd7b6239d478c7573f76aba17196297edd0e299d915f`,
-the developer patch SHA-256 is
-`01dce71767159f1c8c8ca6db2e46c85833a981be73ed350d37e78448cc789c37`,
-and the explicit empty web patch SHA-256 is
-`e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`.
-The source snapshot is reconciled to the exact independently verified canonical
-refs listed below. Package/ledger commit
-`9ad0913bc40692887f1eed5031c97d2512397961` is pushed and independently read
-back. Only this dedicated handoff snapshot remains in the working cycle.
+Issue #54 is a public-safe journal for this same task. It is intentionally not a
+bridge-controlled mutating issue. The workspace/OpenCode route cannot be started
+without conflicting with protected open mutating issue #49, which the human has
+explicitly required this task not to replay, close, abort, replace, or otherwise
+touch. This correction therefore uses bounded connected-GitHub source edits plus
+remote CI/readback rather than forcing the unavailable workspace mutation lane.
 
 ## Source ranges
 
-- developer package: `ba73b3b54febfdeadbff66262acaa7be12e5760e..d24b67d78d58bd0c217530545ab0b548b64e2485`
-- bridge implementation: `11f1f1178394bd0ff80116f4acf67958cdc08ace..f76dfbd2c103ae43605939ec999f7f846acf7286`
-- developer handoff: `f76dfbd2c103ae43605939ec999f7f846acf7286..d24b67d78d58bd0c217530545ab0b548b64e2485` (task record only)
+Historical reviewed package ranges retained as evidence:
+
+- template-development: `7915a22248f11c8000622ffd761fb2a6e91e2359..d509bf3fd0d3a4622d080f920aca6c122f77624d`
+- developer: `ba73b3b54febfdeadbff66262acaa7be12e5760e..3d3cbad9f423cc4d80aaff8a0fba86a16300c502`
 - web-orchestration: `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17..7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`
-- main: unchanged at `6127611113dfdb66f93a0cfd2d355359aa370833`
-- template-development implementation: `7915a22248f11c8000622ffd761fb2a6e91e2359..cd433706bfefebaf42a5de6ea1521ec61deb2c8a`
-- correction-cycle ledger reopen:
-  `fb903dafdb2713621abbfe86b220f26c8d26a6e0..546ada45be5fb4317ea40cdf7b207b0174ebe0e3`
-- corrected template-development implementation: begins after
-  `546ada45be5fb4317ea40cdf7b207b0174ebe0e3` and is pushed at
+
+Historical correction checkpoints:
+
+- template-development containment/runtime implementation:
   `33227b741c0dc2909ed8ca8dc00ea1b28963febc`
-- developer correction implementation:
-  `183402e259a5f8367f3f4cc233fc8b3c490140c1..1b7fb2bce9d9bf23e107d808632066c62fe4c13c`
-- developer correction handoff:
-  `1b7fb2bce9d9bf23e107d808632066c62fe4c13c..3d3cbad9f423cc4d80aaff8a0fba86a16300c502`
-- corrected developer package range:
-  `ba73b3b54febfdeadbff66262acaa7be12e5760e..3d3cbad9f423cc4d80aaff8a0fba86a16300c502`
-- corrected template-development package range begins at
-  `7915a22248f11c8000622ffd761fb2a6e91e2359`; the superseded first schema-3
-  package used pushed pre-package checkpoint
-  `1e8ac4a276eb8e6a2687495aa51b4e5767f04cfa`, and the final reviewed head is the
-  green package-free checkpoint `d509bf3fd0d3a4622d080f920aca6c122f77624d`
+- previous package-free reviewed template head:
+  `d509bf3fd0d3a4622d080f920aca6c122f77624d`
+- previous package/ledger commit:
+  `66a8289fc112de4546ea9cee1933a8c056fd0ba7`
+- previous template handoff:
+  `1f539586f382149a5d5a23bb62771165b880df0c`
+- developer real-runtime harness:
+  `f455d6269678dbbab3783fd845ef26e0227c7ed7`
+- developer OAuth/provider correction:
+  `1b7fb2bce9d9bf23e107d808632066c62fe4c13c`
+- developer handoff:
+  `3d3cbad9f423cc4d80aaff8a0fba86a16300c502`
+
+Superseded original rejected evidence remains historical:
+
+- developer implementation: `f76dfbd2c103ae43605939ec999f7f846acf7286`
+- developer handoff: `d24b67d78d58bd0c217530545ab0b548b64e2485`
+- template-development implementation: `cd433706bfefebaf42a5de6ea1521ec61deb2c8a`
+- template-development package/ledger: `9ad0913bc40692887f1eed5031c97d2512397961`
+- template-development handoff: `fb903dafdb2713621abbfe86b220f26c8d26a6e0`
+
+The new correction range begins after this review-reopen checkpoint. Exact head
+will be recorded only after remote publication and readback.
 
 ## Observed
 
-- The existing bridge originally admitted ordinary developer starts but had no
-  durable workspace task kind or second verified runtime.
-- The template-owned gate independently derives eligible worktrees from Git,
-  keeps instruction authority at template-development, and rejects foreign,
-  unregistered, stale, symlinked, or escaping targets without returning host
-  paths.
-- A task's first accepted start permanently locks its developer/workspace kind,
-  including a start that fails before OpenCode session creation.
-- Workspace runtime initialization is lazy and retryable after transient setup
-  failure; subsequent activity re-proves the same canonical worktree without
-  requiring it to remain clean after authorized work begins.
-- Persisted legacy sessions recover as developer sessions; null, unknown, or
-  conflicting kinds fail closed.
-- The developer implementation changed exactly 20 reviewed paths and did not
-  alter the separate paused Scout records, `main`, or web-orchestration.
-- Bubblewrap adversarial fixtures prove an injected secret is absent, host
-  sentinels cannot be read or written, symlink and foreign Git routes cannot
-  escape, Git metadata does not persist sandbox changes, and host loopback is not
-  reachable. The fixed broker additionally rejects `main`, unregistered local
-  origins, transport redirection, and canonical branch advance.
-- Real OpenCode 1.18.16 inventory resolves every non-workspace tool to deny and
-  every discovered skill except `workspace-maintenance` to deny, while loading
-  the expected workspace plugin surface from template-development.
-- Schema 3 keeps `source-lock.json` independent and three-source-only; the
-  reviewed template-development head is proven from canonical history but must
-  precede and exclude its own generated package path.
-- The successful live acceptance created a real OpenCode 1.18.16 workspace
-  session with template-development as project/directory and
-  `workspace-maintainer` as agent, proved the connected expected provider/model,
-  loaded workspace plugin/skill, and mechanically denied every other discovered
-  tool/skill.
-- The same mapped workspace session loaded `workspace-maintenance`, inspected
-  developer instructions as evidence only, used the four required workspace
-  tools, and ran only sandboxed `git status --short` against developer. Project,
-  session directory, and skill inventory remained template-rooted afterward.
-- Two meaningful workspace assistant phases reached terminal delivery through
-  canonical recovery and public projection with no host-local paths. A separate
-  real `small-developer` session then proved normal developer routing remained
-  independent. Both source worktrees remained clean and temporary runtime state
-  was removed.
+- `sandboxCommand` currently mounts the whole common Git directory read-only at
+  `/repo.git` and the worktree Git directory at `/worktree.git`.
+- The repository's bridge configuration intentionally stores local/private bridge
+  state beneath the common `.git`, so mounting the whole common directory violates
+  the workspace command confidentiality boundary even though writes are denied.
+- Useful ordinary Git inspection does not require exposing every common-Git file;
+  the command sandbox needs only a sanitized read-only metadata/object view or a
+  separately brokered inspection surface.
+- `assertSafeGitMetadata` currently derives unsafe names exclusively from
+  `git config --local --name-only --list`.
+- `url.*.pushInsteadOf` can rewrite only push destinations; canonical pre/post
+  `ls-remote` does not prevent that foreign side effect.
+- `core.askPass` can name an executable credential prompt helper even when
+  terminal prompting is disabled.
+- Worktree-specific config can override common repository config when
+  `extensions.worktreeConfig=true`, and `--local` alone does not enumerate those
+  effective values.
+- Existing workspace tests cover host secret absence, outside read/write denial,
+  symlink escape, network denial, foreign Git routes, sandbox ref persistence,
+  `main` denial, pushurl rejection, and stale canonical heads, but not these two
+  new adversarial cases.
 
 ## Interpretation
 
-Workspace maintenance is a distinct least-authority route rather than a widened
-developer route. The session's project and instruction authority remain the
-registered template-development worktree while repository-owned tools mediate
-verified target access. Durable session kind, exact ref/worktree proof, and
-runtime-specific recovery prevent a restart or interaction from crossing into
-the normal developer runtime. Technical access still grants no authority to
-promote `main`; exact-SHA human approval remains unchanged.
+The first blocker is a confidentiality failure in the arbitrary-command sandbox,
+not merely a path-redaction defect: private state must never become readable in
+that namespace. The safest design is to avoid mounting the real common directory
+and instead materialize a temporary sanitized read-only Git view containing only
+required public repository metadata/objects/refs for the selected worktree, or
+move Git inspection behind a fixed broker if a sanitized view cannot preserve
+ordinary commands safely.
+
+The second blocker must be prevented before any push/credential resolution.
+Publication should audit the complete effective repository-local configuration,
+including worktree scope when enabled, reject push-only URL rewriting and askpass
+programs, and set fixed non-executing askpass environment values as defense in
+depth. Tests must assert rejection occurs before foreign-remote or askpass sentinel
+side effects.
+
+The publisher's current canonical GitHub HTTPS-only production origin restriction
+is left unchanged in this security cycle. Its broader SSH/custom-host
+compatibility is a separate non-blocking design question and must not be widened
+until the transport security model is explicit.
 
 ## Attempts
 
-1. Established and pushed the template ledger record before source work.
-2. Implemented and runtime-tested the template-owned workspace agent and gate,
-   then pushed the template phase at `cd433706bfefebaf42a5de6ea1521ec61deb2c8a`.
-3. Established the developer task record and preserved a continuation handoff
-   before bridge implementation.
-4. Implemented the explicit workspace route, focused tests, protocol/schema
-   updates, and current component AS-BUILT facts on developer.
-5. Ordinary Git publication was blocked before remote ref mutation by the
-   configured transport proxy. A bounded connected-GitHub fallback published
-   exact staged trees to `developer`; cache-busted readback and later direct Git
-   transport verified both exact commits and ancestry.
-6. A proxy-bypassed canonical fetch/prune synchronized all four remote-tracking
-   refs and an independent `ls-remote` returned the same exact tips.
-7. The tracked package generator performed its sterile canonical fetch and
-   generated the schema-2 package for only the reviewed task range.
-8. Offline package verification and clean-base dry runs succeeded for both
-   source targets, followed by full template-development validation.
-9. Package/source-snapshot commit
-   `9ad0913bc40692887f1eed5031c97d2512397961` was pushed; a fresh canonical
-   fetch and independent remote readback returned that exact template-development
-   tip while the three source refs remained unchanged.
-10. Reconciled the correction-cycle start through both a fresh proxy-bypassed
-    canonical fetch and an independent connected-GitHub branch readback; all four
-    heads still matched the last reviewed state before reopening this record.
-11. Replaced arbitrary host execution with a Bubblewrap worktree namespace and a
-    separate fixed publication broker, then added harmless outside-read/write,
-    secret, network, symlink, Git-redirection/ref, origin, main, and stale-remote
-    fixtures.
-12. Verified the exact pinned permission syntax against OpenCode 1.18.16 and
-    added a real server inventory validator for the effective agent, tools, and
-    skills rather than relying on agent-file text.
-13. Extended generation, offline validation, application, and tests to provenance
-    schema 3 with an exact non-self-referential template-development range and
-    removed the superseded current package bytes pending corrected regeneration.
-14. Updated ADR-0001, current AS-BUILT/design/deviation records, maintenance
-    instructions, and repository documentation to state the branch's intentional
-    rooted-runtime role and three-range transfer boundary.
-15. Ran the complete template-development validation, committed the corrected
-    implementation as `33227b741c0dc2909ed8ca8dc00ea1b28963febc`, and
-    independently read that exact canonical ref back with direct `ls-remote`;
-    ancestry from the correction-cycle ledger checkpoint passed.
-16. Reopened the developer record at
-    `183402e259a5f8367f3f4cc233fc8b3c490140c1`, added and pushed the tracked real
-    bridge lifecycle harness at `f455d6269678dbbab3783fd845ef26e0227c7ed7`,
-    and recovered the hook's initial proxy-caused synchronization marker only
-    after exact remote readback proved that commit.
-17. A first full server attempt proved the project/agent/tool/skill inventory but
-    exposed that disabling OpenCode's bundled default integration prevented the
-    copied OAuth credential from connecting. It produced one inactive user
-    message, no assistant/tool/error message, no repository mutation, and its
-    isolated process/state were stopped and removed.
-18. Added an explicit provider/model connection gate and retained the bundled
-    authentication integration only for OAuth mode, while continuing to audit
-    every exposed tool/skill under the real agent's default-deny rules. Published
-    that correction at `1b7fb2bce9d9bf23e107d808632066c62fe4c13c`.
-19. Ran a fresh real OpenCode 1.18.16 acceptance successfully, repeated the full
-    developer validation set, and published the developer handoff snapshot
-    `3d3cbad9f423cc4d80aaff8a0fba86a16300c502`.
-20. Re-fetched all canonical refs, independently read them back, and reconciled
-    `source-lock.json` directly to the exact developer handoff plus unchanged
-    main and web refs without adding a self-referential template-development SHA.
-21. Published the non-self-referential reviewed template-development endpoint
-    `1e8ac4a276eb8e6a2687495aa51b4e5767f04cfa`, independently read it back, and
-    generated the complete schema-3 package only with
-    `scripts/create-change-package.mjs` using that exact template head,
-    developer handoff `3d3cbad9f423cc4d80aaff8a0fba86a16300c502`, and the unchanged empty web
-    range.
-22. Re-ran the generator with the reviewed template commit epoch and compared all
-    four files byte-for-byte; deterministic regeneration, offline provenance,
-    and public-safe content checks passed.
-23. Ran the final package through clean disposable matching-branch dry runs and
-    applications. Applied template-development and developer trees exactly
-    matched their reviewed head trees; the web patch remained an explicit clean
-    no-op.
-24. Published package/ledger commit
-    `18747555881db600ee033dd93b7fc53e1f7d8f12` and independently read back its
-    exact parent, five changed paths, and four remote file digests. Developer CI
-    was green on both correction commits and its handoff, but template-development
-    CI failed at the first Bubblewrap execution on the Ubuntu 24.04 runner after
-    all six package tests passed.
-25. Confirmed from the official Ubuntu 24.04 security contract that AppArmor
-    restricts unprivileged user namespaces by default. Added a workflow-only,
-    one-boot sysctl on the ephemeral validation runner so the real Bubblewrap
-    adversarial test executes instead of being skipped. Removed only the
-    superseded generated package from the current tree; its exact bytes remain
-    recoverable at the historical package commit.
-26. Remote run 32081677444 proved the ephemeral-runner namespace prerequisite
-    succeeded, then exposed that `actions/setup-node` keeps the pinned runtime
-    outside the deliberately mounted `/usr` and `/bin` roots. Kept the host
-    runtime tree and `PATH` hidden: the gate now resolves and mounts only its own
-    already-running Node executable read-only at fixed `/runtime/node`. The
-    containment fixture proves that fixed in-sandbox path and reports sandbox
-    diagnostics on failure.
-27. Published and independently read back package-free reviewed head
-    `d509bf3fd0d3a4622d080f920aca6c122f77624d`; template-development CI run
-    32081956594 passed the complete real containment/package/OpenCode suite.
-28. Re-fetched and independently read all four canonical refs, then regenerated
-    the schema-3 package only with the repository-owned generator from final
-    template head `d509bf3fd0d3a4622d080f920aca6c122f77624d`, developer handoff
-    `3d3cbad9f423cc4d80aaff8a0fba86a16300c502`, and unchanged web head
-    `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`.
-29. Published final package/ledger commit
-    `66a8289fc112de4546ea9cee1933a8c056fd0ba7`, fetched all four branches into a
-    fresh bare repository, proved its parent is the reviewed implementation
-    head, matched all four package file digests, and observed successful
-    template-development CI run 32082204637.
+- Re-established all four exact remote refs through connected GitHub before
+  relying on prior handoff state.
+- Read the exact template-maintenance agreement, maintenance skill,
+  `source-lock.json`, current task record, task template, and live implementation.
+- Independently confirmed both new findings against the exact
+  `template-development` blob.
+- Searched open control issues: #49 and #53 are the only protected open
+  `agentic-bridge` issues; no issue was bound to this task ID.
+- Created public-safe issue #54 for continuity under the same task ID. It remains
+  intentionally unlabelled for bridge control because the one-open-mutating-issue
+  gate and the human's no-touch requirement on #49 make a new workspace mutation
+  session unavailable.
 
 ## Changed approach
 
-Source publication used a bounded connected-GitHub path only after normal Git
-transport failed without mutating a ref. The fallback required the remote tree
-to equal the local staged tree before advancing only `developer`. Package
-generation later used the repository-owned generator through a working direct
-canonical Git route; no package bytes or provenance rules were hand-built or
-weakened.
-
-For the correction cycle, direct Git transport works when the environment's
-intercepting proxy variables are removed. The template implementation uses that
-route so tracked post-commit push and independent `ls-remote` proof remain the
-normal repository-owned path.
+The prior completed handoff is no longer treated as final. This cycle first
+publishes this task-record-only reopen checkpoint, then uses a bounded direct
+connected-GitHub correction on exact known template paths. Remote GitHub Actions
+and exact post-push diff/readback provide the execution evidence unavailable in
+this web runtime. No bridge/OpenCode mutation is claimed for this cycle unless the
+protected issue constraint later changes explicitly.
 
 ## Checks
 
-- `git fetch --prune origin` with the working direct transport: passed.
-- Independent `git ls-remote --heads origin`: main
-  `6127611113dfdb66f93a0cfd2d355359aa370833`, developer
-  `d24b67d78d58bd0c217530545ab0b548b64e2485`, web-orchestration
-  `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`, and template-development
-  `cd433706bfefebaf42a5de6ea1521ec61deb2c8a` before this cycle's ledger commit.
-- Remote developer compare: `11f1f1178394bd0ff80116f4acf67958cdc08ace..f76dfbd2c103ae43605939ec999f7f846acf7286`
-  is ahead one, behind zero, with exactly the intended 20 paths.
-- Developer `npm --prefix tools/opencode-bridge run build`: passed.
-- Developer focused protocol/GitHub/state/workspace tests: passed 36/36.
-- Developer full bridge tests: passed 113/113.
-- Developer `./scripts/validate-opencode-bridge.sh`: passed, including the bridge
-  contract/build/full test suite and 8/8 branch-initialization tests.
-- Developer `./scripts/validate-repository.sh`: passed on the final source and
-  handoff-record trees.
-- Developer `./scripts/bootstrap-agent-workflow.sh --check`: passed.
-- Developer `git diff --check`: passed.
-- Template-owned gate fixture tests: passed 2/2; runtime agent/skill/tool
-  resolution also passed before the template phase was pushed.
-- Package manifest: schema 2, canonical-remote provenance, 20 exact developer
-  paths, zero web paths, and both reviewed heads ancestor-of/equal-to their
-  canonical tips.
-- Developer package dry run from exact base: passed; empty web package dry run:
-  passed.
-- `node --test tests/change-package.test.mjs`: passed 5/5.
-- `./scripts/validate-template-development.sh`: passed, including 7/7 tests and
-  `git diff --check`.
-- Public-path scan of the generated package and reconciled source snapshot:
-  passed.
-- Package/ledger remote readback: template-development
-  `9ad0913bc40692887f1eed5031c97d2512397961`; developer
-  `d24b67d78d58bd0c217530545ab0b548b64e2485`; web-orchestration
-  `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`; main
-  `6127611113dfdb66f93a0cfd2d355359aa370833`.
-- Corrected containment fixtures: passed 2/2, including harmless outside
-  read/write, injected-secret, host-network, symlink, foreign Git, read-only Git
-  metadata, fixed publication, main denial, redirect, and stale-tip checks.
-- Corrected package/provenance fixtures: passed 6/6, including deterministic
-  three-range generation, canonical advance, wrong/non-ancestor base, forged
-  head, template patch/provenance/package tamper, self-package rejection, clean
-  template/developer dry runs, and application.
-- Real OpenCode inventory: pinned version 1.18.16 started with sterile local
-  state; workspace agent, plugin, custom tools, sole allowed skill, and all
-  forbidden effective permissions passed.
-- Corrected structural template-development validation: passed before this
-  implementation checkpoint.
-- Complete corrected `./scripts/validate-template-development.sh`: passed 8/8
-  fixtures, real pinned runtime inventory, structural validation, and
-  `git diff --check` on implementation commit
-  `33227b741c0dc2909ed8ca8dc00ea1b28963febc`.
-- Independent canonical readback: `origin/template-development` and direct
-  `ls-remote` both returned `33227b741c0dc2909ed8ca8dc00ea1b28963febc`;
-  the correction range is linear from
-  `546ada45be5fb4317ea40cdf7b207b0174ebe0e3`.
-- Developer real-runtime harness implementation
-  `f455d6269678dbbab3783fd845ef26e0227c7ed7`, OAuth/provider-gate correction
-  `1b7fb2bce9d9bf23e107d808632066c62fe4c13c`, and handoff
-  `3d3cbad9f423cc4d80aaff8a0fba86a16300c502`: each pushed and independently
-  read back; correction history is linear from
-  `183402e259a5f8367f3f4cc233fc8b3c490140c1`.
-- Developer final-source focused workspace/protocol/state/recovery/projection/
-  scope tests: passed 68/68; complete bridge tests passed 113/113.
-- Developer final-source bridge validator, repository validator, bootstrap hook
-  check, and `git diff --check`: passed, including 8/8 branch-initialization
-  tests.
-- Real credential-isolated OpenCode 1.18.16 lifecycle smoke: passed with actual
-  provider/model connection, template project and agent, effective permissions,
-  workspace tool progress, evidence-only target instructions, same-session
-  terminal recovery/public delivery, separate normal developer routing, no
-  local-path projection, zero repository mutation, and complete temporary-state
-  cleanup.
-- Current canonical readback before source-lock mutation: template-development
-  `dfbfeaa2cdd513e7f5012b3829179c596d9c0d80`, developer
-  `3d3cbad9f423cc4d80aaff8a0fba86a16300c502`, main
-  `6127611113dfdb66f93a0cfd2d355359aa370833`, and web-orchestration
-  `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`.
-- Pre-package checkpoint `1e8ac4a276eb8e6a2687495aa51b4e5767f04cfa`:
-  immediate push, independent `ls-remote`, exact local/tracking equality, and
-  ancestry from task base passed.
-- Corrected package manifest: schema 3; template-development 26 paths at
-  `7915a22248f11c8000622ffd761fb2a6e91e2359..1e8ac4a276eb8e6a2687495aa51b4e5767f04cfa`;
-  developer 24 paths at
-  `ba73b3b54febfdeadbff66262acaa7be12e5760e..3d3cbad9f423cc4d80aaff8a0fba86a16300c502`;
-  web-orchestration zero paths at
-  `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17..7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`.
-- Corrected package binding SHA-256:
-  `3929590c1ca829709fabaa2a41f9eab8450693485a74194cd8b3e4f43be345b5`;
-  manifest file SHA-256:
-  `ec9730b5f53467215e7f4e63a6ef4019dfc0d8349f9ceca08b15081bbdfb2b61`;
-  source-lock SHA-256:
-  `1e4ed20af43d74410600470b64ef60b0c8d8263db0d28b623ac9297825ee9a34`.
-- Corrected template-development patch SHA-256:
-  `0eb33783939e34efea1575d372f0185211b1e0fc6af60c4912237f07ab8d92ce`;
-  developer patch SHA-256:
-  `a64a5e89f6416e3257122c195d6d353fb01e73f20b8ca586685691fc0b59fce7`;
-  empty web patch SHA-256:
-  `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`.
-- Final package deterministic regeneration, schema-3 provenance validation,
-  exact file inventory, patch/package digest recomputation, and public-safe scan:
-  passed.
-- Final package dry-run/application against clean exact-base disposable
-  template-development, developer, and web-orchestration branches: passed; both
-  non-empty applied trees equaled their reviewed head trees.
-- Final focused package/provenance fixtures: passed 6/6; workspace containment/
-  publication fixtures: passed 2/2.
-- Final `./scripts/validate-template-development.sh`: passed structural checks,
-  8/8 tests, real pinned OpenCode agent/plugin/skill/tool inventory, and
-  `git diff --check` with the generated package present.
-- Developer GitHub Actions `Validate repository`: successful for harness commit
-  `f455d6269678dbbab3783fd845ef26e0227c7ed7` (run 32079986178), provider-gate
-  commit `1b7fb2bce9d9bf23e107d808632066c62fe4c13c` (run 32080811724), and handoff
-  `3d3cbad9f423cc4d80aaff8a0fba86a16300c502` (run 32080998018).
-- Template GitHub Actions runs 32081151487 and 32081389092: failed at
-  `tests/workspace-maintenance.test.mjs` line 220 because the first Bubblewrap
-  command exited 1 on the Ubuntu 24.04 runner; package tests passed 6/6 before
-  that failure. This is the active CI correction, not completion evidence.
-- Template GitHub Actions run 32081677444: its Bubblewrap installation and
-  one-boot namespace prerequisite both passed; validation then failed at the
-  same first command because the pinned setup-node executable lived outside the
-  fixed system mounts. The follow-up exposes only that one executable at the
-  fixed read-only sandbox path, not the hosted tool-cache tree or host `PATH`.
-- Template GitHub Actions run 32081956594: passed on package-free reviewed head
-  `d509bf3fd0d3a4622d080f920aca6c122f77624d`, including real Bubblewrap
-  containment and actual pinned OpenCode inventory.
-- Final regenerated manifest: schema 3; template-development 26 paths at
-  `7915a22248f11c8000622ffd761fb2a6e91e2359..d509bf3fd0d3a4622d080f920aca6c122f77624d`;
-  developer 24 paths at
-  `ba73b3b54febfdeadbff66262acaa7be12e5760e..3d3cbad9f423cc4d80aaff8a0fba86a16300c502`;
-  web-orchestration zero paths at
-  `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17..7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`.
-- Final package binding SHA-256:
-  `78fbf87877d48810c527fbdb0a055d345bbeaa9cddff7efc4a9c0bf777df6d60`;
-  manifest file SHA-256:
-  `f0036c692c09f8ccb73d769ff0a520f437913ba559f5eeefb69346513fd42686`;
-  template patch SHA-256:
-  `0a6aaad8fb4c347fcd6735892718ce668a486d4def66d0e130ccace693cb9350`;
-  developer and empty-web patch SHA-256 values remain
-  `a64a5e89f6416e3257122c195d6d353fb01e73f20b8ca586685691fc0b59fce7`
-  and `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`.
-- Final package byte-for-byte deterministic regeneration, schema-3 provenance,
-  public-safe scan, three matching-branch dry runs/applications, and exact
-  applied-tree equality: passed. Focused fixtures passed 6/6 package and 2/2
-  containment; complete validation passed 8/8 plus actual OpenCode 1.18.16
-  inventory with the regenerated package present.
-- Fresh remote package readback: template-development package checkpoint
-  `66a8289fc112de4546ea9cee1933a8c056fd0ba7` with exact parent
-  `d509bf3fd0d3a4622d080f920aca6c122f77624d`, developer
-  `3d3cbad9f423cc4d80aaff8a0fba86a16300c502`, main
-  `6127611113dfdb66f93a0cfd2d355359aa370833`, and web-orchestration
-  `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`; exact changed-path inventory,
-  package bytes, ancestry, and clean worktree checks passed.
-- Template GitHub Actions run 32082204637: passed on the stored final package
-  commit, including structural validation, 8/8 fixtures, real Bubblewrap
-  containment, and actual pinned OpenCode 1.18.16 inventory.
-- No `main` or web-orchestration mutation occurred. The paused
-  `TEMPLATE-BRIDGE-LIFECYCLE-RECOVERY-002` task and protected #49/#53/Scout
-  lifecycle state were not replayed, aborted, replaced, closed, or
-  reinterpreted.
+Historical successful checks retained as evidence, not as proof of the new
+correction:
+
+- template-development workflow run `32081956594` passed on package-free head
+  `d509bf3fd0d3a4622d080f920aca6c122f77624d`.
+- workflow run `32082204637` passed on package/ledger commit
+  `66a8289fc112de4546ea9cee1933a8c056fd0ba7`.
+- workflow run `32082313822` passed on handoff
+  `1f539586f382149a5d5a23bb62771165b880df0c`.
+- the previous real OpenCode 1.18.16 OAuth-backed lifecycle acceptance succeeded
+  and left the source worktrees unchanged.
+
+New-cycle checks are pending implementation. Required minimum is focused
+adversarial workspace-maintenance tests plus the complete tracked
+`validate-template-development` workflow on every substantive corrected head and
+package/handoff checkpoint.
 
 ## Blockers / required decisions
 
-No technical blocker or human decision remains within this correction task. Any
-future `main` promotion still requires explicit human approval of an exact SHA
-and is outside this task.
+No human decision is required to implement the two security corrections. The
+workspace/OpenCode mutation lane is unavailable while protected #49 remains open
+and untouched, so the selected route is direct connected-GitHub mutation with CI.
+
+The task remains blocked in independent review until both blockers are corrected,
+new adversarial tests pass, exact remote source ranges are re-reviewed, and the
+schema-3 package is regenerated/verified from the corrected package-free head.
+
+Any `main` promotion remains a separate explicit exact-SHA human decision and is
+not authorized here.
 
 ## Remaining work
 
-None within the approved correction scope. The dedicated task-progress snapshot
-containing this record is the handoff boundary and does not promote `main`.
+1. Correct the Git-common confidentiality boundary without exposing private
+   `.git` state while preserving useful read-only Git inspection.
+2. Correct effective local/worktree Git-config validation, reject
+   `url.*.pushInsteadOf` and `core.askPass`, and pin non-executing askpass fallback.
+3. Add adversarial common-Git private-state and worktree-config/push/askpass tests
+   proving rejection or inaccessibility before side effects.
+4. Run full template-development validation and inspect the exact pushed range.
+5. Regenerate schema-3 package from the new package-free reviewed template head
+   and the exact corrected developer/web heads if they remain unchanged.
+6. Validate and independently review package bytes/provenance and create a new
+   dedicated template-development handoff snapshot.
+7. Only after another clean independent review consider archival, downstream
+   application, or a separately authorized promotion workflow.
 
 ## Next action
 
-Return the exact pushed handoff snapshot, source handoffs, package identity,
-checks, and task-record path using the maintainer response contract.
+Independently read back this task-record-only reopen checkpoint, then correct
+`scripts/workspace-maintenance-lib.mjs` and `tests/workspace-maintenance.test.mjs`
+with the smallest design that proves both security boundaries without widening
+publication transport support.
 
 ## Relevant durable records
 
-- `docs/architecture/AS-BUILT.md`
-- `docs/design/template-maintenance-workflow.md`
-- `source-lock.json`
-- Developer implementation `f76dfbd2c103ae43605939ec999f7f846acf7286`
-- Developer handoff `d24b67d78d58bd0c217530545ab0b548b64e2485`
-- Superseded historical package/ledger commit
-  `9ad0913bc40692887f1eed5031c97d2512397961` with schema-2 package SHA-256
-  `79815d273f90870b6e7acd7b6239d478c7573f76aba17196297edd0e299d915f`
-- Corrected schema-3 package path
-  `changes/TEMPLATE-WORKSPACE-MAINTENANCE-AGENT-001/manifest.json` with final
-  binding SHA-256
+- current task record:
+  `docs/work/current/TEMPLATE-WORKSPACE-MAINTENANCE-AGENT-001-workspace-maintenance-agent.md`
+- public-safe continuation journal: issue #54
+- final previous schema-3 package:
+  `changes/TEMPLATE-WORKSPACE-MAINTENANCE-AGENT-001/`
+- previous package binding SHA-256:
   `78fbf87877d48810c527fbdb0a055d345bbeaa9cddff7efc4a9c0bf777df6d60`
-- Final corrected package/ledger commit
+- previous manifest SHA-256:
+  `f0036c692c09f8ccb73d769ff0a520f437913ba559f5eeefb69346513fd42686`
+- previous package/ledger commit:
   `66a8289fc112de4546ea9cee1933a8c056fd0ba7`
-- Superseded first schema-3 package/ledger commit
-  `18747555881db600ee033dd93b7fc53e1f7d8f12` with binding SHA-256
-  `3929590c1ca829709fabaa2a41f9eab8450693485a74194cd8b3e4f43be345b5`
-- Corrected template-development implementation checkpoint
-  `33227b741c0dc2909ed8ca8dc00ea1b28963febc`
-- Final corrected template-development implementation head
+- previous package-free reviewed head:
   `d509bf3fd0d3a4622d080f920aca6c122f77624d`
-- Developer correction implementation checkpoints
-  `f455d6269678dbbab3783fd845ef26e0227c7ed7` and
-  `1b7fb2bce9d9bf23e107d808632066c62fe4c13c`
-- Developer correction handoff
+- previous developer handoff:
   `3d3cbad9f423cc4d80aaff8a0fba86a16300c502`
+- unchanged web source handoff:
+  `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`
 
 ## Last handoff commit
 
-`fb903dafdb2713621abbfe86b220f26c8d26a6e0`
+1f539586f382149a5d5a23bb62771165b880df0c
