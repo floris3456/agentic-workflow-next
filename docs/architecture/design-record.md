@@ -20,7 +20,7 @@ This repository uses a human-controlled web-orchestrated implementation system w
 
 ## Local agents
 
-The normal implementation route uses `small-developer` (GPT 5.6 Luna, maximum supported applicable reasoning tier). `large-developer` (GPT 5.6 Sol, high effort) is selected only by the web orchestrator after two substantive Luna failures or for exceptional intrinsic complexity. Environmental failures, external blockers, missing information, and poor task design do not consume attempts.
+The normal implementation route uses `small-developer` (Gemini 3.7 Flash high, selected via model-agnostic `small` route, default). `large-developer` (GPT 5.6 Sol, high effort, selected via `heavy` route) is selected only by the web orchestrator after two substantive small-developer failures or for exceptional intrinsic complexity. Environmental failures, external blockers, missing information, and poor task design do not consume attempts.
 
 The repository Scout is a separate Luna/high focused fact finder on a dedicated
 authenticated loopback OpenCode `1.18.16` endpoint. Its bridge-installed runtime,

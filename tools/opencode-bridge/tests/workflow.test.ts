@@ -115,7 +115,7 @@ test("deterministic workflow covers routing, interaction, recovery, finalization
     return result;
   }
 
-  await apply(1, "start", { brief: "Implement the public-safe task", agent: "luna" }, true);
+  await apply(1, "start", { brief: "Implement the public-safe task", agent: "small" }, true);
   const permission = projection.project("per_workflow_private", "WORKFLOW-1");
   const question = projection.project("que_workflow_private", "WORKFLOW-1");
   assert.equal(permission, "permission-1");
@@ -128,7 +128,7 @@ test("deterministic workflow covers routing, interaction, recovery, finalization
   await apply(2, "steer", { message: "Continue with the requested correction" });
   assert.equal(state.getTaskSession("WORKFLOW-1")?.sessionState, "starting");
   state.updateTaskSessionState("WORKFLOW-1", "session.idle", "evt_second_terminal");
-  await apply(3, "route", { agent: "sol", message: "Handle the exceptional complex step" });
+  await apply(3, "route", { agent: "heavy", message: "Handle the exceptional complex step" });
   assert.equal(state.getTaskSession("WORKFLOW-1")?.agent, "large-developer");
   assert.equal(state.getTaskSession("WORKFLOW-1")?.sessionState, "starting");
   const permissionReply = await apply(4, "permission.reply", { permission: "permission-1", reply: "once" });

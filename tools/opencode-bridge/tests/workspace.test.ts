@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import {
   mkdtempSync,
   mkdirSync,
@@ -105,6 +106,7 @@ function fakeClient(
   sessionId: string,
   requests: Array<{ operationId: string; args: OperationArguments }>,
 ): OpenCodeClient {
+  let createdCount = 0;
   const client = new OpenCodeClient({
     baseUrl: "http://127.0.0.1:4096",
     username: "bridge",
@@ -116,7 +118,10 @@ function fakeClient(
   client.compatibility = async () => compatible;
   client.request = async (operationId, args = {}) => {
     requests.push({ operationId, args });
-    if (operationId === "session.create") return { id: sessionId, directory };
+    if (operationId === "session.create") {
+      createdCount++;
+      return { id: createdCount === 1 ? sessionId : `${sessionId}_${createdCount}`, directory };
+    }
     if (operationId === "session.prompt_async") return undefined;
     if (operationId === "session.status") return {};
     if (operationId === "session.messages") return [];
@@ -137,7 +142,7 @@ function command(
   return {
     protocol: "agentic-bridge/1",
     sequence,
-    command_id: `${String(sequence).padStart(8, "0")}-1111-4111-8111-${taskId === "TASK-WORKSPACE" ? "111111111111" : "222222222222"}`,
+    command_id: `${String(sequence).padStart(8, "0")}-1111-4111-8111-${createHash("sha256").update(taskId).digest("hex").slice(0, 12)}`,
     task_id: taskId,
     kind,
     arguments: argumentsValue,
@@ -265,11 +270,11 @@ test("workspace.start and every same-task interaction stay on the fixed template
   const started = await executor.execute(workspaceStart);
   assert.equal(started.state, "succeeded");
   assert.equal(state.getTaskSession("TASK-WORKSPACE")?.sessionKind, "workspace");
-  assert.equal(state.getTaskSession("TASK-WORKSPACE")?.agent, "workspace-maintainer");
+  assert.equal(state.getTaskSession("TASK-WORKSPACE")?.agent, "small-workspace-maintainer");
   assert.equal(workspace.directory, templateDirectory);
   assert.equal(developerRequests.length, 0);
   assert.deepEqual(workspaceRequests.map((entry) => entry.operationId), ["session.create", "session.prompt_async"]);
-  assert.equal((workspaceRequests[0]?.args.body as Record<string, JsonValue>)?.agent, "workspace-maintainer");
+  assert.equal((workspaceRequests[0]?.args.body as Record<string, JsonValue>)?.agent, "small-workspace-maintainer");
   assert.doesNotMatch(JSON.stringify(started.publicResult), /private|ses_workspace/);
 
   const questionAlias = state.ensureAlias("question", "que_workspace_private", "TASK-WORKSPACE");
@@ -295,10 +300,10 @@ test("workspace.start and every same-task interaction stay on the fixed template
     "TASK-WORKSPACE",
     4,
     "route",
-    { agent: "sol" },
+    { agent: "heavy" },
   ), 70).command!;
   assert.equal((await executor.execute(route)).state, "failed");
-  assert.match(state.getCommand(route.commandId)?.error ?? "", /fixed workspace-maintainer route/);
+  assert.match(state.getCommand(route.commandId)?.error ?? "", /fixed workspace route/);
 
   const pty = state.acceptCommand(command(
     "TASK-WORKSPACE",
@@ -313,7 +318,7 @@ test("workspace.start and every same-task interaction stay on the fixed template
     "TASK-DEVELOPER",
     1,
     "start",
-    { brief: "Keep the normal developer route", agent: "luna" },
+    { brief: "Keep the normal developer route", agent: "small" },
     { developer_sha: "d".repeat(40), ref: "developer" },
   ), 71).command!;
   assert.equal((await executor.execute(developerStart)).state, "succeeded");
@@ -324,7 +329,7 @@ test("workspace.start and every same-task interaction stay on the fixed template
 });
 
 
-test("a failed workspace start cannot override its agent or switch the durable task runtime", async (context) => {
+test("workspace.start supports model-agnostic small and heavy routes and rejects invalid selectors or runtime switches", async (context) => {
   const { state, projection } = stateFixture(context);
   const developerRequests: Array<{ operationId: string; args: OperationArguments }> = [];
   const workspaceRequests: Array<{ operationId: string; args: OperationArguments }> = [];
@@ -351,21 +356,33 @@ test("a failed workspace start cannot override its agent or switch the durable t
     }),
   });
 
-  const override = state.acceptCommand(command(
+  const legacyModel = state.acceptCommand(command(
     "TASK-WORKSPACE",
     1,
     "workspace.start",
-    { brief: "Use only the fixed agent", agent: "sol" },
+    { brief: "Reject legacy model selector", agent: "sol" },
     { template_development_sha: "e".repeat(40), ref: "template-development" },
   ), 75).command!;
-  assert.equal((await executor.execute(override)).state, "failed");
-  assert.match(state.getCommand(override.commandId)?.error ?? "", /unknown field agent/);
+  assert.equal((await executor.execute(legacyModel)).state, "failed");
+  assert.match(state.getCommand(legacyModel.commandId)?.error ?? "", /agent must be small or heavy/);
+  assert.equal(state.getTaskSession("TASK-WORKSPACE"), undefined);
+  assert.equal(workspaceRequests.length, 0);
+
+  const unknownField = state.acceptCommand(command(
+    "TASK-WORKSPACE",
+    2,
+    "workspace.start",
+    { brief: "Reject unknown argument field", unexpected: true },
+    { template_development_sha: "e".repeat(40), ref: "template-development" },
+  ), 75).command!;
+  assert.equal((await executor.execute(unknownField)).state, "failed");
+  assert.match(state.getCommand(unknownField.commandId)?.error ?? "", /unknown field unexpected/);
   assert.equal(state.getTaskSession("TASK-WORKSPACE"), undefined);
   assert.equal(workspaceRequests.length, 0);
 
   const switchRoute = state.acceptCommand(command(
     "TASK-WORKSPACE",
-    2,
+    3,
     "start",
     { brief: "Do not switch this task to developer" },
     { developer_sha: "d".repeat(40), ref: "developer" },
@@ -374,16 +391,27 @@ test("a failed workspace start cannot override its agent or switch the durable t
   assert.match(state.getCommand(switchRoute.commandId)?.error ?? "", /cannot change from workspace to developer/);
   assert.equal(developerRequests.length, 0);
 
-  const corrected = state.acceptCommand(command(
-    "TASK-WORKSPACE",
-    3,
+  const heavyStart = state.acceptCommand(command(
+    "TASK-WORKSPACE-HEAVY",
+    1,
     "workspace.start",
-    { brief: "Continue on the fixed workspace route" },
+    { brief: "Start heavy workspace maintainer", agent: "heavy" },
     { template_development_sha: "e".repeat(40), ref: "template-development" },
-  ), 75).command!;
-  assert.equal((await executor.execute(corrected)).state, "succeeded");
-  assert.equal(state.getTaskSession("TASK-WORKSPACE")?.agent, "workspace-maintainer");
-  assert.deepEqual(workspaceRequests.map((entry) => entry.operationId), ["session.create", "session.prompt_async"]);
+  ), 76).command!;
+  assert.equal((await executor.execute(heavyStart)).state, "succeeded");
+  assert.equal(state.getTaskSession("TASK-WORKSPACE-HEAVY")?.agent, "heavy-workspace-maintainer");
+  assert.equal((workspaceRequests[0]?.args.body as Record<string, JsonValue>)?.agent, "heavy-workspace-maintainer");
+
+  const smallStart = state.acceptCommand(command(
+    "TASK-WORKSPACE-SMALL",
+    1,
+    "workspace.start",
+    { brief: "Start default small workspace maintainer" },
+    { template_development_sha: "e".repeat(40), ref: "template-development" },
+  ), 77).command!;
+  assert.equal((await executor.execute(smallStart)).state, "succeeded");
+  assert.equal(state.getTaskSession("TASK-WORKSPACE-SMALL")?.agent, "small-workspace-maintainer");
+  assert.equal((workspaceRequests[2]?.args.body as Record<string, JsonValue>)?.agent, "small-workspace-maintainer");
   controller.abort();
 });
 

@@ -115,7 +115,7 @@ for (const command of commands) {
     fail("Project start example does not carry the developer exact-SHA/ref guard");
   }
   if (!sameMembers(Object.keys(command.arguments ?? {}), ["brief", "agent"])
-    || !["luna", "sol"].includes(command.arguments?.agent)) {
+    || !["small", "heavy"].includes(command.arguments?.agent)) {
     fail("Project start example arguments differ from the developer start contract");
   }
 }

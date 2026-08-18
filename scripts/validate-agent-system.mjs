@@ -57,7 +57,7 @@ try {
 }
 
 for (const [file, model, effort] of [
-  [".opencode/agents/small-developer.md", "openai/gpt-5.6-luna", "max"],
+  [".opencode/agents/small-developer.md", "cliproxyapi/gemini-3.7-flash-high", "high"],
   [".opencode/agents/large-developer.md", "openai/gpt-5.6-sol", "high"],
 ]) {
   assert(exists(file), `Missing approved developer definition: ${file}`);

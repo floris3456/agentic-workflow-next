@@ -14,7 +14,7 @@ import type {
 } from "./types.js";
 import { asJson, asRecord, errorMessage, isRecord } from "./util.js";
 
-type AgentRoute = "luna" | "sol";
+type AgentRoute = "small" | "heavy";
 
 export interface GitState {
   developerSha?: string;
@@ -97,7 +97,9 @@ export interface CommandExecutorOptions {
   operationPolicy: OperationPolicy;
   instanceId: string;
   signal: AbortSignal;
-  agents?: { luna: string; sol: string };
+  developerAgents?: { small: string; heavy: string };
+  workspaceAgents?: { small: string; heavy: string };
+  agents?: { small: string; heavy: string };
   ptyEnabled?: boolean;
   currentGitState?: () => Promise<GitState>;
   workspaceRuntime?: () => Promise<Omit<CommandRuntime, "sessionKind">>;
@@ -139,9 +141,9 @@ function integer(input: Record<string, JsonValue>, name: string, fallback: numbe
   return Number(value);
 }
 
-function route(input: Record<string, JsonValue>, fallback: AgentRoute = "luna"): AgentRoute {
+function route(input: Record<string, JsonValue>, fallback: AgentRoute = "small"): AgentRoute {
   const value = input.agent ?? fallback;
-  if (value !== "luna" && value !== "sol") throw new TypeError("agent must be luna or sol");
+  if (value !== "small" && value !== "heavy") throw new TypeError("agent must be small or heavy");
   return value;
 }
 
@@ -177,11 +179,11 @@ export class CommandExecutor {
   private readonly projection: PublicProjection;
   private readonly operationPolicy: OperationPolicy;
   private readonly instanceId: string;
-  private readonly agents: { luna: string; sol: string };
+  private readonly developerAgents: { small: string; heavy: string };
+  private readonly workspaceAgents: { small: string; heavy: string };
   private readonly ptyEnabled: boolean;
   private readonly currentGitState: (() => Promise<GitState>) | undefined;
   private readonly workspaceRuntime: (() => Promise<Omit<CommandRuntime, "sessionKind">>) | undefined;
-  private readonly workspaceAgent: string;
   private readonly runPromotion: ((approvedSha: string) => Promise<JsonValue>) | undefined;
   private readonly onSessionStarted: ((taskId: string) => void) | undefined;
   private readonly onSessionContinued: ((taskId: string, sessionId: string) => void) | undefined;
@@ -195,11 +197,11 @@ export class CommandExecutor {
     this.projection = options.projection;
     this.operationPolicy = options.operationPolicy;
     this.instanceId = options.instanceId;
-    this.agents = options.agents ?? { luna: "small-developer", sol: "large-developer" };
+    this.developerAgents = options.developerAgents ?? options.agents ?? { small: "small-developer", heavy: "large-developer" };
+    this.workspaceAgents = options.workspaceAgents ?? (options.workspaceAgent ? { small: options.workspaceAgent, heavy: options.workspaceAgent } : { small: "small-workspace-maintainer", heavy: "heavy-workspace-maintainer" });
     this.ptyEnabled = options.ptyEnabled === true;
     this.currentGitState = options.currentGitState;
     this.workspaceRuntime = options.workspaceRuntime;
-    this.workspaceAgent = options.workspaceAgent ?? "workspace-maintainer";
     this.runPromotion = options.runPromotion;
     this.onSessionStarted = options.onSessionStarted;
     this.onSessionContinued = options.onSessionContinued;
@@ -300,11 +302,11 @@ export class CommandExecutor {
   ): Promise<JsonValue> {
     const input = command.envelope.arguments;
     const workspace = runtime.sessionKind === "workspace";
-    keys(input, workspace ? ["brief", "title"] : ["brief", "agent", "title"]);
+    keys(input, ["brief", "agent", "title"]);
     if (this.state.getTaskSession(command.taskId)) throw new Error(`Task ${command.taskId} already has an OpenCode session`);
     const brief = text(input, "brief");
-    const selected = workspace ? undefined : route(input);
-    const agent = workspace ? this.workspaceAgent : this.agents[selected!];
+    const selected = route(input, "small");
+    const agent = workspace ? this.workspaceAgents[selected] : this.developerAgents[selected];
     const title = optionalText(input, "title", 200) ?? command.taskId;
     markMutation();
     const created = await runtime.client.request("session.create", { body: { title, agent } });
@@ -324,7 +326,7 @@ export class CommandExecutor {
       status: "started",
       session: sessionId,
       session_kind: runtime.sessionKind,
-      agent: workspace ? this.workspaceAgent : selected!,
+      agent: selected,
       created: created ?? null,
     };
   }
@@ -374,12 +376,12 @@ export class CommandExecutor {
     runtime: CommandRuntime,
     markMutation: () => void,
   ): Promise<JsonValue> {
-    if (runtime.sessionKind === "workspace") throw new Error("Workspace tasks keep the fixed workspace-maintainer route");
+    if (runtime.sessionKind === "workspace") throw new Error("Workspace tasks keep the fixed workspace route");
     const input = command.envelope.arguments;
     keys(input, ["agent", "message"]);
     const selected = route(input);
     const session = this.task(command, runtime);
-    const agent = this.agents[selected];
+    const agent = this.developerAgents[selected];
     const message = optionalText(input, "message", 65_536) ?? "Continue this task using the newly selected agent route.";
     markMutation();
     await runtime.client.request("session.prompt_async", {

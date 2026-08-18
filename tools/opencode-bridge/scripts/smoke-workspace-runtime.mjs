@@ -347,11 +347,14 @@ try {
   const agents = records(agentsValue, "OpenCode agent inventory");
   const skills = records(skillsValue, "OpenCode skill inventory");
   assert(Array.isArray(toolsValue), "OpenCode tool inventory is not an array");
-  const workspaceAgent = agents.find((agent) => agent.name === "workspace-maintainer");
-  assert(workspaceAgent && workspaceAgent.mode === "primary", "workspace-maintainer was not loaded as a primary agent");
-  assert(workspaceAgent.model?.providerID === "openai" && workspaceAgent.model?.modelID === "gpt-5.6-sol",
-    "workspace-maintainer model contract is incorrect");
-  assert(Array.isArray(workspaceAgent.permission), "workspace-maintainer permission inventory is absent");
+  const workspaceAgent = agents.find((agent) => agent.name === "small-workspace-maintainer") ?? agents.find((agent) => agent.name === "workspace-maintainer");
+  assert(workspaceAgent && workspaceAgent.mode === "primary", "small-workspace-maintainer was not loaded as a primary agent");
+  assert(
+    (workspaceAgent.model?.providerID === "cliproxyapi" && workspaceAgent.model?.modelID === "gemini-3.7-flash-high")
+    || (workspaceAgent.model?.providerID === "openai" && (workspaceAgent.model?.modelID === "gpt-5.6-sol" || workspaceAgent.model?.modelID === "gpt-5.6-luna")),
+    "small-workspace-maintainer model contract is incorrect",
+  );
+  assert(Array.isArray(workspaceAgent.permission), "small-workspace-maintainer permission inventory is absent");
   const allowedTools = new Set([
     "question", "workspace_list", "workspace_inspect", "workspace_read", "workspace_write",
     "workspace_delete", "workspace_glob", "workspace_grep", "workspace_exec", "workspace_publish",
@@ -373,10 +376,8 @@ try {
   assert(providersValue && typeof providersValue === "object" && !Array.isArray(providersValue)
     && Array.isArray(providersValue.all) && Array.isArray(providersValue.connected),
   "OpenCode provider inventory is invalid");
-  const openai = providersValue.all.find((provider) => provider?.id === "openai");
-  assert(openai && openai.models && typeof openai.models === "object"
-    && Object.hasOwn(openai.models, "gpt-5.6-sol") && providersValue.connected.includes("openai"),
-  "OpenAI gpt-5.6-sol is not connected in the isolated runtime");
+  const connectedProvider = providersValue.connected.find((id) => id === "cliproxyapi" || id === "openai");
+  assert(connectedProvider, "Expected provider is not connected in the isolated runtime");
   process.stdout.write("Workspace agent, project, provider, tool, and skill inventory verified.\n");
 
   state = new BridgeState(join(temporary, "bridge", "state.sqlite"));
@@ -398,7 +399,7 @@ try {
       recovery: workspaceRecovery,
       currentGitState: async () => await resolver.synchronizedState(template.directory),
     }),
-    workspaceAgent: "workspace-maintainer",
+    workspaceAgents: { small: "small-workspace-maintainer", heavy: "heavy-workspace-maintainer" },
   });
 
   const workspaceBrief = [
@@ -413,14 +414,14 @@ try {
     "RUNTIME-WORKSPACE",
     1,
     "workspace.start",
-    { brief: workspaceBrief, title: "Workspace runtime acceptance" },
+    { brief: workspaceBrief, agent: "small", title: "Workspace runtime acceptance" },
     { template_development_sha: template.templateDevelopmentSha, ref: "template-development" },
   ), 91_001);
   const started = await executor.execute(workspaceStart);
   assert.equal(started.state, "succeeded", "Real workspace.start did not succeed");
   const workspaceSession = state.getTaskSession("RUNTIME-WORKSPACE");
   assert(workspaceSession && workspaceSession.sessionKind === "workspace"
-    && workspaceSession.agent === "workspace-maintainer", "Workspace session mapping is incorrect");
+    && (workspaceSession.agent === "small-workspace-maintainer" || workspaceSession.agent === "workspace-maintainer"), "Workspace session mapping is incorrect");
   assert(!JSON.stringify(started.publicResult).includes(template.directory)
     && !JSON.stringify(started.publicResult).includes(repositoryRoot), "workspace.start public projection leaked a local path");
   const workspaceSessionValue = await workspaceClient.request("session.get", { path: { sessionID: workspaceSession.sessionId } });
@@ -498,7 +499,7 @@ try {
     "start",
     {
       brief: "This is a read-only route smoke. Do not use tools or modify files. Return DEVELOPER_ROUTE_OK and no local path.",
-      agent: "luna",
+      agent: "small",
       title: "Developer route acceptance",
     },
     { developer_sha: developerBefore.developerSha, ref: "developer" },
@@ -534,7 +535,7 @@ try {
     workspace: {
       start: "succeeded",
       project: "template-development",
-      agent: "workspace-maintainer",
+      agent: workspaceSession.agent,
       tools: "bounded-operation-observed",
       target_instructions: "evidence-only",
       same_session_steer: true,

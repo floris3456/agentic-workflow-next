@@ -8,7 +8,7 @@ Commands are JSON inside a hidden Markdown marker:
 
 ```markdown
 <!-- agentic-bridge-command
-{"protocol":"agentic-bridge/1","sequence":1,"command_id":"9f1c5ea1-e4ab-4ac7-8e8d-af9fdcae6331","task_id":"TASK-001","kind":"start","arguments":{"brief":"Public-safe delegated brief","agent":"luna"},"expected":{"developer_sha":"0123456789abcdef0123456789abcdef01234567","ref":"developer"}}
+{"protocol":"agentic-bridge/1","sequence":1,"command_id":"9f1c5ea1-e4ab-4ac7-8e8d-af9fdcae6331","task_id":"TASK-001","kind":"start","arguments":{"brief":"Public-safe delegated brief","agent":"small"},"expected":{"developer_sha":"0123456789abcdef0123456789abcdef01234567","ref":"developer"}}
 -->
 ```
 
@@ -33,11 +33,11 @@ runtime-appropriate expected guards while implementation files are dirty.
 
 | Kind | Arguments |
 | --- | --- |
-| `start` | `brief` string; optional `agent` (`luna` or `sol`) and `title` |
-| `workspace.start` | `brief` string; optional `title`; route is fixed to `workspace-maintainer` |
+| `start` | `brief` string; optional `agent` (`small` or `heavy`, default `small`) and `title` |
+| `workspace.start` | `brief` string; optional `agent` (`small` or `heavy`, default `small`) and `title` |
 | `status` | none |
 | `steer` | `message` |
-| `route` | `agent`; optional continuation `message` |
+| `route` | `agent` (`small` or `heavy`); optional continuation `message` |
 | `permission.reply` | public `permission` alias, `reply` (`once`, `always`, `reject`), optional `message` |
 | `question.reply` | public `question` alias and ordered `answers` string arrays |
 | `abort` | none |

@@ -38,8 +38,10 @@ stakes.
 
 The current approved implementation agents are:
 
-- `small-developer`: default, configured-provider GPT 5.6 Luna at `max` reasoning effort;
-- `large-developer`: exceptional path, configured-provider GPT 5.6 Sol at `high` reasoning effort.
+- `small-developer`: default, configured-provider Gemini 3.7 Flash (`cliproxyapi/gemini-3.7-flash-high`) at `high` reasoning effort;
+- `large-developer`: exceptional path, configured-provider GPT 5.6 Sol (`openai/gpt-5.6-sol`) at `high` reasoning effort.
+
+Public selector vocabulary for developer and workspace routes is model-agnostic `small` (default) or `heavy`.
 
 No ref-owned `repository-scout` agent is tracked. The Luna/high non-implementation
 role is owned by an externally installed bridge runtime and exposes only contained
@@ -55,7 +57,7 @@ public alias that the web orchestrator can answer through `question.reply`;
 ordinary assistant prose is not a substitute. The read-only Scout denies questions
 and cannot enter this interaction path.
 
-The bridge is transport and local durability, not a new authority. It maps public task aliases to private OpenCode sessions, projects bounded status, and invokes Luna/Sol against the same loopback server a human can attach to with the normal TUI. Direct GitHub inspection remains the proof route.
+The bridge is transport and local durability, not a new authority. It maps public task aliases to private OpenCode sessions, projects bounded status, and invokes the selected small or heavy implementation agent against the same loopback server a human can attach to with the normal TUI. Direct GitHub inspection remains the proof route.
 
 Routing policy is web-side and intentionally is not frozen through a validator that counts agent files.
 

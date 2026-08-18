@@ -101,9 +101,10 @@ legacy rows migrate to developer and unknown values fail closed. Every later
 status, prompt, generic request, structured reply, continuation check/nudge,
 abort, durable/canonical recovery, and terminal delivery selects the same client
 from that kind. Restart re-proves the registered worktree without requiring the
-post-start worktree to remain clean or at the original SHA. The agent remains
-fixed to `workspace-maintainer`; route changes, bridge PTYs, and main promotion
-are denied for workspace tasks.
+post-start worktree to remain clean or at the original SHA. Workspace start
+accepts an optional model-agnostic `small|heavy` selector (default `small`)
+mapped to `small-workspace-maintainer` and `heavy-workspace-maintainer`; route changes,
+bridge PTYs, and main promotion are denied for workspace tasks.
 
 The operator-run workspace lifecycle acceptance uses a fresh real pinned
 OpenCode process with sterile temporary state and an explicitly supplied private

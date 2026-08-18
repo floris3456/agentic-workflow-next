@@ -213,7 +213,7 @@ test("command executor starts a guarded session, persists aliases, and publishes
       assert.ok(state.pendingOutbox(Date.now() + 1_000).some((item) => JSON.stringify(item.payload).includes("applying")));
     },
   });
-  const accepted = state.acceptCommand(envelope(1, "start", { brief: "Implement the task", agent: "luna" }, true), 7).command!;
+  const accepted = state.acceptCommand(envelope(1, "start", { brief: "Implement the task", agent: "small" }, true), 7).command!;
   const result = await executor.execute(accepted);
   assert.equal(result.state, "succeeded");
   assert.equal(applyingObserved, true);

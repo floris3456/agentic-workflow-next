@@ -107,7 +107,7 @@ try {
     "CommandExecutor",
     "TemplateDevelopmentWorktreeResolver",
     '"workspace.start"',
-    '"workspace-maintainer"',
+    '"small-workspace-maintainer"',
     '"workspace_list"',
     '"workspace_inspect"',
     '"workspace_read"',

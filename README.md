@@ -19,7 +19,7 @@ The workflow deliberately uses three branches with different authorities:
 - `main` contains only the exact implementation state explicitly accepted by the human. It is advanced through the guarded exact-SHA promotion script, not ordinary commits or merges.
 - `web-orchestration` is an independent orphan history containing only `web-orchestration-only/**`. It stores concise task context, routing memory, and a generalized public-safe ChatGPT Project installation package; it is never merged into implementation branches.
 
-The web orchestrator designs bounded tasks, routes the normal Luna or exceptional Sol developer, steers work, and independently reviews exact remote ranges. OpenCode developers implement only the delegated task. The human remains the consequential acceptance authority.
+The web orchestrator designs bounded tasks, selects the small or heavy developer route, steers work, and independently reviews exact remote ranges. OpenCode developers implement only the delegated task. The human remains the consequential acceptance authority.
 
 Consumers who need the complete workflow should create from this template with all branches included. GitHub can generate included branches with unrelated histories, so first run `./scripts/initialize-template-branches.sh` from a clean `developer` checkout; it safely no-ops for correct ancestry and refuses established ambiguous histories. The independent `web-orchestration` branch is intentional and is never repaired or folded into `main`. Install and customize its `web-orchestration-only/chatgpt-project/` package in the target ChatGPT Project, then run `./scripts/bootstrap-agent-workflow.sh` to activate tracked hooks.
 
