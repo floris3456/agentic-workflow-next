@@ -296,7 +296,7 @@ export class BridgeService {
           currentGitState: async () => await this.templateWorktrees.synchronizedState(runtime.directory),
         };
       },
-      workspaceAgent: "workspace-maintainer",
+      workspaceAgent: "small-workspace-maintainer",
       ...(config.policy.promotionEnabled ? { runPromotion: promotion(config) } : {}),
       onSessionStarted: (taskId) => this.startSessionRecovery(taskId),
       onSessionContinued: (taskId, sessionId) => this.reenrollSessionRecovery(taskId, sessionId),
