@@ -268,6 +268,8 @@ The earlier focused check for the narrow small-agent correction is superseded:
   no-tool smoke completed with `step_start`, `text`, and `step_finish` events;
 - the default `template-maintainer` resolves to the same
   `cliproxyapi/gemini-3.7-flash-high` model with high reasoning;
+- commit `2eb3c29790630bd6544f65e3bf8acc2fc591324e` was pushed and exact remote
+  readback matched it;
 - `git diff --check` passed; commit `4fcd483872bb747a8dadd53adb3360a369dac5b1`
   contained the invalid `llmgateway` reference and is superseded by this fix.
 
