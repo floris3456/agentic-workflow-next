@@ -6,96 +6,73 @@ TEMPLATE-WORKSPACE-MAINTENANCE-AGENT-001
 
 ## Status
 
-Blocked in independent review pending a second security-correction cycle. The prior
-completed handoff remains historical implementation evidence but is superseded by
-new findings against the exact pushed implementation. No `main` promotion is
+Security source correction implemented and independently reviewed at exact remote
+`template-development` head `9d119a2432eacfe7c4655f18f6d40ebc34d1e2ef`.
+The task is **not complete**: exact push-triggered CI result evidence for the new
+head is not available through the current connector surface, and same-task
+schema-3 package supersession is not defined by the tracked generator after the
+old package bytes already entered template history. No `main` promotion is
 authorized.
 
 ## Task-start template-development SHA
 
-7915a22248f11c8000622ffd761fb2a6e91e2359
+`7915a22248f11c8000622ffd761fb2a6e91e2359`
 
 ## Review-base template-development SHA
 
-1f539586f382149a5d5a23bb62771165b880df0c
+Prior completed handoff superseded by this review cycle:
+`1f539586f382149a5d5a23bb62771165b880df0c`.
+
+Review-reopen checkpoint:
+`7cf68d1937b6d21a54bb022e67dec17e5f7b293b`.
 
 ## Public-safe task brief
 
-Continue the existing Workspace Maintenance Agent template task without changing
-its task ID. Correct two independently reproduced security gaps: arbitrary
-`workspace_exec` commands must not receive the repository's private Git-common
-state, and `workspace_publish` must reject dangerous effective repository/worktree
-Git configuration before any credential-program or foreign-push side effect.
-Preserve useful read-only Git inspection, default-deny agent authority, normal
-developer routing, exact-SHA human authority over `main`, and the existing
-three-source schema-3 package model. Keep `main`, `web-orchestration`, the paused
-lifecycle task, protected control issues #49/#53, and their historical Scout state
-unchanged.
+Continue the same Workspace Maintenance Agent task and correct two independent
+security findings without changing the task ID:
 
-## Current objective
+1. arbitrary `workspace_exec` commands must not receive private/common Git state;
+2. `workspace_publish` must reject dangerous effective repository/worktree Git
+   configuration before any foreign-push or credential-program side effect.
 
-Produce a package-free corrected `template-development` head that closes both
-security blockers with adversarial tests, run the complete relevant template
-validation, independently review the exact pushed range, then regenerate and
-verify the schema-3 package from the corrected reviewed template head and the
-exact live source handoffs.
+Preserve useful read-only Git inspection, default-deny agent authority, the
+existing developer bridge implementation, exact-SHA human authority over `main`,
+and the schema-3 three-source package model. Keep protected issues #49/#53 and
+their historical Scout state untouched.
 
-## Current position
+## Current exact remote state
 
-Independent remote readback on 2026-08-18 re-established the exact canonical
-heads before this cycle:
+Re-established after the source correction:
 
-- template-development: `1f539586f382149a5d5a23bb62771165b880df0c`
+- template-development: `9d119a2432eacfe7c4655f18f6d40ebc34d1e2ef`
 - developer: `3d3cbad9f423cc4d80aaff8a0fba86a16300c502`
 - main: `6127611113dfdb66f93a0cfd2d355359aa370833`
 - web-orchestration: `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`
 
-`source-lock.json` exactly matches the live main/developer/web heads above and is
-therefore not moved by this reopen checkpoint.
+`source-lock.json` remains unchanged and still exactly matches the live
+main/developer/web heads. Issue #49 remains open with 254 comments and unchanged
+`updated_at=2026-08-17T02:02:28Z`. Issue #53 remains open with 12 comments and
+unchanged `updated_at=2026-08-17T11:45:43Z`. Issue #54 is this task's public-safe
+continuation journal, remains open and unlabelled, and has no bridge activity.
 
-The previous correction fixed the earlier four review findings: Bubblewrap
-containment replaced cwd-only host execution; publication became a separate fixed
-broker; workspace-maintainer became mechanically default-deny; and a real pinned
-OpenCode 1.18.16 lifecycle harness exercised the production bridge route. The
-schema-3 package was generated and validated from exact reviewed ranges.
+## Historical reviewed evidence
 
-A deeper independent review then found two new blockers in the exact live
-`scripts/workspace-maintenance-lib.mjs`:
+Previous reviewed package ranges remain historical evidence:
 
-1. `sandboxCommand` read-only binds the complete real common Git directory to
-   `/repo.git` and sets `GIT_COMMON_DIR=/repo.git`. That exposes private bridge
-   state stored beneath the common `.git` as well as broader local-only Git state
-   to arbitrary allowed workspace commands. Existing containment fixtures only
-   use a sentinel outside the repository and do not cover this confidentiality
-   boundary.
-2. `assertSafeGitMetadata` reads only `git config --local --name-only --list`.
-   It does not reject `url.*.pushInsteadOf` or `core.askPass`, and it misses
-   worktree-specific settings when `extensions.worktreeConfig=true`. A canonical
-   post-push readback is too late because a foreign push or askpass execution may
-   already have happened.
+- template-development:
+  `7915a22248f11c8000622ffd761fb2a6e91e2359..d509bf3fd0d3a4622d080f920aca6c122f77624d`
+- developer:
+  `ba73b3b54febfdeadbff66262acaa7be12e5760e..3d3cbad9f423cc4d80aaff8a0fba86a16300c502`
+- web-orchestration:
+  `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17..7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`
 
-Issue #54 is a public-safe journal for this same task. It is intentionally not a
-bridge-controlled mutating issue. The workspace/OpenCode route cannot be started
-without conflicting with protected open mutating issue #49, which the human has
-explicitly required this task not to replay, close, abort, replace, or otherwise
-touch. This correction therefore uses bounded connected-GitHub source edits plus
-remote CI/readback rather than forcing the unavailable workspace mutation lane.
+Important previous checkpoints:
 
-## Source ranges
-
-Historical reviewed package ranges retained as evidence:
-
-- template-development: `7915a22248f11c8000622ffd761fb2a6e91e2359..d509bf3fd0d3a4622d080f920aca6c122f77624d`
-- developer: `ba73b3b54febfdeadbff66262acaa7be12e5760e..3d3cbad9f423cc4d80aaff8a0fba86a16300c502`
-- web-orchestration: `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17..7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`
-
-Historical correction checkpoints:
-
-- template-development containment/runtime implementation:
+- template containment/runtime correction:
   `33227b741c0dc2909ed8ca8dc00ea1b28963febc`
 - previous package-free reviewed template head:
   `d509bf3fd0d3a4622d080f920aca6c122f77624d`
-- previous package/ledger commit:
+- previous package storage/ledger commit:
   `66a8289fc112de4546ea9cee1933a8c056fd0ba7`
 - previous template handoff:
   `1f539586f382149a5d5a23bb62771165b880df0c`
@@ -103,165 +80,212 @@ Historical correction checkpoints:
   `f455d6269678dbbab3783fd845ef26e0227c7ed7`
 - developer OAuth/provider correction:
   `1b7fb2bce9d9bf23e107d808632066c62fe4c13c`
-- developer handoff:
+- unchanged developer handoff:
   `3d3cbad9f423cc4d80aaff8a0fba86a16300c502`
 
-Superseded original rejected evidence remains historical:
+Previous schema-3 package:
 
-- developer implementation: `f76dfbd2c103ae43605939ec999f7f846acf7286`
-- developer handoff: `d24b67d78d58bd0c217530545ab0b548b64e2485`
-- template-development implementation: `cd433706bfefebaf42a5de6ea1521ec61deb2c8a`
-- template-development package/ledger: `9ad0913bc40692887f1eed5031c97d2512397961`
-- template-development handoff: `fb903dafdb2713621abbfe86b220f26c8d26a6e0`
+- directory: `changes/TEMPLATE-WORKSPACE-MAINTENANCE-AGENT-001/`
+- package binding:
+  `78fbf87877d48810c527fbdb0a055d345bbeaa9cddff7efc4a9c0bf777df6d60`
+- reported manifest SHA-256:
+  `f0036c692c09f8ccb73d769ff0a520f437913ba559f5eeefb69346513fd42686`
 
-The new correction range begins after this review-reopen checkpoint. Exact head
-will be recorded only after remote publication and readback.
+## Current correction range
 
-## Observed
+Exact independently compared range:
 
-- `sandboxCommand` currently mounts the whole common Git directory read-only at
-  `/repo.git` and the worktree Git directory at `/worktree.git`.
-- The repository's bridge configuration intentionally stores local/private bridge
-  state beneath the common `.git`, so mounting the whole common directory violates
-  the workspace command confidentiality boundary even though writes are denied.
-- Useful ordinary Git inspection does not require exposing every common-Git file;
-  the command sandbox needs only a sanitized read-only metadata/object view or a
-  separately brokered inspection surface.
-- `assertSafeGitMetadata` currently derives unsafe names exclusively from
-  `git config --local --name-only --list`.
-- `url.*.pushInsteadOf` can rewrite only push destinations; canonical pre/post
-  `ls-remote` does not prevent that foreign side effect.
-- `core.askPass` can name an executable credential prompt helper even when
-  terminal prompting is disabled.
-- Worktree-specific config can override common repository config when
-  `extensions.worktreeConfig=true`, and `--local` alone does not enumerate those
-  effective values.
-- Existing workspace tests cover host secret absence, outside read/write denial,
-  symlink escape, network denial, foreign Git routes, sandbox ref persistence,
-  `main` denial, pushurl rejection, and stale canonical heads, but not these two
-  new adversarial cases.
+`7cf68d1937b6d21a54bb022e67dec17e5f7b293b..9d119a2432eacfe7c4655f18f6d40ebc34d1e2ef`
 
-## Interpretation
+It is linear, nine commits ahead, zero behind, and changes exactly six files:
 
-The first blocker is a confidentiality failure in the arbitrary-command sandbox,
-not merely a path-redaction defect: private state must never become readable in
-that namespace. The safest design is to avoid mounting the real common directory
-and instead materialize a temporary sanitized read-only Git view containing only
-required public repository metadata/objects/refs for the selected worktree, or
-move Git inspection behind a fixed broker if a sanitized view cannot preserve
-ordinary commands safely.
+- `scripts/workspace-maintenance-base.mjs`
+- `scripts/workspace-maintenance-common.mjs`
+- `scripts/workspace-maintenance-lib.mjs`
+- `scripts/workspace-maintenance-publish.mjs`
+- `scripts/workspace-maintenance-sandbox.mjs`
+- `tests/workspace-maintenance-security.test.mjs`
 
-The second blocker must be prevented before any push/credential resolution.
-Publication should audit the complete effective repository-local configuration,
-including worktree scope when enabled, reject push-only URL rewriting and askpass
-programs, and set fixed non-executing askpass environment values as defense in
-depth. Tests must assert rejection occurs before foreign-remote or askpass sentinel
-side effects.
+No package bytes, `source-lock.json`, developer source, `main`, or web-orchestration
+content changed in this range.
 
-The publisher's current canonical GitHub HTTPS-only production origin restriction
-is left unchanged in this security cycle. Its broader SSH/custom-host
-compatibility is a separate non-blocking design question and must not be widened
-until the transport security model is explicit.
+## Implemented correction
 
-## Attempts
+### Workspace command confidentiality
 
-- Re-established all four exact remote refs through connected GitHub before
-  relying on prior handoff state.
-- Read the exact template-maintenance agreement, maintenance skill,
-  `source-lock.json`, current task record, task template, and live implementation.
-- Independently confirmed both new findings against the exact
-  `template-development` blob.
-- Searched open control issues: #49 and #53 are the only protected open
-  `agentic-bridge` issues; no issue was bound to this task ID.
-- Created public-safe issue #54 for continuity under the same task ID. It remains
-  intentionally unlabelled for bridge control because the one-open-mutating-issue
-  gate and the human's no-touch requirement on #49 make a new workspace mutation
-  session unavailable.
+The old arbitrary-command sandbox no longer mounts the real common Git directory
+or real worktree Git directory. The compatibility facade now delegates to a
+sanitized sandbox that:
 
-## Changed approach
+- creates a temporary Git view containing only an explicit object pack for `HEAD`
+  plus blobs referenced by the current index;
+- uses `pack-objects --revs --stdout --no-reuse-object --no-sparse` with bitmap,
+  sparse-pack, and path-walk reuse disabled, then builds a fresh pack index;
+- creates only the selected current `HEAD`/branch ref and minimal Git config;
+- copies only the current worktree index and, in split-index mode, only the exact
+  shared index reported by `git rev-parse --shared-index-path`;
+- read-only binds that sanitized view at `/git-view` and masks `/workspace/.git`
+  with the sanitized directory/gitfile;
+- retains the actual selected worktree writable at `/workspace`, unshares all
+  namespaces/network, uses sterile HOME/XDG/tmp, fixed PATH/runtime, disables
+  replacement refs, and fixes askpass programs to `/bin/false`;
+- preserves repository-relative executable symlink-parent rejection through the
+  pre-existing `secureParent` boundary.
 
-The prior completed handoff is no longer treated as final. This cycle first
-publishes this task-record-only reopen checkpoint, then uses a bounded direct
-connected-GitHub correction on exact known template paths. Remote GitHub Actions
-and exact post-push diff/readback provide the execution evidence unavailable in
-this web runtime. No bridge/OpenCode mutation is claimed for this cycle unless the
-protected issue constraint later changes explicitly.
+Independent review found and corrected two secondary issues before freezing this
+range: the first modular refactor had temporarily omitted `secureParent` from
+repository-relative executable validation, and the first sanitized snapshot
+copied every `sharedindex.*` file rather than only the current referenced split
+index. Both are corrected in the exact current head.
 
-## Checks
+### Workspace publication
 
-Historical successful checks retained as evidence, not as proof of the new
-correction:
+The fixed host-side publisher now:
 
-- template-development workflow run `32081956594` passed on package-free head
-  `d509bf3fd0d3a4622d080f920aca6c122f77624d`.
-- workflow run `32082204637` passed on package/ledger commit
-  `66a8289fc112de4546ea9cee1933a8c056fd0ba7`.
-- workflow run `32082313822` passed on handoff
-  `1f539586f382149a5d5a23bb62771165b880df0c`.
-- the previous real OpenCode 1.18.16 OAuth-backed lifecycle acceptance succeeded
-  and left the source worktrees unchanged.
+- inspects local repository config with includes disabled;
+- detects `extensions.worktreeConfig=true` and then also inspects worktree config;
+- rejects `url.*.insteadOf`, `url.*.pushInsteadOf`, `core.sshCommand`,
+  `core.askPass`, include/includeIf, remote transport overrides, all
+  `credential.*`, all `http.*`, alternates, replace refs, content filters, and
+  working-tree encodings before publication side effects;
+- pins `GIT_ASKPASS=/bin/false` and `SSH_ASKPASS=/bin/false` during publication as
+  defense in depth;
+- retains exact synchronized tracking-branch preflight, canonical pre-push
+  `ls-remote`, no-force exact-ref push, canonical post-push readback, and
+  synchronization-failure marker behavior;
+- deliberately leaves the production canonical GitHub HTTPS-only origin
+  restriction unchanged in this security cycle.
 
-New-cycle checks are pending implementation. Required minimum is focused
-adversarial workspace-maintenance tests plus the complete tracked
-`validate-template-development` workflow on every substantive corrected head and
-package/handoff checkpoint.
+## Adversarial tests added
+
+The new security fixture covers:
+
+- a private sentinel beneath `.git/opencode-bridge/**`;
+- a stale/decoy `sharedindex.*` sentinel in the selected worktree Git directory;
+- a deliberately unreachable object containing a private sentinel;
+- proof that arbitrary sandbox commands cannot enumerate/read those values;
+- proof that `git cat-file` cannot recover the unreachable object;
+- preservation of useful `git status`, staged `git diff`, and `git log` behavior;
+- common-config `url.*.pushInsteadOf` rejection before a foreign ref can appear;
+- worktree-config `url.*.pushInsteadOf` rejection before a foreign ref can appear;
+- common-config `core.askPass` rejection before its sentinel program can execute;
+- worktree-config `core.askPass` rejection before its sentinel program can
+  execute.
+
+The pre-existing workspace-maintenance suite continues to cover host environment
+secret absence, loopback/network denial, outside reads/writes, symlink escape,
+foreign `git -C`/`--git-dir`, nonpersistent sandbox ref updates, successful local
+fixture publication, `main` denial, `pushurl` rejection, and stale canonical
+heads.
+
+## Checks and independent evidence
+
+Before publication of the final two confidentiality refinements, local fixture
+checks on the modular implementation established:
+
+- syntax checks for the new runtime/test modules passed;
+- all publication adversarial cases passed;
+- a positive brokered local-fixture publication passed;
+- basic read/write/glob/grep operations passed;
+- a direct sanitized-snapshot check preserved status/cached-diff/log and excluded
+  a deliberately unreachable object.
+
+That local environment did not provide the non-root `/usr/bin/bwrap` execution
+surface required for the complete namespace test, so it is not claimed as the
+full tracked validation result.
+
+The exact current workflow `.github/workflows/validate-template-development.yml`
+is configured to run on every `template-development` push, installs Bubblewrap,
+enables unprivileged namespaces, and executes the tracked full validator. The
+current connected GitHub tool surface exposes workflow jobs only when a run ID is
+already known and exposes commit-associated workflow discovery only for PR runs;
+it does not expose push-triggered run listing or check-run lookup. Exact CI
+success for `9d119a2432eacfe7c4655f18f6d40ebc34d1e2ef` is therefore **UNKNOWN**, not
+inferred from the workflow definition.
+
+Historical successful workflow runs `32081956594`, `32082204637`, and
+`32082313822` remain historical evidence only and do not prove this new range.
+
+## Package supersession blocker discovered in this cycle
+
+The existing schema-3 package is a full task package whose template range is
+`7915a22248f11c8000622ffd761fb2a6e91e2359..d509bf3fd0d3a4622d080f920aca6c122f77624d`.
+The tracked generator deliberately rejects a template-development range that
+contains `changes/<task-id>/**` so a package cannot contain its own generated
+storage.
+
+The new correction necessarily descends from the already-stored package commit.
+Therefore a full same-task regeneration from the original template base now
+contains historical `changes/TEMPLATE-WORKSPACE-MAINTENANCE-AGENT-001/**` paths
+and is rejected by the current generator. The tracked tests cover first-generation
+self-reference rejection but define no same-task supersession procedure.
+
+Using the previous handoff as a new template base would produce only a correction
+delta. That is not accepted here as a replacement for the existing full package:
+the apply tool checks patch applicability but does not require the target checkout
+to equal the manifest base SHA, so a delta-only replacement could fail to carry
+the original feature to a fresh downstream.
+
+No package bytes have been hand-built or overwritten. The previous package remains
+unchanged historical evidence.
+
+## Attempts / route decisions
+
+- Re-established all four exact refs before relying on the prior handoff.
+- Reopened this same task in its canonical current record at `7cf68d1937b6d21a54bb022e67dec17e5f7b293b`.
+- Created public-safe issue #54 under the same task ID; it remains intentionally
+  unlabelled for bridge control.
+- Did not touch protected #49/#53 or the historical stuck Scout request/session.
+- The workspace/OpenCode mutating lane remains unavailable without disturbing the
+  protected open bridge-control state, so the source correction used bounded
+  connected-GitHub contents writes with exact readback.
+- An attempted atomic Git-tree publication was refused by the connector before any
+  tree/ref mutation; exact readback proved no branch effect, so it was not replayed.
+  The correction was then published as bounded linear contents commits.
 
 ## Blockers / required decisions
 
-No human decision is required to implement the two security corrections. The
-workspace/OpenCode mutation lane is unavailable while protected #49 remains open
-and untouched, so the selected route is direct connected-GitHub mutation with CI.
+1. **Exact current CI proof:** the full push-triggered validation result for the
+   corrected head must be obtained from a surface that can read GitHub Actions
+   check/run state for this push. CI success is currently UNKNOWN.
+2. **Same-task schema-3 package supersession:** repository-owned behavior must be
+   defined before changing generator/validator semantics or replacing the old
+   package. The current tracked contract has no safe same-ID supersession path
+   after package storage is already in history. A delta-only replacement is not
+   accepted by inference.
+3. Package generation itself must still run through the tracked generator on an
+   authorized maintainer execution surface; hand-building package bytes is
+   prohibited.
 
-The task remains blocked in independent review until both blockers are corrected,
-new adversarial tests pass, exact remote source ranges are re-reviewed, and the
-schema-3 package is regenerated/verified from the corrected package-free head.
+No human decision is needed about the two original security corrections; their
+source implementation is complete. A human/repository-level design decision is
+required before changing the package format/provenance contract to solve the
+same-task supersession ambiguity.
 
 Any `main` promotion remains a separate explicit exact-SHA human decision and is
 not authorized here.
 
 ## Remaining work
 
-1. Correct the Git-common confidentiality boundary without exposing private
-   `.git` state while preserving useful read-only Git inspection.
-2. Correct effective local/worktree Git-config validation, reject
-   `url.*.pushInsteadOf` and `core.askPass`, and pin non-executing askpass fallback.
-3. Add adversarial common-Git private-state and worktree-config/push/askpass tests
-   proving rejection or inaccessibility before side effects.
-4. Run full template-development validation and inspect the exact pushed range.
-5. Regenerate schema-3 package from the new package-free reviewed template head
-   and the exact corrected developer/web heads if they remain unchanged.
-6. Validate and independently review package bytes/provenance and create a new
-   dedicated template-development handoff snapshot.
-7. Only after another clean independent review consider archival, downstream
-   application, or a separately authorized promotion workflow.
+1. Obtain exact successful full template-development validation for the final
+   package-free correction head; correct only evidence-backed failures if any.
+2. Decide and implement a repository-owned safe same-task package-supersession
+   rule, or otherwise provide an authorized package path that preserves the full
+   original feature plus these corrections without self-reference.
+3. Generate the schema-3 package through the tracked generator on an authorized
+   maintainer execution surface.
+4. Validate and independently review exact package bytes, manifest provenance,
+   source ranges, and canonical-tip relations.
+5. Publish a dedicated final template-development handoff only after those steps.
+6. Only after another clean independent review consider archival, downstream
+   application, or any separately human-approved promotion workflow.
 
 ## Next action
 
-Independently read back this task-record-only reopen checkpoint, then correct
-`scripts/workspace-maintenance-lib.mjs` and `tests/workspace-maintenance.test.mjs`
-with the smallest design that proves both security boundaries without widening
-publication transport support.
+Do not archive or promote. Resolve exact CI evidence and the same-task package
+supersession contract while keeping the corrected source range, historical package,
+protected issues, developer, main, and web-orchestration unchanged.
 
-## Relevant durable records
+## Last historical handoff commit
 
-- current task record:
-  `docs/work/current/TEMPLATE-WORKSPACE-MAINTENANCE-AGENT-001-workspace-maintenance-agent.md`
-- public-safe continuation journal: issue #54
-- final previous schema-3 package:
-  `changes/TEMPLATE-WORKSPACE-MAINTENANCE-AGENT-001/`
-- previous package binding SHA-256:
-  `78fbf87877d48810c527fbdb0a055d345bbeaa9cddff7efc4a9c0bf777df6d60`
-- previous manifest SHA-256:
-  `f0036c692c09f8ccb73d769ff0a520f437913ba559f5eeefb69346513fd42686`
-- previous package/ledger commit:
-  `66a8289fc112de4546ea9cee1933a8c056fd0ba7`
-- previous package-free reviewed head:
-  `d509bf3fd0d3a4622d080f920aca6c122f77624d`
-- previous developer handoff:
-  `3d3cbad9f423cc4d80aaff8a0fba86a16300c502`
-- unchanged web source handoff:
-  `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`
-
-## Last handoff commit
-
-1f539586f382149a5d5a23bb62771165b880df0c
+`1f539586f382149a5d5a23bb62771165b880df0c`
