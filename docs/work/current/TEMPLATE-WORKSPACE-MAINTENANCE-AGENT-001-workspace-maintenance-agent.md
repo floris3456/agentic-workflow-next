@@ -55,6 +55,22 @@ Keep the bootstrap single-writer and bounded. Do not treat it as resolving the
 remaining workspace security findings, package supersession, branch protection,
 or CI observability problems.
 
+## Active continuation checkpoint
+
+This task resumed from the exact remote `template-development` tip
+`5e31fff24f8d78d8767b9e20d249bdd47061a894` after the authorized model-routing
+bootstrap checkpoint. The working tree contains the bounded split-route edit:
+`heavy-workspace-maintainer` retains the Sol model and
+`small-workspace-maintainer` is the Gemini Flash route. No source tree or
+downstream branch was copied or changed.
+
+The pinned OpenCode `1.18.16` provider inventory parsed both agent definitions,
+but the small route currently names `cliproxyapi/gemini-3.7-flash`; that provider
+is not present in the inventory. The inventory does contain active
+`llmgateway/gemini-3.7-flash` with reasoning and a `high` variant. The next
+bounded action is to correct that model reference, then run the focused runtime
+and repository checks without widening the bootstrap.
+
 ## Re-established source state before record checkpoint
 
 At the model-routing bootstrap start, independent remote readback established:
