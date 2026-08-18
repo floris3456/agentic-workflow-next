@@ -2,7 +2,7 @@
 description: Maintains verified worktrees across the exact repository while remaining rooted in template-development.
 mode: primary
 model: openai/gpt-5.6-sol
-reasoningEffort: high
+reasoningEffort: max
 permission:
   "*": deny
   task: deny
