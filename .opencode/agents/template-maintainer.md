@@ -1,8 +1,8 @@
 ---
 description: Maintains the reusable template through exact source refs and portable change packages.
 mode: primary
-model: openai/gpt-5.6-luna
-reasoningEffort: max
+model: cliproxyapi/gemini-3.7-flash-high
+reasoningEffort: high
 permission:
   task: deny
   question: allow

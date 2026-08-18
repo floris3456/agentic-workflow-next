@@ -84,6 +84,10 @@ The corrected configured runtime now resolves the small agent to
 the `high` variant completed with normal start, text, and finish events and no
 error event.
 
+The default `template-maintainer` now uses the same configured model and
+`reasoningEffort: high`; its previous `max` setting was not supported by this
+model's available variants.
+
 ## Re-established source state before record checkpoint
 
 At the model-routing bootstrap start, independent remote readback established:
@@ -262,8 +266,15 @@ The earlier focused check for the narrow small-agent correction is superseded:
   additional provider option, not a boolean capability flag;
 - the configured runtime discovered the corrected agent/model pair and the
   no-tool smoke completed with `step_start`, `text`, and `step_finish` events;
+- the default `template-maintainer` resolves to the same
+  `cliproxyapi/gemini-3.7-flash-high` model with high reasoning;
 - `git diff --check` passed; commit `4fcd483872bb747a8dadd53adb3360a369dac5b1`
   contained the invalid `llmgateway` reference and is superseded by this fix.
+
+The legacy full validators still fail on the separate committed
+`workspace-maintainer` definition because they expect `reasoningEffort: high`
+while that heavy Sol route currently declares `max`; this narrow change does not
+alter or claim to resolve that separate mismatch.
 
 The focused checks do not claim that the broader split-route bootstrap, bridge,
 validator, package, or CI work is complete.
