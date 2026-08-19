@@ -14,7 +14,7 @@ const required = [
   ".opencode/agents/template-maintainer.md", ".opencode/skills/template-maintenance/SKILL.md",
   ".opencode/agents/workspace-maintainer.md", ".opencode/skills/workspace-maintenance/SKILL.md",
   ".opencode/plugins/workspace-maintenance.ts", ".opencode/.gitignore", ".opencode/package.json",
-  "scripts/workspace-maintenance-lib.mjs",
+  "scripts/workspace-maintenance-lib.mjs", "scripts/workspace-maintenance-host.mjs",
   "docs/architecture/AS-BUILT.md", "docs/architecture/decisions/0001-template-development-ledger.md",
   "docs/design/template-maintenance-workflow.md", "docs/deviations.md",
   "docs/work/templates/task-progress-template.md", "docs/work/templates/maintainer-response-template.md",
@@ -77,12 +77,14 @@ try {
 if (existsSync(join(root, ".opencode/agents/workspace-maintainer.md"))) {
   const agent = read(".opencode/agents/workspace-maintainer.md");
   for (const term of [
-    "mode: primary", "model: openai/gpt-5.6-sol", "reasoningEffort: high",
+    "mode: primary", "model: openai/gpt-5.6-sol", "reasoningEffort: max",
     '"*": deny', "task: deny", "bash: deny", "edit: deny", "question: allow", "external_directory: deny",
     "skill:\n    \"*\": deny\n    workspace-maintenance: allow",
     "workspace_list: allow", "workspace_inspect: allow", "workspace_read: allow",
     "workspace_write: allow", "workspace_delete: allow", "workspace_glob: allow",
-    "workspace_grep: allow", "workspace_exec: allow", "workspace_publish: allow", "load\n`workspace-maintenance`",
+    "workspace_grep: allow", "workspace_exec: allow", "workspace_publish: allow",
+    "workspace_bridge_inspect: allow", "workspace_bridge_start: allow", "workspace_bridge_reconcile: allow",
+    "load\n`workspace-maintenance`",
     "Reading them never transfers",
   ]) if (!agent.includes(term)) fail(`workspace-maintainer is missing required boundary: ${term}`);
 }
@@ -112,6 +114,7 @@ if (existsSync(join(root, ".opencode/plugins/workspace-maintenance.ts"))) {
   for (const name of [
     "workspace_list", "workspace_inspect", "workspace_read", "workspace_write",
     "workspace_delete", "workspace_glob", "workspace_grep", "workspace_exec", "workspace_publish",
+    "workspace_bridge_inspect", "workspace_bridge_start", "workspace_bridge_reconcile",
   ]) if (!plugin.includes(`${name}: tool(`)) fail(`Workspace plugin is missing ${name}`);
 }
 

@@ -62,7 +62,9 @@ inspectable compatibility evidence only.
 
 The template-development-owned OpenCode plugin exposes `workspace_list`,
 `workspace_inspect`, `workspace_read`, `workspace_write`, `workspace_delete`,
-`workspace_glob`, `workspace_grep`, `workspace_exec`, and `workspace_publish`.
+`workspace_glob`, `workspace_grep`, `workspace_exec`, `workspace_publish`,
+`workspace_bridge_inspect`, `workspace_bridge_start`, and
+`workspace_bridge_reconcile`.
 The agent uses a real default-deny permission inventory, explicitly allows only
 these tools plus structured questions, and denies every skill before allowing
 only `workspace-maintenance`. Built-in task, shell, read/edit, web, planning, and
@@ -111,6 +113,40 @@ Registered access is technical capability only. A `main` worktree is inspectable
 and technically reachable when registered, but consequential main mutation or
 promotion still requires the repository's existing explicit human exact-SHA
 authority.
+
+## Bounded host-bridge administration
+
+The Workspace Maintenance Agent possesses bounded operations for inspecting,
+starting, and reconciling the existing OpenCode bridge service associated with
+the repository without obtaining arbitrary host shell, DBus, filesystem, or
+configuration access.
+
+The operations are:
+- `workspace_bridge_inspect`: discovers the private bridge configuration for
+  the calling repository from the operator's host configuration directory
+  (`~/.config/agentic-workflow/` or `$AGENTIC_WORKFLOW_CONFIG_DIR`), validates
+  ownership and Git repository identity, inspects the associated `systemd --user`
+  unit state and live bridge admin socket (or reads durable SQLite metadata when
+  stopped), and returns bounded public-safe status (service state, running status,
+  heartbeat freshness, queue counts, active session counts, loopback OpenCode
+  endpoint health, and safety flags).
+- `workspace_bridge_start`: idempotently starts an existing registered bridge
+  service via `systemctl --user start <unit>` after proving that `developer` is
+  clean and synchronized and no conflicting active lock is held. It never accepts
+  user-supplied unit names or paths, never executes bootstrap or instance disposal,
+  and verifies post-start health.
+- `workspace_bridge_reconcile`: connects to the running bridge's private Unix
+  domain socket (`admin.sock`, mode 0600) and triggers the bridge's normal
+  canonical recovery and response delivery pass for mapped sessions. It never
+  creates, prompts, routes, or aborts sessions, nor fabricates terminal state.
+
+Security invariants:
+- The agent supplies no host paths, unit names, DBus addresses, or command arguments.
+- Private configuration, credentials, secrets, raw host paths, and database contents
+  are never returned in public tool responses.
+- The `workspace_exec` Bubblewrap sandbox cannot access host DBus, `$XDG_RUNTIME_DIR`,
+  or the host admin socket.
+- Missing, ambiguous, foreign, or diverged configurations fail closed.
 
 ## Acceptance-test CI reachability
 

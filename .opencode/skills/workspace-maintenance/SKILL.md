@@ -49,9 +49,12 @@ workflow.
    the Node executable hosting the gate are read-only; the host `PATH`, runtime
    tree, credentials, and environment are absent. It is not a push or commit
    route. Use the separate fixed-operation `workspace_publish` broker for
-   an authorized non-main commit plus exact-branch push. These tools keep OpenCode
-   rooted in template-development and do not grant blanket trust to a parent
-   directory.
+   an authorized non-main commit plus exact-branch push. Use
+   `workspace_bridge_inspect`, `workspace_bridge_start`, and
+   `workspace_bridge_reconcile` for bounded host bridge inspection, start, and
+   reconciliation without supplying paths, unit names, or DBus addresses.
+   These tools keep OpenCode rooted in template-development and do not grant
+   blanket trust to a parent directory.
 
 ## Bounded task procedure
 

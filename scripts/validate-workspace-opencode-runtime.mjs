@@ -24,6 +24,9 @@ const allowedTools = new Set([
   "workspace_grep",
   "workspace_exec",
   "workspace_publish",
+  "workspace_bridge_inspect",
+  "workspace_bridge_start",
+  "workspace_bridge_reconcile",
 ]);
 
 function wildcard(pattern, value) {
@@ -135,7 +138,7 @@ try {
   assert(agent, "workspace-maintainer was not discovered from template-development");
   assert.equal(agent.mode, "primary");
   assert.deepEqual(agent.model, { providerID: "openai", modelID: "gpt-5.6-sol" });
-  assert.equal(agent.options?.reasoningEffort, "high");
+  assert.equal(agent.options?.reasoningEffort, "max");
   assert(Array.isArray(agent.permission), "workspace-maintainer permission inventory is missing");
 
   for (const tool of toolIds) {

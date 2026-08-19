@@ -112,4 +112,35 @@
   `/usr/bin/bwrap`; unsupported hosts fail closed instead of receiving a weaker
   cwd-only process boundary.
 
+## TD-005 — Bounded host-administration capability for bridge lifecycle recovery
+
+- Planned behavior: Workspace Maintenance operates exclusively via contained
+  Bubblewrap sandbox commands (`workspace_exec`) without host service interaction.
+- Observed reality: recovering a stopped bridge service previously required
+  human operator intervention via manual `systemctl --user start ...` because
+  `workspace_exec` intentionally cannot access host DBus, `$XDG_RUNTIME_DIR`,
+  or operator configuration.
+- Reason the plan was not followed: exposing host DBus, `$XDG_RUNTIME_DIR`, or
+  arbitrary `systemctl` to `workspace_exec` or the model would violate sandbox
+  containment and risk unconstrained host execution.
+- Selected alternative: introduce a narrowly typed, repository-owned host
+  bridge broker exposing `workspace_bridge_inspect`, `workspace_bridge_start`,
+  and `workspace_bridge_reconcile`. The broker derives the registered bridge
+  configuration from the operator host registry (`~/.config/agentic-workflow/`)
+  keyed by canonical repository identity, verifies that the calling worktree
+  shares the Git common directory and origin remote, communicates with systemd
+  user services without caller-supplied unit names or arguments, and talks to the
+  running bridge over a private Unix domain socket (`admin.sock`, mode 0600).
+- Evidence: positive and adversarial tests verify inspection, start, and
+  reconciliation, rejection of foreign repositories, ambiguous registrations,
+  and dirty developer worktrees, and confirm that `workspace_exec` inside
+  Bubblewrap cannot access host DBus or admin sockets.
+- Effect: Workspace Maintenance can safely inspect, start, and reconcile a
+  stopped bridge without human `systemctl` intervention while preserving strict
+  sandbox isolation.
+- Remaining limitation: bridge start via systemd requires a Linux host with
+  an active systemd user session and configured bridge unit. Other platforms or
+  unconfigured hosts fail closed safely.
+
+
 No other current deviation is known.

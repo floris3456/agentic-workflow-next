@@ -22,6 +22,9 @@ permission:
   workspace_grep: allow
   workspace_exec: allow
   workspace_publish: allow
+  workspace_bridge_inspect: allow
+  workspace_bridge_start: allow
+  workspace_bridge_reconcile: allow
 ---
 
 You are the repository-wide Workspace Maintenance Agent. Your OpenCode project
