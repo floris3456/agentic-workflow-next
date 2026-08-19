@@ -4,7 +4,7 @@
   "recorded_at": "2026-08-19T12:05:00Z",
   "sources": {
     "main": "6127611113dfdb66f93a0cfd2d355359aa370833",
-    "developer": "bd287bca8b7b9861f91e2d5c9243c4c5165834f9",
+    "developer": "c6b747f00ad7509c1340fc11fca1466abb8eb1f9",
     "web-orchestration": "7e29c07e6ac9fc65a2cb2a8957514bc03500cc17"
   },
   "last_reconciled_task": "TEMPLATE-HOST-ADMIN-001",
