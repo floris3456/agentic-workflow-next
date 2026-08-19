@@ -114,30 +114,24 @@ test("production BridgeState schema is inspected accurately with real terminal s
   });
 
   const ts = Date.now();
-  // 1. Commands: accepted + applying are counted, completed/rejected are not
   db.prepare("INSERT INTO commands (command_id, task_id, sequence, issue_number, kind, envelope_json, state, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)").run("cmd1", "t1", 1, 1, "task.start", "{}", "accepted", ts, ts);
   db.prepare("INSERT INTO commands (command_id, task_id, sequence, issue_number, kind, envelope_json, state, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)").run("cmd2", "t1", 2, 1, "task.start", "{}", "applying", ts, ts);
   db.prepare("INSERT INTO commands (command_id, task_id, sequence, issue_number, kind, envelope_json, state, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)").run("cmd3", "t1", 3, 1, "task.start", "{}", "completed", ts, ts);
 
-  // 2. Requests: applying counted, rejected not
   db.prepare("INSERT INTO requests (request_id, task_id, issue_number, kind, envelope_json, state, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)").run("req1", "t1", 1, "scout.start", "{}", "applying", ts, ts);
   db.prepare("INSERT INTO requests (request_id, task_id, issue_number, kind, envelope_json, state, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)").run("req2", "t1", 1, "scout.start", "{}", "rejected", ts, ts);
 
-  // 3. Outbox: delivered_at IS NULL counted
   db.prepare("INSERT INTO github_outbox (dedupe_key, kind, issue_number, payload_json, next_attempt_at, delivered_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)").run("out1", "comment", 1, "{}", ts, null, ts);
   db.prepare("INSERT INTO github_outbox (dedupe_key, kind, issue_number, payload_json, next_attempt_at, delivered_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)").run("out2", "comment", 1, "{}", ts, ts, ts);
 
-  // 4. Response deliveries: queued_at IS NULL counted
   db.prepare("INSERT INTO response_deliveries (event_id, task_id, session_id, issue_number, event_type, queued_at, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)").run("ev1", "t1", "s1", 1, "session.idle", null, ts, ts);
   db.prepare("INSERT INTO response_deliveries (event_id, task_id, session_id, issue_number, event_type, queued_at, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)").run("ev2", "t1", "s2", 1, "session.idle", ts, ts, ts);
 
-  // 5. Task sessions: non-terminal counted, terminal (session.idle, session.error) not counted
   db.prepare("INSERT INTO task_sessions (task_id, session_id, issue_number, agent, session_kind, session_state, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)").run("t-dev-active", "s-dev-active", 1, "small-developer", "developer", "busy", ts, ts);
   db.prepare("INSERT INTO task_sessions (task_id, session_id, issue_number, agent, session_kind, session_state, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)").run("t-dev-idle", "s-dev-idle", 1, "small-developer", "developer", "session.idle", ts, ts);
   db.prepare("INSERT INTO task_sessions (task_id, session_id, issue_number, agent, session_kind, session_state, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)").run("t-ws-active", "s-ws-active", 1, "workspace-maintainer", "workspace", "running", ts, ts);
   db.prepare("INSERT INTO task_sessions (task_id, session_id, issue_number, agent, session_kind, session_state, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)").run("t-ws-err", "s-ws-err", 1, "workspace-maintainer", "workspace", "session.error", ts, ts);
 
-  // 6. Scout sessions: starting counted, session.idle not counted
   db.prepare("INSERT INTO scout_sessions (request_id, task_id, session_id, issue_number, ref_sha, workspace_path, session_state, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)").run("sc1", "t1", "scs1", 1, "sha", "path", "starting", ts, ts);
   db.prepare("INSERT INTO scout_sessions (request_id, task_id, session_id, issue_number, ref_sha, workspace_path, session_state, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)").run("sc2", "t1", "scs2", 1, "sha", "path", "session.idle", ts, ts);
   db.close();
@@ -191,7 +185,6 @@ test("host bridge broker inspects stopped existing bridge, detects pending work,
   await git(template, "commit", "-m", "Initial commit");
   await git(template, "push", "--set-upstream", "origin", "template-development");
 
-  // Create developer worktree
   await git(template, "branch", "developer");
   await git(template, "worktree", "add", developer, "developer");
   await writeFile(join(developer, "operation-manifest.json"), "{}", { mode: 0o600 });
@@ -266,7 +259,6 @@ test("host bridge broker inspects stopped existing bridge, detects pending work,
     fetchFn: async () => ({ status: 200, json: async () => ({ version: "1.18.16" }) }),
   });
 
-  // 1. Inspect stopped bridge
   const statusBefore = await gate.bridgeInspect();
   assert.equal(statusBefore.service_state, "stopped");
   assert.equal(statusBefore.bridge_running, false);
@@ -276,11 +268,9 @@ test("host bridge broker inspects stopped existing bridge, detects pending work,
   assert.equal(statusBefore.active_developer_sessions, 1);
   assert.equal(statusBefore.opencode_endpoint_healthy, true);
 
-  // Assert no host paths leaked in public response
   const serialized = JSON.stringify(statusBefore);
   assert.doesNotMatch(serialized, new RegExp(fixture.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\$&")));
 
-  // 2. Start bridge with fake admin server
   const adminServer = await startFakeAdminServer(socketPath, {
     onStatus: () => ({
       instance: "test-owner-origin",
@@ -290,9 +280,7 @@ test("host bridge broker inspects stopped existing bridge, detects pending work,
       pending_commands: 1,
       active_developer_sessions: 1,
     }),
-    onReconcile: () => ({
-      reconciled: true,
-    }),
+    onReconcile: () => ({ reconciled: true }),
   });
   t.after(async () => await adminServer.stop());
 
@@ -303,18 +291,16 @@ test("host bridge broker inspects stopped existing bridge, detects pending work,
   assert.equal(fakeSystemd.startCalls.length, 1);
   assert.equal(fakeSystemd.startCalls[0], "origin-bridge.service");
 
-  // 3. Start again is idempotent
   const startAgain = await gate.bridgeStart();
   assert.equal(startAgain.status, "already-running");
   assert.equal(fakeSystemd.startCalls.length, 1);
 
-  // 4. Reconcile running bridge
   const reconcileResult = await gate.bridgeReconcile();
   assert.equal(reconcileResult.reconciled, true);
   assert.equal(reconcileResult.service_state, "running");
 });
 
-test("post-start health proofs reject active unit with unreachable admin, wrong identity, or stale heartbeat", async (t) => {
+test("admin identity and health proofs cover fresh start, already-active start, inspection, and reconcile", async (t) => {
   const fixture = await mkdtemp(join(tmpdir(), "workspace-bridge-post-start-"));
   t.after(async () => await rm(fixture, { recursive: true, force: true }));
 
@@ -370,18 +356,15 @@ test("post-start health proofs reject active unit with unreachable admin, wrong 
   await writeFile(join(configDir, "key.pem"), "key\n", { mode: 0o600 });
   await writeFile(configFile, JSON.stringify(bridgeConfig), { mode: 0o600 });
 
-  // 1. Post-start fails if admin endpoint is unreachable
-  const fakeSystemd = new FakeSystemdClient({
-    "origin-bridge.service": {
-      Id: "origin-bridge.service",
-      LoadState: "loaded",
-      ActiveState: "inactive",
-      SubState: "dead",
-      WorkingDirectory: developer,
-      ExecStart: `/usr/bin/node dist/cli.js run --config ${configFile}`,
-    },
+  const inactiveUnit = () => ({
+    Id: "origin-bridge.service",
+    LoadState: "loaded",
+    ActiveState: "inactive",
+    SubState: "dead",
+    WorkingDirectory: developer,
+    ExecStart: `/usr/bin/node dist/cli.js run --config ${configFile}`,
   });
-
+  const fakeSystemd = new FakeSystemdClient({ "origin-bridge.service": inactiveUnit() });
   const gate = new WorkspaceMaintenanceGate(template, {
     configDirectory: configDir,
     systemdClient: fakeSystemd,
@@ -394,59 +377,71 @@ test("post-start health proofs reject active unit with unreachable admin, wrong 
     /Bridge service started in systemd but admin endpoint is unreachable or unresponsive/,
   );
 
-  // 2. Post-start fails if instance identity is mismatched
-  let adminHandler = {
+  let adminServer = await startFakeAdminServer(socketPath, {
     onStatus: () => ({
       instance: "wrong-instance",
       repository: "local/origin",
       running: true,
       heartbeat_at: Date.now(),
     }),
-  };
-  let adminServer = await startFakeAdminServer(socketPath, adminHandler);
-
-  fakeSystemd.units.set("origin-bridge.service", {
-    Id: "origin-bridge.service",
-    LoadState: "loaded",
-    ActiveState: "inactive",
-    SubState: "dead",
-    WorkingDirectory: developer,
-    ExecStart: `/usr/bin/node dist/cli.js run --config ${configFile}`,
   });
-
+  fakeSystemd.units.set("origin-bridge.service", inactiveUnit());
   await assert.rejects(
     () => gate.bridgeStart(),
-    /reported mismatched instance identity: wrong-instance/,
+    /Bridge service started but admin endpoint identity or health verification failed/,
   );
   await adminServer.stop();
 
-  // 3. Post-start fails if heartbeat is stale
-  adminHandler = {
+  adminServer = await startFakeAdminServer(socketPath, {
     onStatus: () => ({
       instance: "test-instance",
       repository: "local/origin",
       running: true,
       heartbeat_at: Date.now() - 60_000,
     }),
-  };
-  adminServer = await startFakeAdminServer(socketPath, adminHandler);
-  fakeSystemd.units.set("origin-bridge.service", {
-    Id: "origin-bridge.service",
-    LoadState: "loaded",
-    ActiveState: "inactive",
-    SubState: "dead",
-    WorkingDirectory: developer,
-    ExecStart: `/usr/bin/node dist/cli.js run --config ${configFile}`,
   });
-
+  fakeSystemd.units.set("origin-bridge.service", inactiveUnit());
   await assert.rejects(
     () => gate.bridgeStart(),
-    /reported stale heartbeat/,
+    /Bridge service started but admin endpoint identity or health verification failed/,
   );
+  await adminServer.stop();
+
+  let reconcileCalls = 0;
+  adminServer = await startFakeAdminServer(socketPath, {
+    onStatus: () => ({
+      repository: "local/origin",
+      running: true,
+      heartbeat_at: Date.now(),
+    }),
+    onReconcile: () => {
+      reconcileCalls++;
+      return { reconciled: true };
+    },
+  });
+  fakeSystemd.units.set("origin-bridge.service", {
+    ...inactiveUnit(),
+    ActiveState: "active",
+    SubState: "running",
+  });
+
+  const blockedInspect = await gate.bridgeInspect();
+  assert.equal(blockedInspect.service_state, "blocked");
+  assert.equal(blockedInspect.canonical_recovery_required, true);
+  assert.equal(blockedInspect.heartbeat_fresh, false);
+  await assert.rejects(
+    () => gate.bridgeStart(),
+    /Cannot use already-active bridge: admin endpoint identity or health verification failed/,
+  );
+  await assert.rejects(
+    () => gate.bridgeReconcile(),
+    /refusing reconciliation/,
+  );
+  assert.equal(reconcileCalls, 0, "untrusted admin endpoint must not receive reconcile");
   await adminServer.stop();
 });
 
-test("systemd unit binding rejects missing service_unit, wrong WorkingDirectory, and wrong config path", async (t) => {
+test("systemd unit binding requires exact WorkingDirectory and exact --config argument", async (t) => {
   const fixture = await mkdtemp(join(tmpdir(), "workspace-bridge-unit-binding-"));
   t.after(async () => await rm(fixture, { recursive: true, force: true }));
 
@@ -482,7 +477,6 @@ test("systemd unit binding rejects missing service_unit, wrong WorkingDirectory,
   const stateFile = join(stateDir, "bridge.sqlite");
   createProductionBridgeDatabase(stateFile).close();
 
-  // 1. Missing service_unit in config -> start rejected
   const noUnitConfig = {
     schema_version: 1,
     instance_id: "test-instance",
@@ -516,7 +510,6 @@ test("systemd unit binding rejects missing service_unit, wrong WorkingDirectory,
     /no service_unit registered in bridge configuration/,
   );
 
-  // 2. Unit with wrong WorkingDirectory -> start rejected
   const withUnitConfig = { ...noUnitConfig, service_unit: "custom-bridge.service" };
   await writeFile(configFile, JSON.stringify(withUnitConfig), { mode: 0o600 });
 
@@ -527,13 +520,11 @@ test("systemd unit binding rejects missing service_unit, wrong WorkingDirectory,
     WorkingDirectory: wrongDir,
     ExecStart: `/usr/bin/node dist/cli.js run --config ${configFile}`,
   });
-
   await assert.rejects(
     () => gate.bridgeStart(),
     /is not loaded or does not match repository binding/,
   );
 
-  // 3. Unit with wrong config path in ExecStart -> start rejected
   fakeSystemd.units.set("custom-bridge.service", {
     Id: "custom-bridge.service",
     LoadState: "loaded",
@@ -541,20 +532,54 @@ test("systemd unit binding rejects missing service_unit, wrong WorkingDirectory,
     WorkingDirectory: developer,
     ExecStart: `/usr/bin/node dist/cli.js run --config /etc/wrong/path.json`,
   });
-
   await assert.rejects(
     () => gate.bridgeStart(),
     /is not loaded or does not match repository binding/,
   );
+
+  fakeSystemd.units.set("custom-bridge.service", {
+    Id: "custom-bridge.service",
+    LoadState: "loaded",
+    ActiveState: "inactive",
+    WorkingDirectory: developer,
+  });
+  await assert.rejects(
+    () => gate.bridgeStart(),
+    /is not loaded or does not match repository binding/,
+  );
+
+  fakeSystemd.units.set("custom-bridge.service", {
+    Id: "custom-bridge.service",
+    LoadState: "loaded",
+    ActiveState: "inactive",
+    WorkingDirectory: developer,
+    ExecStart: `/usr/bin/node dist/cli.js run --config ${configFile}.backup`,
+  });
+  await assert.rejects(
+    () => gate.bridgeStart(),
+    /is not loaded or does not match repository binding/,
+  );
+
+  fakeSystemd.units.set("custom-bridge.service", {
+    Id: "custom-bridge.service",
+    LoadState: "loaded",
+    ActiveState: "inactive",
+    WorkingDirectory: developer,
+    ExecStart: `{ path=/usr/bin/node ; argv[]=/usr/bin/node dist/cli.js run --config ${configFile} ; ignore_errors=no ; start_time=[n/a] ; stop_time=[n/a] ; pid=0 ; code=(null) ; status=0/0 }`,
+  });
+  const exactStatus = await gate.bridgeInspect();
+  assert.equal(exactStatus.service_state, "stopped");
+  assert.equal(exactStatus.starting_safe, true);
 });
 
-test("host bridge broker fails closed on duplicate registrations with same instance ID, ahead/behind developer worktree, or stopped reconcile", async (t) => {
+test("host bridge broker fails closed on duplicate registrations, local divergence, stale remote tracking, or stopped reconcile", async (t) => {
   const fixture = await mkdtemp(join(tmpdir(), "workspace-bridge-adversarial-"));
   t.after(async () => await rm(fixture, { recursive: true, force: true }));
 
   const origin = join(fixture, "origin.git");
   const template = join(fixture, "template-ledger");
   const developer = join(fixture, "developer");
+  const publisher = join(fixture, "publisher");
   const configDir = join(fixture, "config");
   const stateDir = join(fixture, "state");
 
@@ -602,15 +627,9 @@ test("host bridge broker fails closed on duplicate registrations with same insta
   };
   await writeFile(join(configDir, "key.pem"), "key\n", { mode: 0o600 });
 
-  // 1. Two configs with SAME instance_id for the same repository must FAIL CLOSED
-  await writeFile(join(configDir, "bridge1.json"), JSON.stringify({
-    ...baseConfig,
-    state_file: state1,
-  }), { mode: 0o600 });
-  await writeFile(join(configDir, "bridge2.json"), JSON.stringify({
-    ...baseConfig,
-    state_file: state2,
-  }), { mode: 0o600 });
+  const config1 = join(configDir, "bridge1.json");
+  await writeFile(config1, JSON.stringify({ ...baseConfig, state_file: state1 }), { mode: 0o600 });
+  await writeFile(join(configDir, "bridge2.json"), JSON.stringify({ ...baseConfig, state_file: state2 }), { mode: 0o600 });
 
   const gate = new WorkspaceMaintenanceGate(template, {
     configDirectory: configDir,
@@ -618,45 +637,70 @@ test("host bridge broker fails closed on duplicate registrations with same insta
     adminProbeRetries: 3,
     adminProbeIntervalMs: 50,
   });
-
   await assert.rejects(
     () => gate.bridgeInspect(),
     /Ambiguous bridge registration: multiple configurations match repository/,
   );
 
-  // 2. Remove duplicate, but make developer worktree ahead of origin/developer
   await rm(join(configDir, "bridge2.json"));
   await writeFile(join(developer, "ahead.txt"), "ahead\n", "utf8");
   await git(developer, "add", ".");
-  await git(developer, "commit", "-m", "Ahead commit"); // Not pushed
+  await git(developer, "commit", "-m", "Ahead commit");
 
+  const fakeSystemd = new FakeSystemdClient({
+    "origin-bridge.service": {
+      Id: "origin-bridge.service",
+      LoadState: "loaded",
+      ActiveState: "inactive",
+      WorkingDirectory: developer,
+      ExecStart: `/usr/bin/node dist/cli.js run --config ${config1}`,
+    },
+  });
   const aheadGate = new WorkspaceMaintenanceGate(template, {
     configDirectory: configDir,
-    systemdClient: new FakeSystemdClient({
-      "origin-bridge.service": {
-        Id: "origin-bridge.service",
-        LoadState: "loaded",
-        ActiveState: "inactive",
-        WorkingDirectory: developer,
-        ExecStart: `/usr/bin/node dist/cli.js run --config ${join(configDir, "bridge1.json")}`,
-      },
-    }),
+    systemdClient: fakeSystemd,
   });
 
   const aheadStatus = await aheadGate.bridgeInspect();
   assert.equal(aheadStatus.starting_safe, false);
-
   await assert.rejects(
     () => aheadGate.bridgeStart(),
-    /Cannot start bridge: developer worktree is dirty\/diverged or service lock is held/,
+    /Cannot start bridge: developer worktree/,
+  );
+
+  await git(developer, "reset", "--hard", "origin/developer");
+  await git(fixture, "clone", origin, publisher);
+  await configureRepository(publisher);
+  await git(publisher, "checkout", "developer");
+  await writeFile(join(publisher, "remote.txt"), "remote\n", "utf8");
+  await git(publisher, "add", ".");
+  await git(publisher, "commit", "-m", "Remote developer advance");
+  await git(publisher, "push", "origin", "developer");
+
+  const localTracking = (await git(developer, "rev-parse", "refs/remotes/origin/developer")).stdout;
+  const localHead = (await git(developer, "rev-parse", "HEAD")).stdout;
+  assert.equal(localTracking, localHead, "fixture keeps the local origin/developer tracking ref stale");
+  const liveRemote = (await git(publisher, "rev-parse", "HEAD")).stdout;
+  assert.notEqual(liveRemote, localHead, "canonical remote must be newer than the stale local checkout");
+
+  const staleStatus = await aheadGate.bridgeInspect();
+  assert.equal(staleStatus.starting_safe, false, "live remote advance must invalidate starting safety without fetching locally");
+  await assert.rejects(
+    () => aheadGate.bridgeStart(),
+    /not at live origin\/developer/,
+  );
+
+  await assert.rejects(
+    () => aheadGate.bridgeReconcile(),
+    /refusing reconciliation/,
   );
 });
 
-test("real-host integration acceptance test (inspects real installation, reconciles if running, tests start only if stopped)", async (t) => {
+test("real-host default integration coverage is read-only inspection only", async (t) => {
   const hostRegistry = new HostBridgeRegistry();
   const candidates = hostRegistry.findCandidateConfigFiles();
   if (candidates.length === 0) {
-    t.skip("No real host bridge configuration found in ~/.config/agentic-workflow/; skipping real host test in non-host/CI environment");
+    t.skip("No real host bridge configuration found in the default registry; skipping real host read-only inspection in non-host/CI environment");
     return;
   }
 
@@ -665,7 +709,7 @@ test("real-host integration acceptance test (inspects real installation, reconci
   try {
     status = await gate.bridgeInspect();
   } catch (error) {
-    t.skip(`Real host bridge inspection was not possible from current directory: ${error.message}`);
+    t.skip(`Real host bridge read-only inspection was not possible from current directory: ${error.message}`);
     return;
   }
 
@@ -674,22 +718,4 @@ test("real-host integration acceptance test (inspects real installation, reconci
   assert.ok(typeof status.service_state === "string", "Service state returned");
   assert.ok(typeof status.bridge_running === "boolean", "Bridge running boolean returned");
   assert.ok(typeof status.canonical_recovery_required === "boolean", "Canonical recovery boolean returned");
-
-  // If the bridge is running: test reconcile
-  if (status.bridge_running) {
-    try {
-      const reconcile = await gate.bridgeReconcile();
-      assert.equal(reconcile.reconciled, true);
-    } catch (error) {
-      if (error.message.includes("admin endpoint is unavailable") || error.message.includes("not running")) {
-        assert.ok(true, "Bridge running pre-upgrade version on host");
-      } else {
-        throw error;
-      }
-    }
-  } else if (status.service_state === "stopped" && status.starting_safe) {
-    // If naturally stopped and safe, exercise start
-    const startRes = await gate.bridgeStart();
-    assert.equal(startRes.status, "started");
-  }
 });
