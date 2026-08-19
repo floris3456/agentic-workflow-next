@@ -55,6 +55,21 @@ workflow.
    reconciliation without supplying paths, unit names, or DBus addresses.
    These tools keep OpenCode rooted in template-development and do not grant
    blanket trust to a parent directory.
+5. Treat `workspace_bridge_inspect` as read-only even though start-safety proof
+   contacts live `origin/developer`: it may use non-mutating remote queries but
+   must not fetch, update refs, replace the developer checkout, start a service,
+   or reconcile bridge state. `workspace_bridge_start` remains the explicit
+   permission-gated host mutation. It may report `already-running` only after the
+   same registered-instance, repository, running, and fresh-heartbeat proof used
+   after a fresh start. Reconciliation must prove that same live endpoint identity
+   and health before sending the fixed reconcile request.
+6. The broker trusts only the operator-registered service unit whose effective
+   systemd `WorkingDirectory` matches the registered developer checkout and whose
+   effective `ExecStart` contains exactly one `--config` argument whose following
+   argument is the exact registered private config path. Missing, ambiguous, or
+   merely substring-matching command data fails closed. A reachable admin socket
+   with missing or wrong instance/repository identity is untrusted and must not
+   supply inspection counts or receive reconciliation.
 
 ## Bounded task procedure
 
@@ -67,7 +82,10 @@ workflow.
    host-local absolute paths.
 4. Run relevant checks through the verified target, inspect the resulting status
    and diff, and keep applicable durable records accurate with the implementation
-   facts they describe.
+   facts they describe. The canonical `tests/*.test.mjs` suite must keep any
+   real-host bridge coverage read-only. Real bridge start/reconcile acceptance is
+   an operator-owned host mutation and lives separately behind an explicit opt-in;
+   do not invoke it merely as routine validation.
 5. When durable mutation is requested, use `workspace_publish` with the exact
    inspected preflight. It creates one non-main commit without repository hooks,
    filters, signing, alternate objects, remote redirection, or agent-controlled
