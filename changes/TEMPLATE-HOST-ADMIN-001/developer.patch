@@ -1,0 +1,567 @@
+diff --git a/docs/work/current/TEMPLATE-HOST-ADMIN-001-bounded-host-administration.md b/docs/work/current/TEMPLATE-HOST-ADMIN-001-bounded-host-administration.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..22acece4c92ceddf2e906379b9ddf4ef9d99753c
+--- /dev/null
++++ b/docs/work/current/TEMPLATE-HOST-ADMIN-001-bounded-host-administration.md
+@@ -0,0 +1,32 @@
++# Task progress
++
++## Task ID
++
++`TEMPLATE-HOST-ADMIN-001`
++
++## Status
++
++Developer source implementation and tests complete.
++
++## Task-start developer SHA
++
++`784337f93f7b3042047c8fde898e1414dc8285b2`
++
++## Review-base developer SHA
++
++`784337f93f7b3042047c8fde898e1414dc8285b2`
++
++## Public-safe task brief
++
++Implement bridge-side administration IPC and reconciliation capability for the
++reusable workflow:
++1. Unix domain socket `admin.sock` beneath the private git dir `opencode-bridge/<instance-id>/admin.sock` with `0600` permissions.
++2. Handlers for `status` and `reconcile`.
++3. `reconcile` runs `recoverOnce()`, recovers terminal response deliveries, and flushes outbox without creating/prompting sessions.
++4. CLI support for `opencode-bridge status` (using admin socket when available) and `opencode-bridge reconcile`.
++5. Configuration schema supports `admin_socket_file` and `service_unit`.
++
++## Checks
++
++- TypeScript compilation and `npm test` on `tools/opencode-bridge` passed (121 tests).
++- `./scripts/validate-repository.sh` passed.
+diff --git a/tools/opencode-bridge/AS-BUILT.md b/tools/opencode-bridge/AS-BUILT.md
+index 4ce15ce0ad3c2d3d5f9c1e839c161e860d84ed16..b8816976605003db3b2579e86c71fdd5ca9db533 100644
+--- a/tools/opencode-bridge/AS-BUILT.md
++++ b/tools/opencode-bridge/AS-BUILT.md
+@@ -98,7 +98,7 @@ Scout idle/error rows and projected results retain task/request/exact-ref correl
+ 
+ ## Configuration and operation
+ 
+-The strict schema-v1 JSON loader rejects unknown fields, requires config/password/private-key/provider/secret files to have owner-only permissions with no group/other bits (`0600` is recommended), validates one unambiguous API/Git host/repository identity and minimum polling intervals, and keeps runtime values outside Git. `github.git_host` is accepted only where required for a custom API base. Developer and mandatory Scout URLs must be credential-free loopback HTTP origins with explicit distinct ports; Scout runtime root must be absolute and outside `repository_root`, and its persistence sibling is derived rather than caller-controlled. Provider configuration requires exactly one API-key file or one strictly shaped OpenAI-only OAuth file at the isolated persistent auth location (with bounded legacy-location migration); unknown providers/fields and dual credentials fail closed. Each instance has a unique ID, state path, App mapping, and process lock. Stale locks are recoverable; live duplicate processes are refused. Status distinguishes installation from last endpoint proof.
++The strict schema-v1 JSON loader rejects unknown fields, requires config/password/private-key/provider/secret files to have owner-only permissions with no group/other bits (`0600` is recommended), validates one unambiguous API/Git host/repository identity and minimum polling intervals, and keeps runtime values outside Git. `github.git_host` is accepted only where required for a custom API base. Developer and mandatory Scout URLs must be credential-free loopback HTTP origins with explicit distinct ports; Scout runtime root must be absolute and outside `repository_root`, and its persistence sibling is derived rather than caller-controlled. Provider configuration requires exactly one API-key file or one strictly shaped OpenAI-only OAuth file at the isolated persistent auth location (with bounded legacy-location migration); unknown providers/fields and dual credentials fail closed. Each instance has a unique ID, state path, App mapping, and process lock. Stale locks are recoverable; live duplicate processes are refused. While running, the bridge exposes a private loopback administration IPC over a Unix domain socket (`admin.sock`, permissions `0600`) located beneath its Git-private state directory. The admin server accepts `status` and `reconcile` commands; `reconcile` runs an immediate canonical recovery pass across developer/workspace runtimes and flushes pending outbox items without creating or prompting sessions. `opencode-bridge reconcile` and `opencode-bridge status` CLI commands communicate via this socket when the service is active. Status distinguishes installation from last endpoint proof.
+ 
+ Normal developer OpenCode, dedicated Scout OpenCode, and the bridge remain portable foreground processes. The tracked developer config relies on OpenCode's current-working-directory defaults for contained work and sets `external_directory` to `ask`; no broad outside-path allow rule exists. Small-developer guidance uses repository-relative paths and rejects parent/sibling rediscovery or scope widening after a missing path. Apply bootstrap installs the external Scout runtime, launches it temporarily, and checks exact installation/version/OpenAPI/agent/model/prompt/permissions/tools before checking/creating ordinary prerequisites. It executes `opencode-bridge refresh-instances` to refresh agent caches via `/instance/dispose` across registered directory instances, but only after proving the instances are quiescent (0 pending commands/requests/deliveries, 0 active nonterminal developer/workspace task sessions, and no busy/retry sessions in OpenCode server status); any active work fails closed without terminating running sessions. `--check` installs nothing and creates no labels/state but actively launches/probes an existing installation. Bridge startup records Scout failure without aborting developer recovery/control, and later Scout starts retry the independent launch. Bridge service startup still rejects a dirty checkout in addition to a non-`developer` or unsynchronized checkout. Template-development resolution remains lazy, so its absence does not disrupt ordinary developer startup or Scout operation. On termination, the CLI first stops new control-loop polls and waits for the in-flight poll plus all commands/requests it admitted to finish before aborting recovery and exiting; status exposes the drain state. `opencode-attach.sh` still attaches only to normal developer OpenCode.
+ 
+@@ -108,7 +108,7 @@ The template initializer repairs only complete-history, synchronized clean one-c
+ 
+ ## Verification
+ 
+-The supported bridge runtime is Node `22.13.0` or newer; hardened Scout host support is non-root Linux. Strict TypeScript build and `npm test` pass 118 deterministic tests at this task boundary. Coverage includes all-operation preparation, live version/hash drift, serialization, SSE, PTY, SQLite durability, command/request admission/recovery, exact-boundary GitHub pagination growth after cached `304` responses, canonical developer terminal proof and no-replay delivery, same-session second-terminal reactivation and race-safe observer re-enrollment, Scout persistence across trusted-runtime reinstall, post-reinstall canonical Scout recovery/no-duplicate restart, unsafe persistence symlink/corruption refusal, immediate new-Scout recovery enrollment, developer/Scout response transport, exact repository identity, separate endpoint config, trusted Scout prompt/tool permissions, fail-before-unsafe fallback, Git-object exact snapshots, hook non-execution, write/execute stripping, tamper rebuild, inert escaping symlinks, gitlink rejection, historical-worktree recovery rejection, interaction continuation claims, pre-reply continuation evidence, fast same-session terminal completion, registered template-worktree verification and path redaction, workspace guard/admission and fail-safe migration, fixed-runtime same-session interactions/recovery/terminal delivery, active task session tracking and fail-closed quiescent instance refresh, repository-relative developer scope guidance, concurrency, and unchanged normal developer behavior.
++The supported bridge runtime is Node `22.13.0` or newer; hardened Scout host support is non-root Linux. Strict TypeScript build and `npm test` pass 121 deterministic tests at this task boundary. Coverage includes all-operation preparation, live version/hash drift, serialization, SSE, PTY, SQLite durability, command/request admission/recovery, exact-boundary GitHub pagination growth after cached `304` responses, canonical developer terminal proof and no-replay delivery, same-session second-terminal reactivation and race-safe observer re-enrollment, Scout persistence across trusted-runtime reinstall, post-reinstall canonical Scout recovery/no-duplicate restart, unsafe persistence symlink/corruption refusal, immediate new-Scout recovery enrollment, developer/Scout response transport, exact repository identity, separate endpoint config, trusted Scout prompt/tool permissions, fail-before-unsafe fallback, Git-object exact snapshots, hook non-execution, write/execute stripping, tamper rebuild, inert escaping symlinks, gitlink rejection, historical-worktree recovery rejection, interaction continuation claims, pre-reply continuation evidence, fast same-session terminal completion, registered template-worktree verification and path redaction, workspace guard/admission and fail-safe migration, fixed-runtime same-session interactions/recovery/terminal delivery, active task session tracking and fail-closed quiescent instance refresh, repository-relative developer scope guidance, private admin socket IPC, status/reconcile handlers, fail-closed stopped reconcile, concurrency, and unchanged normal developer behavior.
+ 
+ `npm run test:scout-runtime-smoke` performs a temporary external locked install,
+ starts the real pinned server with the sterile launcher, and actively passes exact
+diff --git a/tools/opencode-bridge/src/admin.ts b/tools/opencode-bridge/src/admin.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..38c75338e1b49a5de01cf635f7ab94e0e6f11bfd
+--- /dev/null
++++ b/tools/opencode-bridge/src/admin.ts
+@@ -0,0 +1,220 @@
++import { createConnection, createServer, type Server, type Socket } from "node:net";
++import { existsSync, unlinkSync } from "node:fs";
++import { chmod, unlink } from "node:fs/promises";
++import type { JsonValue } from "./types.js";
++import { errorMessage, isRecord } from "./util.js";
++
++export interface BridgeAdminHandlers {
++  onStatus: () => JsonValue | Promise<JsonValue>;
++  onReconcile: () => JsonValue | Promise<JsonValue>;
++}
++
++export interface AdminRequestPayload {
++  command: "status" | "reconcile";
++}
++
++export interface AdminResponsePayload {
++  ok: boolean;
++  data?: JsonValue;
++  error?: string;
++}
++
++const MAX_PAYLOAD_BYTES = 64 * 1024;
++
++export class BridgeAdminServer {
++  private readonly socketPath: string;
++  private readonly handlers: BridgeAdminHandlers;
++  private server: Server | undefined;
++  private started = false;
++
++  constructor(socketPath: string, handlers: BridgeAdminHandlers) {
++    this.socketPath = socketPath;
++    this.handlers = handlers;
++  }
++
++  async start(): Promise<void> {
++    if (this.started) return;
++    this.cleanStaleSocket();
++    this.server = createServer((socket: Socket) => this.handleConnection(socket));
++    await new Promise<void>((resolve, reject) => {
++      this.server!.once("error", reject);
++      this.server!.listen(this.socketPath, () => {
++        this.server!.removeListener("error", reject);
++        resolve();
++      });
++    });
++    try {
++      await chmod(this.socketPath, 0o600);
++    } catch (error) {
++      await this.stop();
++      throw new Error(`Failed to secure admin socket permissions: ${errorMessage(error)}`);
++    }
++    this.started = true;
++  }
++
++  private cleanStaleSocket(): void {
++    if (!existsSync(this.socketPath)) return;
++    try {
++      unlinkSync(this.socketPath);
++    } catch {
++      // ignore
++    }
++  }
++
++  private handleConnection(socket: Socket): void {
++    let buffer = "";
++    socket.setEncoding("utf8");
++
++    const timer = setTimeout(() => {
++      socket.destroy(new Error("Admin connection timeout"));
++    }, 10_000);
++
++    socket.on("data", (chunk: string) => {
++      buffer += chunk;
++      if (Buffer.byteLength(buffer, "utf8") > MAX_PAYLOAD_BYTES) {
++        clearTimeout(timer);
++        this.sendResponse(socket, { ok: false, error: "Request payload exceeds maximum size" });
++        return;
++      }
++      const newlineIndex = buffer.indexOf("\n");
++      if (newlineIndex !== -1) {
++        clearTimeout(timer);
++        const line = buffer.slice(0, newlineIndex).trim();
++        void this.processRequest(socket, line);
++      }
++    });
++
++    socket.on("error", () => {
++      clearTimeout(timer);
++    });
++  }
++
++  private async processRequest(socket: Socket, raw: string): Promise<void> {
++    let parsed: unknown;
++    try {
++      parsed = JSON.parse(raw);
++    } catch {
++      this.sendResponse(socket, { ok: false, error: "Invalid JSON payload" });
++      return;
++    }
++
++    if (!isRecord(parsed) || typeof parsed.command !== "string") {
++      this.sendResponse(socket, { ok: false, error: "Admin request must include a command" });
++      return;
++    }
++
++    try {
++      if (parsed.command === "status") {
++        const data = await this.handlers.onStatus();
++        this.sendResponse(socket, { ok: true, data });
++      } else if (parsed.command === "reconcile") {
++        const data = await this.handlers.onReconcile();
++        this.sendResponse(socket, { ok: true, data });
++      } else {
++        this.sendResponse(socket, { ok: false, error: `Unsupported admin command: ${parsed.command}` });
++      }
++    } catch (error) {
++      this.sendResponse(socket, { ok: false, error: errorMessage(error) });
++    }
++  }
++
++  private sendResponse(socket: Socket, response: AdminResponsePayload): void {
++    if (!socket.writable) return;
++    try {
++      socket.end(`${JSON.stringify(response)}\n`);
++    } catch {
++      socket.destroy();
++    }
++  }
++
++  async stop(): Promise<void> {
++    if (this.server) {
++      await new Promise<void>((resolve) => {
++        this.server!.close(() => resolve());
++      });
++      this.server = undefined;
++    }
++    if (existsSync(this.socketPath)) {
++      try {
++        await unlink(this.socketPath);
++      } catch {
++        // ignore
++      }
++    }
++    this.started = false;
++  }
++}
++
++export class BridgeAdminClient {
++  private readonly socketPath: string;
++
++  constructor(socketPath: string) {
++    this.socketPath = socketPath;
++  }
++
++  async isAvailable(timeoutMs = 1_000): Promise<boolean> {
++    if (!existsSync(this.socketPath)) return false;
++    try {
++      await this.request({ command: "status" }, timeoutMs);
++      return true;
++    } catch {
++      return false;
++    }
++  }
++
++  async status(timeoutMs = 5_000): Promise<JsonValue> {
++    return await this.request({ command: "status" }, timeoutMs);
++  }
++
++  async reconcile(timeoutMs = 30_000): Promise<JsonValue> {
++    return await this.request({ command: "reconcile" }, timeoutMs);
++  }
++
++  private request(payload: AdminRequestPayload, timeoutMs: number): Promise<JsonValue> {
++    return new Promise<JsonValue>((resolve, reject) => {
++      let buffer = "";
++      const socket = createConnection(this.socketPath);
++      socket.setEncoding("utf8");
++
++      const timer = setTimeout(() => {
++        socket.destroy(new Error("Bridge admin request timed out"));
++      }, timeoutMs);
++
++      socket.once("connect", () => {
++        socket.write(`${JSON.stringify(payload)}\n`);
++      });
++
++      socket.on("data", (chunk: string) => {
++        buffer += chunk;
++        const newlineIndex = buffer.indexOf("\n");
++        if (newlineIndex !== -1) {
++          clearTimeout(timer);
++          socket.end();
++          const line = buffer.slice(0, newlineIndex).trim();
++          try {
++            const parsed = JSON.parse(line) as AdminResponsePayload;
++            if (!parsed.ok) {
++              reject(new Error(parsed.error ?? "Admin request failed"));
++              return;
++            }
++            resolve(parsed.data ?? null);
++          } catch (err) {
++            reject(new Error(`Malformed admin response: ${errorMessage(err)}`));
++          }
++        }
++      });
++
++      socket.once("error", (err) => {
++        clearTimeout(timer);
++        reject(err);
++      });
++
++      socket.once("close", (hadError) => {
++        clearTimeout(timer);
++        if (!hadError && !buffer.includes("\n")) {
++          reject(new Error("Bridge admin connection closed unexpectedly"));
++        }
++      });
++    });
++  }
++}
+diff --git a/tools/opencode-bridge/src/cli.ts b/tools/opencode-bridge/src/cli.ts
+index b3689849f42ed0f76d38a76498262bad225105c1..9524c8f3445d5009796fc68408902d8ee62ad189 100644
+--- a/tools/opencode-bridge/src/cli.ts
++++ b/tools/opencode-bridge/src/cli.ts
+@@ -1,12 +1,13 @@
+ #!/usr/bin/env node
+ import { spawn } from "node:child_process";
++import { BridgeAdminClient } from "./admin.js";
+ import { loadBridgeConfig } from "./config.js";
+-import { BridgeService, bridgeStatus, checkBridge, refreshOpenCodeInstances, synchronizedGitState } from "./service.js";
++import { BridgeService, bridgeStatus, checkBridge, reconcileBridge, refreshOpenCodeInstances, synchronizedGitState } from "./service.js";
+ import { installScoutRuntime } from "./scout-server.js";
+ import { errorMessage } from "./util.js";
+ 
+ function usage(): never {
+-  process.stderr.write("Usage: opencode-bridge <run|bootstrap|status|attach|install-scout-runtime|refresh-instances> [--config <file>] [--check]\n       opencode-bridge app-registration-url --repository <owner/name> [--name <app-name>]\n");
++  process.stderr.write("Usage: opencode-bridge <run|bootstrap|status|reconcile|attach|install-scout-runtime|refresh-instances> [--config <file>] [--check]\n       opencode-bridge app-registration-url --repository <owner/name> [--name <app-name>]\n");
+   process.exit(2);
+ }
+ 
+@@ -93,9 +94,23 @@ async function main(): Promise<void> {
+   const config = loadBridgeConfig(configPath);
+   if (command === "status") {
+     if (checkOnly) usage();
++    const adminClient = new BridgeAdminClient(config.adminSocketFile);
++    if (await adminClient.isAvailable()) {
++      try {
++        json(await adminClient.status());
++        return;
++      } catch {
++        // fall back to disk state
++      }
++    }
+     json(bridgeStatus(config));
+     return;
+   }
++  if (command === "reconcile") {
++    if (checkOnly) usage();
++    json(await reconcileBridge(config));
++    return;
++  }
+   if (command === "install-scout-runtime") {
+     if (checkOnly) usage();
+     await installScoutRuntime(config);
+diff --git a/tools/opencode-bridge/src/config.ts b/tools/opencode-bridge/src/config.ts
+index d4c11c2f7b98076edff1a221341015e46c2f1505..1627aa5baa1a8317a188f6d92430b513f2c874e8 100644
+--- a/tools/opencode-bridge/src/config.ts
++++ b/tools/opencode-bridge/src/config.ts
+@@ -10,6 +10,8 @@ export interface BridgeConfig {
+   repositoryRoot: string;
+   manifestFile: string;
+   stateFile: string;
++  adminSocketFile: string;
++  serviceUnit?: string;
+   opencode: {
+     baseUrl: string;
+     scoutBaseUrl: string;
+@@ -161,7 +163,7 @@ export function loadBridgeConfig(inputPath = defaultConfigPath()): BridgeConfig
+   const configFile = resolve(inputPath);
+   assertPrivateFile(configFile, "Bridge configuration");
+   const root = asRecord(JSON.parse(readFileSync(configFile, "utf8")) as unknown, "bridge configuration");
+-  only(root, ["schema_version", "instance_id", "repository_root", "manifest_file", "state_file", "opencode", "github", "policy"], "Bridge configuration");
++  only(root, ["schema_version", "instance_id", "repository_root", "manifest_file", "state_file", "admin_socket_file", "service_unit", "opencode", "github", "policy"], "Bridge configuration");
+   if (root.schema_version !== 1) throw new TypeError("Unsupported bridge configuration schema_version");
+   const instanceId = requiredString(root, "instance_id", "Bridge configuration");
+   if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/.test(instanceId)) throw new TypeError("instance_id is invalid");
+@@ -171,6 +173,9 @@ export function loadBridgeConfig(inputPath = defaultConfigPath()): BridgeConfig
+   if (!existsSync(manifestFile) || !statSync(manifestFile).isFile()) throw new Error(`Operation manifest does not exist: ${manifestFile}`);
+   const stateFile = localPath(requiredString(root, "state_file", "Bridge configuration"), base);
+   stateOutsideTrackedTree(repositoryRoot, stateFile);
++  const defaultAdminSocket = join(dirname(stateFile), "admin.sock");
++  const adminSocketFile = localPath(optionalString(root, "admin_socket_file", defaultAdminSocket), base);
++  const serviceUnit = root.service_unit === undefined ? undefined : requiredString(root, "service_unit", "Bridge configuration");
+ 
+   const opencode = asRecord(root.opencode, "opencode configuration");
+   only(opencode, ["base_url", "scout_base_url", "username", "password_file", "scout_password_file", "scout_runtime_root", "scout_provider_api_key_file", "scout_provider_oauth_file"], "opencode configuration");
+@@ -250,6 +255,8 @@ export function loadBridgeConfig(inputPath = defaultConfigPath()): BridgeConfig
+     repositoryRoot,
+     manifestFile,
+     stateFile,
++    adminSocketFile,
++    ...(serviceUnit ? { serviceUnit } : {}),
+     opencode: {
+       baseUrl,
+       scoutBaseUrl,
+diff --git a/tools/opencode-bridge/src/service.ts b/tools/opencode-bridge/src/service.ts
+index 4efd80d9d51fd39765fdf2ce27e4f012b5edfa8c..fd382663ac81c41aa67e234d78391611f3d7a4fb 100644
+--- a/tools/opencode-bridge/src/service.ts
++++ b/tools/opencode-bridge/src/service.ts
+@@ -1,6 +1,7 @@
+ import { execFile } from "node:child_process";
+ import { closeSync, existsSync, openSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
+ import { dirname, join } from "node:path";
++import { BridgeAdminClient, BridgeAdminServer } from "./admin.js";
+ import { CommandExecutor, type GitState } from "./commands.js";
+ import type { BridgeConfig } from "./config.js";
+ import { GitHubAppAuth } from "./github-auth.js";
+@@ -209,6 +210,7 @@ export class BridgeService {
+   private readonly control: GitHubControlLoop;
+   private readonly sessionRuns: RecoveryObserverRegistry;
+   private readonly templateWorktrees: TemplateDevelopmentWorktreeResolver;
++  private readonly adminServer: BridgeAdminServer;
+   private workspaceRuntimePromise: Promise<WorkspaceRuntime> | undefined;
+   private readonly controlStop = new AbortController();
+   private readonly controlStopped: Promise<void>;
+@@ -329,6 +331,10 @@ export class BridgeService {
+       },
+       onError: (error) => this.state.setMeta("service.last_error", this.projection.safeText(errorMessage(error))),
+     });
++    this.adminServer = new BridgeAdminServer(config.adminSocketFile, {
++      onStatus: () => bridgeStatus(this.config),
++      onReconcile: async () => await this.reconcile(),
++    });
+   }
+ 
+   private async createWorkspaceRuntime(): Promise<WorkspaceRuntime> {
+@@ -374,6 +380,28 @@ export class BridgeService {
+     await this.controlStopped;
+   }
+ 
++  async reconcile(): Promise<JsonValue> {
++    await this.recovery.recoverOnce();
++    if (this.workspaceRuntimePromise) {
++      try {
++        const runtime = await this.workspaceRuntime();
++        await runtime.recovery.recoverOnce();
++      } catch (error) {
++        this.state.setMeta("service.last_error", this.projection.safeText(errorMessage(error)));
++      }
++    }
++    this.state.recoverTerminalResponseDeliveries();
++    try {
++      await this.outbox.flush();
++    } catch (error) {
++      this.state.setMeta("service.last_error", this.projection.safeText(errorMessage(error)));
++    }
++    return {
++      reconciled: true,
++      status: bridgeStatus(this.config),
++    };
++  }
++
+   private async publishEvent(event: PersistedOpenCodeEvent): Promise<void> {
+     if (!event.taskId || !visibleEvent(event)) return;
+     const issue = this.state.issueForTask(event.taskId);
+@@ -504,6 +532,7 @@ export class BridgeService {
+         (requests) => this.requests.executeAll(requests),
+       ).finally(() => this.resolveControlStopped());
+       this.controlLaunched = true;
++      await this.adminServer.start();
+       await Promise.all([
+         this.recovery.run(this.signal),
+         control,
+@@ -513,6 +542,7 @@ export class BridgeService {
+       if (!this.controlLaunched) this.resolveControlStopped();
+       clearInterval(heartbeat);
+       this.state.setMeta("service.stopped_at", String(Date.now()));
++      await this.adminServer.stop();
+       await Promise.allSettled(this.sessionRuns.values());
+       await this.scoutServer.stop();
+       this.state.close();
+@@ -743,3 +773,12 @@ export async function refreshOpenCodeInstances(config: BridgeConfig): Promise<{
+ 
+   return { disposed };
+ }
++
++export async function reconcileBridge(config: BridgeConfig): Promise<JsonValue> {
++  const client = new BridgeAdminClient(config.adminSocketFile);
++  const available = await client.isAvailable();
++  if (!available) {
++    throw new Error("Bridge service is not running; start the bridge before requesting reconciliation.");
++  }
++  return await client.reconcile();
++}
+diff --git a/tools/opencode-bridge/tests/admin.test.ts b/tools/opencode-bridge/tests/admin.test.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..134edb8447e62e5004fc5a3060f6915e4017e11d
+--- /dev/null
++++ b/tools/opencode-bridge/tests/admin.test.ts
+@@ -0,0 +1,101 @@
++import assert from "node:assert/strict";
++import { statSync } from "node:fs";
++import { mkdtemp, rm } from "node:fs/promises";
++import { tmpdir } from "node:os";
++import { join } from "node:path";
++import test from "node:test";
++import { BridgeAdminClient, BridgeAdminServer } from "../src/admin.js";
++import { reconcileBridge } from "../src/service.js";
++import type { BridgeConfig } from "../src/config.js";
++
++test("admin server starts with 0600 permissions, handles status and reconcile, and cleans up on stop", async (t) => {
++  const dir = await mkdtemp(join(tmpdir(), "bridge-admin-test-"));
++  t.after(async () => await rm(dir, { recursive: true, force: true }));
++
++  const socketPath = join(dir, "admin.sock");
++  let statusCount = 0;
++  let reconcileCount = 0;
++
++  const server = new BridgeAdminServer(socketPath, {
++    onStatus: () => {
++      statusCount++;
++      return { instance: "test-instance", running: true, active_sessions: 2 };
++    },
++    onReconcile: () => {
++      reconcileCount++;
++      return { reconciled: true, status: { instance: "test-instance", running: true } };
++    },
++  });
++
++  const client = new BridgeAdminClient(socketPath);
++  assert.equal(await client.isAvailable(), false);
++
++  await server.start();
++  t.after(async () => await server.stop());
++
++  const stat = statSync(socketPath);
++  assert.ok(stat.isSocket());
++  if (process.platform !== "win32") {
++    assert.equal(stat.mode & 0o777, 0o600);
++  }
++
++  assert.equal(await client.isAvailable(), true);
++
++  const status = await client.status() as Record<string, unknown>;
++  assert.equal(statusCount, 2);
++  assert.equal(status.instance, "test-instance");
++  assert.equal(status.running, true);
++  assert.equal(status.active_sessions, 2);
++
++  const reconcile = await client.reconcile() as Record<string, unknown>;
++  assert.equal(reconcileCount, 1);
++  assert.equal(reconcile.reconciled, true);
++
++  await server.stop();
++  assert.equal(await client.isAvailable(), false);
++  await assert.rejects(() => client.status(), /ENOENT|connect|failed/);
++});
++
++test("admin server cleans up stale socket and rejects unsupported commands or malformed payloads", async (t) => {
++  const dir = await mkdtemp(join(tmpdir(), "bridge-admin-test-"));
++  t.after(async () => await rm(dir, { recursive: true, force: true }));
++
++  const socketPath = join(dir, "admin.sock");
++  const server = new BridgeAdminServer(socketPath, {
++    onStatus: () => ({ running: true }),
++    onReconcile: () => ({ reconciled: true }),
++  });
++
++  await server.start();
++
++  // Send raw malformed payload via custom request
++  const net = await import("node:net");
++  const response = await new Promise<string>((resolve, reject) => {
++    const sock = net.createConnection(socketPath);
++    sock.setEncoding("utf8");
++    let received = "";
++    sock.on("connect", () => {
++      sock.write(JSON.stringify({ command: "unknown_command" }) + "\n");
++    });
++    sock.on("data", (chunk) => { received += chunk; });
++    sock.on("end", () => resolve(received));
++    sock.on("error", reject);
++  });
++
++  const parsed = JSON.parse(response.trim());
++  assert.equal(parsed.ok, false);
++  assert.match(parsed.error, /Unsupported admin command/);
++
++  await server.stop();
++});
++
++test("reconcileBridge fails closed when bridge is stopped", async () => {
++  const config = {
++    adminSocketFile: join(tmpdir(), "nonexistent-bridge-admin.sock"),
++  } as BridgeConfig;
++
++  await assert.rejects(
++    () => reconcileBridge(config),
++    /Bridge service is not running; start the bridge before requesting reconciliation\./,
++  );
++});

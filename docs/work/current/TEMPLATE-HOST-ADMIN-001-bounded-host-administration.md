@@ -6,7 +6,7 @@ TEMPLATE-HOST-ADMIN-001
 
 ## Status
 
-in_progress
+completed
 
 ## Task-start template-development SHA
 
@@ -46,58 +46,48 @@ Key requirements:
 
 ## Current objective
 
-Design and implement the host-administration broker in both `developer` (bridge
-admin/status/reconcile IPC/capabilities) and `template-development` (workspace gate
-tools, validation, tests, and documentation).
+Complete task-progress snapshot and change package handoff for TEMPLATE-HOST-ADMIN-001.
 
 ## Current position
 
-Task record initialized; live remote refs confirmed.
+Source implementation, tests, validation, change package creation, and source-lock update complete.
 
 ## Source ranges
 
-- `template-development`: `d274bd8fe41af2ed88b9d00074c1a0e9dc3ca3b7..HEAD`
-- `developer`: `784337f93f7b3042047c8fde898e1414dc8285b2..HEAD`
+- `template-development`: `d274bd8fe41af2ed88b9d00074c1a0e9dc3ca3b7..3b66f1dde50e355e9d405799b2f1e8828d7963d9`
+- `developer`: `784337f93f7b3042047c8fde898e1414dc8285b2..bd287bca8b7b9861f91e2d5c9243c4c5165834f9`
 - `web-orchestration`: `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17..7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`
 
 ## Observed
 
-- Live canonical remote refs:
-  - `origin/main`: `6127611113dfdb66f93a0cfd2d355359aa370833`
-  - `origin/developer`: `784337f93f7b3042047c8fde898e1414dc8285b2`
-  - `origin/web-orchestration`: `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`
-  - `origin/template-development`: `d274bd8fe41af2ed88b9d00074c1a0e9dc3ca3b7`
-- Both `developer` and `template-development` worktrees are clean and up to date with origin.
-- Current 118 bridge tests on `developer` pass.
-- Workspace maintenance unit tests on `template-development` pass.
+- Developer implementation on `developer` (`bd287bca8b7b9861f91e2d5c9243c4c5165834f9`):
+  - Created `tools/opencode-bridge/src/admin.ts` with `BridgeAdminServer` (Unix domain socket `admin.sock` mode 0600) and `BridgeAdminClient`.
+  - Added `adminSocketFile` and `serviceUnit` to `BridgeConfig` schema.
+  - Implemented `reconcile()` on `BridgeService` and added `reconcileBridge` helper.
+  - Added `opencode-bridge reconcile` CLI command and updated `opencode-bridge status` to query live admin socket when available.
+  - Added unit test suite in `tools/opencode-bridge/tests/admin.test.ts` (121 total tests passing).
+  - Pushed to `origin/developer` at `bd287bca8b7b9861f91e2d5c9243c4c5165834f9`.
+- Template-development implementation on `template-development` (`3b66f1dde50e355e9d405799b2f1e8828d7963d9`):
+  - Created `scripts/workspace-maintenance-host.mjs` with `SystemdUserClient`, `HostBridgeRegistry`, `HostBridgeAdminClient`, and `WorkspaceBridgeBroker`.
+  - Added `bridgeInspect()`, `bridgeStart()`, and `bridgeReconcile()` to `WorkspaceMaintenanceGate`.
+  - Added `workspace_bridge_inspect`, `workspace_bridge_start`, and `workspace_bridge_reconcile` tools to `.opencode/plugins/workspace-maintenance.ts`.
+  - Allowed tools in `.opencode/agents/workspace-maintainer.md` and `.opencode/agents/small-workspace-maintainer.md`.
+  - Added positive, adversarial, and real-host acceptance unit tests in `tests/workspace-bridge-host.test.mjs` (17 test suites passing).
+  - Updated `docs/architecture/AS-BUILT.md`, `docs/deviations.md`, and `.opencode/skills/workspace-maintenance/SKILL.md`.
+  - Pushed to `origin/template-development` at `3b66f1dde50e355e9d405799b2f1e8828d7963d9`.
+- Change package `changes/TEMPLATE-HOST-ADMIN-001/` created and verified with schema 3 manifest.
+- Source snapshot updated in `source-lock.json`.
 
 ## Interpretation
 
-The host broker should consist of:
-1. On `developer` (bridge runtime):
-   - A private local admin server (Unix domain socket `admin.sock` beneath the private git dir `opencode-bridge/<instance-id>/admin.sock`, mode 0600) exposed while `BridgeService` runs.
-   - Supported admin requests: `status` and `reconcile`.
-   - `reconcile` runs `recoverOnce()`, recovers terminal response deliveries, flushes the outbox, and returns bounded status.
-   - CLI support: `opencode-bridge status` and `opencode-bridge reconcile`.
-   - Systemd user service integration support and bridge config resolution.
-2. On `template-development` (workspace gate & plugin):
-   - Host bridge broker (`scripts/workspace-maintenance-host.mjs` / `workspace-maintenance-bridge.mjs`):
-     - Deterministic registry lookup in `$AGENTIC_WORKFLOW_CONFIG_DIR` or `~/.config/agentic-workflow/`.
-     - Matches canonical repository identity (`gitHost`, `owner`, `repository`) and verifies `repositoryRoot` shares the exact Git common directory and origin remote.
-     - Inspects systemd user service status via deterministic unit resolution or config specification, verifying WorkingDirectory / ExecStart.
-     - Inspects running bridge via `admin.sock` (or stopped state via private state file).
-     - Starts stopped service via `systemctl --user start <unit>` without accepting user-controlled arguments, verifying post-start health.
-     - Triggers `reconcile` on the running bridge via `admin.sock`.
-     - Redacts all host paths, credentials, and internal details from public output.
-   - Workspace tools:
-     - `workspace_bridge_inspect()`
-     - `workspace_bridge_start()`
-     - `workspace_bridge_reconcile()`
-   - Agent definition, permission schema, skill, and validation updates.
+All requirements of the bounded host-administration capability are satisfied. The Workspace Maintenance Agent can inspect, start, and reconcile the bridge without arbitrary host access, unit name injection, path injection, DBus leakage, or credential exposure.
 
 ## Attempts
 
-None yet.
+1. Implemented bridge admin socket server/client on `developer` and ran test suite: 121 tests passed.
+2. Implemented host bridge broker and workspace tools on `template-development` and ran test suite: 17 tests passed.
+3. Ran full template-development validation including pinned OpenCode runtime inventory check: passed.
+4. Created provenance-verified change package and updated source lock: passed.
 
 ## Changed approach
 
@@ -105,8 +95,10 @@ None.
 
 ## Checks
 
-- Initial `node --test tests/*.test.mjs` on `template-development` passed.
-- Initial `npm test` on `tools/opencode-bridge` in `developer` passed.
+- `developer`: `npm test` passed (121 tests); `./scripts/validate-repository.sh` passed.
+- `template-development`: `node --test tests/*.test.mjs` passed (17 tests); `./scripts/validate-template-development.sh` passed.
+- `git diff --check`: clean on both branches.
+- Change package validation: `changes/TEMPLATE-HOST-ADMIN-001/` verified against schema 3.
 
 ## Blockers / required decisions
 
@@ -114,25 +106,20 @@ None.
 
 ## Remaining work
 
-1. Implement admin socket server and IPC in `tools/opencode-bridge` on `developer`.
-2. Implement host broker in `scripts/workspace-maintenance-host.mjs` (or `workspace-maintenance-bridge.mjs`) on `template-development`.
-3. Add `workspace_bridge_*` tools in `.opencode/plugins/workspace-maintenance.ts` and update permissions/agents.
-4. Add comprehensive unit and adversarial tests.
-5. Add real host acceptance test.
-6. Update documentation (AS-BUILT, deviations, operator docs).
-7. Validate and verify.
+None for this task.
 
 ## Next action
 
-Implement bridge admin socket and reconcile logic in `developer` worktree.
+Handoff.
 
 ## Relevant durable records
 
 - `docs/architecture/AS-BUILT.md`
 - `docs/deviations.md`
 - `tools/opencode-bridge/AS-BUILT.md`
-- `docs/architecture/opencode-bridge.md`
+- `source-lock.json`
+- `changes/TEMPLATE-HOST-ADMIN-001/manifest.json`
 
 ## Last handoff commit
 
-None
+d274bd8fe41af2ed88b9d00074c1a0e9dc3ca3b7
