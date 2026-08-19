@@ -131,15 +131,34 @@
   shares the Git common directory and origin remote, communicates with systemd
   user services without caller-supplied unit names or arguments, and talks to the
   running bridge over a private Unix domain socket (`admin.sock`, mode 0600).
-- Evidence: positive and adversarial tests verify inspection, start, and
-  reconciliation, rejection of foreign repositories, ambiguous registrations,
-  and dirty developer worktrees, and confirm that `workspace_exec` inside
-  Bubblewrap cannot access host DBus or admin sockets.
-- Effect: Workspace Maintenance can safely inspect, start, and reconcile a
-  stopped bridge without human `systemctl` intervention while preserving strict
-  sandbox isolation.
-- Remaining limitation: bridge start via systemd requires a Linux host with
-  an active systemd user session and configured bridge unit. Other platforms or
+  Start safety contacts live `origin/developer` with a non-mutating remote query
+  while requiring the local checkout and tracking ref to remain clean and exact;
+  it does not fetch or update refs. The registered systemd unit must expose the
+  exact developer `WorkingDirectory` and exactly one effective `--config`
+  argument whose following argument is the registered private config path.
+  A live admin endpoint is trusted only when it reports the exact registered
+  instance and repository; start additionally requires `running:true` and a fresh
+  heartbeat, and reconcile proves the same live identity/health before sending
+  its fixed request.
+- Evidence: deterministic tests cover production-schema stopped inspection,
+  duplicate registrations, local divergence, stale local remote-tracking state
+  with a newer live canonical developer, missing/substring-matching systemd
+  `ExecStart` binding, fresh and already-active admin identity/health rejection,
+  and refusal to reconcile an untrusted endpoint. The ordinary discovered
+  real-host test is inspection-only; live start/reconcile acceptance lives in a
+  separate file that requires explicit operator opt-in rather than running under
+  the canonical default validator. Containment fixtures continue to prove that
+  `workspace_exec` cannot access host DBus or admin sockets.
+- Effect: an already-reachable Workspace Maintenance session can use a bounded
+  permission-gated start operation and fixed reconciliation without weakening the
+  Bubblewrap sandbox or granting arbitrary host administration. Wrong, stale, or
+  unprovable host mappings fail closed rather than becoming mutation targets.
+- Remaining limitation: bridge start via systemd requires a Linux host with an
+  active systemd user session and configured bridge unit. More importantly, a
+  remote web orchestrator that reaches Workspace Maintenance only through this
+  bridge cannot invoke the plugin after the bridge is completely down; fully
+  remote dead-bridge recovery still requires a separate always-available host
+  supervisor/control surface or a local operator. Other unsupported or
   unconfigured hosts fail closed safely.
 
 
