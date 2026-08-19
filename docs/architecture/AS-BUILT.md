@@ -142,11 +142,25 @@ The operations are:
 
 Security invariants:
 - The agent supplies no host paths, unit names, DBus addresses, or command arguments.
-- Private configuration, credentials, secrets, raw host paths, and database contents
-  are never returned in public tool responses.
-- The `workspace_exec` Bubblewrap sandbox cannot access host DBus, `$XDG_RUNTIME_DIR`,
-  or the host admin socket.
+- Consequential service start is governed by the permission system (`workspace_bridge_start: ask`), while read-only inspection and idempotent reconciliation use `allow`.
+- Service start requires an explicit operator-owned `service_unit` registration whose systemd `WorkingDirectory` and `ExecStart` match the canonical developer checkout and configuration.
+- Stopped-state inspection queries the production `BridgeState` SQLite schema directly with strict schema-validation; schema drift or query failure fails closed to blocked, never silently zeroed.
+- Private configuration, credentials, secrets, raw host paths, and database contents are never returned in public tool responses.
+- The `workspace_exec` Bubblewrap sandbox cannot access host DBus, `$XDG_RUNTIME_DIR`, or the host admin socket.
 - Missing, ambiguous, foreign, or diverged configurations fail closed.
+
+## Architectural boundary: bridge self-recovery
+
+`workspace_bridge_start` resides within the Workspace Maintenance OpenCode plugin.
+Consequently, a remote web orchestrator that communicates with the repository
+solely through the OpenCode bridge cannot invoke Workspace Maintenance tools if
+the bridge process itself is stopped or unreachable. The host broker provides
+a secure, bounded mechanism for a local Workspace Maintenance session or
+operator-supervised workflow to start and recover the bridge without manual
+`systemctl` terminal interaction; recovering a completely dead bridge from a
+purely remote web orchestrator requires a separate, always-available host
+supervisory control plane (which is outside the scope of this template
+maintenance task).
 
 ## Acceptance-test CI reachability
 

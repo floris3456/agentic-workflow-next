@@ -16,6 +16,11 @@ d274bd8fe41af2ed88b9d00074c1a0e9dc3ca3b7
 
 d274bd8fe41af2ed88b9d00074c1a0e9dc3ca3b7
 
+## Previous rejected handoffs
+
+- developer: `bd287bca8b7b9861f91e2d5c9243c4c5165834f9`
+- template-development: `13a274fc373eef286b09c6d6889bda2255be5425`
+
 ## Public-safe task brief
 
 Implement a bounded, repository-owned host-administration capability for the
@@ -23,90 +28,102 @@ reusable workflow so the Workspace Maintenance Agent can safely inspect and
 recover the repository's existing OpenCode bridge service without gaining
 arbitrary host access.
 
-Key requirements:
-1. Expose operations conceptually equivalent to:
-   - `workspace_bridge_inspect`: inspects the existing bridge installation
-     associated with this exact repository, returning bounded public-safe status.
-   - `workspace_bridge_start`: idempotently starts the existing registered bridge
-     service when stopped, without accepting unit names or running bootstrap/dispose.
-   - `workspace_bridge_reconcile`: asks the running bridge to perform its normal
-     canonical recovery and response delivery pass for mapped sessions.
-2. Maintain strict containment:
-   - Model supplies no unit names, paths, DBus addresses, or command arguments.
-   - Private installation is derived deterministically from canonical repository
-     identity and operator-owned host registry/configuration.
-   - DBus, XDG runtime, host environment, and credentials remain inside the trusted
-     broker and are never exposed to `workspace_exec` or the model.
-   - Fail closed on ambiguous registration, identity mismatch, or missing config.
-3. Tests and verification:
-   - Adversarial and positive unit tests for inspection, start, reconciliation, and
-     path/identity containment.
-   - Real-machine acceptance test distinguishable from CI fixtures.
-   - Durable architecture, AS-BUILT, deviations, and operator documentation updates.
+Key corrections implemented in this review cycle:
+1. Admin socket confinement and file safety:
+   - Constrained socket path strictly to `dirname(state_file)/admin.sock`.
+   - Added parent directory validation (`0700` mode, real directory).
+   - Ensured existing regular files and symlinks are never unlinked during server
+     start; only verified socket files are cleaned up.
+2. Systemd service identity binding:
+   - `workspace_bridge_start` requires an explicit operator-registered `service_unit`.
+   - Service identity is strictly validated against `WorkingDirectory` and `ExecStart`
+     referencing the exact private configuration.
+   - Removed guessed service names from start path; unified with `watch-developer-sync.sh`.
+3. Stopped-bridge SQLite state inspection:
+   - Replaced flawed fallback queries with exact queries against the real
+     production `BridgeState` schema (`commands`, `requests`, `github_outbox`,
+     `response_deliveries`, `task_sessions`, `scout_sessions`).
+   - Added schema validation (`sqlite_master`); schema drift or query failure
+     fails closed to blocked, never silently zeroed.
+   - Applied production terminal session semantics (`session.idle`, `session.error`, `terminal`).
+4. Post-start health verification:
+   - Required post-start proofs before reporting success: systemd unit active,
+     admin endpoint reachable, status successful, instance and repository identity
+     matching expected installation, and fresh heartbeat.
+5. Registration ambiguity defense:
+   - Rejected duplicate matching registrations even when instance IDs match.
+6. Permission boundary:
+   - Set `workspace_bridge_start` permission to `ask`.
+   - `workspace_bridge_inspect` and `workspace_bridge_reconcile` set to `allow`.
+   - Updated runtime inventory validator to assert effective permissions.
+7. Developer synchronization proof:
+   - `checkStartingSafe` verifies canonical repository identity, `developer` branch,
+     clean tree, local HEAD equality with `@{upstream}`, and zero ahead/behind counts.
+8. Documentation and configuration updates:
+   - Updated operator documentation, examples, AS-BUILT, and deviations.
+9. Real-host acceptance status:
+   - Tested real host inspection and reconciliation on the active installation.
+   - Distinguished fixture-tested start behavior from live non-destructive testing.
+10. Architectural boundary documentation:
+    - Documented that `workspace_bridge_start` resides inside the Workspace Maintenance
+      plugin, which requires a separate external host supervisor if recovery of a
+      dead bridge is needed from a purely remote web orchestrator.
 
 ## Current objective
 
-Complete task-progress snapshot and change package handoff for TEMPLATE-HOST-ADMIN-001.
+Handoff of corrected source ranges and change package for independent review.
 
 ## Current position
 
-Source implementation, tests, validation, change package creation, and source-lock update complete.
+Source corrections pushed to `developer` (`c6b747f00ad7509c1340fc11fca1466abb8eb1f9`)
+and `template-development`; all tests and validators passing.
 
 ## Source ranges
 
 - `template-development`: `d274bd8fe41af2ed88b9d00074c1a0e9dc3ca3b7..3b66f1dde50e355e9d405799b2f1e8828d7963d9`
-- `developer`: `784337f93f7b3042047c8fde898e1414dc8285b2..bd287bca8b7b9861f91e2d5c9243c4c5165834f9`
+- `developer`: `784337f93f7b3042047c8fde898e1414dc8285b2..c6b747f00ad7509c1340fc11fca1466abb8eb1f9`
 - `web-orchestration`: `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17..7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`
 
 ## Observed
 
-- Developer implementation on `developer` (`bd287bca8b7b9861f91e2d5c9243c4c5165834f9`):
-  - Created `tools/opencode-bridge/src/admin.ts` with `BridgeAdminServer` (Unix domain socket `admin.sock` mode 0600) and `BridgeAdminClient`.
-  - Added `adminSocketFile` and `serviceUnit` to `BridgeConfig` schema.
-  - Implemented `reconcile()` on `BridgeService` and added `reconcileBridge` helper.
-  - Added `opencode-bridge reconcile` CLI command and updated `opencode-bridge status` to query live admin socket when available.
-  - Added unit test suite in `tools/opencode-bridge/tests/admin.test.ts` (121 total tests passing).
-  - Pushed to `origin/developer` at `bd287bca8b7b9861f91e2d5c9243c4c5165834f9`.
-- Template-development implementation on `template-development` (`3b66f1dde50e355e9d405799b2f1e8828d7963d9`):
-  - Created `scripts/workspace-maintenance-host.mjs` with `SystemdUserClient`, `HostBridgeRegistry`, `HostBridgeAdminClient`, and `WorkspaceBridgeBroker`.
-  - Added `bridgeInspect()`, `bridgeStart()`, and `bridgeReconcile()` to `WorkspaceMaintenanceGate`.
-  - Added `workspace_bridge_inspect`, `workspace_bridge_start`, and `workspace_bridge_reconcile` tools to `.opencode/plugins/workspace-maintenance.ts`.
-  - Allowed tools in `.opencode/agents/workspace-maintainer.md` and `.opencode/agents/small-workspace-maintainer.md`.
-  - Added positive, adversarial, and real-host acceptance unit tests in `tests/workspace-bridge-host.test.mjs` (17 test suites passing).
-  - Updated `docs/architecture/AS-BUILT.md`, `docs/deviations.md`, and `.opencode/skills/workspace-maintenance/SKILL.md`.
-  - Pushed to `origin/template-development` at `3b66f1dde50e355e9d405799b2f1e8828d7963d9`.
-- Change package `changes/TEMPLATE-HOST-ADMIN-001/` created and verified with schema 3 manifest.
-- Source snapshot updated in `source-lock.json`.
+- Developer checks:
+  - `tools/opencode-bridge`: TypeScript build and `npm test` passed 123 tests.
+  - `./scripts/validate-repository.sh` passed.
+  - `git diff --check` passed cleanly.
+  - Pushed to `origin/developer` at `c6b747f00ad7509c1340fc11fca1466abb8eb1f9`.
+- Template-development checks:
+  - `node --test tests/*.test.mjs` passed 20 test suites.
+  - `./scripts/validate-template-development.sh` passed full validation (including real pinned OpenCode 1.18.16 inventory and permission validation).
+  - `git diff --check` passed cleanly.
 
 ## Interpretation
 
-All requirements of the bounded host-administration capability are satisfied. The Workspace Maintenance Agent can inspect, start, and reconcile the bridge without arbitrary host access, unit name injection, path injection, DBus leakage, or credential exposure.
+All 10 review findings have been resolved with strict fail-closed guarantees and comprehensive tests.
 
 ## Attempts
 
-1. Implemented bridge admin socket server/client on `developer` and ran test suite: 121 tests passed.
-2. Implemented host bridge broker and workspace tools on `template-development` and ran test suite: 17 tests passed.
-3. Ran full template-development validation including pinned OpenCode runtime inventory check: passed.
-4. Created provenance-verified change package and updated source lock: passed.
+1. Fixed admin socket file safety and parent permissions on `developer`.
+2. Unified `service_unit` in `config.ts` and `watch-developer-sync.sh`.
+3. Updated `workspace-maintenance-host.mjs` on `template-development` with real `BridgeState` queries, `ask` permission, post-start health checks, strict unit bindings, and developer synchronization proof.
+4. Expanded test suite with 20 test suites on `template-development` and 123 tests on `developer`.
 
 ## Changed approach
 
-None.
+Corrected all review findings as requested.
 
 ## Checks
 
-- `developer`: `npm test` passed (121 tests); `./scripts/validate-repository.sh` passed.
-- `template-development`: `node --test tests/*.test.mjs` passed (17 tests); `./scripts/validate-template-development.sh` passed.
-- `git diff --check`: clean on both branches.
-- Change package validation: `changes/TEMPLATE-HOST-ADMIN-001/` verified against schema 3.
+- `developer`: `npm test` (123 tests) and `./scripts/validate-repository.sh` passed.
+- `template-development`: `node --test tests/*.test.mjs` (20 tests) and `./scripts/validate-template-development.sh` passed.
+- `git diff --check`: clean across all branches.
 
 ## Blockers / required decisions
 
-None.
+None for this task. The dead-bridge remote self-recovery limitation is documented as a design boundary.
 
 ## Remaining work
 
-None for this task.
+Awaiting independent review of the corrected handoff.
 
 ## Next action
 
@@ -117,9 +134,10 @@ Handoff.
 - `docs/architecture/AS-BUILT.md`
 - `docs/deviations.md`
 - `tools/opencode-bridge/AS-BUILT.md`
+- `tools/opencode-bridge/README.md`
 - `source-lock.json`
 - `changes/TEMPLATE-HOST-ADMIN-001/manifest.json`
 
 ## Last handoff commit
 
-d274bd8fe41af2ed88b9d00074c1a0e9dc3ca3b7
+13a274fc373eef286b09c6d6889bda2255be5425

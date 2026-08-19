@@ -264,16 +264,28 @@ export class HostBridgeRegistry {
         }
 
         const stateFile = resolve(dirname(filePath), parsed.state_file);
-        const defaultAdminSocket = join(dirname(stateFile), "admin.sock");
-        const adminSocketFile = resolve(dirname(filePath), parsed.admin_socket_file ?? defaultAdminSocket);
+        const derivedAdminSocket = join(dirname(stateFile), "admin.sock");
+        if (parsed.admin_socket_file !== undefined) {
+          const configuredSocket = resolve(dirname(filePath), parsed.admin_socket_file);
+          if (configuredSocket !== derivedAdminSocket) {
+            continue; // invalid admin socket location
+          }
+        }
+
+        let serviceUnit = undefined;
+        if (parsed.service_unit !== undefined) {
+          if (typeof parsed.service_unit === "string" && /^[A-Za-z0-9_.-]+\.service$/.test(parsed.service_unit)) {
+            serviceUnit = parsed.service_unit;
+          }
+        }
 
         matchingConfigs.push({
           configFile: filePath,
           instanceId: parsed.instance_id,
           repositoryRoot: rootCanonical,
           stateFile,
-          adminSocketFile,
-          serviceUnit: parsed.service_unit,
+          adminSocketFile: derivedAdminSocket,
+          serviceUnit,
           opencode: parsed.opencode ?? {},
           github: parsed.github,
         });
@@ -286,8 +298,7 @@ export class HostBridgeRegistry {
       throw new Error(`No registered bridge configuration found for repository ${repoIdentity.owner}/${repoIdentity.repository}`);
     }
 
-    const uniqueInstances = new Set(matchingConfigs.map((c) => c.instanceId));
-    if (uniqueInstances.size > 1) {
+    if (matchingConfigs.length > 1) {
       throw new Error(`Ambiguous bridge registration: multiple configurations match repository ${repoIdentity.owner}/${repoIdentity.repository}`);
     }
 
@@ -330,6 +341,8 @@ export class WorkspaceBridgeBroker {
     this.systemdClient = options.systemdClient ?? new SystemdUserClient(options);
     this.adminClientFactory = options.adminClientFactory ?? ((socketPath) => new HostBridgeAdminClient(socketPath));
     this.fetchFn = options.fetchFn ?? globalThis.fetch;
+    this.adminProbeRetries = options.adminProbeRetries ?? 30;
+    this.adminProbeIntervalMs = options.adminProbeIntervalMs ?? 500;
   }
 
   async verifyInstructionRoot() {
@@ -354,54 +367,48 @@ export class WorkspaceBridgeBroker {
   }
 
   async resolveSystemdUnit(config) {
-    const repoIdentity = parseOriginRepository(
-      (await git(config.repositoryRoot, ["remote", "get-url", "origin"])).stdout,
-    );
-    const candidates = [
-      ...(config.serviceUnit ? [config.serviceUnit] : []),
-      `${repoIdentity.repository}-bridge.service`,
-      `${config.instanceId}-bridge.service`,
-      `${repoIdentity.owner}-${repoIdentity.repository}-bridge.service`,
-    ];
-    const uniqueCandidates = [...new Set(candidates)];
+    if (!config.serviceUnit) {
+      return { available: false, unitName: null, properties: null, registered: false };
+    }
 
     const isAvailable = await this.systemdClient.isAvailable();
     if (!isAvailable) {
-      return { available: false, unitName: uniqueCandidates[0], properties: null };
+      return { available: false, unitName: config.serviceUnit, properties: null, registered: true };
     }
 
-    const matched = [];
-    for (const name of uniqueCandidates) {
+    let props;
+    try {
+      props = await this.systemdClient.showUnit(config.serviceUnit);
+    } catch {
+      return { available: false, unitName: config.serviceUnit, properties: null, registered: true };
+    }
+
+    if (props.LoadState !== "loaded") {
+      return { available: true, unitName: config.serviceUnit, properties: props, registered: true, loaded: false };
+    }
+
+    // Verify WorkingDirectory matches repositoryRoot
+    if (props.WorkingDirectory) {
       try {
-        const props = await this.systemdClient.showUnit(name);
-        if (props.LoadState === "loaded") {
-          if (props.WorkingDirectory) {
-            try {
-              const unitDir = await canonicalDirectory(props.WorkingDirectory, "Unit working directory");
-              if (unitDir !== config.repositoryRoot) continue;
-            } catch {
-              continue;
-            }
-          }
-          matched.push({ name, props });
+        const unitDir = await canonicalDirectory(props.WorkingDirectory, "Unit working directory");
+        if (unitDir !== config.repositoryRoot) {
+          return { available: false, unitName: config.serviceUnit, properties: null, registered: true, error: "working-directory-mismatch" };
         }
       } catch {
-        // unit not found or failed
+        return { available: false, unitName: config.serviceUnit, properties: null, registered: true, error: "working-directory-invalid" };
+      }
+    } else {
+      return { available: false, unitName: config.serviceUnit, properties: null, registered: true, error: "working-directory-missing" };
+    }
+
+    // Verify ExecStart references the exact config file
+    if (props.ExecStart) {
+      if (!props.ExecStart.includes(config.configFile)) {
+        return { available: false, unitName: config.serviceUnit, properties: null, registered: true, error: "exec-start-config-mismatch" };
       }
     }
 
-    if (matched.length > 1) {
-      const distinctNames = new Set(matched.map((m) => m.name));
-      if (distinctNames.size > 1) {
-        throw new Error(`Ambiguous systemd service unit: multiple units match repository (${[...distinctNames].join(", ")})`);
-      }
-    }
-
-    if (matched.length === 1) {
-      return { available: true, unitName: matched[0].name, properties: matched[0].props };
-    }
-
-    return { available: true, unitName: uniqueCandidates[0], properties: null };
+    return { available: true, unitName: config.serviceUnit, properties: props, registered: true, loaded: true };
   }
 
   async probeOpenCodeHealth(baseUrl) {
@@ -418,22 +425,24 @@ export class WorkspaceBridgeBroker {
   }
 
   async readStateFromDisk(stateFile) {
-    const empty = {
-      initialized: existsSync(stateFile),
-      running: false,
-      pid: null,
-      heartbeat_at: null,
-      last_error: null,
-      pending_commands: 0,
-      pending_requests: 0,
-      pending_response_deliveries: 0,
-      pending_outbox: 0,
-      active_task_sessions: 0,
-      active_developer_sessions: 0,
-      active_workspace_sessions: 0,
-      scout_sessions: 0,
-    };
-    if (!existsSync(stateFile)) return empty;
+    if (!existsSync(stateFile)) {
+      return {
+        initialized: false,
+        schema_valid: true,
+        running: false,
+        pid: null,
+        heartbeat_at: null,
+        last_error: null,
+        pending_commands: 0,
+        pending_requests: 0,
+        pending_response_deliveries: 0,
+        pending_outbox: 0,
+        active_task_sessions: 0,
+        active_developer_sessions: 0,
+        active_workspace_sessions: 0,
+        scout_sessions: 0,
+      };
+    }
 
     let db;
     try {
@@ -442,6 +451,7 @@ export class WorkspaceBridgeBroker {
         const syncDb = new nodeSqlite.DatabaseSync(stateFile, { readOnly: true, open: true });
         db = {
           get: (sql, ...params) => syncDb.prepare(sql).get(...params),
+          all: (sql, ...params) => syncDb.prepare(sql).all(...params),
           close: () => syncDb.close(),
         };
       }
@@ -456,6 +466,7 @@ export class WorkspaceBridgeBroker {
           const syncDb = new bunSqlite.Database(stateFile, { readonly: true });
           db = {
             get: (sql, ...params) => syncDb.query(sql).get(...params),
+            all: (sql, ...params) => syncDb.query(sql).all(...params),
             close: () => syncDb.close(),
           };
         }
@@ -464,41 +475,83 @@ export class WorkspaceBridgeBroker {
       }
     }
 
-    if (!db) return empty;
+    if (!db) {
+      return {
+        initialized: true,
+        schema_valid: false,
+        running: false,
+        error: "SQLite driver unavailable for stopped state inspection",
+      };
+    }
 
     try {
-      const getMeta = (key) => {
-        try {
-          const row = db.get("SELECT value FROM meta WHERE key=?", key);
-          return row?.value ?? null;
-        } catch {
-          return null;
+      // 1. Verify schema tables in sqlite_master
+      const requiredTables = [
+        "meta",
+        "commands",
+        "requests",
+        "github_outbox",
+        "response_deliveries",
+        "task_sessions",
+        "scout_sessions",
+      ];
+      const foundTables = new Set(
+        (db.all("SELECT name FROM sqlite_master WHERE type='table'") ?? []).map((row) => row.name),
+      );
+      for (const table of requiredTables) {
+        if (!foundTables.has(table)) {
+          return {
+            initialized: true,
+            schema_valid: false,
+            running: false,
+            error: `Bridge database missing required table: ${table}`,
+          };
         }
+      }
+
+      const getMeta = (key) => {
+        const row = db.get("SELECT value FROM meta WHERE key=?", key);
+        return row?.value ?? null;
       };
       const count = (sql, ...params) => {
-        try {
-          const row = db.get(sql, ...params);
-          return Number(row?.count ?? 0);
-        } catch {
-          return 0;
-        }
+        const row = db.get(sql, ...params);
+        return Number(row?.count ?? 0);
       };
 
       const pid = Number(getMeta("service.pid"));
       const heartbeatAt = Number(getMeta("service.heartbeat_at"));
       const lastError = getMeta("service.last_error");
 
-      const pendingCommands = count("SELECT COUNT(*) AS count FROM commands WHERE status IN ('accepted', 'applying')");
-      const pendingRequests = count("SELECT COUNT(*) AS count FROM requests WHERE status IN ('accepted', 'applying')");
-      const pendingDeliveries = count("SELECT COUNT(*) AS count FROM response_deliveries WHERE delivered_at IS NULL");
-      const pendingOutbox = count("SELECT COUNT(*) AS count FROM outbox WHERE delivered_at IS NULL");
-      const activeTaskSessions = count("SELECT COUNT(*) AS count FROM task_sessions WHERE session_state NOT IN ('completed', 'failed', 'cancelled', 'terminal')");
-      const activeDeveloperSessions = count("SELECT COUNT(*) AS count FROM task_sessions WHERE session_kind='developer' AND session_state NOT IN ('completed', 'failed', 'cancelled', 'terminal')");
-      const activeWorkspaceSessions = count("SELECT COUNT(*) AS count FROM task_sessions WHERE session_kind='workspace' AND session_state NOT IN ('completed', 'failed', 'cancelled', 'terminal')");
-      const scoutSessions = count("SELECT COUNT(*) AS count FROM scout_sessions WHERE session_state NOT IN ('completed', 'failed', 'cancelled', 'terminal')");
+      const pendingCommands = count("SELECT COUNT(*) AS count FROM commands WHERE state IN ('accepted', 'applying')");
+      const pendingRequests = count("SELECT COUNT(*) AS count FROM requests WHERE state IN ('accepted', 'applying')");
+      const pendingDeliveries = count("SELECT COUNT(*) AS count FROM response_deliveries WHERE queued_at IS NULL");
+      const pendingOutbox = count("SELECT COUNT(*) AS count FROM github_outbox WHERE delivered_at IS NULL");
+
+      const isNonTerminal = (state) => !/session\.(?:idle|error)/i.test(state) && !/^(?:terminal|completed|failed)$/i.test(state);
+
+      const taskRows = db.all("SELECT session_kind, session_state FROM task_sessions") ?? [];
+      let activeTaskSessions = 0;
+      let activeDeveloperSessions = 0;
+      let activeWorkspaceSessions = 0;
+      for (const row of taskRows) {
+        if (isNonTerminal(row.session_state)) {
+          activeTaskSessions++;
+          if (row.session_kind === "workspace") activeWorkspaceSessions++;
+          else activeDeveloperSessions++;
+        }
+      }
+
+      const scoutRows = db.all("SELECT session_state FROM scout_sessions") ?? [];
+      let scoutSessions = 0;
+      for (const row of scoutRows) {
+        if (isNonTerminal(row.session_state)) {
+          scoutSessions++;
+        }
+      }
 
       return {
         initialized: true,
+        schema_valid: true,
         running: false,
         pid: Number.isSafeInteger(pid) ? pid : null,
         heartbeat_at: Number.isSafeInteger(heartbeatAt) && heartbeatAt > 0 ? heartbeatAt : null,
@@ -512,23 +565,43 @@ export class WorkspaceBridgeBroker {
         active_workspace_sessions: activeWorkspaceSessions,
         scout_sessions: scoutSessions,
       };
-    } catch {
-      return empty;
+    } catch (error) {
+      return {
+        initialized: true,
+        schema_valid: false,
+        running: false,
+        error: `Bridge database query failed: ${error.message}`,
+      };
     } finally {
       try { db?.close(); } catch { /* ignore */ }
     }
   }
 
   async checkStartingSafe(config, unit) {
-    if (!unit.properties || unit.properties.LoadState !== "loaded") {
+    if (!config.serviceUnit || !unit.registered || !unit.properties || unit.properties.LoadState !== "loaded") {
       return false;
     }
+
     try {
       const repoRoot = config.repositoryRoot;
+      const originRes = await git(repoRoot, ["remote", "get-url", "origin"], true);
+      if (originRes.exitCode !== 0) return false;
+
       const branch = (await git(repoRoot, ["branch", "--show-current"], true)).stdout;
       if (branch !== "developer") return false;
+
       const statusRes = (await git(repoRoot, ["status", "--porcelain"], true)).stdout;
       if (statusRes.length > 0) return false;
+
+      const upstream = await git(repoRoot, ["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{upstream}"], true);
+      if (upstream.exitCode !== 0 || !upstream.stdout || !upstream.stdout.endsWith("/developer")) {
+        return false;
+      }
+
+      const countRes = await git(repoRoot, ["rev-list", "--left-right", "--count", "HEAD...@{upstream}"], true);
+      if (countRes.exitCode !== 0) return false;
+      const [ahead, behind] = countRes.stdout.trim().split(/\s+/).map(Number);
+      if (ahead !== 0 || behind !== 0) return false;
     } catch {
       return false;
     }
@@ -568,7 +641,7 @@ export class WorkspaceBridgeBroker {
       // ignore
     }
 
-    if (unit.properties) {
+    if (unit.registered && unit.properties) {
       const activeState = unit.properties.ActiveState;
       if (activeState === "active") serviceState = "running";
       else if (activeState === "inactive") serviceState = "stopped";
@@ -580,6 +653,9 @@ export class WorkspaceBridgeBroker {
     } else if (adminLive) {
       serviceState = "running";
       isRunning = true;
+    } else if (!unit.registered) {
+      serviceState = "unregistered";
+      isRunning = false;
     } else {
       serviceState = existsSync(config.stateFile) ? "stopped" : "unknown";
       isRunning = false;
@@ -596,6 +672,10 @@ export class WorkspaceBridgeBroker {
       statusData = await this.readStateFromDisk(config.stateFile);
     }
 
+    if (statusData?.schema_valid === false) {
+      serviceState = "blocked";
+    }
+
     const opencodeHealthy = await this.probeOpenCodeHealth(config.opencode?.base_url);
     const heartbeatAt = typeof statusData?.heartbeat_at === "number" ? statusData.heartbeat_at : null;
     const heartbeatFresh = isRunning && heartbeatAt !== null && Date.now() - heartbeatAt < 30_000;
@@ -610,13 +690,14 @@ export class WorkspaceBridgeBroker {
     const scoutSessions = Number(statusData?.scout_sessions ?? 0);
 
     const canonicalRecoveryRequired =
+      statusData?.schema_valid === false ||
       activeTaskSessions > 0 ||
       pendingCommands > 0 ||
       pendingRequests > 0 ||
       pendingDeliveries > 0 ||
       pendingOutbox > 0;
 
-    const startingSafe = !isRunning && (await this.checkStartingSafe(config, unit));
+    const startingSafe = !isRunning && statusData?.schema_valid !== false && (await this.checkStartingSafe(config, unit));
 
     const repoIdentity = parseOriginRepository(
       (await git(config.repositoryRoot, ["remote", "get-url", "origin"])).stdout,
@@ -645,13 +726,19 @@ export class WorkspaceBridgeBroker {
 
   async start() {
     const { config, unit } = await this.resolveBridgeContext();
+    if (!config.serviceUnit) {
+      throw new Error("Cannot start bridge: no service_unit registered in bridge configuration");
+    }
     if (!unit.available || !unit.properties || unit.properties.LoadState !== "loaded") {
-      throw new Error(`Cannot start bridge: systemd unit is not loaded or unavailable`);
+      throw new Error(`Cannot start bridge: registered systemd unit ${config.serviceUnit} is not loaded or does not match repository binding`);
     }
 
     if (unit.properties.ActiveState === "active") {
-      const current = await this.inspect();
-      return { status: "already-running", bridge: current };
+      const adminClient = this.adminClientFactory(config.adminSocketFile);
+      if (await adminClient.isAvailable(1000)) {
+        const current = await this.inspect();
+        return { status: "already-running", bridge: current };
+      }
     }
 
     const safeToStart = await this.checkStartingSafe(config, unit);
@@ -659,19 +746,19 @@ export class WorkspaceBridgeBroker {
       throw new Error("Cannot start bridge: developer worktree is dirty/diverged or service lock is held");
     }
 
-    await this.systemdClient.startUnit(unit.name ?? unit.unitName);
+    await this.systemdClient.startUnit(config.serviceUnit);
 
     let startedActive = false;
     for (let attempt = 0; attempt < 30; attempt++) {
       await new Promise((r) => setTimeout(r, 500));
       try {
-        const props = await this.systemdClient.showUnit(unit.name ?? unit.unitName);
+        const props = await this.systemdClient.showUnit(config.serviceUnit);
         if (props.ActiveState === "active") {
           startedActive = true;
           break;
         }
         if (props.ActiveState === "failed") {
-          throw new Error(`Bridge service entered failed state after start`);
+          throw new Error("Bridge service entered failed state after start");
         }
       } catch (err) {
         if (err.message.includes("failed state")) throw err;
@@ -682,10 +769,48 @@ export class WorkspaceBridgeBroker {
       throw new Error("Bridge service start timed out waiting for active state");
     }
 
+    // Prove post-start health via admin socket
     const adminClient = this.adminClientFactory(config.adminSocketFile);
-    for (let attempt = 0; attempt < 20; attempt++) {
-      if (await adminClient.isAvailable(500)) break;
-      await new Promise((r) => setTimeout(r, 500));
+    let adminLive = false;
+    let liveStatus = null;
+    for (let attempt = 0; attempt < this.adminProbeRetries; attempt++) {
+      if (await adminClient.isAvailable(500)) {
+        try {
+          liveStatus = await adminClient.status(2000);
+          if (liveStatus && typeof liveStatus === "object") {
+            adminLive = true;
+            break;
+          }
+        } catch {
+          // retry
+        }
+      }
+      await new Promise((r) => setTimeout(r, this.adminProbeIntervalMs));
+    }
+
+    if (!adminLive || !liveStatus) {
+      throw new Error("Bridge service started in systemd but admin endpoint is unreachable or unresponsive");
+    }
+
+    if (liveStatus.instance && liveStatus.instance !== config.instanceId) {
+      throw new Error(`Bridge service started but reported mismatched instance identity: ${liveStatus.instance}`);
+    }
+
+    const repoIdentity = parseOriginRepository(
+      (await git(config.repositoryRoot, ["remote", "get-url", "origin"])).stdout,
+    );
+    const expectedRepo = `${repoIdentity.owner}/${repoIdentity.repository}`;
+    if (liveStatus.repository && liveStatus.repository.toLowerCase() !== expectedRepo.toLowerCase()) {
+      throw new Error(`Bridge service started but reported mismatched repository identity: ${liveStatus.repository}`);
+    }
+
+    if (liveStatus.running !== true) {
+      throw new Error("Bridge service started but admin status reported running=false");
+    }
+
+    const heartbeatAt = typeof liveStatus.heartbeat_at === "number" ? liveStatus.heartbeat_at : null;
+    if (heartbeatAt === null || Date.now() - heartbeatAt > 30_000) {
+      throw new Error("Bridge service started but reported stale heartbeat");
     }
 
     const after = await this.inspect();

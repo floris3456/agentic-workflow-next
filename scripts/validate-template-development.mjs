@@ -83,7 +83,7 @@ if (existsSync(join(root, ".opencode/agents/workspace-maintainer.md"))) {
     "workspace_list: allow", "workspace_inspect: allow", "workspace_read: allow",
     "workspace_write: allow", "workspace_delete: allow", "workspace_glob: allow",
     "workspace_grep: allow", "workspace_exec: allow", "workspace_publish: allow",
-    "workspace_bridge_inspect: allow", "workspace_bridge_start: allow", "workspace_bridge_reconcile: allow",
+    "workspace_bridge_inspect: allow", "workspace_bridge_start: ask", "workspace_bridge_reconcile: allow",
     "load\n`workspace-maintenance`",
     "Reading them never transfers",
   ]) if (!agent.includes(term)) fail(`workspace-maintainer is missing required boundary: ${term}`);

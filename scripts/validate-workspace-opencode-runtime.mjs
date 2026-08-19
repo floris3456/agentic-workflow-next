@@ -141,12 +141,28 @@ try {
   assert.equal(agent.options?.reasoningEffort, "max");
   assert(Array.isArray(agent.permission), "workspace-maintainer permission inventory is missing");
 
+  const toolPermissions = {
+    question: "allow",
+    workspace_list: "allow",
+    workspace_inspect: "allow",
+    workspace_read: "allow",
+    workspace_write: "allow",
+    workspace_delete: "allow",
+    workspace_glob: "allow",
+    workspace_grep: "allow",
+    workspace_exec: "allow",
+    workspace_publish: "allow",
+    workspace_bridge_inspect: "allow",
+    workspace_bridge_start: "ask",
+    workspace_bridge_reconcile: "allow",
+  };
+
   for (const tool of toolIds) {
     if (tool === "skill") continue;
-    const expected = allowedTools.has(tool) ? "allow" : "deny";
+    const expected = toolPermissions[tool] ?? "deny";
     assert.equal(permissionAction(agent.permission, tool), expected, `${tool} must resolve to ${expected}`);
   }
-  for (const required of allowedTools) assert(toolIds.includes(required), `${required} was not loaded by the real runtime`);
+  for (const required of Object.keys(toolPermissions)) assert(toolIds.includes(required), `${required} was not loaded by the real runtime`);
   for (const skill of skills) {
     assert.equal(
       permissionAction(agent.permission, "skill", skill.name),
