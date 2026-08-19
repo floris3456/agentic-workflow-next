@@ -1,6 +1,7 @@
 import { createConnection, createServer, type Server, type Socket } from "node:net";
-import { existsSync, unlinkSync } from "node:fs";
-import { chmod, unlink } from "node:fs/promises";
+import { existsSync, lstatSync, unlinkSync } from "node:fs";
+import { chmod } from "node:fs/promises";
+import { dirname } from "node:path";
 import type { JsonValue } from "./types.js";
 import { errorMessage, isRecord } from "./util.js";
 
@@ -20,6 +21,23 @@ export interface AdminResponsePayload {
 }
 
 const MAX_PAYLOAD_BYTES = 64 * 1024;
+
+function assertSocketParent(socketPath: string): void {
+  const parent = dirname(socketPath);
+  if (!existsSync(parent)) {
+    throw new Error(`Admin socket parent directory does not exist: ${parent}`);
+  }
+  const stat = lstatSync(parent);
+  if (!stat.isDirectory() || stat.isSymbolicLink()) {
+    throw new Error(`Admin socket parent must be a real directory, not a symlink: ${parent}`);
+  }
+  if (process.platform !== "win32") {
+    const mode = stat.mode & 0o777;
+    if ((mode & 0o077) !== 0) {
+      throw new Error(`Admin socket parent directory has unsafe permissions (expected 0700): ${parent}`);
+    }
+  }
+}
 
 export class BridgeAdminServer {
   private readonly socketPath: string;
@@ -53,11 +71,23 @@ export class BridgeAdminServer {
   }
 
   private cleanStaleSocket(): void {
-    if (!existsSync(this.socketPath)) return;
+    assertSocketParent(this.socketPath);
+    let stat;
+    try {
+      stat = lstatSync(this.socketPath);
+    } catch {
+      return;
+    }
+    if (stat.isSymbolicLink()) {
+      throw new Error(`Admin socket path is a symlink: ${this.socketPath}`);
+    }
+    if (!stat.isSocket()) {
+      throw new Error(`Admin socket path already exists and is not a socket: ${this.socketPath}`);
+    }
     try {
       unlinkSync(this.socketPath);
-    } catch {
-      // ignore
+    } catch (error) {
+      throw new Error(`Failed to clean stale admin socket: ${errorMessage(error)}`);
     }
   }
 
@@ -136,7 +166,10 @@ export class BridgeAdminServer {
     }
     if (existsSync(this.socketPath)) {
       try {
-        await unlink(this.socketPath);
+        const stat = lstatSync(this.socketPath);
+        if (stat.isSocket() && !stat.isSymbolicLink()) {
+          unlinkSync(this.socketPath);
+        }
       } catch {
         // ignore
       }

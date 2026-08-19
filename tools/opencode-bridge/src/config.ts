@@ -173,9 +173,18 @@ export function loadBridgeConfig(inputPath = defaultConfigPath()): BridgeConfig 
   if (!existsSync(manifestFile) || !statSync(manifestFile).isFile()) throw new Error(`Operation manifest does not exist: ${manifestFile}`);
   const stateFile = localPath(requiredString(root, "state_file", "Bridge configuration"), base);
   stateOutsideTrackedTree(repositoryRoot, stateFile);
-  const defaultAdminSocket = join(dirname(stateFile), "admin.sock");
-  const adminSocketFile = localPath(optionalString(root, "admin_socket_file", defaultAdminSocket), base);
+  const derivedAdminSocket = join(dirname(stateFile), "admin.sock");
+  if (root.admin_socket_file !== undefined) {
+    const configuredAdminSocket = localPath(requiredString(root, "admin_socket_file", "Bridge configuration"), base);
+    if (configuredAdminSocket !== derivedAdminSocket) {
+      throw new Error("admin_socket_file must match the derived path dirname(state_file)/admin.sock");
+    }
+  }
+  const adminSocketFile = derivedAdminSocket;
   const serviceUnit = root.service_unit === undefined ? undefined : requiredString(root, "service_unit", "Bridge configuration");
+  if (serviceUnit !== undefined && !/^[A-Za-z0-9_.-]+\.service$/.test(serviceUnit)) {
+    throw new TypeError("service_unit must be a valid systemd unit name ending in .service");
+  }
 
   const opencode = asRecord(root.opencode, "opencode configuration");
   only(opencode, ["base_url", "scout_base_url", "username", "password_file", "scout_password_file", "scout_runtime_root", "scout_provider_api_key_file", "scout_provider_oauth_file"], "opencode configuration");

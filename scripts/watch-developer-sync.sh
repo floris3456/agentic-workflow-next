@@ -7,7 +7,7 @@ bridge_unit=""
 interval=7
 
 usage() {
-  echo "Usage: $0 --config <file> --bridge-unit <systemd-user-unit> [--interval <5-10>] [--once]" >&2
+  echo "Usage: $0 --config <file> [--bridge-unit <systemd-user-unit>] [--interval <5-10>] [--once]" >&2
   exit 2
 }
 
@@ -21,7 +21,28 @@ while [[ $# -gt 0 ]]; do
     *) usage ;;
   esac
 done
-[[ -n "$config" && -n "$bridge_unit" ]] || usage
+[[ -n "$config" ]] || usage
+
+configured_unit="$(node -e '
+  try {
+    const c = JSON.parse(require("node:fs").readFileSync(process.argv[1], "utf8"));
+    if (typeof c.service_unit === "string") process.stdout.write(c.service_unit);
+  } catch {}
+' "$config")"
+
+if [[ -n "$bridge_unit" && -n "$configured_unit" && "$bridge_unit" != "$configured_unit" ]]; then
+  echo "--bridge-unit ($bridge_unit) does not match configured service_unit ($configured_unit)" >&2
+  exit 2
+fi
+
+if [[ -z "$bridge_unit" ]]; then
+  bridge_unit="$configured_unit"
+fi
+
+[[ -n "$bridge_unit" ]] || {
+  echo "No service_unit configured in $config and none provided via --bridge-unit." >&2
+  exit 2
+}
 (( interval >= 5 && interval <= 10 )) || usage
 
 git_dir="$(git -C "$repo_root" rev-parse --absolute-git-dir 2>/dev/null)" || {

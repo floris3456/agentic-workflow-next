@@ -3,6 +3,7 @@
   "instance_id": "owner-repository",
   "repository_root": "/absolute/path/to/repository",
   "state_file": "/absolute/path/to/repository/.git/opencode-bridge/owner-repository/bridge.sqlite",
+  "service_unit": "repository-bridge.service",
   "opencode": {
     "base_url": "http://127.0.0.1:44123",
     "scout_base_url": "http://127.0.0.1:44124",

@@ -1,12 +1,12 @@
 import assert from "node:assert/strict";
-import { statSync } from "node:fs";
-import { mkdtemp, rm } from "node:fs/promises";
+import { existsSync, readFileSync, statSync } from "node:fs";
+import { mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 import { BridgeAdminClient, BridgeAdminServer } from "../src/admin.js";
 import { reconcileBridge } from "../src/service.js";
-import type { BridgeConfig } from "../src/config.js";
+import { loadBridgeConfig, type BridgeConfig } from "../src/config.js";
 
 test("admin server starts with 0600 permissions, handles status and reconcile, and cleans up on stop", async (t) => {
   const dir = await mkdtemp(join(tmpdir(), "bridge-admin-test-"));
@@ -87,6 +87,92 @@ test("admin server cleans up stale socket and rejects unsupported commands or ma
   assert.match(parsed.error, /Unsupported admin command/);
 
   await server.stop();
+});
+
+test("admin server start refuses to delete existing regular files or symlinks at socket path", async (t) => {
+  const dir = await mkdtemp(join(tmpdir(), "bridge-admin-security-"));
+  t.after(async () => await rm(dir, { recursive: true, force: true }));
+
+  const socketPath = join(dir, "admin.sock");
+  const regularContent = "critical file content that must not be deleted\n";
+  await writeFile(socketPath, regularContent, { mode: 0o600 });
+
+  const server = new BridgeAdminServer(socketPath, {
+    onStatus: () => ({ running: true }),
+    onReconcile: () => ({ reconciled: true }),
+  });
+
+  // 1. Regular file must NOT be deleted, start must throw
+  await assert.rejects(
+    () => server.start(),
+    /Admin socket path already exists and is not a socket/,
+  );
+  assert.ok(existsSync(socketPath), "Regular file must still exist");
+  assert.equal(readFileSync(socketPath, "utf8"), regularContent);
+
+  // 2. Symlink must NOT be deleted, start must throw
+  await rm(socketPath);
+  const targetPath = join(dir, "symlink-target.txt");
+  await writeFile(targetPath, "target\n", { mode: 0o600 });
+  await symlink(targetPath, socketPath);
+
+  await assert.rejects(
+    () => server.start(),
+    /Admin socket path is a symlink/,
+  );
+  assert.ok(existsSync(socketPath), "Symlink must still exist");
+  assert.ok(existsSync(targetPath), "Symlink target must still exist");
+});
+
+test("config rejects admin_socket_file when it does not equal the derived state-directory path", async (t) => {
+  const dir = await mkdtemp(join(tmpdir(), "bridge-admin-config-"));
+  t.after(async () => await rm(dir, { recursive: true, force: true }));
+
+  const repoDir = join(dir, "repo");
+  await mkdir(repoDir);
+  await mkdir(join(repoDir, ".git"));
+  const stateFile = join(dir, "state", "bridge.sqlite");
+  await mkdir(join(dir, "state"), { recursive: true });
+
+  const configContent = {
+    schema_version: 1,
+    instance_id: "test-instance",
+    repository_root: repoDir,
+    manifest_file: join(repoDir, "manifest.json"),
+    state_file: stateFile,
+    admin_socket_file: join(dir, "other-dir", "arbitrary.sock"),
+    opencode: {
+      base_url: "http://127.0.0.1:44123",
+      username: "opencode",
+      password_file: join(dir, "pass"),
+      scout_base_url: "http://127.0.0.1:44124",
+      scout_password_file: join(dir, "scout-pass"),
+      scout_runtime_root: join(dir, "scout-runtime"),
+      scout_provider_api_key_file: join(dir, "api-key"),
+    },
+    github: {
+      app_id: "123",
+      installation_id: 456,
+      private_key_file: join(dir, "key.pem"),
+      owner: "owner",
+      repository: "repo",
+      allowed_authors: ["owner"],
+      comment_author: "bot[bot]",
+    },
+  };
+  await writeFile(join(repoDir, "manifest.json"), "{}", { mode: 0o600 });
+  await writeFile(join(dir, "pass"), "pass\n", { mode: 0o600 });
+  await writeFile(join(dir, "scout-pass"), "pass\n", { mode: 0o600 });
+  await writeFile(join(dir, "api-key"), "key\n", { mode: 0o600 });
+  await writeFile(join(dir, "key.pem"), "-----BEGIN RSA PRIVATE KEY-----\nkey\n-----END RSA PRIVATE KEY-----\n", { mode: 0o600 });
+
+  const configFile = join(dir, "config.json");
+  await writeFile(configFile, JSON.stringify(configContent), { mode: 0o600 });
+
+  assert.throws(
+    () => loadBridgeConfig(configFile),
+    /admin_socket_file must match the derived path/,
+  );
 });
 
 test("reconcileBridge fails closed when bridge is stopped", async () => {

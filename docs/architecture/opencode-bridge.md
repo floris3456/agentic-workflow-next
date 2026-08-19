@@ -29,7 +29,7 @@ runtime and derived persistence roots, GitHub mapping, and process lock. No
 inbound webhook, public listener, tunnel, custom ChatGPT MCP, self-hosted runner,
 or mandatory systemd unit exists.
 
-Operator configuration and secret files are mode `0600` outside Git. SQLite lives outside the tracked tree, normally under the Git directory, with a mode `0700` parent and mode `0600` database. GitHub App installation tokens stay in memory and are automatically refreshed. The App requests only Issues write and Contents read for one repository; Contents write is rejected.
+Operator configuration and secret files are mode `0600` outside Git. SQLite lives outside the tracked tree, normally under the Git directory, with a mode `0700` parent and mode `0600` database. While running, the bridge exposes a private Unix domain socket (`admin.sock`, mode `0600`) located beneath its Git-private state directory (`dirname(state_file)/admin.sock`). The admin server accepts `status` and `reconcile` commands; `reconcile` executes an immediate canonical recovery pass and flushes pending outbox items. The configuration supports an optional `service_unit` property naming the supervising systemd user unit. GitHub App installation tokens stay in memory and are automatically refreshed. The App requests only Issues write and Contents read for one repository; Contents write is rejected.
 
 ## OpenCode parity
 

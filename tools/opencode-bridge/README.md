@@ -78,9 +78,16 @@ Inspect local status with `./scripts/opencode-bridge-status.sh --config <file>`.
 ```
 
 Core operation remains portable foreground CLI behavior; no systemd dependency
-is required. On a Linux workstation, a systemd user unit may supervise the bridge
-and a second unit may run `scripts/watch-developer-sync.sh` with the private
-config path and bridge unit name. The outbound-only watcher polls every 5-10
+is required. While running, the bridge exposes a private Unix domain socket
+(`admin.sock`, permissions `0600`) derived beneath its Git-private state directory
+(`dirname(state_file)/admin.sock`). It responds to bounded `status` and `reconcile`
+commands; `opencode-bridge reconcile` asks the running service to execute an immediate
+canonical recovery and response delivery pass without creating or prompting sessions.
+
+On a Linux workstation, a systemd user unit may supervise the bridge. Specify the
+unit name via `"service_unit": "<name>.service"` in the bridge configuration. A second
+unit may run `scripts/watch-developer-sync.sh --config <file>`, which reads `service_unit`
+directly from that same configuration. The outbound-only watcher polls every 5-10
 seconds, advances only a clean, behind-only `developer` checkout with
 `merge --ff-only`, runs apply and check bootstrap, and restarts the bridge only
 after its control loop drains when the bridge contracts, package, bootstrap, or
