@@ -6,7 +6,7 @@ TEMPLATE-HOST-ADMIN-001
 
 ## Status
 
-blocked
+in progress
 
 ## Task-start template-development SHA
 
@@ -23,56 +23,34 @@ reusable workflow so the Workspace Maintenance Agent can safely inspect and
 recover the repository's existing OpenCode bridge service without gaining
 arbitrary host access.
 
-Key corrections implemented in this review correction cycle:
-1. Admin socket confinement and file safety:
-   - Constrained socket path strictly to `dirname(state_file)/admin.sock`.
-   - Added parent directory validation (`0700` mode, real directory).
-   - Ensured existing regular files and symlinks are never unlinked during server
-     start; only verified socket files are cleaned up.
-2. Systemd service identity binding:
-   - `workspace_bridge_start` requires an explicit operator-registered `service_unit`.
-   - Service identity is strictly validated against `WorkingDirectory` and `ExecStart`
-     referencing the exact private configuration.
-   - Removed guessed service names from start path; unified with `watch-developer-sync.sh`.
-3. Stopped-bridge SQLite state inspection:
-   - Replaced flawed fallback queries with exact queries against the real
-     production `BridgeState` schema (`commands`, `requests`, `github_outbox`,
-     `response_deliveries`, `task_sessions`, `scout_sessions`).
-   - Added schema validation (`sqlite_master`); schema drift or query failure
-     fails closed to blocked, never silently zeroed.
-   - Applied production terminal session semantics (`session.idle`, `session.error`, `terminal`).
-4. Post-start health verification:
-   - Required post-start proofs before reporting success: systemd unit active,
-     admin endpoint reachable, status successful, instance and repository identity
-     matching expected installation, and fresh heartbeat.
-5. Registration ambiguity defense:
-   - Rejected duplicate matching registrations even when instance IDs match.
-6. Permission boundary:
-   - Set `workspace_bridge_start` permission to `ask`.
-   - `workspace_bridge_inspect` and `workspace_bridge_reconcile` set to `allow`.
-   - Updated runtime inventory validator to assert effective permissions.
-7. Developer synchronization proof:
-   - `checkStartingSafe` verifies canonical repository identity, `developer` branch,
-     clean tree, local HEAD equality with `@{upstream}`, and zero ahead/behind counts.
-8. Documentation and configuration updates:
-   - Updated operator documentation, examples, AS-BUILT, and deviations.
-9. Real-host acceptance status:
-   - Tested real host inspection and reconciliation on the active installation.
-   - Distinguished fixture-tested start behavior from live non-destructive testing.
-10. Architectural boundary documentation:
-    - Documented that `workspace_bridge_start` resides inside the Workspace Maintenance
-      plugin, which requires a separate external host supervisor if recovery of a
-      dead bridge is needed from a purely remote web orchestrator.
+The capability remains intentionally narrow: no caller-supplied service names,
+arbitrary `systemctl`, DBus addresses, host paths, private configuration
+contents, or raw SQLite access. Service mutation is start-only, bridge
+reconciliation may operate only on already-mapped state, and `main` promotion is
+outside this task.
 
 ## Current objective
 
-Record source-range corrections and document the same-task change package supersession blocker.
+Finish the residual independent-review corrections on `template-development`
+while preserving the already-corrected `developer` source and the existing
+same-task package-supersession blocker.
 
 ## Current position
 
-Source corrections pushed to `developer` (`c6b747f00ad7509c1340fc11fca1466abb8eb1f9`)
-and `template-development`; all tests and validators passing. Package publication
-blocked on same-task package supersession.
+Exact canonical source refs independently re-established before this correction
+cycle:
+
+- `developer`: `c6b747f00ad7509c1340fc11fca1466abb8eb1f9`
+- `web-orchestration`: `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`
+- `main`: `6127611113dfdb66f93a0cfd2d355359aa370833`
+- correction-cycle `template-development` start:
+  `6993a62f1fd87bdc53320d6547823749598e4fa4`
+
+The previous correction materially fixed the original socket, registration,
+SQLite-schema, permission, post-start, documentation, and service-name defects.
+A later independent source review found a smaller residual set in the
+`template-development` host broker and its tests. This record no longer treats
+those source corrections as fully accepted.
 
 ## Source ranges
 
@@ -82,63 +60,148 @@ blocked on same-task package supersession.
 
 ## Observed
 
+### Earlier corrected source
+
 - Previous rejected handoffs:
   - developer: `bd287bca8b7b9861f91e2d5c9243c4c5165834f9`
   - template-development: `13a274fc373eef286b09c6d6889bda2255be5425`
-- Developer checks:
-  - `tools/opencode-bridge`: TypeScript build and `npm test` passed 123 tests.
-  - `./scripts/validate-repository.sh` passed.
-  - `git diff --check` passed cleanly.
-  - Pushed to `origin/developer` at `c6b747f00ad7509c1340fc11fca1466abb8eb1f9`.
-- Template-development checks:
-  - `node --test tests/*.test.mjs` passed 20 test suites.
-  - `./scripts/validate-template-development.sh` passed full validation (including real pinned OpenCode 1.18.16 inventory and permission validation).
-  - `git diff --check` passed cleanly.
-- Change package generation behavior:
-  - `scripts/create-change-package.mjs` strictly rejects any `template-development` range containing `changes/<task-id>/**` package storage paths. Because the rejected handoff commit `13a274f` stored `changes/TEMPLATE-HOST-ADMIN-001/`, subsequent same-task package creation is mechanically rejected.
+- Corrected developer source is remotely present at
+  `c6b747f00ad7509c1340fc11fca1466abb8eb1f9`.
+- Corrected template-development substantive source is remotely present at
+  `c8f35af1c9ad4e050cf2c8e792232ce4fb302500`, followed by the prior blocked
+  task-record snapshot `6993a62f1fd87bdc53320d6547823749598e4fa4`.
+- The previous implementation added socket confinement, explicit service-unit
+  registration, production-schema stopped-state inspection, duplicate
+  registration rejection, post-start admin probing, and
+  `workspace_bridge_start: ask`.
+
+### Residual independent-review findings
+
+1. `checkStartingSafe()` compares local `HEAD` to `@{upstream}` but does not
+   contact the canonical remote first. A stale `origin/developer` tracking ref can
+   therefore make a stale local developer checkout appear synchronized.
+2. `workspace_bridge_start` uses strict post-start health checks only after a
+   fresh systemd start. If the registered unit is already active, an available
+   admin socket can return `already-running` through `inspect()` without proving
+   the same exact instance/repository identity, `running:true`, and fresh
+   heartbeat. The fresh-start identity checks also permit missing identity fields.
+3. `workspace_bridge_reconcile` can send `reconcile` to any responsive socket at
+   the derived path without first proving that the endpoint reports the exact
+   registered instance and repository. `workspace_bridge_inspect` likewise must
+   not trust wrong/missing endpoint identity as bridge state.
+4. Systemd binding currently treats a missing `ExecStart` as acceptable and uses
+   substring containment to match the private config path. Binding must prove the
+   exact registered config is the effective `--config` argument and fail closed
+   when the effective command cannot be proven.
+5. The ordinary `node --test tests/*.test.mjs` real-host test can invoke
+   `bridgeStart()` or `bridgeReconcile()` against the operator's actual bridge
+   when host conditions happen to permit it. Because
+   `scripts/validate-template-development.sh` runs that default suite, ordinary
+   validation can perform a real host/control-plane mutation outside the
+   `workspace_bridge_start: ask` interaction boundary. Default validation must
+   remain read-only; any live start/reconcile acceptance must be a separate,
+   explicit operator opt-in.
+
+### Package state
+
+- `changes/TEMPLATE-HOST-ADMIN-001/manifest.json` remains the package from the
+  previously rejected implementation and does not represent the corrected source.
+- Schema-3 generation rejects a reviewed `template-development` range containing
+  its own `changes/<task-id>/**` storage path. Because the rejected package is
+  already in this task's history, corrected same-task regeneration remains
+  mechanically undefined under the current schema.
+- The historical package must not be overwritten, hand-edited, reinterpreted, or
+  silently superseded.
 
 ## Interpretation
 
-All 10 source defects have been corrected and verified across both branches. Same-task change package supersession across an existing in-history package commit is mechanically undefined in schema 3 without package schema changes (which are excluded from scope). Following task instructions, package publication is marked blocked rather than inventing new semantics.
+The bounded-host-administration architecture remains viable, but the current
+`template-development` source is not yet accepted because the residual findings
+weaken canonical synchronization proof, exact installation binding, and the
+permission boundary around real host mutation. These are targeted source defects,
+not a reason to widen Bubblewrap or grant general host administration.
+
+The same-task package blocker is independent of these source corrections. Source
+can be corrected and independently reviewed while portable package publication
+remains blocked.
 
 ## Attempts
 
-1. Fixed admin socket file safety and parent permissions on `developer`.
-2. Unified `service_unit` in `config.ts` and `watch-developer-sync.sh`.
-3. Updated `workspace-maintenance-host.mjs` on `template-development` with real `BridgeState` queries, `ask` permission, post-start health checks, strict unit bindings, and developer synchronization proof.
-4. Expanded test suite with 20 test suites on `template-development` and 123 tests on `developer`.
-5. Attempted change package regeneration; stopped when `create-change-package.mjs` rejected the range containing prior package storage.
+1. The prior correction cycle fixed the original high-risk host-admin defects and
+   pushed source to both canonical branches.
+2. A new bridge control issue was opened for this continuation after proving no
+   existing `TEMPLATE-HOST-ADMIN-001` issue was bound.
+3. Its first `workspace.start` marker was rejected before handler execution
+   because an older mutating bridge issue was still open. That older issue's
+   mapped developer session was independently verified terminal (`session.idle`)
+   with a completed pushed handoff, then the stale issue was closed. The rejected
+   marker was not replayed.
+4. A fresh sequence-1 `workspace.start` was admitted and reached `applying`, then
+   failed with `Bridge repository root verification failed`. Direct inspection of
+   the current bridge resolver shows this failure occurs in the registered
+   template-development worktree/root preflight before `session.create`; no
+   Workspace Maintenance session or delegated repository mutation was created.
 
 ## Changed approach
 
-Left change package publication blocked per review instructions rather than hand-editing or inventing undefined supersession behavior.
+The failed Workspace Maintenance route is terminal and is not being replayed.
+Because only that execution surface is unavailable, the correction cycle has
+switched to bounded connected-GitHub edits on `template-development`, with exact
+remote readback and the branch's push-triggered validation used as independent
+proof. `developer`, `web-orchestration`, `main`, and the existing change package
+remain out of scope for mutation.
 
 ## Checks
 
-- `developer`: `npm test` (123 tests) and `./scripts/validate-repository.sh` passed.
-- `template-development`: `node --test tests/*.test.mjs` (20 tests) and `./scripts/validate-template-development.sh` passed.
-- `git diff --check`: clean across all branches.
+Earlier developer/template-development check reports remain historical perceived
+results only. This correction cycle will re-run and independently inspect the
+current branch's canonical validation after the residual fixes are pushed.
+
+Required correction-cycle checks:
+
+- `node --test tests/*.test.mjs`
+- `./scripts/validate-template-development.sh`
+- `git diff --check`
+- push-triggered `template-development` GitHub Actions validation
 
 ## Blockers / required decisions
 
-1. **Same-task change package supersession:** In schema 3, `create-change-package.mjs` strictly enforces that the reviewed `template-development` range does not contain its own `changes/<task-id>/**` package storage path. Because the earlier rejected handoff commit (`13a274fc373eef286b09c6d6889bda2255be5425`) stored `changes/TEMPLATE-HOST-ADMIN-001/`, any subsequent correction on the same task that builds upon that history contains `changes/TEMPLATE-HOST-ADMIN-001/**` in its task-start-to-head range. Same-task package supersession/regeneration mechanism is mechanically undefined in existing machinery and package schema redesign is explicitly excluded from scope. Per review instructions, package publication remains blocked rather than inventing new semantics or overwriting historical packages.
-2. **Dead-bridge remote recovery:** `workspace_bridge_start` is hosted inside the Workspace Maintenance OpenCode plugin. When the bridge is dead, remote web-orchestrator callers who only interact via the bridge cannot invoke the tool without an external host supervisor or local human trigger.
+1. **Same-task change package supersession:** schema 3 has no defined mechanism to
+   regenerate this same task after an earlier rejected package-storage commit is
+   already inside the corrected source history. Package publication remains
+   blocked; no package-schema redesign is authorized in this task.
+2. **Dead-bridge remote recovery:** the Workspace Maintenance plugin cannot itself
+   be invoked through a completely dead bridge. A separate always-available host
+   supervisor/control plane would be required for fully remote dead-bridge
+   recovery and remains outside this task.
+3. **Current installed Workspace route:** the attempted Workspace Maintenance
+   start failed its bridge repository-root verification before session creation.
+   This limits that execution route but does not block bounded direct source
+   correction on `template-development`.
 
 ## Remaining work
 
-1. Resolution of same-task package supersession for rejected handoff cycles.
-2. Independent review of the corrected developer ref `c6b747f00ad7509c1340fc11fca1466abb8eb1f9` and template-development corrections.
+1. Correct the five residual host-broker/test findings on `template-development`.
+2. Add focused regressions for live canonical developer comparison, strict admin
+   identity/health, exact effective `ExecStart --config` binding, and default
+   real-host non-mutation.
+3. Update AS-BUILT/deviations/operator-facing documentation to match the corrected
+   boundary.
+4. Run and independently inspect canonical validation and the exact remote diff.
+5. Keep package publication blocked unless the same-task supersession design is
+   separately resolved.
 
 ## Next action
 
-Handoff with status `blocked` and exact blocker details.
+Apply the bounded direct `template-development` corrections from the exact remote
+state, then review the pushed range and canonical validation before deciding
+whether the source is acceptable.
 
 ## Relevant durable records
 
 - `docs/architecture/AS-BUILT.md`
 - `docs/deviations.md`
-- `tools/opencode-bridge/AS-BUILT.md`
-- `tools/opencode-bridge/README.md`
+- `docs/work/current/TEMPLATE-HOST-ADMIN-001-bounded-host-administration.md`
 - `source-lock.json`
 - `changes/TEMPLATE-HOST-ADMIN-001/manifest.json`
 
