@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 import { spawn } from "node:child_process";
+import { BridgeAdminClient } from "./admin.js";
 import { loadBridgeConfig } from "./config.js";
-import { BridgeService, bridgeStatus, checkBridge, refreshOpenCodeInstances, synchronizedGitState } from "./service.js";
+import { BridgeService, bridgeStatus, checkBridge, reconcileBridge, refreshOpenCodeInstances, synchronizedGitState } from "./service.js";
 import { installScoutRuntime } from "./scout-server.js";
 import { errorMessage } from "./util.js";
 
 function usage(): never {
-  process.stderr.write("Usage: opencode-bridge <run|bootstrap|status|attach|install-scout-runtime|refresh-instances> [--config <file>] [--check]\n       opencode-bridge app-registration-url --repository <owner/name> [--name <app-name>]\n");
+  process.stderr.write("Usage: opencode-bridge <run|bootstrap|status|reconcile|attach|install-scout-runtime|refresh-instances> [--config <file>] [--check]\n       opencode-bridge app-registration-url --repository <owner/name> [--name <app-name>]\n");
   process.exit(2);
 }
 
@@ -93,7 +94,21 @@ async function main(): Promise<void> {
   const config = loadBridgeConfig(configPath);
   if (command === "status") {
     if (checkOnly) usage();
+    const adminClient = new BridgeAdminClient(config.adminSocketFile);
+    if (await adminClient.isAvailable()) {
+      try {
+        json(await adminClient.status());
+        return;
+      } catch {
+        // fall back to disk state
+      }
+    }
     json(bridgeStatus(config));
+    return;
+  }
+  if (command === "reconcile") {
+    if (checkOnly) usage();
+    json(await reconcileBridge(config));
     return;
   }
   if (command === "install-scout-runtime") {

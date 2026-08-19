@@ -1,6 +1,7 @@
 import { execFile } from "node:child_process";
 import { closeSync, existsSync, openSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
+import { BridgeAdminClient, BridgeAdminServer } from "./admin.js";
 import { CommandExecutor, type GitState } from "./commands.js";
 import type { BridgeConfig } from "./config.js";
 import { GitHubAppAuth } from "./github-auth.js";
@@ -209,6 +210,7 @@ export class BridgeService {
   private readonly control: GitHubControlLoop;
   private readonly sessionRuns: RecoveryObserverRegistry;
   private readonly templateWorktrees: TemplateDevelopmentWorktreeResolver;
+  private readonly adminServer: BridgeAdminServer;
   private workspaceRuntimePromise: Promise<WorkspaceRuntime> | undefined;
   private readonly controlStop = new AbortController();
   private readonly controlStopped: Promise<void>;
@@ -329,6 +331,10 @@ export class BridgeService {
       },
       onError: (error) => this.state.setMeta("service.last_error", this.projection.safeText(errorMessage(error))),
     });
+    this.adminServer = new BridgeAdminServer(config.adminSocketFile, {
+      onStatus: () => bridgeStatus(this.config),
+      onReconcile: async () => await this.reconcile(),
+    });
   }
 
   private async createWorkspaceRuntime(): Promise<WorkspaceRuntime> {
@@ -372,6 +378,28 @@ export class BridgeService {
     this.controlStop.abort(new Error("Bridge control loop draining"));
     if (!this.controlLaunched) return;
     await this.controlStopped;
+  }
+
+  async reconcile(): Promise<JsonValue> {
+    await this.recovery.recoverOnce();
+    if (this.workspaceRuntimePromise) {
+      try {
+        const runtime = await this.workspaceRuntime();
+        await runtime.recovery.recoverOnce();
+      } catch (error) {
+        this.state.setMeta("service.last_error", this.projection.safeText(errorMessage(error)));
+      }
+    }
+    this.state.recoverTerminalResponseDeliveries();
+    try {
+      await this.outbox.flush();
+    } catch (error) {
+      this.state.setMeta("service.last_error", this.projection.safeText(errorMessage(error)));
+    }
+    return {
+      reconciled: true,
+      status: bridgeStatus(this.config),
+    };
   }
 
   private async publishEvent(event: PersistedOpenCodeEvent): Promise<void> {
@@ -504,6 +532,7 @@ export class BridgeService {
         (requests) => this.requests.executeAll(requests),
       ).finally(() => this.resolveControlStopped());
       this.controlLaunched = true;
+      await this.adminServer.start();
       await Promise.all([
         this.recovery.run(this.signal),
         control,
@@ -513,6 +542,7 @@ export class BridgeService {
       if (!this.controlLaunched) this.resolveControlStopped();
       clearInterval(heartbeat);
       this.state.setMeta("service.stopped_at", String(Date.now()));
+      await this.adminServer.stop();
       await Promise.allSettled(this.sessionRuns.values());
       await this.scoutServer.stop();
       this.state.close();
@@ -742,4 +772,13 @@ export async function refreshOpenCodeInstances(config: BridgeConfig): Promise<{ 
   }
 
   return { disposed };
+}
+
+export async function reconcileBridge(config: BridgeConfig): Promise<JsonValue> {
+  const client = new BridgeAdminClient(config.adminSocketFile);
+  const available = await client.isAvailable();
+  if (!available) {
+    throw new Error("Bridge service is not running; start the bridge before requesting reconciliation.");
+  }
+  return await client.reconcile();
 }

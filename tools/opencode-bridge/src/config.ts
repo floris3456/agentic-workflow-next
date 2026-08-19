@@ -10,6 +10,8 @@ export interface BridgeConfig {
   repositoryRoot: string;
   manifestFile: string;
   stateFile: string;
+  adminSocketFile: string;
+  serviceUnit?: string;
   opencode: {
     baseUrl: string;
     scoutBaseUrl: string;
@@ -161,7 +163,7 @@ export function loadBridgeConfig(inputPath = defaultConfigPath()): BridgeConfig 
   const configFile = resolve(inputPath);
   assertPrivateFile(configFile, "Bridge configuration");
   const root = asRecord(JSON.parse(readFileSync(configFile, "utf8")) as unknown, "bridge configuration");
-  only(root, ["schema_version", "instance_id", "repository_root", "manifest_file", "state_file", "opencode", "github", "policy"], "Bridge configuration");
+  only(root, ["schema_version", "instance_id", "repository_root", "manifest_file", "state_file", "admin_socket_file", "service_unit", "opencode", "github", "policy"], "Bridge configuration");
   if (root.schema_version !== 1) throw new TypeError("Unsupported bridge configuration schema_version");
   const instanceId = requiredString(root, "instance_id", "Bridge configuration");
   if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/.test(instanceId)) throw new TypeError("instance_id is invalid");
@@ -171,6 +173,9 @@ export function loadBridgeConfig(inputPath = defaultConfigPath()): BridgeConfig 
   if (!existsSync(manifestFile) || !statSync(manifestFile).isFile()) throw new Error(`Operation manifest does not exist: ${manifestFile}`);
   const stateFile = localPath(requiredString(root, "state_file", "Bridge configuration"), base);
   stateOutsideTrackedTree(repositoryRoot, stateFile);
+  const defaultAdminSocket = join(dirname(stateFile), "admin.sock");
+  const adminSocketFile = localPath(optionalString(root, "admin_socket_file", defaultAdminSocket), base);
+  const serviceUnit = root.service_unit === undefined ? undefined : requiredString(root, "service_unit", "Bridge configuration");
 
   const opencode = asRecord(root.opencode, "opencode configuration");
   only(opencode, ["base_url", "scout_base_url", "username", "password_file", "scout_password_file", "scout_runtime_root", "scout_provider_api_key_file", "scout_provider_oauth_file"], "opencode configuration");
@@ -250,6 +255,8 @@ export function loadBridgeConfig(inputPath = defaultConfigPath()): BridgeConfig 
     repositoryRoot,
     manifestFile,
     stateFile,
+    adminSocketFile,
+    ...(serviceUnit ? { serviceUnit } : {}),
     opencode: {
       baseUrl,
       scoutBaseUrl,
