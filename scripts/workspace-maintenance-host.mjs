@@ -15,6 +15,100 @@ import {
 
 const SYSTEMCTL = "/usr/bin/systemctl";
 
+function decodeExecEscape(value, index) {
+  const next = value[index + 1];
+  if (next === undefined) return null;
+  if (next === "x") {
+    const hex = value.slice(index + 2, index + 4);
+    if (!/^[0-9A-Fa-f]{2}$/.test(hex)) return null;
+    return { value: String.fromCharCode(Number.parseInt(hex, 16)), next: index + 4 };
+  }
+  const escapes = {
+    "\\": "\\",
+    "\"": "\"",
+    "'": "'",
+    "s": " ",
+    "t": "\t",
+    "n": "\n",
+    "r": "\r",
+  };
+  if (!(next in escapes)) return null;
+  return { value: escapes[next], next: index + 2 };
+}
+
+function parseExecWords(value) {
+  if (typeof value !== "string" || value.trim().length === 0) return null;
+  let command = value.trim();
+  const argvMarker = command.indexOf("argv[]=");
+  if (argvMarker !== -1) {
+    command = command.slice(argvMarker + "argv[]=".length);
+    const propertyBoundary = command.search(/\s+;\s+(?:ignore_errors|start_time|stop_time|pid|code|status)=/);
+    if (propertyBoundary !== -1) command = command.slice(0, propertyBoundary);
+    command = command.replace(/\s*}\s*$/, "").trim();
+  } else if (/^\{\s*path=/.test(command)) {
+    return null;
+  }
+
+  const words = [];
+  let current = "";
+  let quote = null;
+  let started = false;
+  for (let index = 0; index < command.length;) {
+    const char = command[index];
+    if (char === "\\") {
+      const decoded = decodeExecEscape(command, index);
+      if (!decoded) return null;
+      current += decoded.value;
+      started = true;
+      index = decoded.next;
+      continue;
+    }
+    if (quote !== null) {
+      if (char === quote) {
+        quote = null;
+      } else {
+        current += char;
+      }
+      started = true;
+      index++;
+      continue;
+    }
+    if (char === "\"" || char === "'") {
+      quote = char;
+      started = true;
+      index++;
+      continue;
+    }
+    if (/\s/.test(char)) {
+      if (started) {
+        words.push(current);
+        current = "";
+        started = false;
+      }
+      index++;
+      continue;
+    }
+    current += char;
+    started = true;
+    index++;
+  }
+  if (quote !== null) return null;
+  if (started) words.push(current);
+  return words.length > 0 ? words : null;
+}
+
+function execStartUsesExactConfig(execStart, configFile) {
+  const argv = parseExecWords(execStart);
+  if (!argv) return false;
+  const indexes = [];
+  for (let index = 0; index < argv.length; index++) {
+    if (argv[index] === "--config") indexes.push(index);
+  }
+  return indexes.length === 1
+    && indexes[0] + 1 < argv.length
+    && argv[indexes[0] + 1] === configFile;
+}
+
 export class SystemdUserClient {
   constructor(options = {}) {
     this.systemctlBin = options.systemctlBin ?? SYSTEMCTL;
@@ -387,7 +481,6 @@ export class WorkspaceBridgeBroker {
       return { available: true, unitName: config.serviceUnit, properties: props, registered: true, loaded: false };
     }
 
-    // Verify WorkingDirectory matches repositoryRoot
     if (props.WorkingDirectory) {
       try {
         const unitDir = await canonicalDirectory(props.WorkingDirectory, "Unit working directory");
@@ -401,11 +494,8 @@ export class WorkspaceBridgeBroker {
       return { available: false, unitName: config.serviceUnit, properties: null, registered: true, error: "working-directory-missing" };
     }
 
-    // Verify ExecStart references the exact config file
-    if (props.ExecStart) {
-      if (!props.ExecStart.includes(config.configFile)) {
-        return { available: false, unitName: config.serviceUnit, properties: null, registered: true, error: "exec-start-config-mismatch" };
-      }
+    if (!execStartUsesExactConfig(props.ExecStart, config.configFile)) {
+      return { available: false, unitName: config.serviceUnit, properties: null, registered: true, error: "exec-start-config-mismatch" };
     }
 
     return { available: true, unitName: config.serviceUnit, properties: props, registered: true, loaded: true };
@@ -421,6 +511,36 @@ export class WorkspaceBridgeBroker {
       return json && typeof json === "object" && typeof json.version === "string";
     } catch {
       return false;
+    }
+  }
+
+  async expectedRepository(config) {
+    const remote = (await git(config.repositoryRoot, ["remote", "get-url", "origin"])).stdout;
+    const identity = parseOriginRepository(remote);
+    return `${identity.owner}/${identity.repository}`;
+  }
+
+  async assertAdminIdentity(config, status) {
+    if (!status || typeof status !== "object") {
+      throw new Error("Bridge admin endpoint returned invalid status data");
+    }
+    if (status.instance !== config.instanceId) {
+      throw new Error("Bridge admin endpoint did not report the registered instance identity");
+    }
+    const expectedRepository = await this.expectedRepository(config);
+    if (typeof status.repository !== "string" || status.repository.toLowerCase() !== expectedRepository.toLowerCase()) {
+      throw new Error("Bridge admin endpoint did not report the registered repository identity");
+    }
+  }
+
+  async assertAdminHealthy(config, status) {
+    await this.assertAdminIdentity(config, status);
+    if (status.running !== true) {
+      throw new Error("Bridge admin endpoint reported running=false");
+    }
+    const heartbeatAt = typeof status.heartbeat_at === "number" ? status.heartbeat_at : null;
+    if (heartbeatAt === null || Date.now() - heartbeatAt > 30_000) {
+      throw new Error("Bridge admin endpoint reported a stale heartbeat");
     }
   }
 
@@ -485,7 +605,6 @@ export class WorkspaceBridgeBroker {
     }
 
     try {
-      // 1. Verify schema tables in sqlite_master
       const requiredTables = [
         "meta",
         "commands",
@@ -594,7 +713,7 @@ export class WorkspaceBridgeBroker {
       if (statusRes.length > 0) return false;
 
       const upstream = await git(repoRoot, ["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{upstream}"], true);
-      if (upstream.exitCode !== 0 || !upstream.stdout || !upstream.stdout.endsWith("/developer")) {
+      if (upstream.exitCode !== 0 || upstream.stdout !== "origin/developer") {
         return false;
       }
 
@@ -602,6 +721,20 @@ export class WorkspaceBridgeBroker {
       if (countRes.exitCode !== 0) return false;
       const [ahead, behind] = countRes.stdout.trim().split(/\s+/).map(Number);
       if (ahead !== 0 || behind !== 0) return false;
+
+      const headRes = await git(repoRoot, ["rev-parse", "HEAD"], true);
+      if (headRes.exitCode !== 0 || !/^[0-9a-f]{40}$/.test(headRes.stdout)) return false;
+      const remoteRes = await git(
+        repoRoot,
+        ["ls-remote", "--exit-code", "origin", "refs/heads/developer"],
+        true,
+        { timeout: 10_000 },
+      );
+      if (remoteRes.exitCode !== 0) return false;
+      const lines = remoteRes.stdout.split("\n").filter(Boolean);
+      if (lines.length !== 1) return false;
+      const fields = lines[0].trim().split(/\s+/);
+      if (fields.length !== 2 || fields[1] !== "refs/heads/developer" || fields[0] !== headRes.stdout) return false;
     } catch {
       return false;
     }
@@ -613,7 +746,7 @@ export class WorkspaceBridgeBroker {
         if (Number.isSafeInteger(pid) && pid > 0) {
           try {
             process.kill(pid, 0);
-            return false; // lock held by active process
+            return false;
           } catch {
             // process is dead
           }
@@ -662,23 +795,28 @@ export class WorkspaceBridgeBroker {
     }
 
     let statusData;
+    let adminIdentityTrusted = null;
     if (adminLive) {
       try {
-        statusData = await adminClient.status();
+        const liveStatus = await adminClient.status();
+        await this.assertAdminIdentity(config, liveStatus);
+        statusData = liveStatus;
+        adminIdentityTrusted = true;
       } catch {
         statusData = await this.readStateFromDisk(config.stateFile);
+        adminIdentityTrusted = false;
       }
     } else {
       statusData = await this.readStateFromDisk(config.stateFile);
     }
 
-    if (statusData?.schema_valid === false) {
+    if (statusData?.schema_valid === false || adminIdentityTrusted === false) {
       serviceState = "blocked";
     }
 
     const opencodeHealthy = await this.probeOpenCodeHealth(config.opencode?.base_url);
     const heartbeatAt = typeof statusData?.heartbeat_at === "number" ? statusData.heartbeat_at : null;
-    const heartbeatFresh = isRunning && heartbeatAt !== null && Date.now() - heartbeatAt < 30_000;
+    const heartbeatFresh = isRunning && adminIdentityTrusted !== false && heartbeatAt !== null && Date.now() - heartbeatAt < 30_000;
 
     const pendingCommands = Number(statusData?.pending_commands ?? 0);
     const pendingRequests = Number(statusData?.pending_requests ?? 0);
@@ -691,13 +829,17 @@ export class WorkspaceBridgeBroker {
 
     const canonicalRecoveryRequired =
       statusData?.schema_valid === false ||
+      adminIdentityTrusted === false ||
       activeTaskSessions > 0 ||
       pendingCommands > 0 ||
       pendingRequests > 0 ||
       pendingDeliveries > 0 ||
       pendingOutbox > 0;
 
-    const startingSafe = !isRunning && statusData?.schema_valid !== false && (await this.checkStartingSafe(config, unit));
+    const startingSafe = !isRunning
+      && adminIdentityTrusted !== false
+      && statusData?.schema_valid !== false
+      && (await this.checkStartingSafe(config, unit));
 
     const repoIdentity = parseOriginRepository(
       (await git(config.repositoryRoot, ["remote", "get-url", "origin"])).stdout,
@@ -735,15 +877,23 @@ export class WorkspaceBridgeBroker {
 
     if (unit.properties.ActiveState === "active") {
       const adminClient = this.adminClientFactory(config.adminSocketFile);
-      if (await adminClient.isAvailable(1000)) {
-        const current = await this.inspect();
-        return { status: "already-running", bridge: current };
+      let liveStatus;
+      try {
+        liveStatus = await adminClient.status(2_000);
+        await this.assertAdminHealthy(config, liveStatus);
+      } catch {
+        throw new Error("Cannot use already-active bridge: admin endpoint identity or health verification failed");
       }
+      const current = await this.inspect();
+      if (current.service_state === "blocked" || !current.heartbeat_fresh) {
+        throw new Error("Cannot use already-active bridge: verified status could not be reproduced");
+      }
+      return { status: "already-running", bridge: current };
     }
 
     const safeToStart = await this.checkStartingSafe(config, unit);
     if (!safeToStart) {
-      throw new Error("Cannot start bridge: developer worktree is dirty/diverged or service lock is held");
+      throw new Error("Cannot start bridge: developer worktree is dirty/diverged, not at live origin/developer, or service lock is held");
     }
 
     await this.systemdClient.startUnit(config.serviceUnit);
@@ -769,66 +919,54 @@ export class WorkspaceBridgeBroker {
       throw new Error("Bridge service start timed out waiting for active state");
     }
 
-    // Prove post-start health via admin socket
     const adminClient = this.adminClientFactory(config.adminSocketFile);
-    let adminLive = false;
     let liveStatus = null;
     for (let attempt = 0; attempt < this.adminProbeRetries; attempt++) {
       if (await adminClient.isAvailable(500)) {
         try {
-          liveStatus = await adminClient.status(2000);
-          if (liveStatus && typeof liveStatus === "object") {
-            adminLive = true;
-            break;
-          }
+          liveStatus = await adminClient.status(2_000);
+          if (liveStatus && typeof liveStatus === "object") break;
         } catch {
-          // retry
+          liveStatus = null;
         }
       }
       await new Promise((r) => setTimeout(r, this.adminProbeIntervalMs));
     }
 
-    if (!adminLive || !liveStatus) {
+    if (!liveStatus) {
       throw new Error("Bridge service started in systemd but admin endpoint is unreachable or unresponsive");
     }
-
-    if (liveStatus.instance && liveStatus.instance !== config.instanceId) {
-      throw new Error(`Bridge service started but reported mismatched instance identity: ${liveStatus.instance}`);
-    }
-
-    const repoIdentity = parseOriginRepository(
-      (await git(config.repositoryRoot, ["remote", "get-url", "origin"])).stdout,
-    );
-    const expectedRepo = `${repoIdentity.owner}/${repoIdentity.repository}`;
-    if (liveStatus.repository && liveStatus.repository.toLowerCase() !== expectedRepo.toLowerCase()) {
-      throw new Error(`Bridge service started but reported mismatched repository identity: ${liveStatus.repository}`);
-    }
-
-    if (liveStatus.running !== true) {
-      throw new Error("Bridge service started but admin status reported running=false");
-    }
-
-    const heartbeatAt = typeof liveStatus.heartbeat_at === "number" ? liveStatus.heartbeat_at : null;
-    if (heartbeatAt === null || Date.now() - heartbeatAt > 30_000) {
-      throw new Error("Bridge service started but reported stale heartbeat");
+    try {
+      await this.assertAdminHealthy(config, liveStatus);
+    } catch {
+      throw new Error("Bridge service started but admin endpoint identity or health verification failed");
     }
 
     const after = await this.inspect();
+    if (after.service_state === "blocked" || !after.heartbeat_fresh) {
+      throw new Error("Bridge service started but verified status could not be reproduced");
+    }
     return { status: "started", bridge: after };
   }
 
   async reconcile() {
     const { config } = await this.resolveBridgeContext();
     const adminClient = this.adminClientFactory(config.adminSocketFile);
-    const available = await adminClient.isAvailable(1000);
-    if (!available) {
-      throw new Error("Bridge service is not running or admin endpoint is unavailable; start the bridge before requesting reconciliation.");
+    let status;
+    try {
+      status = await adminClient.status(2_000);
+      await this.assertAdminHealthy(config, status);
+    } catch {
+      throw new Error("Bridge service is unavailable or its admin endpoint identity/health cannot be verified; refusing reconciliation.");
     }
 
     const result = await adminClient.reconcile();
     const after = await this.inspect();
+    if (after.service_state === "blocked") {
+      throw new Error("Bridge reconciliation completed but post-reconcile identity verification failed");
+    }
     return {
-      reconciled: true,
+      reconciled: result?.reconciled === true,
       service_state: after.service_state,
       pending_response_deliveries: after.pending_response_deliveries,
       pending_outbox: after.pending_outbox,
