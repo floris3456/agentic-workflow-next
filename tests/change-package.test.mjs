@@ -615,7 +615,8 @@ test("schema 3 persisted package supersession lifecycle v1 -> rev2 -> rev3, rela
   mkdirSync(activeUnsafeDir, { recursive: true });
   spawnSync("cp", ["-r", v1PackageDir, join(activeUnsafeDir, "TASK-SUPER")]);
   spawnSync("cp", ["-r", v2PackageDir, join(activeUnsafeDir, "TASK-SUPER.rev2")]);
-  const unsafePatch = Buffer.concat([readFileSync(join(activeUnsafeDir, "TASK-SUPER.rev2", "template-development.patch")), Buffer.from("\n+ses_fe0c04342ffeSLjnFNcMQ9SIHs\n")]);
+  const syntheticSessionId = "ses_" + "a".repeat(20);
+  const unsafePatch = Buffer.concat([readFileSync(join(activeUnsafeDir, "TASK-SUPER.rev2", "template-development.patch")), Buffer.from(`\n+${syntheticSessionId}\n`)]);
   writeFileSync(join(activeUnsafeDir, "TASK-SUPER.rev2", "template-development.patch"), unsafePatch);
   const unsafeManifest = JSON.parse(readFileSync(join(activeUnsafeDir, "TASK-SUPER.rev2", "manifest.json"), "utf8"));
   const unsafePatches = {

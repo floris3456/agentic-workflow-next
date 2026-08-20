@@ -129,7 +129,7 @@ if (supersedesInput) {
   const supersededResolved = resolve(supersedesInput);
   let checkedSuperseded;
   try {
-    checkedSuperseded = validateChangePackage(supersededResolved);
+    checkedSuperseded = validateChangePackage(supersededResolved, undefined, { strictPackageStorage: false });
   } catch (error) {
     fail(`Superseded package is invalid: ${error.message}`);
   }
