@@ -1,0 +1,88 @@
+name: Generate template change package
+
+on:
+  push:
+    branches: [template-development]
+    paths:
+      - "docs/work/package-requests/*.json"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: template-change-package-generation
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+        with:
+          node-version: 22.13.0
+      - name: Verify exact request-only trigger
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t changed < <(git diff-tree --no-commit-id --name-only -r "${GITHUB_SHA}")
+          if [[ "${#changed[@]}" -ne 1 || ! "${changed[0]}" =~ ^docs/work/package-requests/[A-Za-z0-9][A-Za-z0-9._-]{0,127}\.json$ ]]; then
+            echo "Package broker requires exactly one package-request JSON change" >&2
+            exit 1
+          fi
+          printf 'REQUEST_PATH=%s\n' "${changed[0]}" >> "${GITHUB_ENV}"
+      - name: Validate broker and request
+        run: |
+          node scripts/validate-template-development.mjs
+          node scripts/validate-package-broker.mjs
+          node --test tests/package-request.test.mjs
+      - name: Generate and validate package
+        run: |
+          node scripts/process-package-request.mjs --request "${REQUEST_PATH}" --request-sha "${GITHUB_SHA}"
+          node scripts/validate-template-development.mjs
+          node scripts/validate-package-broker.mjs
+      - name: Publish exact generated package
+        env:
+          GH_PUSH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin template-development
+          remote_before="$(git rev-parse refs/remotes/origin/template-development)"
+          if [[ "${remote_before}" != "${GITHUB_SHA}" ]]; then
+            echo "template-development moved after package request; refusing publication" >&2
+            exit 1
+          fi
+
+          task_id="$(node -e 'const r=require("fs").readFileSync(process.env.REQUEST_PATH,"utf8"); process.stdout.write(JSON.parse(r).task_id)')"
+          package_path="$(node -e 'const r=JSON.parse(require("fs").readFileSync(process.env.REQUEST_PATH,"utf8")); process.stdout.write(r.result.package_path)')"
+          git add -- "${REQUEST_PATH}" "${package_path}"
+
+          mapfile -t staged < <(git diff --cached --name-only | sort)
+          mapfile -t expected < <(printf '%s\n' \
+            "${REQUEST_PATH}" \
+            "${package_path}/developer.patch" \
+            "${package_path}/manifest.json" \
+            "${package_path}/template-development.patch" \
+            "${package_path}/web-orchestration.patch" | sort)
+          if [[ "$(printf '%s\n' "${staged[@]}")" != "$(printf '%s\n' "${expected[@]}")" ]]; then
+            echo "Unexpected staged paths; refusing package publication" >&2
+            exit 1
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore(${task_id}): store generated change package"
+          package_commit="$(git rev-parse HEAD)"
+          git push "https://x-access-token:${GH_PUSH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" \
+            "${package_commit}:refs/heads/template-development"
+
+          remote_after="$(git ls-remote "https://github.com/${GITHUB_REPOSITORY}.git" refs/heads/template-development | cut -f1)"
+          if [[ "${remote_after}" != "${package_commit}" ]]; then
+            echo "Generated package commit was not confirmed on template-development" >&2
+            exit 1
+          fi
