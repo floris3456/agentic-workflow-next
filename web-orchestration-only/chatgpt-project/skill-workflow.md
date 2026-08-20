@@ -183,6 +183,23 @@ not proof. A delegated `completed` response is reviewable only when its exact SH
 exists on remote `developer`, required task records exist, and the handoff is
 internally usable.
 
+Treat every developer handoff as a claim to evaluate, not a diagnosis or
+next-step instruction to forward. For `blocked` or `needs decision`, normally
+investigate the claimed blocker yourself before steering or escalating: inspect
+exact evidence, consult relevant accepted architecture, design, and deviation
+records, and decide whether the blocker is a real external or human-owned
+condition, an implementation misunderstanding, or an orchestration/design
+problem. Do not make the implementer the default owner of orchestration-level
+diagnosis or architecture merely because it reported the blocker.
+
+Repeated or similar blockers raise the bar. Before another steer, route change,
+or implementation request, do deeper orchestrator analysis and narrow the next
+request from that reasoning. Skip extra analysis only when the blocker is already
+independently proven to be a human-owned decision, safety or authority boundary,
+unavailable required capability, or external condition that further reasoning
+cannot resolve. Keep this proportional; simple proven blockers do not need
+additional ceremony.
+
 If the outcome is incomplete, take the shortest safe correction route. Keep a
 direct correction only while direct-route criteria still hold; otherwise switch
 after exact reconciliation. For delegated work, persist and post a focused
