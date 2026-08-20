@@ -32,21 +32,25 @@ operating workflow.
    objects; the base must be an ancestor of the reviewed head, and the reviewed
    head must be an ancestor of (or equal to) the current canonical tip. The
    template-development reviewed head must precede the new package storage;
-   when regenerating or superseding a package on a task with prior package
-   storage, `changes/<task-id>/**` is excluded from the diff and changed paths
-   so prior package commits in the same task's review range do not pollute
-   `template-development.patch` or create circular self-references. Patch bytes
-   are generated from those exact reviewed ranges using only fetched canonical
-   objects, so later unrelated branch commits are observed but not silently
-   added. Package range bases do not have to equal the repository source
-   snapshot, and that snapshot does not acquire a circular
+   the generator automatically excludes the task's own package storage paths
+   (`changes/<task-id>*/**`) so prior package commits in the same task's review
+   range do not pollute `template-development.patch` or create circular
+   self-references. When superseding a previous package, store the new package in
+   a distinct directory (e.g. `changes/<task-id>.rev2/`) referencing the
+   superseded package with `--supersedes`, preserving the historical package
+   unchanged. Patch bytes are generated from those exact reviewed ranges using
+   only fetched canonical objects, so later unrelated branch commits are observed
+   but not silently added. Package range bases do not have to equal the
+   repository source snapshot, and that snapshot does not acquire a circular
    template-development/resulting-commit field.
 7. Validate the package offline. Schema 3 remains provenance-verified when the
    embedded generation-time source snapshot and digest, exact ranges,
    canonical-tip/head-relation fields, per-patch digests, and package binding all
-   recompute for all three branches. Historical schema 1 remains
-   integrity-compatible but explicitly is not provenance-verified; existing
-   schema 2 remains provenance-compatible.
+   recompute for all three branches. Supersession chains are verified for
+   unambiguous identity, matching historical digests, strictly increasing
+   revisions, and acyclicity. Historical schema 1 remains integrity-compatible
+   but explicitly is not provenance-verified; existing schema 2 remains
+   provenance-compatible.
 8. Apply each patch to the downstream matching branch under a new normal task.
 9. Review downstream exact ranges and use ordinary human-only promotion.
 10. Reconcile `source-lock.json` directly from independently verified exact live
@@ -77,8 +81,8 @@ promotion.
   branch history or is not an ancestor of its current tip: fail closed as
   local-only/divergent evidence. A reviewed head that remains canonical but is
   older than the tip is allowed so unrelated later work stays out of the package.
-- Reviewed template-development history contains its own task package path: fail
-  before output; select the exact pre-package implementation head instead.
+- Reviewed template-development changed paths contain its own package storage path: reject; generator automatically excludes task package paths and superseding packages use distinct revision directories.
+- Invalid, missing, tampered, ambiguous, or cyclic supersession chain: fail closed before package generation or application.
 - A stale source snapshot is an observation to reconcile from exact remote refs;
   it does not redefine or block an already reviewed package range.
 - Failed/ambiguous source push: no package and no completion claim.

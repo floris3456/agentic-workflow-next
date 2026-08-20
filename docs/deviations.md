@@ -97,12 +97,15 @@
   merged into a source branch, and still owns continuity/packages, while also
   owning only its rooted maintenance runtime. Schema 3 carries exact
   `template-development`, `developer`, and `web-orchestration` ranges. The
-  template-development range excludes the task's own package storage path
-  (`changes/<task-id>/**`) so prior package commits in the same task's review
-  range do not pollute `template-development.patch` or block same-task package
-  supersession. The independently reconciled source lock remains a three-source
-  snapshot (`main`, `developer`, `web-orchestration`) and is not required to
-  contain a self-referential resulting SHA.
+  template-development range excludes the task's own package storage paths
+  (`changes/<task-id>*/**`) so prior package commits in the same task's review
+  range do not pollute `template-development.patch`. Superseding packages coexist
+  in distinct revision directories (e.g. `changes/<task-id>.rev2/`) referencing
+  the historical package's exact SHA-256 digest, preserving immutable historical
+  evidence while enabling downstream resolution of the latest active package. The
+  independently reconciled source lock remains a three-source snapshot (`main`,
+  `developer`, `web-orchestration`) and is not required to contain a
+  self-referential resulting SHA.
 - Evidence: generator/application fixtures cover template range ancestry,
   canonical advance, self-package rejection, digest tampering, wrong-base dry
   run, and clean application; the real pinned OpenCode inventory check loads the

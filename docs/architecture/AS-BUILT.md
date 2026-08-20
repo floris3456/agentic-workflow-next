@@ -239,7 +239,7 @@ Before output, the generator:
    fetched canonical object database, requires the base to be an ancestor of the
    reviewed head, and requires the reviewed head to be an ancestor of/equal to
    the current branch tip; and
-5. excludes the task's own `changes/<task-id>/**` storage path when diffing
+5. excludes the task's own `changes/<task-id>*/**` storage paths when diffing
    `template-development` so prior package commits in the same task's review
    range do not pollute `template-development.patch` or create circular
    self-references; and
@@ -250,13 +250,17 @@ Before output, the generator:
 The schema-3 manifest embeds the generation-time `source-lock.json` snapshot and
 digest as provenance context, observed canonical tips, reviewed-head relationship
 markers, exact task ranges, sorted changed paths, and per-patch SHA-256 values.
-The embedded source snapshot does not have to equal either package range base.
-It deliberately continues to contain only `main`, `developer`, and
-`web-orchestration`; it need not and cannot name the commit that will store itself
-or the package. `package_sha256` binds the stable manifest core plus all three raw
-patch streams with a versioned domain separator.
+When a package supersedes an earlier package for the same task, the historical
+package remains immutable in its original directory and the superseding package
+is created in a distinct directory (e.g. `changes/<task-id>.rev2/`). The manifest
+records its `revision` number and a `supersedes` object binding the exact
+relative path, revision, and `package_sha256` of the superseded package.
+`package_sha256` binds the stable manifest core (including supersession metadata)
+plus all three raw patch streams with a versioned domain separator.
 `scripts/change-package-lib.mjs` is the shared offline verifier used by
-generation, application, and ledger validation.
+generation, application, and ledger validation; it verifies supersession chains
+for acyclicity, strictly increasing revisions, digest integrity, and unambiguous
+active package resolution.
 
 Historical schema-1 packages remain integrity-compatible only after their
 original range/per-patch checks pass and are explicitly not provenance-verified.
@@ -266,12 +270,13 @@ snapshot contract. Full 40-character commits remain mandatory. A non-empty outpu
 directory is refused. The generator never writes source branches.
 
 `scripts/apply-change-package.mjs` validates the package and supports all three
-matching downstream branches, including `template-development`. It requires the
-exact matching branch and a clean tree, then runs `git apply --check`. Only
-explicit `--apply` changes the working tree; it does not commit, push, merge, or
-promote. Every branch's own review/commit/push process remains authoritative.
-Patch conflict is an explicit adaptation task, never permission to silently alter
-canonical package contents.
+matching downstream branches, including `template-development`. It accepts an
+explicit `--package` directory or resolves the latest active package via
+`--task-id`, requires the exact matching branch and a clean tree, then runs
+`git apply --check`. Only explicit `--apply` changes the working tree; it does
+not commit, push, merge, or promote. Every branch's own review/commit/push
+process remains authoritative. Patch conflict is an explicit adaptation task,
+never permission to silently alter canonical package contents.
 
 ## Synchronization
 

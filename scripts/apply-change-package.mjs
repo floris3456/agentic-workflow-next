@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 import { execFileSync } from "node:child_process";
+import { existsSync } from "node:fs";
 import { resolve } from "node:path";
-import { validateChangePackage } from "./change-package-lib.mjs";
+import { resolveLatestChangePackage, validateChangePackage } from "./change-package-lib.mjs";
 
 function fail(message) {
   console.error(message);
@@ -16,12 +17,12 @@ function parse(argv) {
     const name = filtered[index];
     const value = filtered[index + 1];
     if (!name?.startsWith("--") || !value || value.startsWith("--")) {
-      fail("Usage: apply-change-package.mjs --package <directory> --repository <path> --target <template-development|developer|web-orchestration> [--apply]");
+      fail("Usage: apply-change-package.mjs [--package <directory> | --task-id <id>] --repository <path> --target <template-development|developer|web-orchestration> [--apply]");
     }
     if (result.has(name)) fail(`Duplicate argument ${name}`);
     result.set(name, value);
   }
-  for (const name of result.keys()) if (!["--package", "--repository", "--target"].includes(name)) fail(`Unknown argument ${name}`);
+  for (const name of result.keys()) if (!["--package", "--task-id", "--repository", "--target", "--changes-dir"].includes(name)) fail(`Unknown argument ${name}`);
   return { apply, values: result };
 }
 
@@ -34,12 +35,27 @@ function git(repository, args) {
 }
 
 const { apply, values } = parse(process.argv.slice(2));
-const packageDirectory = resolve(values.get("--package") ?? fail("Missing --package"));
 const repository = resolve(values.get("--repository") ?? fail("Missing --repository"));
 const target = values.get("--target") ?? fail("Missing --target");
 if (!["template-development", "developer", "web-orchestration"].includes(target)) {
   fail("target must be template-development, developer, or web-orchestration");
 }
+
+let packageDirectory;
+if (values.has("--package")) {
+  packageDirectory = resolve(values.get("--package"));
+} else if (values.has("--task-id")) {
+  const taskId = values.get("--task-id");
+  const changesDir = values.has("--changes-dir")
+    ? resolve(values.get("--changes-dir"))
+    : resolve(repository, "changes");
+  if (!existsSync(changesDir)) fail(`Changes directory not found at ${changesDir}`);
+  const active = resolveLatestChangePackage(changesDir, taskId);
+  packageDirectory = active.directory;
+} else {
+  fail("Must specify either --package or --task-id");
+}
+
 let checked;
 try {
   checked = validateChangePackage(packageDirectory);

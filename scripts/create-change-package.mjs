@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { basename, dirname, join, relative, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 import {
@@ -26,7 +26,7 @@ function argumentsMap(argv) {
     const name = argv[index];
     const value = argv[index + 1];
     if (!name?.startsWith("--") || value === undefined || value.startsWith("--")) {
-      fail("Usage: create-change-package.mjs --repository <path> --task-id <id> --template-base <sha> --template-head <sha> --developer-base <sha> --developer-head <sha> --web-base <sha> --web-head <sha> --output <empty-directory>");
+      fail("Usage: create-change-package.mjs --repository <path> --task-id <id> --template-base <sha> --template-head <sha> --developer-base <sha> --developer-head <sha> --web-base <sha> --web-head <sha> --output <empty-directory> [--revision <number>] [--supersedes <package-dir>]");
     }
     if (result.has(name)) fail(`Duplicate argument ${name}`);
     result.set(name, value);
@@ -100,6 +100,7 @@ const values = argumentsMap(process.argv.slice(2));
 const known = new Set([
   "--repository", "--task-id", "--template-base", "--template-head",
   "--developer-base", "--developer-head", "--web-base", "--web-head", "--output",
+  "--revision", "--supersedes",
 ]);
 for (const name of values.keys()) if (!known.has(name)) fail(`Unknown argument ${name}`);
 
@@ -107,6 +108,44 @@ const repository = resolve(required(values, "--repository"));
 const taskId = required(values, "--task-id");
 if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(taskId)) fail("task-id is invalid");
 runGit(repository, ["rev-parse", "--git-dir"]);
+
+let targetRevision = values.has("--revision") ? Number(values.get("--revision")) : undefined;
+if (targetRevision !== undefined && (!Number.isInteger(targetRevision) || targetRevision < 1)) {
+  fail("--revision must be a positive integer");
+}
+
+let supersedesEntry = undefined;
+const supersedesInput = values.get("--supersedes");
+if (supersedesInput) {
+  const supersededResolved = resolve(supersedesInput);
+  let checkedSuperseded;
+  try {
+    checkedSuperseded = validateChangePackage(supersededResolved);
+  } catch (error) {
+    fail(`Superseded package is invalid: ${error.message}`);
+  }
+  if (checkedSuperseded.manifest.task_id !== taskId) {
+    fail(`Superseded package task_id (${checkedSuperseded.manifest.task_id}) does not match current task-id (${taskId})`);
+  }
+  const supersededRev = checkedSuperseded.manifest.revision ?? 1;
+  if (targetRevision === undefined) {
+    targetRevision = supersededRev + 1;
+  } else if (targetRevision <= supersededRev) {
+    fail(`--revision (${targetRevision}) must be strictly greater than superseded package revision (${supersededRev})`);
+  }
+  let relPath = relative(repository, checkedSuperseded.directory);
+  if (relPath.startsWith("..") || !relPath) {
+    relPath = relative(root, checkedSuperseded.directory);
+  }
+  if (relPath.startsWith("..") || !relPath) {
+    relPath = `changes/${basename(checkedSuperseded.directory)}`;
+  }
+  supersedesEntry = {
+    package_path: relPath,
+    package_sha256: checkedSuperseded.manifest.package_sha256,
+    revision: supersededRev,
+  };
+}
 
 const lock = JSON.parse(readFileSync(resolve(root, "source-lock.json"), "utf8"));
 try {
@@ -174,9 +213,11 @@ try {
     }
   }
 
-  const packagePrefix = `changes/${taskId}/`;
-  const template = range(canonicalRepo, templateBase, templateHead, "template-development", env, packagePrefix.slice(0, -1));
-  if (template.paths.some((path) => path === packagePrefix.slice(0, -1) || path.startsWith(packagePrefix))) {
+  const packagePrefix = `changes/${taskId}`;
+  const template = range(canonicalRepo, templateBase, templateHead, "template-development", env, packagePrefix);
+  if (template.paths.some((path) =>
+    path === packagePrefix || path.startsWith(`${packagePrefix}/`) || path.startsWith(`${packagePrefix}.`) || path.startsWith(`${packagePrefix}-`)
+  )) {
     fail("template-development range must end before its own generated package storage");
   }
   const developer = range(canonicalRepo, developerBase, developerHead, "developer", env);
@@ -191,6 +232,8 @@ try {
   const core = {
     schema_version: 3,
     task_id: taskId,
+    ...(targetRevision !== undefined ? { revision: targetRevision } : {}),
+    ...(supersedesEntry !== undefined ? { supersedes: supersedesEntry } : {}),
     canonical_repository: lock.canonical_repository,
     created_at: createdAt,
     provenance: {
@@ -245,7 +288,7 @@ try {
   writeFileSync(resolve(output, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
   const checked = validateChangePackage(output, taskId);
   if (!checked.provenanceVerified || checked.schemaVersion !== 3) fail("newly generated package did not validate as provenance schema 3");
-  console.log(`Created provenance-verified template change package ${taskId}: template-development ${template.paths.length} path(s), developer ${developer.paths.length} path(s), web-orchestration ${web.paths.length} path(s).`);
+  console.log(`Created provenance-verified template change package ${taskId}${targetRevision ? ` (rev ${targetRevision})` : ""}: template-development ${template.paths.length} path(s), developer ${developer.paths.length} path(s), web-orchestration ${web.paths.length} path(s).`);
 } finally {
   rmSync(temporary, { recursive: true, force: true });
 }

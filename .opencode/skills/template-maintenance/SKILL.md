@@ -63,13 +63,17 @@ local-only SHA as a handoff.
 
 After exact source-range review, run `scripts/create-change-package.mjs` with the
 reviewed template-development, developer, and web ranges. The reviewed
-template-development head must precede the commit that stores the generated
-package; its range must not contain `changes/<task-id>/**`. Package bases and
-heads come from reviewed task ranges and do not have to equal `source-lock.json`.
-The source lock deliberately does not contain its own or a resulting
-template-development commit SHA. The generator proves every endpoint against
-freshly fetched canonical branch history. Commit the generated
-`changes/<task-id>/**` package and verify it with the validator.
+template-development head must precede the commit that stores the new package;
+the generator excludes the task's own package storage path (`changes/<task-id>*/**`)
+so prior package commits in the review range do not pollute `template-development.patch`
+or create circular self-references. When superseding an earlier package, preserve
+the historical package unchanged, store the superseding package in a distinct
+revision directory (e.g. `changes/<task-id>.rev2/`) using `--supersedes`, and
+verify the supersession relation. Package bases and heads come from reviewed
+task ranges and do not have to equal `source-lock.json`. The source lock
+deliberately does not contain its own or a resulting template-development commit
+SHA. The generator proves every endpoint against freshly fetched canonical branch
+history. Commit the generated package directory and verify it with the validator.
 
 Apply each non-empty patch to the downstream repository's matching branch using
 `scripts/apply-change-package.mjs`. Application only updates the working tree;

@@ -2,7 +2,7 @@
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { validateChangePackage, validateSourceLock } from "./change-package-lib.mjs";
+import { validateChangePackage, validatePackageSupersessionChain, validateSourceLock } from "./change-package-lib.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const failures = [];
@@ -151,15 +151,10 @@ for (const directory of ["docs/work/current", "docs/work/archive"]) {
 }
 
 if (existsSync(join(root, "changes"))) {
-  for (const taskId of readdirSync(join(root, "changes"))) {
-    if (taskId === "README.md") continue;
-    const directory = join(root, "changes", taskId);
-    if (!statSync(directory).isDirectory()) { fail(`Unexpected changes entry: ${taskId}`); continue; }
-    try {
-      validateChangePackage(directory, taskId);
-    } catch (error) {
-      fail(`Invalid change package ${taskId}: ${error.message}`);
-    }
+  try {
+    validatePackageSupersessionChain(join(root, "changes"));
+  } catch (error) {
+    fail(`Change package validation failed: ${error.message}`);
   }
 }
 

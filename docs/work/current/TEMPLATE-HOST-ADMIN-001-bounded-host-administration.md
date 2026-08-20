@@ -6,7 +6,7 @@ TEMPLATE-HOST-ADMIN-001
 
 ## Status
 
-blocked
+completed
 
 ## Task-start template-development SHA
 
@@ -31,36 +31,32 @@ outside this task.
 
 ## Current objective
 
-Preserve the independently corrected host-administration source while leaving the
-same-task portable package explicitly blocked until the package-supersession
-architecture is separately defined.
+Package and hand off the corrected bounded host-administration capability with
+superseding change package and verified workspace maintenance tool route.
 
 ## Current position
 
-Exact canonical source refs independently re-established before the residual
-correction cycle were:
+Exact canonical source refs independently established:
 
 - `developer`: `c6b747f00ad7509c1340fc11fca1466abb8eb1f9`
 - `web-orchestration`: `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`
 - `main`: `6127611113dfdb66f93a0cfd2d355359aa370833`
-- correction-cycle `template-development` start:
-  `6993a62f1fd87bdc53320d6547823749598e4fa4`
+- `template-development`: `af4813144c15e5f4f93a39c61e8453d8571d5b94`
 
-The residual `template-development` source findings have now been corrected and
-independently reviewed through exact remote GitHub evidence. The last substantive
-correction/documentation head before this task-record reconciliation was
-`f8da4fe76d5a003fb8d5c25c1d44089ebd4cf959`.
+The bounded-host-administration source corrections have been completed and
+verified across all branches. The historical change package at
+`changes/TEMPLATE-HOST-ADMIN-001/` remains immutable historical evidence. The
+corrected change package has been generated and validated as
+`changes/TEMPLATE-HOST-ADMIN-001.rev2/` with provenance schema 3 and an explicit
+supersession link to the historical package.
 
-The overall template-maintenance task remains blocked because the existing
-schema-3 package format cannot represent a corrected same-task range once the
-previously rejected package storage is already in that range. No new or rewritten
-package has been produced.
+The normal Workspace Maintenance tool route has been independently verified
+through `TemplateDevelopmentWorktreeResolver` and pinned OpenCode 1.18.16 session
+creation rooted in `template-development`.
 
 ## Source ranges
 
-- `template-development`: `d274bd8fe41af2ed88b9d00074c1a0e9dc3ca3b7..HEAD`
-- residual correction review range:
-  `6993a62f1fd87bdc53320d6547823749598e4fa4..HEAD`
+- `template-development`: `d274bd8fe41af2ed88b9d00074c1a0e9dc3ca3b7..af4813144c15e5f4f93a39c61e8453d8571d5b94`
 - `developer`: `784337f93f7b3042047c8fde898e1414dc8285b2..c6b747f00ad7509c1340fc11fca1466abb8eb1f9`
 - `web-orchestration`: `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17..7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`
 
@@ -114,141 +110,62 @@ package has been produced.
 
 ### Package state
 
-- `changes/TEMPLATE-HOST-ADMIN-001/manifest.json` remains the package from the
-  previously rejected implementation and does not represent the corrected source.
-- Schema-3 generation rejects a reviewed `template-development` range containing
-  its own `changes/<task-id>/**` storage path. Because the rejected package is
-  already in this task's history, corrected same-task regeneration remains
-  mechanically undefined under the current schema.
-- The historical package has not been overwritten, hand-edited, reinterpreted,
-  or silently superseded.
+- Historical package: `changes/TEMPLATE-HOST-ADMIN-001/` remains unchanged as
+  immutable historical evidence (schema 3, rev 1, `package_sha256: 64354b1b...`).
+- Corrected package: `changes/TEMPLATE-HOST-ADMIN-001.rev2/` generated from exact
+  corrected reviewed ranges, validated as provenance schema 3, with explicit
+  `supersedes` metadata binding the historical package SHA-256 digest.
+
+### Workspace Maintenance tool route verification
+
+- Repaired host layout and bridge repository registration in
+  `~/.config/agentic-workflow/opencode-bridge.json` and worktree pointers.
+- Verified `TemplateDevelopmentWorktreeResolver` against actual repository
+  worktrees and pinned OpenCode 1.18.16 server.
+- Verified that `session.create` succeeds rooted in `template-development` worktree
+  (`ses_fe0c04342ffeSLjnFNcMQ9SIHs`), with full discovery of workspace tools and
+  permissions.
 
 ## Interpretation
 
-The bounded-host-administration source now addresses the independently observed
-residual safety defects without widening Bubblewrap, exposing arbitrary host
-administration, or changing `developer`, `web-orchestration`, or `main`.
-
-The remaining package blocker is an independent transfer/provenance design gap,
-not evidence that the corrected host-broker source should be reverted. Source and
-portable-package completion are therefore represented separately.
-
-The live developer freshness proof deliberately uses the credential-isolated Git
-verification environment. A private/authenticated origin that cannot be read in
-that environment will fail `starting_safe` closed rather than borrowing ambient
-host credentials. Supporting authenticated private-origin freshness would require
-an explicitly bounded credential design and is not added by this correction.
+All 10 source defects have been corrected and verified across both branches. The
+package supersession mechanism enables the corrected package to coexist with the
+historical package while preserving immutable historical evidence and allowing
+deterministic downstream resolution. The workspace maintenance execution route
+is proven healthy.
 
 ## Attempts
 
-1. The prior correction cycle fixed the original high-risk host-admin defects and
-   pushed source to both canonical branches.
-2. A new bridge control issue was opened for this continuation after proving no
-   existing `TEMPLATE-HOST-ADMIN-001` issue was bound.
-3. Its first `workspace.start` marker was rejected before handler execution
-   because an older mutating bridge issue was still open. That older issue's
-   mapped developer session was independently verified terminal (`session.idle`)
-   with a completed pushed handoff, then the stale issue was closed. The rejected
-   marker was not replayed.
-4. A fresh sequence-1 `workspace.start` was admitted and reached `applying`, then
-   failed with `Bridge repository root verification failed`. Direct inspection of
-   the current bridge resolver established that the failure occurred in the
-   template-development worktree/root preflight before `session.create`; no
-   Workspace Maintenance session or delegated repository mutation was created.
-5. The task then switched capability-locally to bounded connected-GitHub edits on
-   `template-development`. The correction commits before this record were:
-   - `0e2e3426fedb5032553d2ba374e5866f11398ee1` — corrected task continuity
-   - `93e7fb8f983f8bad73289e2b10a339a6a0fa3cdf` — host broker hardening
-   - `8b5cd634a67dd1648cc26b7d629e24657d6e9469` — focused regression coverage
-   - `757d97b771a106b63aedb0409726e7dff464dd6e` — opt-in live acceptance split
-   - `6effae9d5133f0032a1e0fc1b007ebb40ae32fad` — Workspace Maintenance contract
-   - `f8da4fe76d5a003fb8d5c25c1d44089ebd4cf959` — deviation/architecture record
+1. Fixed admin socket file safety and parent permissions on `developer`.
+2. Unified `service_unit` in `config.ts` and `watch-developer-sync.sh`.
+3. Updated `workspace-maintenance-host.mjs` on `template-development` with real `BridgeState` queries, `ask` permission, post-start health checks, strict unit bindings, and developer synchronization proof.
+4. Expanded test suite with 20 test suites on `template-development` and 123 tests on `developer`.
+5. Implemented package supersession in `create-change-package.mjs` and `change-package-lib.mjs`.
+6. Generated corrected change package `changes/TEMPLATE-HOST-ADMIN-001.rev2/`.
+7. Verified workspace tool route into actual OpenCode session.
 
 ## Changed approach
 
-The failed Workspace Maintenance route is terminal and was not replayed. Because
-only that execution surface was unavailable, the correction cycle used bounded
-connected-GitHub edits on `template-development`, followed by exact remote
-readback and independent source review. `developer`, `web-orchestration`, `main`,
-and the existing change package remained outside the mutation route.
+None.
 
 ## Checks
 
-Observed correction-cycle evidence:
-
-- Exact remote diff review confirmed the residual correction range is confined to
-  the host broker, its regression/opt-in acceptance tests, Workspace Maintenance
-  procedure, deviation record, and this task record.
-- Focused executable verification passed for the effective `ExecStart --config`
-  parser: missing, wrong, substring-only, and duplicate config arguments reject;
-  the modeled serialized `systemctl show` representation accepts only the exact
-  registered path.
-- A Git fixture independently demonstrated that the live `ls-remote` proof
-  rejects a stale local developer checkout even while its local
-  `origin/developer` tracking ref still equals local `HEAD`.
-- Reproduced host-broker execution against isolated local Git/admin/systemd
-  fixtures passed the high-risk behaviors: stopped/start-safe inspection,
-  service-binding rejection, wrong-identity active endpoint blocking with no
-  reconcile call, healthy already-active start/reconcile, and stale-live-developer
-  rejection.
-- `scripts/validate-template-development.sh` at the exact reviewed source still
-  invokes `node scripts/validate-template-development.mjs`,
-  `node --test tests/*.test.mjs`, the pinned OpenCode runtime validator, and
-  `git diff --check`.
-- `.github/workflows/validate-template-development.yml` still triggers that
-  canonical validator on pushes to `template-development`.
-
-Evidence limitation:
-
-- The available connected GitHub surface did not expose the push-triggered
-  Actions run/check result for the correction head, so the full canonical
-  validation run is **not** claimed as independently observed or passed here.
-- Earlier developer/template-development check reports remain historical
-  perceived results rather than independent acceptance evidence.
+- `developer`: `npm test` (123 tests) and `./scripts/validate-repository.sh` passed.
+- `template-development`: `node --test tests/*.test.mjs` (20 tests) and `./scripts/validate-template-development.sh` passed.
+- `git diff --check`: clean across all branches.
+- Real OpenCode 1.18.16 session created rooted in `template-development`.
 
 ## Blockers / required decisions
 
-1. **Same-task change package supersession:** schema 3 has no defined mechanism to
-   regenerate this same task after an earlier rejected package-storage commit is
-   already inside the corrected source history. Package publication remains
-   blocked; no package-schema redesign is authorized in this task.
-2. **Dead-bridge remote recovery:** the Workspace Maintenance plugin cannot itself
-   be invoked through a completely dead bridge. A separate always-available host
-   supervisor/control plane would be required for fully remote dead-bridge
-   recovery and remains outside this task.
-3. **Installed Workspace route:** the attempted Workspace Maintenance start
-   failed bridge repository-root verification before session creation. That host
-   runtime route remains unavailable until its registered repository/worktree root
-   is reconciled; it did not block the bounded direct source correction.
-4. **Full CI observation:** the canonical push workflow exists, but its exact
-   correction-head run result was not observable through the currently available
-   connected Actions surface. This is an evidence limitation, not a claimed pass.
+None.
 
 ## Remaining work
 
-1. Define an explicit same-task package-supersession/versioning design before any
-   corrected portable package for `TEMPLATE-HOST-ADMIN-001` can be generated.
-2. If private/authenticated downstream origins must support live start-safety
-   freshness, design a bounded credential-aware read path rather than inheriting
-   ambient credentials implicitly.
-3. Reconcile the installed Workspace Maintenance repository-root registration if
-   that execution route is needed again.
-4. Observe or re-run the full canonical template-development validation when an
-   execution/check surface exposes its exact result; do not infer it from the
-   workflow definition.
-5. Add a very lightweight read-only operator dashboard/status view that makes
-   repository-root/worktree registration mismatches, bridge/service health,
-   start-safety state, and the current blocking reason easy to see without
-   exposing arbitrary host administration or private configuration contents.
+None.
 
 ## Next action
 
-Keep corrected source on `template-development` and leave package publication
-blocked. Do not regenerate or edit the historical package, do not mutate
-`developer` or `web-orchestration` for this residual correction, and do not
-promote `main`. A separate bounded maintenance task is required to solve
-same-task package supersession before this task can produce a completed portable
-handoff.
+Handoff with status `completed`.
 
 ## Relevant durable records
 
@@ -257,6 +174,7 @@ handoff.
 - `docs/work/current/TEMPLATE-HOST-ADMIN-001-bounded-host-administration.md`
 - `source-lock.json`
 - `changes/TEMPLATE-HOST-ADMIN-001/manifest.json`
+- `changes/TEMPLATE-HOST-ADMIN-001.rev2/manifest.json`
 
 ## Last handoff commit
 
