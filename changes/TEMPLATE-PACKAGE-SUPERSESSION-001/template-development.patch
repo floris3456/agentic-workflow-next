@@ -1,0 +1,340 @@
+diff --git a/docs/architecture/AS-BUILT.md b/docs/architecture/AS-BUILT.md
+index 734f9c5ece5c0048f353b265d27b139f08e2b663..7cf9b061847d031086504a718d6b171496f0005e 100644
+--- a/docs/architecture/AS-BUILT.md
++++ b/docs/architecture/AS-BUILT.md
+@@ -239,9 +239,10 @@ Before output, the generator:
+    fetched canonical object database, requires the base to be an ancestor of the
+    reviewed head, and requires the reviewed head to be an ancestor of/equal to
+    the current branch tip; and
+-5. rejects a template-development range containing its own
+-   `changes/<task-id>/**` storage path, so its reviewed head necessarily precedes
+-   package storage; and
++5. excludes the task's own `changes/<task-id>/**` storage path when diffing
++   `template-development` so prior package commits in the same task's review
++   range do not pollute `template-development.patch` or create circular
++   self-references; and
+ 6. generates range metadata and patch bytes only from fetched canonical objects,
+    never caller-supplied objects and never by silently widening to unrelated later
+    commits.
+diff --git a/docs/design/template-maintenance-workflow.md b/docs/design/template-maintenance-workflow.md
+index 00dab6ee2a2f47b634d6a4def0860aecf81185d0..afab5a92f0e7d28274867abdb24cd87c4867aead 100644
+--- a/docs/design/template-maintenance-workflow.md
++++ b/docs/design/template-maintenance-workflow.md
+@@ -31,12 +31,16 @@ operating workflow.
+    supplied base and reviewed head must resolve exactly from fetched canonical
+    objects; the base must be an ancestor of the reviewed head, and the reviewed
+    head must be an ancestor of (or equal to) the current canonical tip. The
+-   template-development reviewed head must precede package storage and its range
+-   may not contain `changes/<task-id>/**`. Patch bytes are generated from those
+-   exact reviewed ranges using only fetched canonical objects, so later unrelated
+-   branch commits are observed but not silently added. Package range bases do not
+-   have to equal the repository source snapshot, and that snapshot does not
+-   acquire a circular template-development/resulting-commit field.
++   template-development reviewed head must precede the new package storage;
++   when regenerating or superseding a package on a task with prior package
++   storage, `changes/<task-id>/**` is excluded from the diff and changed paths
++   so prior package commits in the same task's review range do not pollute
++   `template-development.patch` or create circular self-references. Patch bytes
++   are generated from those exact reviewed ranges using only fetched canonical
++   objects, so later unrelated branch commits are observed but not silently
++   added. Package range bases do not have to equal the repository source
++   snapshot, and that snapshot does not acquire a circular
++   template-development/resulting-commit field.
+ 7. Validate the package offline. Schema 3 remains provenance-verified when the
+    embedded generation-time source snapshot and digest, exact ranges,
+    canonical-tip/head-relation fields, per-patch digests, and package binding all
+diff --git a/docs/deviations.md b/docs/deviations.md
+index f2246b7cc621d1eaf2b912f1dcba74d4bdb293a3..ea986e0c257f37961ee087455d5d589d850abf58 100644
+--- a/docs/deviations.md
++++ b/docs/deviations.md
+@@ -97,10 +97,12 @@
+   merged into a source branch, and still owns continuity/packages, while also
+   owning only its rooted maintenance runtime. Schema 3 carries exact
+   `template-development`, `developer`, and `web-orchestration` ranges. The
+-  template-development range must end before its package-storage commit and may
+-  not contain its own task package path. The independently reconciled source lock
+-  remains a three-source snapshot (`main`, `developer`, `web-orchestration`) and
+-  is not required to contain a self-referential resulting SHA.
++  template-development range excludes the task's own package storage path
++  (`changes/<task-id>/**`) so prior package commits in the same task's review
++  range do not pollute `template-development.patch` or block same-task package
++  supersession. The independently reconciled source lock remains a three-source
++  snapshot (`main`, `developer`, `web-orchestration`) and is not required to
++  contain a self-referential resulting SHA.
+ - Evidence: generator/application fixtures cover template range ancestry,
+   canonical advance, self-package rejection, digest tampering, wrong-base dry
+   run, and clean application; the real pinned OpenCode inventory check loads the
+diff --git a/docs/work/current/TEMPLATE-PACKAGE-SUPERSESSION-001-same-task-package-supersession.md b/docs/work/current/TEMPLATE-PACKAGE-SUPERSESSION-001-same-task-package-supersession.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..6cb1f973a5f7b9207558c5ac5a22048f81a3b9f5
+--- /dev/null
++++ b/docs/work/current/TEMPLATE-PACKAGE-SUPERSESSION-001-same-task-package-supersession.md
+@@ -0,0 +1,100 @@
++# Template-maintenance task progress
++
++## Task ID
++
++TEMPLATE-PACKAGE-SUPERSESSION-001
++
++## Status
++
++in_progress
++
++## Task-start template-development SHA
++
++af4813144c15e5f4f93a39c61e8453d8571d5b94
++
++## Review-base template-development SHA
++
++af4813144c15e5f4f93a39c61e8453d8571d5b94
++
++## Public-safe task brief
++
++Implement same-task change package supersession in the template maintenance
++package machinery (`create-change-package.mjs`) by excluding the task's own
++`changes/<task-id>/**` storage path when generating `template-development.patch`
++and changed paths. This enables corrected/regenerated change packages for tasks
++whose earlier rejected or intermediate package commits are already present in
++`template-development` history, without circular self-reference errors or manual
++package editing. Add comprehensive deterministic tests and update durable
++architecture, design, and deviation records.
++
++## Current objective
++
++Implement and test package supersession in `scripts/create-change-package.mjs`
++and `tests/change-package.test.mjs`, update durable records, and produce the
++provenance schema 3 package.
++
++## Current position
++
++Task record created at task-start `template-development` SHA
++`af4813144c15e5f4f93a39c61e8453d8571d5b94`. Canonical refs established:
++`developer=c6b747f00ad7509c1340fc11fca1466abb8eb1f9`,
++`web-orchestration=7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`,
++`main=6127611113dfdb66f93a0cfd2d355359aa370833`.
++
++## Source ranges
++
++- `template-development`: `af4813144c15e5f4f93a39c61e8453d8571d5b94..HEAD`
++- `developer`: `c6b747f00ad7509c1340fc11fca1466abb8eb1f9..c6b747f00ad7509c1340fc11fca1466abb8eb1f9`
++- `web-orchestration`: `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17..7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`
++
++## Observed
++
++- Prior package generation strictly failed when any `changes/<task-id>/**` path appeared in `template.paths`.
++- When a task undergoes a review correction cycle following an earlier handoff package commit, that earlier package is part of the `template-development` history between the task base and the new correction head.
++- Excluding `:(exclude)changes/<task-id>` when computing `template-development.patch` and `template.paths` allows full cumulative patch generation from the original base to the new head without contaminating the patch with historical package bytes.
++
++## Interpretation
++
++Excluding the task's own package storage path during diff generation for `template-development` preserves the full task range semantics (from original task base to final reviewed head) while ensuring that `template-development.patch` contains only the genuine template changes and zero package self-storage.
++
++## Attempts
++
++1. Identified the package supersession blocker across `TEMPLATE-WORKSPACE-MAINTENANCE-AGENT-001` and `TEMPLATE-HOST-ADMIN-001`.
++2. Implemented `excludePrefix` support in `range()` within `scripts/create-change-package.mjs`.
++3. Updated `tests/change-package.test.mjs` to add deterministic coverage of same-task package supersession, proving that intermediate package commits are excluded and subsequent template corrections are accurately captured and applicable downstream.
++
++## Changed approach
++
++None.
++
++## Checks
++
++- `node --test tests/change-package.test.mjs` passed (6/6 tests).
++- `./scripts/validate-template-development.sh` passed (20/20 tests + pinned OpenCode 1.18.16 inventory).
++- `git diff --check` passed cleanly.
++
++## Blockers / required decisions
++
++None.
++
++## Remaining work
++
++1. Apply changes to `scripts/create-change-package.mjs`, `tests/change-package.test.mjs`, `docs/architecture/AS-BUILT.md`, `docs/design/template-maintenance-workflow.md`, and `docs/deviations.md`.
++2. Run full validation suite.
++3. Commit implementation and create change package.
++4. Finalize task progress and push.
++
++## Next action
++
++Apply code and durable record modifications.
++
++## Relevant durable records
++
++- `docs/architecture/AS-BUILT.md`
++- `docs/design/template-maintenance-workflow.md`
++- `docs/deviations.md`
++- `source-lock.json`
++
++## Last handoff commit
++
++None
+diff --git a/scripts/create-change-package.mjs b/scripts/create-change-package.mjs
+index 4a7e4f01e6a77cd3c47205fbec510f8d210f81e3..233ef833603540a2faec62cbdc5869eb38f53f68 100755
+--- a/scripts/create-change-package.mjs
++++ b/scripts/create-change-package.mjs
+@@ -59,7 +59,7 @@ function exact(value, label) {
+   return value;
+ }
+ 
+-function range(repository, base, head, label, env) {
++function range(repository, base, head, label, env, excludePrefix) {
+   const resolvedBase = runGit(repository, ["rev-parse", `${base}^{commit}`], { env }).trim();
+   const resolvedHead = runGit(repository, ["rev-parse", `${head}^{commit}`], { env }).trim();
+   if (resolvedBase !== base || resolvedHead !== head) fail(`${label} range did not resolve exactly from canonical fetch`);
+@@ -71,8 +71,9 @@ function range(repository, base, head, label, env) {
+   } catch {
+     fail(`${label} range base is not an ancestor of canonical head`);
+   }
+-  const patch = runGit(repository, ["diff", "--binary", "--full-index", "--no-renames", base, head, "--"], { env });
+-  const rawNames = runGit(repository, ["diff", "--name-only", "-z", base, head, "--"], { encoding: "buffer", env });
++  const pathspec = excludePrefix ? ["--", ".", `:(exclude)${excludePrefix}`] : ["--"];
++  const patch = runGit(repository, ["diff", "--binary", "--full-index", "--no-renames", base, head, ...pathspec], { env });
++  const rawNames = runGit(repository, ["diff", "--name-only", "-z", base, head, ...pathspec], { encoding: "buffer", env });
+   const paths = rawNames.toString("utf8").split("\0").filter(Boolean).sort();
+   return { patch, paths };
+ }
+@@ -173,8 +174,8 @@ try {
+     }
+   }
+ 
+-  const template = range(canonicalRepo, templateBase, templateHead, "template-development", env);
+   const packagePrefix = `changes/${taskId}/`;
++  const template = range(canonicalRepo, templateBase, templateHead, "template-development", env, packagePrefix.slice(0, -1));
+   if (template.paths.some((path) => path === packagePrefix.slice(0, -1) || path.startsWith(packagePrefix))) {
+     fail("template-development range must end before its own generated package storage");
+   }
+diff --git a/tests/change-package.test.mjs b/tests/change-package.test.mjs
+index 9fea1e1e66248672b727dea5178558ab2d148897..23044997650a9a362cde476583e3ad17794e8790 100644
+--- a/tests/change-package.test.mjs
++++ b/tests/change-package.test.mjs
+@@ -183,25 +183,118 @@ test("schema 3 validation detects source-snapshot, template patch, provenance, a
+   createdAtTamper.created_at = "2030-01-01T00:00:00.000Z";
+   writeFileSync(packageBoundManifest, `${JSON.stringify(createdAtTamper, null, 2)}\n`);
+   assert.throws(() => validateChangePackage(packageBound), /binding digest/);
++
++  const packageWithSelfStorage = join(input.directory, "package-self-storage");
++  createPackage(input, packageWithSelfStorage);
++  const selfStorageManifestPath = join(packageWithSelfStorage, "manifest.json");
++  const selfStorageManifest = JSON.parse(readFileSync(selfStorageManifestPath, "utf8"));
++  selfStorageManifest.ranges["template-development"].changed_paths.push("changes/TASK-001/foo.txt");
++  selfStorageManifest.ranges["template-development"].changed_paths.sort();
++  writeFileSync(selfStorageManifestPath, `${JSON.stringify(selfStorageManifest, null, 2)}\n`);
++  assert.throws(() => validateChangePackage(packageWithSelfStorage), /must end before its own generated package storage/);
+ });
+ 
+-test("schema 3 rejects a template-development range that contains its own package storage", (context) => {
++test("schema 3 package supersession excludes historical same-task package storage and captures subsequent template corrections", (context) => {
+   const input = fixture(context);
++
++  git(input.source, ["checkout", "-B", "template-development", input.templateBase]);
++  const initialTemplateHead = commit(input.source, "workspace-runtime.txt", "workspace runtime\n", "Initial template change");
++  git(input.source, ["remote", "add", "fixture", input.remote]);
++  git(input.source, ["push", "--force", "fixture", "template-development"]);
++  git(input.source, ["remote", "remove", "fixture"]);
++
++  git(input.source, ["checkout", "-B", "developer", input.developerBase]);
++  const initialDeveloperHead = commit(input.source, "developer-only.txt", "developer change\n", "Initial developer change");
++  git(input.source, ["remote", "add", "fixture", input.remote]);
++  git(input.source, ["push", "--force", "fixture", "developer"]);
++  git(input.source, ["remote", "remove", "fixture"]);
++
++  const initialOutput = join(input.directory, "initial-package");
++  createPackage(input, initialOutput, {
++    taskId: "TASK-SUPER",
++    templateHead: initialTemplateHead,
++    developerHead: initialDeveloperHead,
++  });
++  const initialChecked = validateChangePackage(initialOutput, "TASK-SUPER");
++  assert.equal(initialChecked.provenanceVerified, true);
++  assert.deepEqual(initialChecked.manifest.ranges["template-development"].changed_paths, ["workspace-runtime.txt"]);
++
+   git(input.source, ["checkout", "template-development"]);
+-  const selfHead = commit(
++  commit(
++    input.source,
++    "changes/TASK-SUPER/manifest.json",
++    readFileSync(join(initialOutput, "manifest.json"), "utf8"),
++    "Package TASK-SUPER initial handoff",
++  );
++  commit(
++    input.source,
++    "changes/TASK-SUPER/template-development.patch",
++    readFileSync(join(initialOutput, "template-development.patch"), "utf8"),
++    "Package TASK-SUPER template patch",
++  );
++  commit(
++    input.source,
++    "changes/TASK-SUPER/developer.patch",
++    readFileSync(join(initialOutput, "developer.patch"), "utf8"),
++    "Package TASK-SUPER developer patch",
++  );
++  commit(
++    input.source,
++    "changes/TASK-SUPER/web-orchestration.patch",
++    readFileSync(join(initialOutput, "web-orchestration.patch"), "utf8"),
++    "Package TASK-SUPER web patch",
++  );
++
++  const supersededTemplateHead = commit(
+     input.source,
+-    "changes/TASK-SELF/generated.txt",
+-    "self-referential package bytes\n",
+-    "Add forbidden package bytes to reviewed range",
++    "workspace-fix.txt",
++    "corrected workspace fix\n",
++    "Fix review issue on template-development",
+   );
+   git(input.source, ["remote", "add", "fixture", input.remote]);
+   git(input.source, ["push", "fixture", "template-development"]);
+   git(input.source, ["remote", "remove", "fixture"]);
+-  const result = createPackage(input, join(input.directory, "self-package"), {
+-    taskId: "TASK-SELF",
+-    templateHead: selfHead,
+-  }, 1);
+-  assert.match(result.stderr, /must end before its own generated package storage/);
++
++  git(input.source, ["checkout", "developer"]);
++  const supersededDeveloperHead = commit(
++    input.source,
++    "developer-fix.txt",
++    "corrected developer fix\n",
++    "Fix review issue on developer",
++  );
++  git(input.source, ["remote", "add", "fixture", input.remote]);
++  git(input.source, ["push", "fixture", "developer"]);
++  git(input.source, ["remote", "remove", "fixture"]);
++
++  const supersededOutput = join(input.directory, "superseded-package");
++  const result = createPackage(input, supersededOutput, {
++    taskId: "TASK-SUPER",
++    templateHead: supersededTemplateHead,
++    developerHead: supersededDeveloperHead,
++  });
++  assert.match(result.stdout, /provenance-verified/);
++
++  const checked = validateChangePackage(supersededOutput, "TASK-SUPER");
++  assert.equal(checked.schemaVersion, 3);
++  assert.equal(checked.provenanceVerified, true);
++  assert.deepEqual(
++    checked.manifest.ranges["template-development"].changed_paths,
++    ["workspace-fix.txt", "workspace-runtime.txt"],
++  );
++  assert.deepEqual(
++    checked.manifest.ranges.developer.changed_paths,
++    ["developer-fix.txt", "developer-only.txt"],
++  );
++
++  const target = join(input.directory, "superseded-target");
++  mkdirSync(target);
++  git(target, ["init", "-b", "template-development"]);
++  commit(target, "ledger-base.txt", "template base\n", "target template base");
++  const applied = run("node", [applyScript, "--package", supersededOutput, "--repository", target, "--target", "template-development", "--apply"], root);
++  assert.match(applied.stdout, /provenance schema 3 verified/);
++  assert.equal(readFileSync(join(target, "workspace-runtime.txt"), "utf8"), "workspace runtime\n");
++  assert.equal(readFileSync(join(target, "workspace-fix.txt"), "utf8"), "corrected workspace fix\n");
++  assert.equal(existsSync(join(target, "changes")), false);
+ });
+ 
+ test("legacy schema 1 packages remain integrity-compatible but are not provenance verified", (context) => {

@@ -6,7 +6,7 @@ TEMPLATE-PACKAGE-SUPERSESSION-001
 
 ## Status
 
-in_progress
+completed
 
 ## Task-start template-development SHA
 
@@ -29,21 +29,20 @@ architecture, design, and deviation records.
 
 ## Current objective
 
-Implement and test package supersession in `scripts/create-change-package.mjs`
-and `tests/change-package.test.mjs`, update durable records, and produce the
-provenance schema 3 package.
+Package and hand off same-task change package supersession.
 
 ## Current position
 
-Task record created at task-start `template-development` SHA
-`af4813144c15e5f4f93a39c61e8453d8571d5b94`. Canonical refs established:
-`developer=c6b747f00ad7509c1340fc11fca1466abb8eb1f9`,
-`web-orchestration=7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`,
-`main=6127611113dfdb66f93a0cfd2d355359aa370833`.
+Implemented package supersession in `scripts/create-change-package.mjs` and
+`tests/change-package.test.mjs`; updated `docs/architecture/AS-BUILT.md`,
+`docs/design/template-maintenance-workflow.md`, `docs/deviations.md`, and
+`source-lock.json`; generated provenance schema 3 package
+`changes/TEMPLATE-PACKAGE-SUPERSESSION-001/`; all 20 tests and full repository
+validation passing.
 
 ## Source ranges
 
-- `template-development`: `af4813144c15e5f4f93a39c61e8453d8571d5b94..HEAD`
+- `template-development`: `af4813144c15e5f4f93a39c61e8453d8571d5b94..4ec1932ee41a0db38417d341e674bd127d0e0f24`
 - `developer`: `c6b747f00ad7509c1340fc11fca1466abb8eb1f9..c6b747f00ad7509c1340fc11fca1466abb8eb1f9`
 - `web-orchestration`: `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17..7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`
 
@@ -62,6 +61,7 @@ Excluding the task's own package storage path during diff generation for `templa
 1. Identified the package supersession blocker across `TEMPLATE-WORKSPACE-MAINTENANCE-AGENT-001` and `TEMPLATE-HOST-ADMIN-001`.
 2. Implemented `excludePrefix` support in `range()` within `scripts/create-change-package.mjs`.
 3. Updated `tests/change-package.test.mjs` to add deterministic coverage of same-task package supersession, proving that intermediate package commits are excluded and subsequent template corrections are accurately captured and applicable downstream.
+4. Generated and validated change package `changes/TEMPLATE-PACKAGE-SUPERSESSION-001/` with provenance schema 3.
 
 ## Changed approach
 
@@ -79,14 +79,11 @@ None.
 
 ## Remaining work
 
-1. Apply changes to `scripts/create-change-package.mjs`, `tests/change-package.test.mjs`, `docs/architecture/AS-BUILT.md`, `docs/design/template-maintenance-workflow.md`, and `docs/deviations.md`.
-2. Run full validation suite.
-3. Commit implementation and create change package.
-4. Finalize task progress and push.
+1. Independent review of template-development change package `changes/TEMPLATE-PACKAGE-SUPERSESSION-001/`.
 
 ## Next action
 
-Apply code and durable record modifications.
+Handoff with status `completed`.
 
 ## Relevant durable records
 
@@ -94,6 +91,7 @@ Apply code and durable record modifications.
 - `docs/design/template-maintenance-workflow.md`
 - `docs/deviations.md`
 - `source-lock.json`
+- `changes/TEMPLATE-PACKAGE-SUPERSESSION-001/manifest.json`
 
 ## Last handoff commit
 

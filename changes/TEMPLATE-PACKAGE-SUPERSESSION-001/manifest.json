@@ -1,0 +1,63 @@
+{
+  "schema_version": 3,
+  "task_id": "TEMPLATE-PACKAGE-SUPERSESSION-001",
+  "canonical_repository": "https://github.com/floris3456/agentic-workflow-template.git",
+  "created_at": "2026-08-20T12:13:29.244Z",
+  "provenance": {
+    "mode": "canonical-remote-fetch-v2",
+    "source_lock": {
+      "schema_version": 1,
+      "canonical_repository": "https://github.com/floris3456/agentic-workflow-template.git",
+      "recorded_at": "2026-08-19T12:05:00Z",
+      "sources": {
+        "main": "6127611113dfdb66f93a0cfd2d355359aa370833",
+        "developer": "c6b747f00ad7509c1340fc11fca1466abb8eb1f9",
+        "web-orchestration": "7e29c07e6ac9fc65a2cb2a8957514bc03500cc17"
+      },
+      "last_reconciled_task": "TEMPLATE-HOST-ADMIN-001",
+      "last_change_package": "changes/TEMPLATE-HOST-ADMIN-001/manifest.json"
+    },
+    "source_lock_sha256": "88cae29369a83ed9f5d8953435376aa34409eb313e55e1e96d5ded692b62e45a",
+    "canonical_tips": {
+      "template-development": "4ec1932ee41a0db38417d341e674bd127d0e0f24",
+      "developer": "c6b747f00ad7509c1340fc11fca1466abb8eb1f9",
+      "web-orchestration": "7e29c07e6ac9fc65a2cb2a8957514bc03500cc17"
+    },
+    "head_relations": {
+      "template-development": "reviewed-head-ancestor-of-canonical-tip",
+      "developer": "reviewed-head-ancestor-of-canonical-tip",
+      "web-orchestration": "reviewed-head-ancestor-of-canonical-tip"
+    }
+  },
+  "ranges": {
+    "template-development": {
+      "base": "af4813144c15e5f4f93a39c61e8453d8571d5b94",
+      "head": "4ec1932ee41a0db38417d341e674bd127d0e0f24",
+      "changed_paths": [
+        "docs/architecture/AS-BUILT.md",
+        "docs/design/template-maintenance-workflow.md",
+        "docs/deviations.md",
+        "docs/work/current/TEMPLATE-PACKAGE-SUPERSESSION-001-same-task-package-supersession.md",
+        "scripts/create-change-package.mjs",
+        "tests/change-package.test.mjs"
+      ],
+      "patch": "template-development.patch",
+      "patch_sha256": "bf001f5c5946a789b1d0b497c327f2d462e8ac350742cea772336ffca048815d"
+    },
+    "developer": {
+      "base": "c6b747f00ad7509c1340fc11fca1466abb8eb1f9",
+      "head": "c6b747f00ad7509c1340fc11fca1466abb8eb1f9",
+      "changed_paths": [],
+      "patch": "developer.patch",
+      "patch_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "web-orchestration": {
+      "base": "7e29c07e6ac9fc65a2cb2a8957514bc03500cc17",
+      "head": "7e29c07e6ac9fc65a2cb2a8957514bc03500cc17",
+      "changed_paths": [],
+      "patch": "web-orchestration.patch",
+      "patch_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "package_sha256": "a7c51e47770118995081f6632ba329cf1d8fb8174f84a2b7d8d4e5e280db1332"
+}
