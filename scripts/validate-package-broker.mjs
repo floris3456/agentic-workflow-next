@@ -20,6 +20,7 @@ for (const path of [
   "scripts/validate-package-broker.mjs",
   "tests/package-request.test.mjs",
   "docs/work/package-requests/README.md",
+  "docs/architecture/package-generation-broker.md",
 ]) {
   if (!existsSync(join(root, path))) fail(`Missing package broker path: ${path}`);
 }
@@ -41,6 +42,26 @@ if (existsSync(join(root, ".github/workflows/generate-change-package.yml"))) {
   for (const forbidden of ["pull_request:", "workflow_dispatch:", "repository_dispatch:", "schedule:", "secrets."]) {
     if (workflow.includes(forbidden)) fail(`Package broker workflow contains forbidden trigger/secret surface: ${forbidden}`);
   }
+}
+
+if (existsSync(join(root, ".opencode/skills/template-maintenance/SKILL.md"))) {
+  const skill = read(".opencode/skills/template-maintenance/SKILL.md");
+  for (const term of [
+    "fixed-operation package\nbroker",
+    "docs/work/package-requests/<task-id>.json",
+    "The request commit is the trigger",
+    "never replay an uncertain publication",
+  ]) if (!skill.includes(term)) fail(`Template-maintenance skill is missing package broker boundary: ${term}`);
+}
+
+if (existsSync(join(root, "docs/architecture/package-generation-broker.md"))) {
+  const architecture = read("docs/architecture/package-generation-broker.md");
+  for (const term of [
+    "one bounded networked\nexecution surface",
+    "no command, repository URL, output path, credential, environment",
+    "remote tip to equal the original request SHA",
+    "never replayed\nautomatically",
+  ]) if (!architecture.includes(term)) fail(`Package broker AS-BUILT is missing boundary: ${term}`);
 }
 
 const requestDirectory = join(root, "docs/work/package-requests");
