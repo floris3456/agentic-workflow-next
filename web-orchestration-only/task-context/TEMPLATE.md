@@ -23,9 +23,9 @@
 
 ## Routing
 
-- Selected developer: none | Luna | Sol
-- Luna substantive-attempt count: 0 | 1 | 2
-- Selection route: none | direct GitHub | default Luna | immediate Sol | Sol after two substantive Luna failures
+- Selected developer: none | small | heavy
+- Small substantive-attempt count: 0 | 1 | 2
+- Selection route: none | direct GitHub | default small | immediate heavy | heavy after two substantive small failures
 - Reason: <concise orchestrator reasoning or none>
 - Attempt classifications: <attempt/ref and basis, or none>
 - Route changes: <date, issue/command ref, old -> new, and reason, or none>
