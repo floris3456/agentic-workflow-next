@@ -71,19 +71,37 @@ local-only SHA as a handoff.
 
 ## Package and apply
 
-After exact source-range review, run `scripts/create-change-package.mjs` with the
-reviewed template-development, developer, and web ranges. The reviewed
-template-development head must precede the commit that stores the new package;
-all paths beneath `changes/**` are ledger-only package storage and are automatically
-excluded from `template-development.patch`. When superseding an earlier package,
-preserve the historical package unchanged, store the superseding package in a
-distinct revision directory (e.g. `changes/<task-id>.rev2/`) using
-`--supersedes changes/<package-directory>`, and verify the supersession relation.
-Package bases and heads come from reviewed task ranges and do not have to equal
-`source-lock.json`. The source lock deliberately does not contain its own or a
-resulting template-development commit SHA. The generator proves every endpoint
-against freshly fetched canonical branch history. Commit the generated package
-directory and verify it with the validator.
+After exact source-range review, use the tracked `scripts/create-change-package.mjs`
+generator with the reviewed template-development, developer, and web ranges. The
+reviewed template-development head must precede the commit that stores the new
+package; all paths beneath `changes/**` are ledger-only package storage and are
+automatically excluded from `template-development.patch`. When superseding an
+earlier package, preserve the historical package unchanged, store the superseding
+package in a distinct revision directory (for example `changes/<task-id>.rev2/`),
+and verify the supersession relation. Package bases and heads come from reviewed
+task ranges and do not have to equal `source-lock.json`. The source lock deliberately
+does not contain its own or a resulting template-development commit SHA. The
+generator proves every endpoint against freshly fetched canonical branch history.
+
+When the current maintainer execution surface can run that tracked generator with
+canonical network access, run it directly and validate the resulting package. If
+that capability is unavailable, use the repository-owned fixed-operation package
+broker rather than hand-building package bytes. Create or update exactly one
+`docs/work/package-requests/<task-id>.json` request containing only a fresh public-
+safe request UUID, task/revision/supersession metadata, and the exact reviewed
+three-branch base/head ranges. The request cannot choose a command, output path,
+repository, credential, or arbitrary argument.
+
+A valid request commit changes exactly that one JSON file. The push-triggered
+`generate-change-package.yml` workflow runs the same tracked generator on GitHub
+Actions with canonical network access, validates schema-3 provenance/public
+safety, and may publish only the completed request plus the derived four-file
+`changes/<task-id>[.revN]/` package. It must prove `template-development` still
+equals the triggering request SHA immediately before publication. Branch movement,
+unexpected paths, malformed requests, existing output, failed validation, or an
+ambiguous push fail closed. The request commit is the trigger and the subsequent
+package/result commit is the effect; reconcile remote state before any retry and
+never replay an uncertain publication.
 
 Apply each non-empty patch to the downstream repository's matching branch using
 `scripts/apply-change-package.mjs`. Application only updates the working tree;
