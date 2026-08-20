@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
-import { readFileSync, readdirSync } from "node:fs";
-import { resolve } from "node:path";
+import { readFileSync, readdirSync, statSync } from "node:fs";
+import { basename, dirname, join, relative, resolve } from "node:path";
 
 const exactSha = /^[0-9a-f]{40}$/;
 const sourceLockTargets = ["developer", "web-orchestration"];
@@ -148,6 +148,48 @@ export function baseTaskId(identifier) {
   return identifier.replace(/(?:\.|\-)rev\d+$/i, "").replace(/(?:\.|\-)r\d+$/i, "");
 }
 
+export function isTaskPackagePath(path, taskId) {
+  if (typeof path !== "string" || typeof taskId !== "string" || !taskId) return false;
+  const prefix = `changes/${taskId}`;
+  if (path === prefix || path.startsWith(`${prefix}/`)) return true;
+  const rest = path.slice(prefix.length);
+  if (/^(?:[\.-](?:rev|r)\d+)(?:\/.*)?$/i.test(rest)) return true;
+  return false;
+}
+
+export function resolveSupersededPath(packagePath, changesDir) {
+  if (typeof packagePath !== "string" || packagePath.length === 0) {
+    throw new Error("Package supersedes.package_path is invalid");
+  }
+  if (/[\r\n\0\\]/.test(packagePath)) {
+    throw new Error(`Package supersedes.package_path contains invalid characters: ${packagePath}`);
+  }
+  if (packagePath.startsWith("/") || /^[A-Za-z]:[/\\]/.test(packagePath)) {
+    throw new Error(`Package supersedes.package_path must be repository-relative, got absolute path: ${packagePath}`);
+  }
+  const segments = packagePath.split("/");
+  if (segments.some((s) => s === "" || s === "." || s === "..")) {
+    throw new Error(`Package supersedes.package_path must not contain traversal segments: ${packagePath}`);
+  }
+  let dirName;
+  if (segments.length === 2 && segments[0] === "changes") {
+    dirName = segments[1];
+  } else if (segments.length === 1) {
+    dirName = segments[0];
+  } else {
+    throw new Error(`Package supersedes.package_path must point directly beneath changes directory: ${packagePath}`);
+  }
+  if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(dirName)) {
+    throw new Error(`Package supersedes.package_path contains invalid directory name: ${packagePath}`);
+  }
+  const resolvedChanges = resolve(changesDir);
+  const targetDir = resolve(resolvedChanges, dirName);
+  if (!targetDir.startsWith(`${resolvedChanges}/`)) {
+    throw new Error(`Package supersedes.package_path escapes changes directory: ${packagePath}`);
+  }
+  return { dirName, targetDir, normalizedPath: `changes/${dirName}` };
+}
+
 export function validateChangePackage(directory, expectedTaskId) {
   const manifest = JSON.parse(readFileSync(resolve(directory, "manifest.json"), "utf8"));
   if (typeof manifest.task_id !== "string" || manifest.task_id.length === 0) throw new Error("Package task_id is invalid");
@@ -169,6 +211,9 @@ export function validateChangePackage(directory, expectedTaskId) {
     const { package_path, package_sha256, revision } = manifest.supersedes;
     if (typeof package_path !== "string" || package_path.length === 0) {
       throw new Error("Package supersedes.package_path is invalid");
+    }
+    if (/[\r\n\0\\]/.test(package_path) || package_path.startsWith("/") || package_path.split("/").some((s) => s === ".." || s === "." || s === "")) {
+      throw new Error(`Package supersedes.package_path is invalid: ${package_path}`);
     }
     if (!/^[0-9a-f]{64}$/.test(package_sha256 ?? "")) {
       throw new Error("Package supersedes.package_sha256 must be an exact 64-character SHA-256");
@@ -216,10 +261,7 @@ export function validateChangePackage(directory, expectedTaskId) {
     const files = readdirSync(resolve(directory)).sort();
     const expectedFiles = ["manifest.json", ...targets.map((target) => patchNames[target])].sort();
     if (files.join("\0") !== expectedFiles.join("\0")) throw new Error("Schema 3 package file inventory is invalid");
-    const packagePrefix = `changes/${manifest.task_id}`;
-    if (manifest.ranges["template-development"].changed_paths.some((path) =>
-      path === packagePrefix || path.startsWith(`${packagePrefix}/`) || path.startsWith(`${packagePrefix}.`) || path.startsWith(`${packagePrefix}-`)
-    )) {
+    if (manifest.ranges["template-development"].changed_paths.some((path) => isTaskPackagePath(path, manifest.task_id))) {
       throw new Error("template-development range must end before its own generated package storage");
     }
   }
@@ -256,16 +298,13 @@ export function validatePackageSupersessionChain(changesDir) {
   }
 
   const byTaskId = new Map();
-  const byPath = new Map();
-  const bySha = new Map();
+  const byDirectoryName = new Map();
 
   for (const pkg of packages) {
     const taskId = pkg.manifest.task_id;
     if (!byTaskId.has(taskId)) byTaskId.set(taskId, []);
     byTaskId.get(taskId).push(pkg);
-    byPath.set(`changes/${pkg.directoryName}`, pkg);
-    byPath.set(pkg.directoryName, pkg);
-    bySha.set(pkg.manifest.package_sha256, pkg);
+    byDirectoryName.set(pkg.directoryName, pkg);
   }
 
   const activePackages = new Map();
@@ -285,14 +324,10 @@ export function validatePackageSupersessionChain(changesDir) {
     for (const pkg of taskPkgs) {
       if (pkg.manifest.supersedes) {
         const { package_path, package_sha256, revision: targetRev } = pkg.manifest.supersedes;
-        let superseded = byPath.get(package_path) || bySha.get(package_sha256);
+        const { dirName } = resolveSupersededPath(package_path, resolvedChanges);
+        const superseded = byDirectoryName.get(dirName);
         if (!superseded) {
-          const directTarget = resolve(resolvedChanges, package_path.replace(/^changes\//, ""));
-          try {
-            superseded = validateChangePackage(directTarget);
-          } catch {
-            throw new Error(`Package ${pkg.directoryName} supersedes missing package ${package_path}`);
-          }
+          throw new Error(`Package ${pkg.directoryName} supersedes missing package ${package_path}`);
         }
         if (superseded.manifest.task_id !== taskId) {
           throw new Error(`Package ${pkg.directoryName} for task ${taskId} cannot supersede package from different task ${superseded.manifest.task_id}`);
@@ -321,7 +356,8 @@ export function validatePackageSupersessionChain(changesDir) {
           throw new Error(`Package supersession cycle detected for task ${taskId}`);
         }
         visited.add(current.manifest.package_sha256);
-        current = bySha.get(current.manifest.supersedes.package_sha256);
+        const { dirName } = resolveSupersededPath(current.manifest.supersedes.package_path, resolvedChanges);
+        current = byDirectoryName.get(dirName);
       }
     }
 

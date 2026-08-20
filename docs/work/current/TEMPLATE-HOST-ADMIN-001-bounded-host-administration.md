@@ -122,9 +122,9 @@ creation rooted in `template-development`.
   `~/.config/agentic-workflow/opencode-bridge.json` and worktree pointers.
 - Verified `TemplateDevelopmentWorktreeResolver` against actual repository
   worktrees and pinned OpenCode 1.18.16 server.
-- Verified that `session.create` succeeds rooted in `template-development` worktree
-  (`ses_fe0c04342ffeSLjnFNcMQ9SIHs`), with full discovery of workspace tools and
-  permissions.
+- Verified that a pinned OpenCode 1.18.16 session rooted in the registered
+  template-development worktree succeeds, with full discovery of workspace tools
+  and permissions.
 
 ## Interpretation
 

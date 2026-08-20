@@ -289,14 +289,77 @@ test("schema 3 persisted package supersession lifecycle, relations, downstream s
     ["workspace-fix.txt", "workspace-runtime.txt"],
   );
 
-  // Prove supersession chain validation and active package resolution
-  const chain = validatePackageSupersessionChain(changesDir);
-  assert.equal(chain.packages.length, 2);
-  const resolved = resolveLatestChangePackage(changesDir, "TASK-SUPER");
-  assert.equal(resolved.directory, v2PackageDir);
-  assert.equal(resolved.manifest.revision, 2);
+  const v2ManifestBytes = readFileSync(join(v2PackageDir, "manifest.json"), "utf8");
+  const v2TemplatePatchBytes = readFileSync(join(v2PackageDir, "template-development.patch"), "utf8");
 
-  // Downstream application uses the corrected package
+  // Commit package v2 to template-development history
+  git(input.source, ["checkout", "template-development"]);
+  commit(input.source, "changes/TASK-SUPER.rev2/manifest.json", v2ManifestBytes, "Package TASK-SUPER v2 manifest");
+  commit(input.source, "changes/TASK-SUPER.rev2/template-development.patch", v2TemplatePatchBytes, "Package TASK-SUPER v2 template patch");
+  commit(input.source, "changes/TASK-SUPER.rev2/developer.patch", readFileSync(join(v2PackageDir, "developer.patch"), "utf8"), "Package TASK-SUPER v2 dev patch");
+  commit(input.source, "changes/TASK-SUPER.rev2/web-orchestration.patch", readFileSync(join(v2PackageDir, "web-orchestration.patch"), "utf8"), "Package TASK-SUPER v2 web patch");
+
+  // Second correction cycle: add another fix
+  const supersededTemplateHead3 = commit(
+    input.source,
+    "workspace-fix-2.txt",
+    "second workspace fix\n",
+    "Second fix on template-development",
+  );
+  git(input.source, ["remote", "add", "fixture", input.remote]);
+  git(input.source, ["push", "fixture", "template-development"]);
+  git(input.source, ["remote", "remove", "fixture"]);
+
+  git(input.source, ["checkout", "developer"]);
+  const supersededDeveloperHead3 = commit(
+    input.source,
+    "developer-fix-2.txt",
+    "second developer fix\n",
+    "Second fix on developer",
+  );
+  git(input.source, ["remote", "add", "fixture", input.remote]);
+  git(input.source, ["push", "fixture", "developer"]);
+  git(input.source, ["remote", "remove", "fixture"]);
+
+  // Create distinct superseding package v3 in changes/TASK-SUPER.rev3
+  const v3PackageDir = join(changesDir, "TASK-SUPER.rev3");
+  const result3 = createPackage(input, v3PackageDir, {
+    taskId: "TASK-SUPER",
+    templateHead: supersededTemplateHead3,
+    developerHead: supersededDeveloperHead3,
+    supersedes: v2PackageDir,
+  });
+  assert.match(result3.stdout, /provenance-verified/);
+
+  // Prove historical v1 and v2 packages remain 100% byte-identical
+  assert.equal(readFileSync(join(v1PackageDir, "manifest.json"), "utf8"), v1ManifestBytes);
+  assert.equal(readFileSync(join(v1PackageDir, "template-development.patch"), "utf8"), v1TemplatePatchBytes);
+  assert.equal(readFileSync(join(v2PackageDir, "manifest.json"), "utf8"), v2ManifestBytes);
+  assert.equal(readFileSync(join(v2PackageDir, "template-development.patch"), "utf8"), v2TemplatePatchBytes);
+
+  // Validate all three packages
+  const v3Checked = validateChangePackage(v3PackageDir, "TASK-SUPER");
+  assert.equal(v3Checked.provenanceVerified, true);
+  assert.equal(v3Checked.manifest.revision, 3);
+  assert.equal(v3Checked.manifest.supersedes.package_sha256, v2Checked.manifest.package_sha256);
+  assert.equal(v3Checked.manifest.supersedes.revision, 2);
+  assert.deepEqual(
+    v3Checked.manifest.ranges["template-development"].changed_paths,
+    ["workspace-fix-2.txt", "workspace-fix.txt", "workspace-runtime.txt"],
+  );
+  assert.deepEqual(
+    v3Checked.manifest.ranges.developer.changed_paths,
+    ["developer-fix-2.txt", "developer-fix.txt", "developer-only.txt"],
+  );
+
+  // Prove supersession chain validation and active package resolution returns rev3
+  const chain = validatePackageSupersessionChain(changesDir);
+  assert.equal(chain.packages.length, 3);
+  const resolved = resolveLatestChangePackage(changesDir, "TASK-SUPER");
+  assert.equal(resolved.directory, v3PackageDir);
+  assert.equal(resolved.manifest.revision, 3);
+
+  // Downstream application uses the corrected package rev3
   const target = join(input.directory, "superseded-target");
   mkdirSync(target);
   git(target, ["init", "-b", "template-development"]);
@@ -305,6 +368,7 @@ test("schema 3 persisted package supersession lifecycle, relations, downstream s
   assert.match(applied.stdout, /provenance schema 3 verified/);
   assert.equal(readFileSync(join(target, "workspace-runtime.txt"), "utf8"), "workspace runtime\n");
   assert.equal(readFileSync(join(target, "workspace-fix.txt"), "utf8"), "corrected workspace fix\n");
+  assert.equal(readFileSync(join(target, "workspace-fix-2.txt"), "utf8"), "second workspace fix\n");
 
   // Negative tests: Tampered historical package fails closed
   const tamperedChangesDir = join(input.directory, "tampered-changes");
@@ -316,12 +380,62 @@ test("schema 3 persisted package supersession lifecycle, relations, downstream s
   writeFileSync(join(tamperedV1, "template-development.patch"), "tampered patch bytes\n");
   assert.throws(() => validatePackageSupersessionChain(tamperedChangesDir), /patch digest|digest mismatch/);
 
-  // Negative tests: Missing superseded package fails closed
-  const missingChangesDir = join(input.directory, "missing-changes");
-  mkdirSync(missingChangesDir, { recursive: true });
-  const missingV2 = join(missingChangesDir, "TASK-SUPER.rev2");
-  spawnSync("cp", ["-r", v2PackageDir, missingV2]);
-  assert.throws(() => validatePackageSupersessionChain(missingChangesDir), /supersedes missing package/);
+  // Negative tests: Wrong package_path with correct digest fails closed
+  const wrongPathChangesDir = join(input.directory, "wrong-path-changes");
+  mkdirSync(wrongPathChangesDir, { recursive: true });
+  spawnSync("cp", ["-r", v1PackageDir, join(wrongPathChangesDir, "TASK-SUPER")]);
+  spawnSync("cp", ["-r", v2PackageDir, join(wrongPathChangesDir, "TASK-SUPER.rev2")]);
+  const wrongPathManifest = JSON.parse(readFileSync(join(wrongPathChangesDir, "TASK-SUPER.rev2", "manifest.json"), "utf8"));
+  wrongPathManifest.supersedes.package_path = "changes/NONEXISTENT-PATH";
+  const wrongPathCore = { ...wrongPathManifest };
+  delete wrongPathCore.package_sha256;
+  const patchesV2 = {
+    "template-development": readFileSync(join(v2PackageDir, "template-development.patch")),
+    developer: readFileSync(join(v2PackageDir, "developer.patch")),
+    "web-orchestration": readFileSync(join(v2PackageDir, "web-orchestration.patch")),
+  };
+  wrongPathManifest.package_sha256 = packageDigest(wrongPathCore, patchesV2);
+  writeFileSync(join(wrongPathChangesDir, "TASK-SUPER.rev2", "manifest.json"), `${JSON.stringify(wrongPathManifest, null, 2)}\n`);
+  assert.throws(() => validatePackageSupersessionChain(wrongPathChangesDir), /supersedes missing package/);
+
+  // Negative tests: Traversal (../) in package_path fails closed
+  const traversalChangesDir = join(input.directory, "traversal-changes");
+  mkdirSync(traversalChangesDir, { recursive: true });
+  spawnSync("cp", ["-r", v1PackageDir, join(traversalChangesDir, "TASK-SUPER")]);
+  spawnSync("cp", ["-r", v2PackageDir, join(traversalChangesDir, "TASK-SUPER.rev2")]);
+  const traversalManifest = JSON.parse(readFileSync(join(traversalChangesDir, "TASK-SUPER.rev2", "manifest.json"), "utf8"));
+  traversalManifest.supersedes.package_path = "../TASK-SUPER";
+  const traversalCore = { ...traversalManifest };
+  delete traversalCore.package_sha256;
+  traversalManifest.package_sha256 = packageDigest(traversalCore, patchesV2);
+  writeFileSync(join(traversalChangesDir, "TASK-SUPER.rev2", "manifest.json"), `${JSON.stringify(traversalManifest, null, 2)}\n`);
+  assert.throws(() => validatePackageSupersessionChain(traversalChangesDir), /traversal segments|invalid/);
+
+  // Negative tests: Absolute path in package_path fails closed
+  const absPathChangesDir = join(input.directory, "abs-path-changes");
+  mkdirSync(absPathChangesDir, { recursive: true });
+  spawnSync("cp", ["-r", v1PackageDir, join(absPathChangesDir, "TASK-SUPER")]);
+  spawnSync("cp", ["-r", v2PackageDir, join(absPathChangesDir, "TASK-SUPER.rev2")]);
+  const absPathManifest = JSON.parse(readFileSync(join(absPathChangesDir, "TASK-SUPER.rev2", "manifest.json"), "utf8"));
+  absPathManifest.supersedes.package_path = "/etc/passwd";
+  const absPathCore = { ...absPathManifest };
+  delete absPathCore.package_sha256;
+  absPathManifest.package_sha256 = packageDigest(absPathCore, patchesV2);
+  writeFileSync(join(absPathChangesDir, "TASK-SUPER.rev2", "manifest.json"), `${JSON.stringify(absPathManifest, null, 2)}\n`);
+  assert.throws(() => validatePackageSupersessionChain(absPathChangesDir), /must be repository-relative|invalid/);
+
+  // Negative tests: Escaping changes directory in package_path fails closed
+  const escapeChangesDir = join(input.directory, "escape-changes");
+  mkdirSync(escapeChangesDir, { recursive: true });
+  spawnSync("cp", ["-r", v1PackageDir, join(escapeChangesDir, "TASK-SUPER")]);
+  spawnSync("cp", ["-r", v2PackageDir, join(escapeChangesDir, "TASK-SUPER.rev2")]);
+  const escapeManifest = JSON.parse(readFileSync(join(escapeChangesDir, "TASK-SUPER.rev2", "manifest.json"), "utf8"));
+  escapeManifest.supersedes.package_path = "docs/TASK-SUPER";
+  const escapeCore = { ...escapeManifest };
+  delete escapeCore.package_sha256;
+  escapeManifest.package_sha256 = packageDigest(escapeCore, patchesV2);
+  writeFileSync(join(escapeChangesDir, "TASK-SUPER.rev2", "manifest.json"), `${JSON.stringify(escapeManifest, null, 2)}\n`);
+  assert.throws(() => validatePackageSupersessionChain(escapeChangesDir), /must point directly beneath changes directory/);
 
   // Negative tests: Ambiguous duplicate revisions fail closed
   const ambiguousChangesDir = join(input.directory, "ambiguous-changes");
@@ -367,7 +481,6 @@ test("schema 3 persisted package supersession lifecycle, relations, downstream s
   cycAManifest.package_sha256 = packageDigest(coreA, patchesA);
   writeFileSync(join(cycA, "manifest.json"), `${JSON.stringify(cycAManifest, null, 2)}\n`);
 
-  // Update cycB to point to cycA digest to form a tight cycle
   cycBManifest.supersedes.package_sha256 = cycAManifest.package_sha256;
   const coreB2 = { ...cycBManifest };
   delete coreB2.package_sha256;

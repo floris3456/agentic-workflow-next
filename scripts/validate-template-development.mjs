@@ -183,6 +183,9 @@ for (const file of files(root)) {
   const path = relative(root, file);
   const text = bytes.toString("utf8");
   if (/\/home\/[A-Za-z0-9._-]+\//.test(text)) fail(`${path} contains a host-local absolute path`);
+  if (path.endsWith(".md") && /\bses_[0-9A-Za-z]{16,}\b/.test(text)) {
+    fail(`${path} contains a raw OpenCode session identifier`);
+  }
 }
 
 if (failures.length) {

@@ -6,7 +6,9 @@ import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 import {
   assertRemoteMatchesCanonical,
+  isTaskPackagePath,
   packageDigest,
+  resolveSupersededPath,
   sha256,
   sourceLockDigest,
   validateChangePackage,
@@ -59,7 +61,7 @@ function exact(value, label) {
   return value;
 }
 
-function range(repository, base, head, label, env, excludePrefix) {
+function range(repository, base, head, label, env, excludePrefixes) {
   const resolvedBase = runGit(repository, ["rev-parse", `${base}^{commit}`], { env }).trim();
   const resolvedHead = runGit(repository, ["rev-parse", `${head}^{commit}`], { env }).trim();
   if (resolvedBase !== base || resolvedHead !== head) fail(`${label} range did not resolve exactly from canonical fetch`);
@@ -71,7 +73,12 @@ function range(repository, base, head, label, env, excludePrefix) {
   } catch {
     fail(`${label} range base is not an ancestor of canonical head`);
   }
-  const pathspec = excludePrefix ? ["--", ".", `:(exclude)${excludePrefix}`] : ["--"];
+  const prefixList = Array.isArray(excludePrefixes)
+    ? excludePrefixes
+    : excludePrefixes ? [excludePrefixes] : [];
+  const pathspec = prefixList.length > 0
+    ? ["--", ".", ...prefixList.map((prefix) => `:(exclude)${prefix}`)]
+    : ["--"];
   const patch = runGit(repository, ["diff", "--binary", "--full-index", "--no-renames", base, head, ...pathspec], { env });
   const rawNames = runGit(repository, ["diff", "--name-only", "-z", base, head, ...pathspec], { encoding: "buffer", env });
   const paths = rawNames.toString("utf8").split("\0").filter(Boolean).sort();
@@ -140,8 +147,9 @@ if (supersedesInput) {
   if (relPath.startsWith("..") || !relPath) {
     relPath = `changes/${basename(checkedSuperseded.directory)}`;
   }
+  const { normalizedPath } = resolveSupersededPath(relPath, resolve(repository, "changes"));
   supersedesEntry = {
-    package_path: relPath,
+    package_path: normalizedPath,
     package_sha256: checkedSuperseded.manifest.package_sha256,
     revision: supersededRev,
   };
@@ -213,11 +221,14 @@ try {
     }
   }
 
-  const packagePrefix = `changes/${taskId}`;
-  const template = range(canonicalRepo, templateBase, templateHead, "template-development", env, packagePrefix);
-  if (template.paths.some((path) =>
-    path === packagePrefix || path.startsWith(`${packagePrefix}/`) || path.startsWith(`${packagePrefix}.`) || path.startsWith(`${packagePrefix}-`)
-  )) {
+  const taskExcludePatterns = [
+    `changes/${taskId}`,
+    `changes/${taskId}.*`,
+    `changes/${taskId}-rev*`,
+    `changes/${taskId}-r*`,
+  ];
+  const template = range(canonicalRepo, templateBase, templateHead, "template-development", env, taskExcludePatterns);
+  if (template.paths.some((path) => isTaskPackagePath(path, taskId))) {
     fail("template-development range must end before its own generated package storage");
   }
   const developer = range(canonicalRepo, developerBase, developerHead, "developer", env);
