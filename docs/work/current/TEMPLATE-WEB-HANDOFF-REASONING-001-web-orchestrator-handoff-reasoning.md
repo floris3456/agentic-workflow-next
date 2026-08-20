@@ -6,7 +6,7 @@ TEMPLATE-WEB-HANDOFF-REASONING-001
 
 ## Status
 
-in_progress
+blocked
 
 ## Task-start template-development SHA
 
@@ -35,146 +35,136 @@ when the blocker is already independently proven to be a genuine human-owned
 decision, safety/authority boundary, unavailable required capability, or external
 condition that further reasoning cannot resolve.
 
-A later structural stress test confirmed the ordinary workflow wording is useful
-but found that the same responsibility is not guaranteed when the web
-orchestrator routes into a different procedure, especially template maintenance.
-The claim-first/blocker-analysis responsibility is a stable web-orchestrator
-responsibility and must survive procedure routing.
-
-The human has explicitly authorized the web orchestrator to implement this
-instruction change directly and to continue the dependent role-routing and
-Workspace target-rule instruction tasks sequentially. This authorization does not
-change the human-only `main` promotion boundary or authorize destructive history
-changes.
+A structural stress test found that the first implementation protected only the
+ordinary workflow. The human then explicitly authorized direct correction so the
+claim-first/blocker-analysis responsibility survives procedure routing.
 
 ## Current objective
 
-Finish the handoff-reasoning change by making the claim-first blocker-analysis
-rule universal across web-orchestrator routes, while keeping the detailed
-procedure proportional and avoiding unnecessary ceremony for simple proven
-blockers.
+Source implementation is complete. Preserve the reviewed exact web range and
+finish package/check reconciliation when the required execution/evidence surface
+is available.
 
 ## Current position
 
-The first source change is already implemented directly on canonical
+The universal source correction is now published on canonical
 `web-orchestration` at:
 
-- `web-orchestration`: `64e9aacd0168053d5be5b4931d9d22cb5762edb7`
+- `web-orchestration`: `cc5a521c70f4198947ec0360cf60cb95876dff3b`
 
-Its exact first source range is:
+The complete source range for this task is:
 
-- `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17..64e9aacd0168053d5be5b4931d9d22cb5762edb7`
+- `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17..cc5a521c70f4198947ec0360cf60cb95876dff3b`
 
-The ordinary workflow now says every developer handoff is a claim to evaluate,
-not a diagnosis or next-step instruction to forward, and requires stronger
-orchestrator analysis for repeated blockers.
+The first part of that range added detailed blocker reasoning to
+`skill-workflow.md`. The final four commits from
+`64e9aacd0168053d5be5b4931d9d22cb5762edb7..cc5a521c70f4198947ec0360cf60cb95876dff3b`
+then:
 
-Current exact remote refs immediately before the universal-rule correction:
+- add a short permanent claim-first invariant to
+  `developer-instructions.md`;
+- apply the same responsibility explicitly to template-maintenance blocker
+  handoffs;
+- require both rules in the standalone web package validator; and
+- add focused Node regressions proving the permanent and template routes cannot
+  silently lose the behavior.
 
-- `main`: `6127611113dfdb66f93a0cfd2d355359aa370833`
-- `developer`: `c6b747f00ad7509c1340fc11fca1466abb8eb1f9`
-- `web-orchestration`: `64e9aacd0168053d5be5b4931d9d22cb5762edb7`
-- `template-development`: `768ffca52b9f6831f848ba3459d06ae41194b551`
+Exact final four-file comparison shows only:
 
-The next direct source change will keep a short universal claim-first rule in
-`developer-instructions.md`, keep detailed ordinary behavior in
-`skill-workflow.md`, and make `skill-template-maintenance.md` explicitly apply the
-same responsibility to source/maintainer blocker handoffs. The web package
-validator/tests will protect both the permanent and template-maintenance rule.
+- `web-orchestration-only/chatgpt-project/developer-instructions.md`
+- `web-orchestration-only/chatgpt-project/skill-template-maintenance.md`
+- `web-orchestration-only/validate-package.mjs`
+- `web-orchestration-only/validate-package.test.mjs`
 
-No portable change package has been generated. Packaging remains a separate
-networked-maintainer execution step and must not be hand-built.
+The connected GitHub commit-status surface exposed no status records for the final
+head. The repository's push-triggered web workflow remains present, but a final
+run/result is not claimed without direct observable run evidence.
+
+No portable change package has been generated. Packaging must not be hand-built.
 
 ## Source ranges
 
 - `template-development`: `407a292eb3c41b3d364d9216a377326c2b98b5b1..HEAD`
-- `web-orchestration`: `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17..64e9aacd0168053d5be5b4931d9d22cb5762edb7` (partial; final head not yet established)
+- `web-orchestration`: `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17..cc5a521c70f4198947ec0360cf60cb95876dff3b`
 - `developer`: unchanged at `c6b747f00ad7509c1340fc11fca1466abb8eb1f9`
 
 ## Observed
 
-- Permanent web instructions define the web role as reasoning, orchestration, and
-  independent review, but do not yet state the operational claim-first blocker
-  rule.
-- `skill-workflow.md` explicitly handles `blocked` and `needs decision` handoffs
-  as claims requiring orchestrator analysis before forwarding.
-- `skill-template-maintenance.md` has independent-review language, but does not
-  contain the same explicit operational rule for blocker handoffs or repeated
-  blocker loops.
-- Permanent instructions say to load only the procedure needed for the current
-  task, so route-specific detail cannot be assumed to remain active after routing.
-- The structural stress test reproduced the gap with a realistic
-  template-maintenance blocker.
-- The human confirmed this is a real issue and explicitly authorized direct web
-  source implementation.
+- The permanent instructions now say every handoff is a claim to evaluate, not a
+  diagnosis/decision/next step to forward.
+- The permanent rule explicitly covers nontrivial and repeated blockers and
+  requires exact evidence plus accepted architecture/design/deviation and
+  responsibility checks before steering/rerouting/escalation.
+- The template-maintenance skill now applies the permanent claim-first rule to
+  source/maintainer `blocked` and `needs decision` handoffs and strengthens
+  repeated-blocker analysis.
+- Direct escalation remains allowed for independently proven human-owned,
+  safety/authority, unavailable-capability, or unresolvable external blockers.
+- The validator and test suite now mechanically require the permanent and
+  template-maintenance forms of the rule.
+- Exact remote comparison proves the final correction touched only the four
+  intended web files.
 
 ## Interpretation
 
-A handoff is evidence to investigate, not an instruction to forward.
+The intended responsibility split is now explicit at the permanent role level:
+implementers report what happened; the web orchestrator decides what it means and
+what happens next; the human is involved only for genuinely human-owned decisions.
 
-This is a stable web-role invariant. The permanent instructions should carry a
-short version so it cannot disappear when a conditional procedure is selected.
-Detailed route-specific procedure should explain how to apply it without turning
-every simple handoff into a large investigation.
-
-The web orchestrator should normally do more analysis when a blocker is repeated,
-architectural, provenance-related, cross-branch, or about responsibility. It
-should not perform extra analysis when an already proven external or human-owned
-boundary makes the next step obvious.
+The source design problem is resolved. Remaining work is packaging and direct CI
+run observation, not instruction design.
 
 ## Attempts
 
-1. Created and pushed this maintenance task record before the first source change.
-2. Added the claim-first blocker-analysis rule to `skill-workflow.md`.
-3. Added a focused regression test for ordinary workflow blocker handling.
-4. Independently reviewed the exact first remote web source range.
-5. Ran a read-only multi-role structural stress test.
-6. The stress test found that the new rule was route-local rather than universal.
-7. The human authorized direct implementation of the corrected universal rule.
+1. Added the first ordinary-workflow claim-first rule and regression.
+2. Stress-tested the role/handoff system and found the route-local gap.
+3. Recorded the gap and obtained explicit human authorization for direct source
+   correction.
+4. Added the permanent role invariant.
+5. Added template-maintenance-specific blocker handling.
+6. Added standalone validator and Node regression protection.
+7. Independently compared the exact final remote source range.
 
 ## Changed approach
 
 The first implementation treated blocker analysis as an ordinary-workflow rule.
-The stress test showed that was too narrow. The corrected approach is to make the
-core claim-first responsibility universal in permanent web instructions and keep
-route-specific detail in the conditional skills.
+The corrected design makes it a permanent web-role invariant, with route-specific
+detail only where useful.
 
 ## Checks
 
-- Exact first web source range reviewed:
-  `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17..64e9aacd0168053d5be5b4931d9d22cb5762edb7`.
-- Read-only stress test exercised ordinary developer, template-maintenance,
-  workspace, recovery, finalization, and promotion handoff boundaries.
-- No final CI/package completion is claimed yet because the universal correction
-  has not yet been published.
+- Exact final web head exists remotely:
+  `cc5a521c70f4198947ec0360cf60cb95876dff3b`.
+- Exact final correction range
+  `64e9aacd0168053d5be5b4931d9d22cb5762edb7..cc5a521c70f4198947ec0360cf60cb95876dff3b`
+  is four commits ahead, zero behind, and changes exactly four intended files.
+- Final source files and validation patterns were read/reviewed directly.
+- Connected combined-status lookup returned no observable statuses for the final
+  web head, so no CI-pass claim is made.
 
 ## Blockers / required decisions
 
-- No human design decision remains for this task.
-- No destructive or `main` action is authorized.
-- Portable package generation remains dependent on a legitimate networked
-  maintainer execution surface; this does not block source correction or exact
-  remote review.
+1. Portable change-package generation requires a legitimate networked maintainer
+   execution surface and must not be simulated or hand-built.
+2. Direct final push-CI run evidence is not currently exposed by the connected
+   status lookup used here. This is an evidence-surface limitation, not a known
+   source failure.
+3. No human design decision remains for this task.
 
 ## Remaining work
 
-1. Add the short universal claim-first blocker-analysis invariant to permanent web
-   instructions.
-2. Make template-maintenance handoff/blocker handling explicitly consistent with
-   the invariant.
-3. Add validator/regression coverage for both permanent and template-maintenance
-   behavior.
-4. Run canonical web push CI and independently review the complete exact web
-   source range.
-5. Mark source work complete/package pending, then move sequentially to the
-   authorized role-routing task.
-6. Generate/review the tracked package later on a legitimate networked maintainer
-   execution surface.
+1. Observe/verify the canonical web push validation result for the final exact
+   source SHA when a run lookup surface is available.
+2. Generate and validate the tracked maintenance package on a legitimate
+   networked maintainer execution surface.
+3. Reconcile package/source-lock state through the repository-owned procedure and
+   finalize/archive the task when its full maintenance contract is satisfied.
 
 ## Next action
 
-Publish the smallest permanent/template-maintenance instruction correction and
-its focused regression checks directly on `web-orchestration`.
+Source mutation for this task is finished. Proceed to the explicitly authorized
+role-routing task while preserving this exact reviewed source range for later
+package/check reconciliation.
 
 ## Relevant durable records
 
