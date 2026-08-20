@@ -236,6 +236,10 @@ Evidence limitation:
 4. Observe or re-run the full canonical template-development validation when an
    execution/check surface exposes its exact result; do not infer it from the
    workflow definition.
+5. Add a very lightweight read-only operator dashboard/status view that makes
+   repository-root/worktree registration mismatches, bridge/service health,
+   start-safety state, and the current blocking reason easy to see without
+   exposing arbitrary host administration or private configuration contents.
 
 ## Next action
 
