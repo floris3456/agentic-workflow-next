@@ -45,6 +45,7 @@ test("canonical package validates", () => {
   assert.equal(result.status, 0, `stdout: ${result.stdout}\nstderr: ${result.stderr}`);
   assert.match(result.stdout, /5 exact conditionally routed Project Sources/);
   assert.match(result.stdout, /capability-local workflow/);
+  assert.match(result.stdout, /small\/heavy routing/);
   assert.match(result.stdout, /unified prompt creation\/craft/);
 });
 
@@ -52,7 +53,7 @@ test("canonical push CI is read-only and reaches validator plus discovered Node 
   const workflow = fs.readFileSync(path.join(root, "..", ".github", "workflows", "validate-web-orchestration.yml"), "utf8");
   assert.match(workflow, /push:\s*\n\s+branches:\s*\[web-orchestration\]/);
   assert.match(workflow, /permissions:\s*\n\s+contents:\s+read/);
-  assert.match(workflow, /persist-credentials:\s+false/);
+  assert.match(workflow, /persist-credentials:\s*false/);
   assert.match(workflow, /run:\s+node web-orchestration-only\/validate-package\.mjs/);
   assert.match(workflow, /run:\s+node --test\s*(?:\n|$)/);
   assert.doesNotMatch(workflow, /\bwrite\b/);
@@ -71,6 +72,21 @@ test("permanent and template routes preserve claim-first blocker reasoning", () 
   const maintenance = fs.readFileSync(path.join(root, "chatgpt-project", "skill-template-maintenance.md"), "utf8");
   assert.match(instructions, /Treat every handoff as a claim to evaluate[\s\S]{0,700}nontrivial or repeated blocker[\s\S]{0,900}architecture\/design\/deviations/i);
   assert.match(maintenance, /reports `blocked` or `needs decision`[\s\S]{0,900}permanent claim-first rule[\s\S]{0,1200}Repeated or similar blockers require stronger\s+orchestrator analysis/i);
+});
+
+test("routing contract uses only small and heavy", () => {
+  const workflow = fs.readFileSync(path.join(root, "chatgpt-project", "skill-workflow.md"), "utf8");
+  const taskTemplate = fs.readFileSync(path.join(root, "task-context", "TEMPLATE.md"), "utf8");
+  assert.match(workflow, /Select `small` by default[\s\S]{0,700}Use `heavy` immediately[\s\S]{0,700}two substantive small-route failures/i);
+  assert.match(workflow, /"agent":"small"/);
+  assert.match(taskTemplate, /^- Selected developer: none \| small \| heavy$/m);
+  assert.match(taskTemplate, /^- Small substantive-attempt count: 0 \| 1 \| 2$/m);
+});
+
+test("rejects routing vocabulary outside small and heavy", () => {
+  expectFailure((target) => {
+    replace(target, "task-context/TEMPLATE.md", "- Selected developer: none | small | heavy", "- Selected developer: none | small | other");
+  });
 });
 
 test("rejects loss of permanent claim-first blocker reasoning", () => {
