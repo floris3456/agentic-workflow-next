@@ -175,6 +175,7 @@ Handoff with status `completed`.
 - `source-lock.json`
 - `changes/TEMPLATE-HOST-ADMIN-001/manifest.json`
 - `changes/TEMPLATE-HOST-ADMIN-001.rev2/manifest.json`
+- `changes/TEMPLATE-HOST-ADMIN-001.rev3/manifest.json`
 
 ## Last handoff commit
 

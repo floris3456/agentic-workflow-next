@@ -99,9 +99,11 @@ Handoff with status `completed`.
 - `source-lock.json`
 - `changes/TEMPLATE-PACKAGE-SUPERSESSION-001/manifest.json`
 - `changes/TEMPLATE-PACKAGE-SUPERSESSION-001.rev2/manifest.json`
+- `changes/TEMPLATE-PACKAGE-SUPERSESSION-001.rev3/manifest.json`
 - `changes/TEMPLATE-HOST-ADMIN-001/manifest.json`
 - `changes/TEMPLATE-HOST-ADMIN-001.rev2/manifest.json`
+- `changes/TEMPLATE-HOST-ADMIN-001.rev3/manifest.json`
 
 ## Last handoff commit
 
-82d7e533d3da484b84f40895c066ddf4a5af9179
+e1a514ce05cc0172f834a3029dd024a5621aede1
