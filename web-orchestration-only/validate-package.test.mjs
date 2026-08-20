@@ -66,6 +66,25 @@ test("workflow requires orchestrator analysis before forwarding blocker handoffs
   assert.match(workflow, /Repeated or similar blockers raise the bar[\s\S]{0,700}deeper orchestrator analysis[\s\S]{0,900}human-owned decision[\s\S]{0,900}unavailable required capability/i);
 });
 
+test("permanent and template routes preserve claim-first blocker reasoning", () => {
+  const instructions = fs.readFileSync(path.join(root, "chatgpt-project", "developer-instructions.md"), "utf8");
+  const maintenance = fs.readFileSync(path.join(root, "chatgpt-project", "skill-template-maintenance.md"), "utf8");
+  assert.match(instructions, /Treat every handoff as a claim to evaluate[\s\S]{0,700}nontrivial or repeated blocker[\s\S]{0,900}architecture\/design\/deviations/i);
+  assert.match(maintenance, /reports `blocked` or `needs decision`[\s\S]{0,900}permanent claim-first rule[\s\S]{0,1200}Repeated or similar blockers require stronger\s+orchestrator analysis/i);
+});
+
+test("rejects loss of permanent claim-first blocker reasoning", () => {
+  expectFailure((target) => {
+    replace(target, "chatgpt-project/developer-instructions.md", "Treat every handoff as a claim to evaluate", "Forward every handoff as the next instruction");
+  });
+});
+
+test("rejects loss of template-maintenance blocker reasoning", () => {
+  expectFailure((target) => {
+    replace(target, "chatgpt-project/skill-template-maintenance.md", "apply\nthe permanent claim-first rule", "forward\nthe maintainer's proposed next step");
+  });
+});
+
 test("rejects a superseded MCP skill in the package inventory", () => {
   expectFailure((target) => {
     fs.writeFileSync(path.join(target, "chatgpt-project", "skill-mcp-on-workflow.md"), "# stale\n");
