@@ -1,0 +1,79 @@
+{
+  "schema_version": 3,
+  "task_id": "TEMPLATE-PACKAGE-SUPERSESSION-001",
+  "revision": 2,
+  "supersedes": {
+    "package_path": "changes/TEMPLATE-PACKAGE-SUPERSESSION-001",
+    "package_sha256": "a7c51e47770118995081f6632ba329cf1d8fb8174f84a2b7d8d4e5e280db1332",
+    "revision": 1
+  },
+  "canonical_repository": "https://github.com/floris3456/agentic-workflow-template.git",
+  "created_at": "2026-08-20T13:01:04.211Z",
+  "provenance": {
+    "mode": "canonical-remote-fetch-v2",
+    "source_lock": {
+      "schema_version": 1,
+      "canonical_repository": "https://github.com/floris3456/agentic-workflow-template.git",
+      "recorded_at": "2026-08-20T12:13:29Z",
+      "sources": {
+        "main": "6127611113dfdb66f93a0cfd2d355359aa370833",
+        "developer": "c6b747f00ad7509c1340fc11fca1466abb8eb1f9",
+        "web-orchestration": "7e29c07e6ac9fc65a2cb2a8957514bc03500cc17"
+      },
+      "last_reconciled_task": "TEMPLATE-PACKAGE-SUPERSESSION-001",
+      "last_change_package": "changes/TEMPLATE-PACKAGE-SUPERSESSION-001/manifest.json"
+    },
+    "source_lock_sha256": "24e27f4c1e34ed266ef4334c9fbb96cb7ac0ba643033b387a3184844c76585d7",
+    "canonical_tips": {
+      "template-development": "82d7e533d3da484b84f40895c066ddf4a5af9179",
+      "developer": "c6b747f00ad7509c1340fc11fca1466abb8eb1f9",
+      "web-orchestration": "7e29c07e6ac9fc65a2cb2a8957514bc03500cc17"
+    },
+    "head_relations": {
+      "template-development": "reviewed-head-ancestor-of-canonical-tip",
+      "developer": "reviewed-head-ancestor-of-canonical-tip",
+      "web-orchestration": "reviewed-head-ancestor-of-canonical-tip"
+    }
+  },
+  "ranges": {
+    "template-development": {
+      "base": "af4813144c15e5f4f93a39c61e8453d8571d5b94",
+      "head": "82d7e533d3da484b84f40895c066ddf4a5af9179",
+      "changed_paths": [
+        ".opencode/skills/template-maintenance/SKILL.md",
+        "changes/TEMPLATE-HOST-ADMIN-001.rev2/developer.patch",
+        "changes/TEMPLATE-HOST-ADMIN-001.rev2/manifest.json",
+        "changes/TEMPLATE-HOST-ADMIN-001.rev2/template-development.patch",
+        "changes/TEMPLATE-HOST-ADMIN-001.rev2/web-orchestration.patch",
+        "docs/architecture/AS-BUILT.md",
+        "docs/design/template-maintenance-workflow.md",
+        "docs/deviations.md",
+        "docs/work/current/TEMPLATE-HOST-ADMIN-001-bounded-host-administration.md",
+        "docs/work/current/TEMPLATE-PACKAGE-SUPERSESSION-001-same-task-package-supersession.md",
+        "scripts/apply-change-package.mjs",
+        "scripts/change-package-lib.mjs",
+        "scripts/create-change-package.mjs",
+        "scripts/validate-template-development.mjs",
+        "source-lock.json",
+        "tests/change-package.test.mjs"
+      ],
+      "patch": "template-development.patch",
+      "patch_sha256": "5b4127e30e8a30574ee7fddb608197932a6dc55b4f2a25ecdac2334c0cfa4001"
+    },
+    "developer": {
+      "base": "c6b747f00ad7509c1340fc11fca1466abb8eb1f9",
+      "head": "c6b747f00ad7509c1340fc11fca1466abb8eb1f9",
+      "changed_paths": [],
+      "patch": "developer.patch",
+      "patch_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "web-orchestration": {
+      "base": "7e29c07e6ac9fc65a2cb2a8957514bc03500cc17",
+      "head": "7e29c07e6ac9fc65a2cb2a8957514bc03500cc17",
+      "changed_paths": [],
+      "patch": "web-orchestration.patch",
+      "patch_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "package_sha256": "54e1da115d0d1b9e76ac7a3256e5fbd602349ee7e9f4b7d2f6ccb27c4e042356"
+}

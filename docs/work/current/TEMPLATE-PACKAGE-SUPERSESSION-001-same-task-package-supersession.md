@@ -98,8 +98,10 @@ Handoff with status `completed`.
 - `docs/deviations.md`
 - `source-lock.json`
 - `changes/TEMPLATE-PACKAGE-SUPERSESSION-001/manifest.json`
+- `changes/TEMPLATE-PACKAGE-SUPERSESSION-001.rev2/manifest.json`
+- `changes/TEMPLATE-HOST-ADMIN-001/manifest.json`
 - `changes/TEMPLATE-HOST-ADMIN-001.rev2/manifest.json`
 
 ## Last handoff commit
 
-ef2159fcb7f873624460b6246575210642b1308b
+82d7e533d3da484b84f40895c066ddf4a5af9179
