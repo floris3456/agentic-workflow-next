@@ -79,8 +79,8 @@ None.
 
 ## Checks
 
-- `node --test tests/change-package.test.mjs` passed (7/7 tests).
-- `./scripts/validate-template-development.sh` passed (20/20 tests + pinned OpenCode 1.18.16 inventory + raw session ID prevention check).
+- `node --test tests/change-package.test.mjs` passed (8/8 tests).
+- `./scripts/validate-template-development.sh` passed (21/21 tests + pinned OpenCode 1.18.16 inventory + raw session ID prevention check).
 - `git diff --check` passed cleanly.
 
 ## Blockers / required decisions
@@ -105,6 +105,7 @@ Handoff with status `needs decision` regarding historical Git residue.
 - `changes/TEMPLATE-PACKAGE-SUPERSESSION-001.rev2/manifest.json`
 - `changes/TEMPLATE-PACKAGE-SUPERSESSION-001.rev3/manifest.json`
 - `changes/TEMPLATE-PACKAGE-SUPERSESSION-001.rev4/manifest.json`
+- `changes/TEMPLATE-PACKAGE-SUPERSESSION-001.rev5/manifest.json`
 - `changes/TEMPLATE-HOST-ADMIN-001/manifest.json`
 - `changes/TEMPLATE-HOST-ADMIN-001.rev2/manifest.json`
 - `changes/TEMPLATE-HOST-ADMIN-001.rev3/manifest.json`
@@ -112,4 +113,4 @@ Handoff with status `needs decision` regarding historical Git residue.
 
 ## Last handoff commit
 
-f5f385df14a52a14a86c976a2af75afc59d0bbc7
+1c523af4cabaf709cdf315a404a2b7517a6fe9e9

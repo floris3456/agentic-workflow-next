@@ -388,7 +388,7 @@ export function validatePackageSupersessionChain(changesDir) {
       throw new Error(`Ambiguous package supersession for task ${taskId}: multiple active packages`);
     }
     const active = activeList[0];
-    if (active.manifest.schema_version === 3 && active.manifest.ranges["template-development"]?.changed_paths.some(isPackageStoragePath)) {
+    if (active.manifest.schema_version === 3 && active.manifest.ranges["template-development"]?.changed_paths.some((p) => p.startsWith("changes/") && p !== "changes/README.md")) {
       throw new Error(`Active package ${active.directoryName} template-development range contains package storage paths beneath changes/`);
     }
     assertPackagePublicSafe(active);

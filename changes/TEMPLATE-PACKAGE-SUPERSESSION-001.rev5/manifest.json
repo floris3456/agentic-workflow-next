@@ -1,0 +1,75 @@
+{
+  "schema_version": 3,
+  "task_id": "TEMPLATE-PACKAGE-SUPERSESSION-001",
+  "revision": 5,
+  "supersedes": {
+    "package_path": "changes/TEMPLATE-PACKAGE-SUPERSESSION-001.rev4",
+    "package_sha256": "8e374e495e356ea1fdd1065925a1cb0ff4b162ba11b5c8b0a293e2ce61e328a0",
+    "revision": 4
+  },
+  "canonical_repository": "https://github.com/floris3456/agentic-workflow-template.git",
+  "created_at": "2026-08-20T15:15:26.238Z",
+  "provenance": {
+    "mode": "canonical-remote-fetch-v2",
+    "source_lock": {
+      "schema_version": 1,
+      "canonical_repository": "https://github.com/floris3456/agentic-workflow-template.git",
+      "recorded_at": "2026-08-20T14:07:00Z",
+      "sources": {
+        "main": "6127611113dfdb66f93a0cfd2d355359aa370833",
+        "developer": "c6b747f00ad7509c1340fc11fca1466abb8eb1f9",
+        "web-orchestration": "7e29c07e6ac9fc65a2cb2a8957514bc03500cc17"
+      },
+      "last_reconciled_task": "TEMPLATE-PACKAGE-SUPERSESSION-001",
+      "last_change_package": "changes/TEMPLATE-PACKAGE-SUPERSESSION-001.rev4/manifest.json"
+    },
+    "source_lock_sha256": "e9f699aae52c99172a7165bc1fb5ae85e17e408b5271aa88a9d2a6b38171fd04",
+    "canonical_tips": {
+      "template-development": "971363100f8e665c5f04a8d345cc326a4aee36ad",
+      "developer": "c6b747f00ad7509c1340fc11fca1466abb8eb1f9",
+      "web-orchestration": "7e29c07e6ac9fc65a2cb2a8957514bc03500cc17"
+    },
+    "head_relations": {
+      "template-development": "reviewed-head-ancestor-of-canonical-tip",
+      "developer": "reviewed-head-ancestor-of-canonical-tip",
+      "web-orchestration": "reviewed-head-ancestor-of-canonical-tip"
+    }
+  },
+  "ranges": {
+    "template-development": {
+      "base": "af4813144c15e5f4f93a39c61e8453d8571d5b94",
+      "head": "971363100f8e665c5f04a8d345cc326a4aee36ad",
+      "changed_paths": [
+        ".opencode/skills/template-maintenance/SKILL.md",
+        "docs/architecture/AS-BUILT.md",
+        "docs/design/template-maintenance-workflow.md",
+        "docs/deviations.md",
+        "docs/work/current/TEMPLATE-HOST-ADMIN-001-bounded-host-administration.md",
+        "docs/work/current/TEMPLATE-PACKAGE-SUPERSESSION-001-same-task-package-supersession.md",
+        "scripts/apply-change-package.mjs",
+        "scripts/change-package-lib.mjs",
+        "scripts/create-change-package.mjs",
+        "scripts/validate-template-development.mjs",
+        "source-lock.json",
+        "tests/change-package.test.mjs"
+      ],
+      "patch": "template-development.patch",
+      "patch_sha256": "3b373bc8a728e5fac43aa674f2ba663981560106b148d00d48523fe658759657"
+    },
+    "developer": {
+      "base": "c6b747f00ad7509c1340fc11fca1466abb8eb1f9",
+      "head": "c6b747f00ad7509c1340fc11fca1466abb8eb1f9",
+      "changed_paths": [],
+      "patch": "developer.patch",
+      "patch_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "web-orchestration": {
+      "base": "7e29c07e6ac9fc65a2cb2a8957514bc03500cc17",
+      "head": "7e29c07e6ac9fc65a2cb2a8957514bc03500cc17",
+      "changed_paths": [],
+      "patch": "web-orchestration.patch",
+      "patch_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "package_sha256": "f239139c271d73222ca38e0fe22765d83d673d2c1820efdcf0fc84385467eaf2"
+}

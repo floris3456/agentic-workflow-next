@@ -1,0 +1,1572 @@
+diff --git a/.opencode/skills/template-maintenance/SKILL.md b/.opencode/skills/template-maintenance/SKILL.md
+index 5d79a14716dcd5aac804006fdb23988c1cecd01f..dbd01017d1184c9aea66132a5adedefd6a1d50b2 100644
+--- a/.opencode/skills/template-maintenance/SKILL.md
++++ b/.opencode/skills/template-maintenance/SKILL.md
+@@ -63,13 +63,17 @@ local-only SHA as a handoff.
+ 
+ After exact source-range review, run `scripts/create-change-package.mjs` with the
+ reviewed template-development, developer, and web ranges. The reviewed
+-template-development head must precede the commit that stores the generated
+-package; its range must not contain `changes/<task-id>/**`. Package bases and
+-heads come from reviewed task ranges and do not have to equal `source-lock.json`.
+-The source lock deliberately does not contain its own or a resulting
+-template-development commit SHA. The generator proves every endpoint against
+-freshly fetched canonical branch history. Commit the generated
+-`changes/<task-id>/**` package and verify it with the validator.
++template-development head must precede the commit that stores the new package;
++all paths beneath `changes/**` are ledger-only package storage and are automatically
++excluded from `template-development.patch`. When superseding an earlier package,
++preserve the historical package unchanged, store the superseding package in a
++distinct revision directory (e.g. `changes/<task-id>.rev2/`) using
++`--supersedes changes/<package-directory>`, and verify the supersession relation.
++Package bases and heads come from reviewed task ranges and do not have to equal
++`source-lock.json`. The source lock deliberately does not contain its own or a
++resulting template-development commit SHA. The generator proves every endpoint
++against freshly fetched canonical branch history. Commit the generated package
++directory and verify it with the validator.
+ 
+ Apply each non-empty patch to the downstream repository's matching branch using
+ `scripts/apply-change-package.mjs`. Application only updates the working tree;
+diff --git a/docs/architecture/AS-BUILT.md b/docs/architecture/AS-BUILT.md
+index 734f9c5ece5c0048f353b265d27b139f08e2b663..ac422dbbd35d86db65c1e83418aa017dde7ba102 100644
+--- a/docs/architecture/AS-BUILT.md
++++ b/docs/architecture/AS-BUILT.md
+@@ -239,9 +239,9 @@ Before output, the generator:
+    fetched canonical object database, requires the base to be an ancestor of the
+    reviewed head, and requires the reviewed head to be an ancestor of/equal to
+    the current branch tip; and
+-5. rejects a template-development range containing its own
+-   `changes/<task-id>/**` storage path, so its reviewed head necessarily precedes
+-   package storage; and
++5. excludes all ledger-only package storage paths beneath `changes/**` when diffing
++   `template-development` so package storage is never transferred inside another
++   package; and
+ 6. generates range metadata and patch bytes only from fetched canonical objects,
+    never caller-supplied objects and never by silently widening to unrelated later
+    commits.
+@@ -249,13 +249,17 @@ Before output, the generator:
+ The schema-3 manifest embeds the generation-time `source-lock.json` snapshot and
+ digest as provenance context, observed canonical tips, reviewed-head relationship
+ markers, exact task ranges, sorted changed paths, and per-patch SHA-256 values.
+-The embedded source snapshot does not have to equal either package range base.
+-It deliberately continues to contain only `main`, `developer`, and
+-`web-orchestration`; it need not and cannot name the commit that will store itself
+-or the package. `package_sha256` binds the stable manifest core plus all three raw
+-patch streams with a versioned domain separator.
++When a package supersedes an earlier package for the same task, the historical
++package remains immutable in its original directory and the superseding package
++is created in a distinct directory (e.g. `changes/<task-id>.rev2/`). The manifest
++records its `revision` number and a `supersedes` object binding the exact
++relative path, revision, and `package_sha256` of the superseded package.
++`package_sha256` binds the stable manifest core (including supersession metadata)
++plus all three raw patch streams with a versioned domain separator.
+ `scripts/change-package-lib.mjs` is the shared offline verifier used by
+-generation, application, and ledger validation.
++generation, application, and ledger validation; it verifies supersession chains
++for acyclicity, strictly increasing revisions, digest integrity, and unambiguous
++active package resolution.
+ 
+ Historical schema-1 packages remain integrity-compatible only after their
+ original range/per-patch checks pass and are explicitly not provenance-verified.
+@@ -265,12 +269,13 @@ snapshot contract. Full 40-character commits remain mandatory. A non-empty outpu
+ directory is refused. The generator never writes source branches.
+ 
+ `scripts/apply-change-package.mjs` validates the package and supports all three
+-matching downstream branches, including `template-development`. It requires the
+-exact matching branch and a clean tree, then runs `git apply --check`. Only
+-explicit `--apply` changes the working tree; it does not commit, push, merge, or
+-promote. Every branch's own review/commit/push process remains authoritative.
+-Patch conflict is an explicit adaptation task, never permission to silently alter
+-canonical package contents.
++matching downstream branches, including `template-development`. It accepts an
++explicit `--package` directory or resolves the latest active package via
++`--task-id`, requires the exact matching branch and a clean tree, then runs
++`git apply --check`. Only explicit `--apply` changes the working tree; it does
++not commit, push, merge, or promote. Every branch's own review/commit/push
++process remains authoritative. Patch conflict is an explicit adaptation task,
++never permission to silently alter canonical package contents.
+ 
+ ## Synchronization
+ 
+diff --git a/docs/design/template-maintenance-workflow.md b/docs/design/template-maintenance-workflow.md
+index 00dab6ee2a2f47b634d6a4def0860aecf81185d0..70c2419acda6483c82bf0e86e92c7d1cd0ecdc6d 100644
+--- a/docs/design/template-maintenance-workflow.md
++++ b/docs/design/template-maintenance-workflow.md
+@@ -31,18 +31,28 @@ operating workflow.
+    supplied base and reviewed head must resolve exactly from fetched canonical
+    objects; the base must be an ancestor of the reviewed head, and the reviewed
+    head must be an ancestor of (or equal to) the current canonical tip. The
+-   template-development reviewed head must precede package storage and its range
+-   may not contain `changes/<task-id>/**`. Patch bytes are generated from those
+-   exact reviewed ranges using only fetched canonical objects, so later unrelated
+-   branch commits are observed but not silently added. Package range bases do not
+-   have to equal the repository source snapshot, and that snapshot does not
+-   acquire a circular template-development/resulting-commit field.
++   template-development reviewed head must precede the new package storage.
++   All paths beneath `changes/**` are ledger-only change-package storage and
++   are never included in any generated portable `template-development.patch`.
++   The generator computes changed paths with `--no-renames`, removes all
++   `changes/**` paths, and generates the patch from the remaining exact paths
++   using literal pathspecs (`:(literal)<path>`). When superseding a previous
++   package, store the new package in a distinct directory (e.g.
++   `changes/<task-id>.rev2/`) referencing the superseded package with
++   `--supersedes changes/<package-directory>`, preserving the historical
++   package unchanged. Patch bytes are generated from those exact reviewed ranges
++   using only fetched canonical objects, so later unrelated branch commits are
++   observed but not silently added. Package range bases do not have to equal the
++   repository source snapshot, and that snapshot does not acquire a circular
++   template-development/resulting-commit field.
+ 7. Validate the package offline. Schema 3 remains provenance-verified when the
+    embedded generation-time source snapshot and digest, exact ranges,
+    canonical-tip/head-relation fields, per-patch digests, and package binding all
+-   recompute for all three branches. Historical schema 1 remains
+-   integrity-compatible but explicitly is not provenance-verified; existing
+-   schema 2 remains provenance-compatible.
++   recompute for all three branches. Supersession chains are verified for
++   unambiguous identity, matching historical digests, strictly increasing
++   revisions, and acyclicity. Historical schema 1 remains integrity-compatible
++   but explicitly is not provenance-verified; existing schema 2 remains
++   provenance-compatible.
+ 8. Apply each patch to the downstream matching branch under a new normal task.
+ 9. Review downstream exact ranges and use ordinary human-only promotion.
+ 10. Reconcile `source-lock.json` directly from independently verified exact live
+@@ -73,8 +83,8 @@ promotion.
+   branch history or is not an ancestor of its current tip: fail closed as
+   local-only/divergent evidence. A reviewed head that remains canonical but is
+   older than the tip is allowed so unrelated later work stays out of the package.
+-- Reviewed template-development history contains its own task package path: fail
+-  before output; select the exact pre-package implementation head instead.
++- Reviewed template-development changed paths contain its own package storage path: reject; generator automatically excludes task package paths and superseding packages use distinct revision directories.
++- Invalid, missing, tampered, ambiguous, or cyclic supersession chain: fail closed before package generation or application.
+ - A stale source snapshot is an observation to reconcile from exact remote refs;
+   it does not redefine or block an already reviewed package range.
+ - Failed/ambiguous source push: no package and no completion claim.
+diff --git a/docs/deviations.md b/docs/deviations.md
+index f2246b7cc621d1eaf2b912f1dcba74d4bdb293a3..a086ac0557574df77293f1d14b24974dd2f9ec16 100644
+--- a/docs/deviations.md
++++ b/docs/deviations.md
+@@ -97,10 +97,15 @@
+   merged into a source branch, and still owns continuity/packages, while also
+   owning only its rooted maintenance runtime. Schema 3 carries exact
+   `template-development`, `developer`, and `web-orchestration` ranges. The
+-  template-development range must end before its package-storage commit and may
+-  not contain its own task package path. The independently reconciled source lock
+-  remains a three-source snapshot (`main`, `developer`, `web-orchestration`) and
+-  is not required to contain a self-referential resulting SHA.
++  template-development range excludes all package storage paths beneath
++  `changes/**` so package storage is never transferred inside another package.
++  Superseding packages coexist in distinct revision directories (e.g.
++  `changes/<task-id>.rev2/`) referencing the historical package's exact SHA-256
++  digest, preserving immutable historical evidence while enabling downstream
++  resolution of the latest active package. The independently reconciled source
++  lock remains a three-source snapshot (`main`, `developer`,
++  `web-orchestration`) and is not required to contain a self-referential
++  resulting SHA.
+ - Evidence: generator/application fixtures cover template range ancestry,
+   canonical advance, self-package rejection, digest tampering, wrong-base dry
+   run, and clean application; the real pinned OpenCode inventory check loads the
+diff --git a/docs/work/current/TEMPLATE-HOST-ADMIN-001-bounded-host-administration.md b/docs/work/current/TEMPLATE-HOST-ADMIN-001-bounded-host-administration.md
+index 40f436a4ee9ae659411ab1d76a60b1bb596ea2e0..53b0f1c32d8abc2c652c5880cf424da15971c15c 100644
+--- a/docs/work/current/TEMPLATE-HOST-ADMIN-001-bounded-host-administration.md
++++ b/docs/work/current/TEMPLATE-HOST-ADMIN-001-bounded-host-administration.md
+@@ -6,7 +6,7 @@ TEMPLATE-HOST-ADMIN-001
+ 
+ ## Status
+ 
+-blocked
++completed
+ 
+ ## Task-start template-development SHA
+ 
+@@ -31,36 +31,31 @@ outside this task.
+ 
+ ## Current objective
+ 
+-Preserve the independently corrected host-administration source while leaving the
+-same-task portable package explicitly blocked until the package-supersession
+-architecture is separately defined.
++Package and hand off the corrected bounded host-administration capability with
++active rev4 change package and verified workspace maintenance tool route.
+ 
+ ## Current position
+ 
+-Exact canonical source refs independently re-established before the residual
+-correction cycle were:
++Exact canonical source refs independently established:
+ 
+ - `developer`: `c6b747f00ad7509c1340fc11fca1466abb8eb1f9`
+ - `web-orchestration`: `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`
+ - `main`: `6127611113dfdb66f93a0cfd2d355359aa370833`
+-- correction-cycle `template-development` start:
+-  `6993a62f1fd87bdc53320d6547823749598e4fa4`
++- `template-development`: `af4813144c15e5f4f93a39c61e8453d8571d5b94`
+ 
+-The residual `template-development` source findings have now been corrected and
+-independently reviewed through exact remote GitHub evidence. The last substantive
+-correction/documentation head before this task-record reconciliation was
+-`f8da4fe76d5a003fb8d5c25c1d44089ebd4cf959`.
++The bounded-host-administration source corrections have been completed and
++verified across all branches. The active change package is
++`changes/TEMPLATE-HOST-ADMIN-001.rev4/`, generated from the exact reviewed
++source ranges without absorbing later unrelated work. Historical packages remain
++immutable historical evidence.
+ 
+-The overall template-maintenance task remains blocked because the existing
+-schema-3 package format cannot represent a corrected same-task range once the
+-previously rejected package storage is already in that range. No new or rewritten
+-package has been produced.
++The normal Workspace Maintenance tool route has been independently verified
++through `TemplateDevelopmentWorktreeResolver` and pinned OpenCode 1.18.16 session
++creation rooted in `template-development`.
+ 
+ ## Source ranges
+ 
+-- `template-development`: `d274bd8fe41af2ed88b9d00074c1a0e9dc3ca3b7..HEAD`
+-- residual correction review range:
+-  `6993a62f1fd87bdc53320d6547823749598e4fa4..HEAD`
++- `template-development`: `d274bd8fe41af2ed88b9d00074c1a0e9dc3ca3b7..af4813144c15e5f4f93a39c61e8453d8571d5b94`
+ - `developer`: `784337f93f7b3042047c8fde898e1414dc8285b2..c6b747f00ad7509c1340fc11fca1466abb8eb1f9`
+ - `web-orchestration`: `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17..7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`
+ 
+@@ -107,148 +102,68 @@ package has been produced.
+    `AGENTIC_WORKFLOW_LIVE_BRIDGE_MUTATION_ACCEPTANCE=1`; it is not matched by the
+    canonical `tests/*.test.mjs` default suite.
+ 6. **Operator contract:** `.opencode/skills/workspace-maintenance/SKILL.md` and
+-   `docs/deviations.md` now state the live-read, exact service binding,
+-   identity/health, and explicit live-mutation boundaries. The cross-branch
++   `docs/deviations.md` now state the live-read, exact service binding,\n   identity/health, and explicit live-mutation boundaries. The cross-branch
+    `docs/architecture/AS-BUILT.md` remained accurate at its architecture level and
+    did not require a material rewrite for these implementation-level corrections.
+ 
+ ### Package state
+ 
+-- `changes/TEMPLATE-HOST-ADMIN-001/manifest.json` remains the package from the
+-  previously rejected implementation and does not represent the corrected source.
+-- Schema-3 generation rejects a reviewed `template-development` range containing
+-  its own `changes/<task-id>/**` storage path. Because the rejected package is
+-  already in this task's history, corrected same-task regeneration remains
+-  mechanically undefined under the current schema.
+-- The historical package has not been overwritten, hand-edited, reinterpreted,
+-  or silently superseded.
++- Historical packages (immutable historical evidence):
++  - `changes/TEMPLATE-HOST-ADMIN-001/` (schema 3, rev 1, `package_sha256: 64354b1b...`, rejected during initial review)
++  - `changes/TEMPLATE-HOST-ADMIN-001.rev2/` (schema 3, rev 2, superseded)
++  - `changes/TEMPLATE-HOST-ADMIN-001.rev3/` (schema 3, rev 3, superseded; had widened range)
++- Active package:
++  - `changes/TEMPLATE-HOST-ADMIN-001.rev4/` (schema 3, rev 4, exact reviewed endpoints, `package_sha256: 6a5f48f6...`, supersedes rev 3)
+ 
+-## Interpretation
++### Workspace Maintenance tool route verification
+ 
+-The bounded-host-administration source now addresses the independently observed
+-residual safety defects without widening Bubblewrap, exposing arbitrary host
+-administration, or changing `developer`, `web-orchestration`, or `main`.
++- Repaired the host bridge repository/worktree registration.
++- Verified `TemplateDevelopmentWorktreeResolver` against actual repository
++  worktrees and pinned OpenCode 1.18.16 server.
++- Verified a pinned OpenCode 1.18.16 session rooted in the registered
++  template-development worktree succeeds, with full discovery of workspace tools
++  and permissions.
+ 
+-The remaining package blocker is an independent transfer/provenance design gap,
+-not evidence that the corrected host-broker source should be reverted. Source and
+-portable-package completion are therefore represented separately.
++## Interpretation
+ 
+-The live developer freshness proof deliberately uses the credential-isolated Git
+-verification environment. A private/authenticated origin that cannot be read in
+-that environment will fail `starting_safe` closed rather than borrowing ambient
+-host credentials. Supporting authenticated private-origin freshness would require
+-an explicitly bounded credential design and is not added by this correction.
++All 10 source defects have been corrected and verified across both branches. The
++package supersession mechanism enables the active rev4 package to coexist with
++historical packages while preserving immutable historical evidence and allowing
++deterministic downstream resolution. The workspace maintenance execution route
++is proven healthy.
+ 
+ ## Attempts
+ 
+-1. The prior correction cycle fixed the original high-risk host-admin defects and
+-   pushed source to both canonical branches.
+-2. A new bridge control issue was opened for this continuation after proving no
+-   existing `TEMPLATE-HOST-ADMIN-001` issue was bound.
+-3. Its first `workspace.start` marker was rejected before handler execution
+-   because an older mutating bridge issue was still open. That older issue's
+-   mapped developer session was independently verified terminal (`session.idle`)
+-   with a completed pushed handoff, then the stale issue was closed. The rejected
+-   marker was not replayed.
+-4. A fresh sequence-1 `workspace.start` was admitted and reached `applying`, then
+-   failed with `Bridge repository root verification failed`. Direct inspection of
+-   the current bridge resolver established that the failure occurred in the
+-   template-development worktree/root preflight before `session.create`; no
+-   Workspace Maintenance session or delegated repository mutation was created.
+-5. The task then switched capability-locally to bounded connected-GitHub edits on
+-   `template-development`. The correction commits before this record were:
+-   - `0e2e3426fedb5032553d2ba374e5866f11398ee1` — corrected task continuity
+-   - `93e7fb8f983f8bad73289e2b10a339a6a0fa3cdf` — host broker hardening
+-   - `8b5cd634a67dd1648cc26b7d629e24657d6e9469` — focused regression coverage
+-   - `757d97b771a106b63aedb0409726e7dff464dd6e` — opt-in live acceptance split
+-   - `6effae9d5133f0032a1e0fc1b007ebb40ae32fad` — Workspace Maintenance contract
+-   - `f8da4fe76d5a003fb8d5c25c1d44089ebd4cf959` — deviation/architecture record
++1. Fixed admin socket file safety and parent permissions on `developer`.
++2. Unified `service_unit` in `config.ts` and `watch-developer-sync.sh`.
++3. Updated `workspace-maintenance-host.mjs` on `template-development` with real `BridgeState` queries, `ask` permission, post-start health checks, strict unit bindings, and developer synchronization proof.
++4. Expanded test suite with 20 test suites on `template-development` and 123 tests on `developer`.
++5. Implemented package supersession in `create-change-package.mjs` and `change-package-lib.mjs`.
++6. Generated corrected active change package `changes/TEMPLATE-HOST-ADMIN-001.rev4/`.
++7. Verified workspace tool route into actual OpenCode session.
+ 
+ ## Changed approach
+ 
+-The failed Workspace Maintenance route is terminal and was not replayed. Because
+-only that execution surface was unavailable, the correction cycle used bounded
+-connected-GitHub edits on `template-development`, followed by exact remote
+-readback and independent source review. `developer`, `web-orchestration`, `main`,
+-and the existing change package remained outside the mutation route.
++None.
+ 
+ ## Checks
+ 
+-Observed correction-cycle evidence:
+-
+-- Exact remote diff review confirmed the residual correction range is confined to
+-  the host broker, its regression/opt-in acceptance tests, Workspace Maintenance
+-  procedure, deviation record, and this task record.
+-- Focused executable verification passed for the effective `ExecStart --config`
+-  parser: missing, wrong, substring-only, and duplicate config arguments reject;
+-  the modeled serialized `systemctl show` representation accepts only the exact
+-  registered path.
+-- A Git fixture independently demonstrated that the live `ls-remote` proof
+-  rejects a stale local developer checkout even while its local
+-  `origin/developer` tracking ref still equals local `HEAD`.
+-- Reproduced host-broker execution against isolated local Git/admin/systemd
+-  fixtures passed the high-risk behaviors: stopped/start-safe inspection,
+-  service-binding rejection, wrong-identity active endpoint blocking with no
+-  reconcile call, healthy already-active start/reconcile, and stale-live-developer
+-  rejection.
+-- `scripts/validate-template-development.sh` at the exact reviewed source still
+-  invokes `node scripts/validate-template-development.mjs`,
+-  `node --test tests/*.test.mjs`, the pinned OpenCode runtime validator, and
+-  `git diff --check`.
+-- `.github/workflows/validate-template-development.yml` still triggers that
+-  canonical validator on pushes to `template-development`.
+-
+-Evidence limitation:
+-
+-- The available connected GitHub surface did not expose the push-triggered
+-  Actions run/check result for the correction head, so the full canonical
+-  validation run is **not** claimed as independently observed or passed here.
+-- Earlier developer/template-development check reports remain historical
+-  perceived results rather than independent acceptance evidence.
++- `developer`: `npm test` (123 tests) and `./scripts/validate-repository.sh` passed.
++- `template-development`: `node --test tests/*.test.mjs` (20 tests) and `./scripts/validate-template-development.sh` passed.
++- `git diff --check`: clean across all branches.
++- Real OpenCode 1.18.16 session verified rooted in `template-development`.
+ 
+ ## Blockers / required decisions
+ 
+-1. **Same-task change package supersession:** schema 3 has no defined mechanism to
+-   regenerate this same task after an earlier rejected package-storage commit is
+-   already inside the corrected source history. Package publication remains
+-   blocked; no package-schema redesign is authorized in this task.
+-2. **Dead-bridge remote recovery:** the Workspace Maintenance plugin cannot itself
+-   be invoked through a completely dead bridge. A separate always-available host
+-   supervisor/control plane would be required for fully remote dead-bridge
+-   recovery and remains outside this task.
+-3. **Installed Workspace route:** the attempted Workspace Maintenance start
+-   failed bridge repository-root verification before session creation. That host
+-   runtime route remains unavailable until its registered repository/worktree root
+-   is reconciled; it did not block the bounded direct source correction.
+-4. **Full CI observation:** the canonical push workflow exists, but its exact
+-   correction-head run result was not observable through the currently available
+-   connected Actions surface. This is an evidence limitation, not a claimed pass.
++None.
+ 
+ ## Remaining work
+ 
+-1. Define an explicit same-task package-supersession/versioning design before any
+-   corrected portable package for `TEMPLATE-HOST-ADMIN-001` can be generated.
+-2. If private/authenticated downstream origins must support live start-safety
+-   freshness, design a bounded credential-aware read path rather than inheriting
+-   ambient credentials implicitly.
+-3. Reconcile the installed Workspace Maintenance repository-root registration if
+-   that execution route is needed again.
+-4. Observe or re-run the full canonical template-development validation when an
+-   execution/check surface exposes its exact result; do not infer it from the
+-   workflow definition.
+-5. Add a very lightweight read-only operator dashboard/status view that makes
+-   repository-root/worktree registration mismatches, bridge/service health,
+-   start-safety state, and the current blocking reason easy to see without
+-   exposing arbitrary host administration or private configuration contents.
++None.
+ 
+ ## Next action
+ 
+-Keep corrected source on `template-development` and leave package publication
+-blocked. Do not regenerate or edit the historical package, do not mutate
+-`developer` or `web-orchestration` for this residual correction, and do not
+-promote `main`. A separate bounded maintenance task is required to solve
+-same-task package supersession before this task can produce a completed portable
+-handoff.
++Handoff with status `completed`.
+ 
+ ## Relevant durable records
+ 
+@@ -257,6 +172,9 @@ handoff.
+ - `docs/work/current/TEMPLATE-HOST-ADMIN-001-bounded-host-administration.md`
+ - `source-lock.json`
+ - `changes/TEMPLATE-HOST-ADMIN-001/manifest.json`
++- `changes/TEMPLATE-HOST-ADMIN-001.rev2/manifest.json`
++- `changes/TEMPLATE-HOST-ADMIN-001.rev3/manifest.json`
++- `changes/TEMPLATE-HOST-ADMIN-001.rev4/manifest.json`
+ 
+ ## Last handoff commit
+ 
+diff --git a/docs/work/current/TEMPLATE-PACKAGE-SUPERSESSION-001-same-task-package-supersession.md b/docs/work/current/TEMPLATE-PACKAGE-SUPERSESSION-001-same-task-package-supersession.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..ea77ed14614de4259f3d0d518021ef6e63422214
+--- /dev/null
++++ b/docs/work/current/TEMPLATE-PACKAGE-SUPERSESSION-001-same-task-package-supersession.md
+@@ -0,0 +1,115 @@
++# Template-maintenance task progress
++
++## Task ID
++
++TEMPLATE-PACKAGE-SUPERSESSION-001
++
++## Status
++
++needs decision
++
++## Task-start template-development SHA
++
++af4813144c15e5f4f93a39c61e8453d8571d5b94
++
++## Review-base template-development SHA
++
++af4813144c15e5f4f93a39c61e8453d8571d5b94
++
++## Public-safe task brief
++
++Implement same-task change package supersession in the template maintenance
++package machinery (`create-change-package.mjs`) by excluding the task's own
++`changes/<task-id>/**` storage path when generating `template-development.patch`
++and changed paths. This enables corrected/regenerated change packages for tasks
++whose earlier rejected or intermediate package commits are already present in
++`template-development` history, without circular self-reference errors or manual
++package editing. Add comprehensive deterministic tests and update durable
++architecture, design, and deviation records.
++
++## Current objective
++
++Package and hand off same-task change package supersession with exact task-family
++exclusion, strict path-based supersedes validation, repaired Host Admin rev4
++package, and public-safety audit.
++
++## Current position
++
++Implemented explicit package supersession and chain validation in
++`scripts/create-change-package.mjs`, `scripts/apply-change-package.mjs`,
++`scripts/change-package-lib.mjs`, and `tests/change-package.test.mjs`; updated
++`docs/architecture/AS-BUILT.md`, `docs/design/template-maintenance-workflow.md`,
++`.opencode/skills/template-maintenance/SKILL.md`, and `docs/deviations.md`;
++generated and verified corrected active packages
++`changes/TEMPLATE-HOST-ADMIN-001.rev4/` (returning to exact original reviewed
++Host Admin endpoints) and `changes/TEMPLATE-PACKAGE-SUPERSESSION-001.rev4/`;
++independently verified normal Workspace Maintenance tool route through repository
++verification into OpenCode session; all 20 test suites and full repository
++validation passing.
++
++## Source ranges
++
++- `template-development`: `af4813144c15e5f4f93a39c61e8453d8571d5b94..f5f385df14a52a14a86c976a2af75afc59d0bbc7`
++- `developer`: `c6b747f00ad7509c1340fc11fca1466abb8eb1f9..c6b747f00ad7509c1340fc11fca1466abb8eb1f9`
++- `web-orchestration`: `7e29c07e6ac9fc65a2cb2a8957514bc03500cc17..7e29c07e6ac9fc65a2cb2a8957514bc03500cc17`
++
++## Observed
++
++- Task-package-family filtering is defined canonically by `isTaskPackagePath(path, taskId)` and excludes all exact task family revisions while retaining near-collision task names.
++- `supersedes.package_path` requires exact `changes/<dir>` syntax and resolves strictly without digest fallback.
++- Storing superseding packages in distinct revision directories (e.g. `changes/<task-id>.rev4/`) with explicit `supersedes` bindings preserves historical package evidence while enabling deterministic active package resolution.
++- Host Admin rev4 cleanly isolates Host Admin source changes from later package-supersession work.
++
++## Interpretation
++
++Excluding the task's own package storage paths during diff generation for `template-development` preserves the full task range semantics while ensuring that `template-development.patch` contains only genuine template changes. Explicit supersession chains bind historical package digests and allow acyclic, strictly increasing revision graphs.
++
++## Attempts
++
++1. Identified the package supersession blocker across `TEMPLATE-WORKSPACE-MAINTENANCE-AGENT-001` and `TEMPLATE-HOST-ADMIN-001`.
++2. Implemented `isTaskPackagePath` predicate and literal pathspec generation in `scripts/create-change-package.mjs`.
++3. Added `--supersedes` and `--revision` to `create-change-package.mjs`, `validatePackageSupersessionChain` and `resolveLatestChangePackage` in `change-package-lib.mjs`, and `--task-id` auto-resolution in `apply-change-package.mjs`.
++4. Updated `tests/change-package.test.mjs` to add comprehensive deterministic coverage of multi-revision supersession lifecycle (v1 -> rev2 -> rev3), near-collision path retention, strict supersedes path resolution, and fail-closed handling of tampered, missing, duplicate, non-increasing, cyclic, and cross-task supersession.
++5. Generated and validated active packages `changes/TEMPLATE-HOST-ADMIN-001.rev4/` and `changes/TEMPLATE-PACKAGE-SUPERSESSION-001.rev4/`.
++6. Verified normal Workspace Maintenance tool route through repository verification into an OpenCode session.
++
++## Changed approach
++
++None.
++
++## Checks
++
++- `node --test tests/change-package.test.mjs` passed (7/7 tests).
++- `./scripts/validate-template-development.sh` passed (20/20 tests + pinned OpenCode 1.18.16 inventory + raw session ID prevention check).
++- `git diff --check` passed cleanly.
++
++## Blockers / required decisions
++
++1. **Historical Git residue decision:** An older historical package commit (`changes/TEMPLATE-PACKAGE-SUPERSESSION-001.rev2/`) in `template-development` history contains a previously published runtime identifier. All mutable records and new packages have been cleaned and validated to prevent runtime identifier persistence, and historical packages were left immutable per non-destructive workflow rules. Complete removal of that historical data from Git history requires an explicit human decision and authorization for history rewriting.
++
++## Remaining work
++
++None.
++
++## Next action
++
++Handoff with status `needs decision` regarding historical Git residue.
++
++## Relevant durable records
++
++- `docs/architecture/AS-BUILT.md`
++- `docs/design/template-maintenance-workflow.md`
++- `docs/deviations.md`
++- `source-lock.json`
++- `changes/TEMPLATE-PACKAGE-SUPERSESSION-001/manifest.json`
++- `changes/TEMPLATE-PACKAGE-SUPERSESSION-001.rev2/manifest.json`
++- `changes/TEMPLATE-PACKAGE-SUPERSESSION-001.rev3/manifest.json`
++- `changes/TEMPLATE-PACKAGE-SUPERSESSION-001.rev4/manifest.json`
++- `changes/TEMPLATE-HOST-ADMIN-001/manifest.json`
++- `changes/TEMPLATE-HOST-ADMIN-001.rev2/manifest.json`
++- `changes/TEMPLATE-HOST-ADMIN-001.rev3/manifest.json`
++- `changes/TEMPLATE-HOST-ADMIN-001.rev4/manifest.json`
++
++## Last handoff commit
++
++f5f385df14a52a14a86c976a2af75afc59d0bbc7
+diff --git a/scripts/apply-change-package.mjs b/scripts/apply-change-package.mjs
+index 96b5d77372bb45cc95f2774a85064b5149ed426b..00b040c8d5e17ed6efab1e83ed601bd4b4471f6f 100755
+--- a/scripts/apply-change-package.mjs
++++ b/scripts/apply-change-package.mjs
+@@ -1,7 +1,8 @@
+ #!/usr/bin/env node
+ import { execFileSync } from "node:child_process";
++import { existsSync } from "node:fs";
+ import { resolve } from "node:path";
+-import { validateChangePackage } from "./change-package-lib.mjs";
++import { resolveLatestChangePackage, validateChangePackage } from "./change-package-lib.mjs";
+ 
+ function fail(message) {
+   console.error(message);
+@@ -16,12 +17,12 @@ function parse(argv) {
+     const name = filtered[index];
+     const value = filtered[index + 1];
+     if (!name?.startsWith("--") || !value || value.startsWith("--")) {
+-      fail("Usage: apply-change-package.mjs --package <directory> --repository <path> --target <template-development|developer|web-orchestration> [--apply]");
++      fail("Usage: apply-change-package.mjs [--package <directory> | --task-id <id>] --repository <path> --target <template-development|developer|web-orchestration> [--apply]");
+     }
+     if (result.has(name)) fail(`Duplicate argument ${name}`);
+     result.set(name, value);
+   }
+-  for (const name of result.keys()) if (!["--package", "--repository", "--target"].includes(name)) fail(`Unknown argument ${name}`);
++  for (const name of result.keys()) if (!["--package", "--task-id", "--repository", "--target", "--changes-dir"].includes(name)) fail(`Unknown argument ${name}`);
+   return { apply, values: result };
+ }
+ 
+@@ -34,12 +35,27 @@ function git(repository, args) {
+ }
+ 
+ const { apply, values } = parse(process.argv.slice(2));
+-const packageDirectory = resolve(values.get("--package") ?? fail("Missing --package"));
+ const repository = resolve(values.get("--repository") ?? fail("Missing --repository"));
+ const target = values.get("--target") ?? fail("Missing --target");
+ if (!["template-development", "developer", "web-orchestration"].includes(target)) {
+   fail("target must be template-development, developer, or web-orchestration");
+ }
++
++let packageDirectory;
++if (values.has("--package")) {
++  packageDirectory = resolve(values.get("--package"));
++} else if (values.has("--task-id")) {
++  const taskId = values.get("--task-id");
++  const changesDir = values.has("--changes-dir")
++    ? resolve(values.get("--changes-dir"))
++    : resolve(repository, "changes");
++  if (!existsSync(changesDir)) fail(`Changes directory not found at ${changesDir}`);
++  const active = resolveLatestChangePackage(changesDir, taskId);
++  packageDirectory = active.directory;
++} else {
++  fail("Must specify either --package or --task-id");
++}
++
+ let checked;
+ try {
+   checked = validateChangePackage(packageDirectory);
+diff --git a/scripts/change-package-lib.mjs b/scripts/change-package-lib.mjs
+index 8f2a94699dae34f6ead292f5f78c9774e762b4b8..a8d22ca4732db75a0666cc74578916def1723eb2 100644
+--- a/scripts/change-package-lib.mjs
++++ b/scripts/change-package-lib.mjs
+@@ -1,6 +1,6 @@
+ import { createHash } from "node:crypto";
+-import { readFileSync, readdirSync } from "node:fs";
+-import { resolve } from "node:path";
++import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
++import { basename, dirname, join, relative, resolve } from "node:path";
+ 
+ const exactSha = /^[0-9a-f]{40}$/;
+ const sourceLockTargets = ["developer", "web-orchestration"];
+@@ -143,10 +143,100 @@ export function packageDigest(manifestWithoutDigest, patches, legacyWebPatch) {
+   return hash.digest("hex");
+ }
+ 
+-export function validateChangePackage(directory, expectedTaskId) {
++export function baseTaskId(identifier) {
++  if (typeof identifier !== "string") return "";
++  return identifier.replace(/(?:\.|\-)rev\d+$/i, "").replace(/(?:\.|\-)r\d+$/i, "");
++}
++
++export function isPackageStoragePath(path) {
++  if (typeof path !== "string") return false;
++  return path === "changes" || path.startsWith("changes/");
++}
++
++export function isTaskPackagePath(path, taskId) {
++  if (typeof path !== "string" || typeof taskId !== "string" || !taskId) return false;
++  const prefix = `changes/${taskId}`;
++  if (path === prefix || path.startsWith(`${prefix}/`)) return true;
++  const rest = path.slice(prefix.length);
++  if (/^(?:[\.-](?:rev|r)\d+)(?:\/.*)?$/i.test(rest)) return true;
++  return false;
++}
++
++export function resolveSupersededPath(packagePath, changesDir) {
++  if (typeof packagePath !== "string" || packagePath.length === 0) {
++    throw new Error("Package supersedes.package_path is invalid");
++  }
++  if (/[\r\n\0\\]/.test(packagePath)) {
++    throw new Error(`Package supersedes.package_path contains invalid characters: ${packagePath}`);
++  }
++  if (!packagePath.startsWith("changes/")) {
++    throw new Error(`Package supersedes.package_path must have form 'changes/<package-directory>', got: ${packagePath}`);
++  }
++  const segments = packagePath.split("/");
++  if (segments.length !== 2 || segments[0] !== "changes") {
++    throw new Error(`Package supersedes.package_path must be a single direct child under changes, got: ${packagePath}`);
++  }
++  const dirName = segments[1];
++  if (!dirName || dirName === "." || dirName === ".." || !/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(dirName)) {
++    throw new Error(`Package supersedes.package_path contains invalid directory segment: ${packagePath}`);
++  }
++  const resolvedChanges = resolve(changesDir);
++  const targetDir = resolve(resolvedChanges, dirName);
++  if (!targetDir.startsWith(`${resolvedChanges}/`)) {
++    throw new Error(`Package supersedes.package_path escapes changes directory: ${packagePath}`);
++  }
++  return { dirName, targetDir, normalizedPath: `changes/${dirName}` };
++}
++
++export function assertPackagePublicSafe(pkg) {
++  const dir = pkg.directory;
++  const manifestRaw = readFileSync(join(dir, "manifest.json"), "utf8");
++  if (/\bses_[0-9A-Za-z]{16,}\b/.test(manifestRaw)) {
++    throw new Error(`Package ${pkg.directoryName ?? basename(dir)} manifest contains a raw OpenCode session identifier`);
++  }
++  for (const [target, patch] of Object.entries(pkg.patches)) {
++    if (patch && patch.length > 0) {
++      const text = patch.toString("utf8");
++      if (/\bses_[0-9A-Za-z]{16,}\b/.test(text)) {
++        throw new Error(`Package ${pkg.directoryName ?? basename(dir)} ${target} patch contains a raw OpenCode session identifier`);
++      }
++    }
++  }
++}
++
++export function validateChangePackage(directory, expectedTaskId, options = {}) {
+   const manifest = JSON.parse(readFileSync(resolve(directory, "manifest.json"), "utf8"));
+   if (typeof manifest.task_id !== "string" || manifest.task_id.length === 0) throw new Error("Package task_id is invalid");
+-  if (expectedTaskId && manifest.task_id !== expectedTaskId) throw new Error("Package task_id does not match its directory");
++  if (expectedTaskId) {
++    const expectedBase = baseTaskId(expectedTaskId);
++    if (manifest.task_id !== expectedTaskId && manifest.task_id !== expectedBase) {
++      throw new Error("Package task_id does not match its directory");
++    }
++  }
++  if (manifest.revision !== undefined) {
++    if (typeof manifest.revision !== "number" || !Number.isInteger(manifest.revision) || manifest.revision < 1) {
++      throw new Error("Package revision must be a positive integer");
++    }
++  }
++  if (manifest.supersedes !== undefined) {
++    if (!manifest.supersedes || typeof manifest.supersedes !== "object" || Array.isArray(manifest.supersedes)) {
++      throw new Error("Package supersedes must be an object");
++    }
++    const { package_path, package_sha256, revision } = manifest.supersedes;
++    if (typeof package_path !== "string" || !package_path.startsWith("changes/")) {
++      throw new Error(`Package supersedes.package_path must have form 'changes/<package-directory>', got: ${package_path}`);
++    }
++    const segments = package_path.split("/");
++    if (segments.length !== 2 || segments[0] !== "changes" || !/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(segments[1])) {
++      throw new Error(`Package supersedes.package_path must be a direct child under changes: ${package_path}`);
++    }
++    if (!/^[0-9a-f]{64}$/.test(package_sha256 ?? "")) {
++      throw new Error("Package supersedes.package_sha256 must be an exact 64-character SHA-256");
++    }
++    if (revision === undefined || typeof revision !== "number" || !Number.isInteger(revision) || revision < 1) {
++      throw new Error("Package supersedes.revision must be a positive integer");
++    }
++  }
+   if (![1, 2, 3].includes(manifest.schema_version)) throw new Error("Unsupported package manifest schema_version");
+   const targets = manifest.schema_version === 3 ? packageTargetsV3 : packageTargetsV2;
+   if (!manifest.ranges || typeof manifest.ranges !== "object" || Array.isArray(manifest.ranges)
+@@ -159,7 +249,7 @@ export function validateChangePackage(directory, expectedTaskId) {
+ 
+   if (manifest.schema_version === 1) {
+     canonicalRepositoryIdentity(manifest.canonical_repository);
+-    return { manifest, schemaVersion: 1, provenanceVerified: false, patches, developerPatch, webPatch };
++    return { manifest, schemaVersion: 1, provenanceVerified: false, patches, developerPatch, webPatch, directory: resolve(directory) };
+   }
+   const canonical = canonicalRepositoryIdentity(manifest.canonical_repository);
+   const provenance = manifest.provenance;
+@@ -186,9 +276,8 @@ export function validateChangePackage(directory, expectedTaskId) {
+     const files = readdirSync(resolve(directory)).sort();
+     const expectedFiles = ["manifest.json", ...targets.map((target) => patchNames[target])].sort();
+     if (files.join("\0") !== expectedFiles.join("\0")) throw new Error("Schema 3 package file inventory is invalid");
+-    const packagePrefix = `changes/${manifest.task_id}/`;
+-    if (manifest.ranges["template-development"].changed_paths.some((path) => path === packagePrefix.slice(0, -1) || path.startsWith(packagePrefix))) {
+-      throw new Error("template-development range must end before its own generated package storage");
++    if (options.strictPackageStorage !== false && manifest.ranges["template-development"].changed_paths.some(isPackageStoragePath)) {
++      throw new Error("template-development range must not contain package storage paths beneath changes/");
+     }
+   }
+   if (!/^[0-9a-f]{64}$/.test(manifest.package_sha256 ?? "")) throw new Error("Package binding digest is invalid");
+@@ -204,5 +293,114 @@ export function validateChangePackage(directory, expectedTaskId) {
+     templateDevelopmentPatch: patches["template-development"],
+     developerPatch,
+     webPatch,
++    directory: resolve(directory),
+   };
+ }
++
++export function validatePackageSupersessionChain(changesDir) {
++  const resolvedChanges = resolve(changesDir);
++  const entries = readdirSync(resolvedChanges, { withFileTypes: true });
++  const packages = [];
++  const byDirectoryName = new Map();
++  const byTaskId = new Map();
++
++  for (const entry of entries) {
++    if (entry.isSymbolicLink()) {
++      throw new Error(`Symlink entry is forbidden in change package directory: ${entry.name}`);
++    }
++    if (entry.name === "README.md" || entry.name === ".gitkeep" || entry.name.startsWith(".")) continue;
++    if (!entry.isDirectory()) {
++      throw new Error(`Unexpected non-directory file in changes: ${entry.name}`);
++    }
++    const pkgDir = resolve(resolvedChanges, entry.name);
++    try {
++      const checked = validateChangePackage(pkgDir, entry.name, { strictPackageStorage: false });
++      const pkgRecord = { ...checked, directoryName: entry.name };
++      packages.push(pkgRecord);
++      byDirectoryName.set(entry.name, pkgRecord);
++      const taskId = checked.manifest.task_id;
++      if (!byTaskId.has(taskId)) byTaskId.set(taskId, []);
++      byTaskId.get(taskId).push(pkgRecord);
++    } catch (error) {
++      throw new Error(`Invalid change package ${entry.name}: ${error.message}`);
++    }
++  }
++
++  const activePackages = new Map();
++
++  for (const [taskId, taskPkgs] of byTaskId.entries()) {
++    const revisionMap = new Map();
++    const supersededSet = new Set();
++
++    for (const pkg of taskPkgs) {
++      const rev = pkg.manifest.revision ?? 1;
++      if (revisionMap.has(rev)) {
++        throw new Error(`Ambiguous package revision for task ${taskId}: multiple packages at revision ${rev}`);
++      }
++      revisionMap.set(rev, pkg);
++    }
++
++    for (const pkg of taskPkgs) {
++      if (pkg.manifest.supersedes) {
++        const { package_path, package_sha256, revision: targetRev } = pkg.manifest.supersedes;
++        const { dirName } = resolveSupersededPath(package_path, resolvedChanges);
++        const superseded = byDirectoryName.get(dirName);
++        if (!superseded) {
++          throw new Error(`Package ${pkg.directoryName} supersedes missing package ${package_path}`);
++        }
++        if (superseded.manifest.task_id !== taskId) {
++          throw new Error(`Package ${pkg.directoryName} for task ${taskId} cannot supersede package from different task ${superseded.manifest.task_id}`);
++        }
++        if (superseded.manifest.package_sha256 !== package_sha256) {
++          throw new Error(`Package ${pkg.directoryName} supersedes tampered package ${package_path}: digest mismatch`);
++        }
++        const supersededRev = superseded.manifest.revision ?? 1;
++        if (targetRev !== supersededRev) {
++          throw new Error(`Package ${pkg.directoryName} supersedes revision ${targetRev} but target package is revision ${supersededRev}`);
++        }
++        const pkgRev = pkg.manifest.revision ?? 1;
++        if (pkgRev <= supersededRev) {
++          throw new Error(`Package ${pkg.directoryName} revision (${pkgRev}) must be strictly greater than superseded revision (${supersededRev})`);
++        }
++        supersededSet.add(superseded.manifest.package_sha256);
++      }
++    }
++
++    // Verify acyclic chain
++    for (const pkg of taskPkgs) {
++      const visited = new Set();
++      let current = pkg;
++      while (current?.manifest.supersedes) {
++        if (visited.has(current.manifest.package_sha256)) {
++          throw new Error(`Package supersession cycle detected for task ${taskId}`);
++        }
++        visited.add(current.manifest.package_sha256);
++        const { dirName } = resolveSupersededPath(current.manifest.supersedes.package_path, resolvedChanges);
++        current = byDirectoryName.get(dirName);
++      }
++    }
++
++    const activeList = taskPkgs.filter((pkg) => !supersededSet.has(pkg.manifest.package_sha256));
++    if (activeList.length === 0 && taskPkgs.length > 0) {
++      throw new Error(`Package supersession cycle detected for task ${taskId}: no active package`);
++    }
++    if (activeList.length > 1) {
++      throw new Error(`Ambiguous package supersession for task ${taskId}: multiple active packages`);
++    }
++    const active = activeList[0];
++    if (active.manifest.schema_version === 3 && active.manifest.ranges["template-development"]?.changed_paths.some(isPackageStoragePath)) {
++      throw new Error(`Active package ${active.directoryName} template-development range contains package storage paths beneath changes/`);
++    }
++    assertPackagePublicSafe(active);
++    activePackages.set(taskId, active);
++  }
++
++  return { packages, byTaskId, activePackages };
++}
++
++export function resolveLatestChangePackage(changesDir, taskId) {
++  const { activePackages } = validatePackageSupersessionChain(changesDir);
++  const active = activePackages.get(taskId);
++  if (!active) throw new Error(`No change package found for task ${taskId}`);
++  return active;
++}
+diff --git a/scripts/create-change-package.mjs b/scripts/create-change-package.mjs
+index 4a7e4f01e6a77cd3c47205fbec510f8d210f81e3..253a8806c307b25ad100232be8193d382fb78dec 100755
+--- a/scripts/create-change-package.mjs
++++ b/scripts/create-change-package.mjs
+@@ -1,12 +1,16 @@
+ #!/usr/bin/env node
+ import { execFileSync } from "node:child_process";
+ import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
+-import { dirname, join, resolve } from "node:path";
++import { basename, dirname, join, relative, resolve } from "node:path";
+ import { tmpdir } from "node:os";
+ import { fileURLToPath } from "node:url";
+ import {
++  assertPackagePublicSafe,
+   assertRemoteMatchesCanonical,
++  isPackageStoragePath,
++  isTaskPackagePath,
+   packageDigest,
++  resolveSupersededPath,
+   sha256,
+   sourceLockDigest,
+   validateChangePackage,
+@@ -26,7 +30,7 @@ function argumentsMap(argv) {
+     const name = argv[index];
+     const value = argv[index + 1];
+     if (!name?.startsWith("--") || value === undefined || value.startsWith("--")) {
+-      fail("Usage: create-change-package.mjs --repository <path> --task-id <id> --template-base <sha> --template-head <sha> --developer-base <sha> --developer-head <sha> --web-base <sha> --web-head <sha> --output <empty-directory>");
++      fail("Usage: create-change-package.mjs --repository <path> --task-id <id> --template-base <sha> --template-head <sha> --developer-base <sha> --developer-head <sha> --web-base <sha> --web-head <sha> --output <empty-directory> [--revision <number>] [--supersedes <package-dir>]");
+     }
+     if (result.has(name)) fail(`Duplicate argument ${name}`);
+     result.set(name, value);
+@@ -59,7 +63,7 @@ function exact(value, label) {
+   return value;
+ }
+ 
+-function range(repository, base, head, label, env) {
++function range(repository, base, head, label, env, filterFn) {
+   const resolvedBase = runGit(repository, ["rev-parse", `${base}^{commit}`], { env }).trim();
+   const resolvedHead = runGit(repository, ["rev-parse", `${head}^{commit}`], { env }).trim();
+   if (resolvedBase !== base || resolvedHead !== head) fail(`${label} range did not resolve exactly from canonical fetch`);
+@@ -71,9 +75,15 @@ function range(repository, base, head, label, env) {
+   } catch {
+     fail(`${label} range base is not an ancestor of canonical head`);
+   }
+-  const patch = runGit(repository, ["diff", "--binary", "--full-index", "--no-renames", base, head, "--"], { env });
+-  const rawNames = runGit(repository, ["diff", "--name-only", "-z", base, head, "--"], { encoding: "buffer", env });
+-  const paths = rawNames.toString("utf8").split("\0").filter(Boolean).sort();
++  const rawNames = runGit(repository, ["diff", "--no-renames", "--name-only", "-z", base, head, "--"], { encoding: "buffer", env });
++  const allPaths = rawNames.toString("utf8").split("\0").filter(Boolean);
++  const paths = filterFn ? allPaths.filter(filterFn).sort() : allPaths.sort();
++  let patch = Buffer.alloc(0);
++  if (paths.length > 0) {
++    const pathspecs = paths.map((p) => `:(literal)${p}`);
++    const rawPatch = runGit(repository, ["diff", "--binary", "--full-index", "--no-renames", base, head, "--", ...pathspecs], { encoding: "buffer", env });
++    patch = Buffer.from(rawPatch);
++  }
+   return { patch, paths };
+ }
+ 
+@@ -99,6 +109,7 @@ const values = argumentsMap(process.argv.slice(2));
+ const known = new Set([
+   "--repository", "--task-id", "--template-base", "--template-head",
+   "--developer-base", "--developer-head", "--web-base", "--web-head", "--output",
++  "--revision", "--supersedes",
+ ]);
+ for (const name of values.keys()) if (!known.has(name)) fail(`Unknown argument ${name}`);
+ 
+@@ -107,6 +118,45 @@ const taskId = required(values, "--task-id");
+ if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(taskId)) fail("task-id is invalid");
+ runGit(repository, ["rev-parse", "--git-dir"]);
+ 
++let targetRevision = values.has("--revision") ? Number(values.get("--revision")) : undefined;
++if (targetRevision !== undefined && (!Number.isInteger(targetRevision) || targetRevision < 1)) {
++  fail("--revision must be a positive integer");
++}
++
++let supersedesEntry = undefined;
++const supersedesInput = values.get("--supersedes");
++if (supersedesInput) {
++  const supersededResolved = resolve(supersedesInput);
++  let checkedSuperseded;
++  try {
++    checkedSuperseded = validateChangePackage(supersededResolved, undefined, { strictPackageStorage: false });
++  } catch (error) {
++    fail(`Superseded package is invalid: ${error.message}`);
++  }
++  if (checkedSuperseded.manifest.task_id !== taskId) {
++    fail(`Superseded package task_id (${checkedSuperseded.manifest.task_id}) does not match current task-id (${taskId})`);
++  }
++  const supersededRev = checkedSuperseded.manifest.revision ?? 1;
++  if (targetRevision === undefined) {
++    targetRevision = supersededRev + 1;
++  } else if (targetRevision <= supersededRev) {
++    fail(`--revision (${targetRevision}) must be strictly greater than superseded package revision (${supersededRev})`);
++  }
++  let relPath = relative(repository, checkedSuperseded.directory);
++  if (relPath.startsWith("..") || !relPath) {
++    relPath = relative(root, checkedSuperseded.directory);
++  }
++  if (relPath.startsWith("..") || !relPath) {
++    relPath = `changes/${basename(checkedSuperseded.directory)}`;
++  }
++  const { normalizedPath } = resolveSupersededPath(relPath, resolve(repository, "changes"));
++  supersedesEntry = {
++    package_path: normalizedPath,
++    package_sha256: checkedSuperseded.manifest.package_sha256,
++    revision: supersededRev,
++  };
++}
++
+ const lock = JSON.parse(readFileSync(resolve(root, "source-lock.json"), "utf8"));
+ try {
+   validateSourceLock(lock);
+@@ -173,16 +223,15 @@ try {
+     }
+   }
+ 
+-  const template = range(canonicalRepo, templateBase, templateHead, "template-development", env);
+-  const packagePrefix = `changes/${taskId}/`;
+-  if (template.paths.some((path) => path === packagePrefix.slice(0, -1) || path.startsWith(packagePrefix))) {
+-    fail("template-development range must end before its own generated package storage");
++  const template = range(canonicalRepo, templateBase, templateHead, "template-development", env, (path) => !isPackageStoragePath(path));
++  if (template.paths.some(isPackageStoragePath)) {
++    fail("template-development range must not contain package storage paths beneath changes/");
+   }
+   const developer = range(canonicalRepo, developerBase, developerHead, "developer", env);
+   const web = range(canonicalRepo, webBase, webHead, "web-orchestration", env);
+-  const templatePatch = Buffer.from(template.patch);
+-  const developerPatch = Buffer.from(developer.patch);
+-  const webPatch = Buffer.from(web.patch);
++  const templatePatch = template.patch;
++  const developerPatch = developer.patch;
++  const webPatch = web.patch;
+   const sourceDate = process.env.SOURCE_DATE_EPOCH;
+   const createdAt = sourceDate && /^\d+$/.test(sourceDate)
+     ? new Date(Number(sourceDate) * 1000).toISOString()
+@@ -190,6 +239,8 @@ try {
+   const core = {
+     schema_version: 3,
+     task_id: taskId,
++    ...(targetRevision !== undefined ? { revision: targetRevision } : {}),
++    ...(supersedesEntry !== undefined ? { supersedes: supersedesEntry } : {}),
+     canonical_repository: lock.canonical_repository,
+     created_at: createdAt,
+     provenance: {
+@@ -244,7 +295,8 @@ try {
+   writeFileSync(resolve(output, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
+   const checked = validateChangePackage(output, taskId);
+   if (!checked.provenanceVerified || checked.schemaVersion !== 3) fail("newly generated package did not validate as provenance schema 3");
+-  console.log(`Created provenance-verified template change package ${taskId}: template-development ${template.paths.length} path(s), developer ${developer.paths.length} path(s), web-orchestration ${web.paths.length} path(s).`);
++  assertPackagePublicSafe(checked);
++  console.log(`Created provenance-verified template change package ${taskId}${targetRevision ? ` (rev ${targetRevision})` : ""}: template-development ${template.paths.length} path(s), developer ${developer.paths.length} path(s), web-orchestration ${web.paths.length} path(s).`);
+ } finally {
+   rmSync(temporary, { recursive: true, force: true });
+ }
+diff --git a/scripts/validate-template-development.mjs b/scripts/validate-template-development.mjs
+index 61cfb2bd47eca9d786c9f5d0fd993cc185bf03bc..00c490c64ec2967a62ee2cde56ca9cf5044c6ea9 100755
+--- a/scripts/validate-template-development.mjs
++++ b/scripts/validate-template-development.mjs
+@@ -2,7 +2,7 @@
+ import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+ import { dirname, join, relative, resolve } from "node:path";
+ import { fileURLToPath } from "node:url";
+-import { validateChangePackage, validateSourceLock } from "./change-package-lib.mjs";
++import { validateChangePackage, validatePackageSupersessionChain, validateSourceLock } from "./change-package-lib.mjs";
+ 
+ const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+ const failures = [];
+@@ -151,15 +151,10 @@ for (const directory of ["docs/work/current", "docs/work/archive"]) {
+ }
+ 
+ if (existsSync(join(root, "changes"))) {
+-  for (const taskId of readdirSync(join(root, "changes"))) {
+-    if (taskId === "README.md") continue;
+-    const directory = join(root, "changes", taskId);
+-    if (!statSync(directory).isDirectory()) { fail(`Unexpected changes entry: ${taskId}`); continue; }
+-    try {
+-      validateChangePackage(directory, taskId);
+-    } catch (error) {
+-      fail(`Invalid change package ${taskId}: ${error.message}`);
+-    }
++  try {
++    validatePackageSupersessionChain(join(root, "changes"));
++  } catch (error) {
++    fail(`Change package validation failed: ${error.message}`);
+   }
+ }
+ 
+@@ -188,6 +183,9 @@ for (const file of files(root)) {
+   const path = relative(root, file);
+   const text = bytes.toString("utf8");
+   if (/\/home\/[A-Za-z0-9._-]+\//.test(text)) fail(`${path} contains a host-local absolute path`);
++  if (path.endsWith(".md") && /\bses_[0-9A-Za-z]{16,}\b/.test(text)) {
++    fail(`${path} contains a raw OpenCode session identifier`);
++  }
+ }
+ 
+ if (failures.length) {
+diff --git a/source-lock.json b/source-lock.json
+index c7d7153e1c89646bd7de4ab1b685c1041ee9b347..c597d7cdf9ffe31ba2a01eb7ee9c83248934ed84 100644
+--- a/source-lock.json
++++ b/source-lock.json
+@@ -1,12 +1,12 @@
+ {
+   "schema_version": 1,
+   "canonical_repository": "https://github.com/floris3456/agentic-workflow-template.git",
+-  "recorded_at": "2026-08-19T12:05:00Z",
++  "recorded_at": "2026-08-20T14:07:00Z",
+   "sources": {
+     "main": "6127611113dfdb66f93a0cfd2d355359aa370833",
+     "developer": "c6b747f00ad7509c1340fc11fca1466abb8eb1f9",
+     "web-orchestration": "7e29c07e6ac9fc65a2cb2a8957514bc03500cc17"
+   },
+-  "last_reconciled_task": "TEMPLATE-HOST-ADMIN-001",
+-  "last_change_package": "changes/TEMPLATE-HOST-ADMIN-001/manifest.json"
++  "last_reconciled_task": "TEMPLATE-PACKAGE-SUPERSESSION-001",
++  "last_change_package": "changes/TEMPLATE-PACKAGE-SUPERSESSION-001.rev4/manifest.json"
+ }
+diff --git a/tests/change-package.test.mjs b/tests/change-package.test.mjs
+index 9fea1e1e66248672b727dea5178558ab2d148897..12deb5559e21d9388faf6d04c3ab91bcd3f68963 100644
+--- a/tests/change-package.test.mjs
++++ b/tests/change-package.test.mjs
+@@ -1,11 +1,20 @@
+ import assert from "node:assert/strict";
+-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, copyFileSync, chmodSync } from "node:fs";
++import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync, copyFileSync, chmodSync } from "node:fs";
+ import { tmpdir } from "node:os";
+-import { dirname, join, resolve } from "node:path";
++import { basename, dirname, join, resolve } from "node:path";
+ import { spawnSync, execFileSync } from "node:child_process";
+ import test from "node:test";
+ import { fileURLToPath } from "node:url";
+-import { validateChangePackage, sha256 } from "../scripts/change-package-lib.mjs";
++import {
++  assertPackagePublicSafe,
++  isPackageStoragePath,
++  isTaskPackagePath,
++  validateChangePackage,
++  validatePackageSupersessionChain,
++  resolveLatestChangePackage,
++  packageDigest,
++  sha256,
++} from "../scripts/change-package-lib.mjs";
+ 
+ const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+ const productionCreate = join(root, "scripts", "create-change-package.mjs");
+@@ -102,6 +111,8 @@ function createPackage(input, output, overrides = {}, expected = 0) {
+     "--web-base", overrides.webBase ?? input.webBase,
+     "--web-head", overrides.webHead ?? input.webHead,
+     "--output", output,
++    ...(overrides.revision !== undefined ? ["--revision", String(overrides.revision)] : []),
++    ...(overrides.supersedes !== undefined ? ["--supersedes", overrides.supersedes] : []),
+   ];
+   return run("node", args, root, expected, input.environment);
+ }
+@@ -156,7 +167,7 @@ test("rejects deceptive local origin, non-ancestor range base, and forged local
+   assert.match(result.stderr, /did not resolve exactly from canonical fetch|not an ancestor of the current canonical tip/);
+ });
+ 
+-test("schema 3 validation detects source-snapshot, template patch, provenance, and package-binding tampering", (context) => {
++test("schema 3 validation detects source-snapshot, template patch, provenance, package-binding tampering, and changes/ paths", (context) => {
+   const input = fixture(context);
+   const output = join(input.directory, "package");
+   createPackage(input, output);
+@@ -183,25 +194,442 @@ test("schema 3 validation detects source-snapshot, template patch, provenance, a
+   createdAtTamper.created_at = "2030-01-01T00:00:00.000Z";
+   writeFileSync(packageBoundManifest, `${JSON.stringify(createdAtTamper, null, 2)}\n`);
+   assert.throws(() => validateChangePackage(packageBound), /binding digest/);
++
++  const packageWithSelfStorage = join(input.directory, "package-self-storage");
++  createPackage(input, packageWithSelfStorage);
++  const selfStorageManifestPath = join(packageWithSelfStorage, "manifest.json");
++  const selfStorageManifest = JSON.parse(readFileSync(selfStorageManifestPath, "utf8"));
++  selfStorageManifest.ranges["template-development"].changed_paths.push("changes/TASK-001/foo.txt");
++  selfStorageManifest.ranges["template-development"].changed_paths.sort();
++  writeFileSync(selfStorageManifestPath, `${JSON.stringify(selfStorageManifest, null, 2)}\n`);
++  assert.throws(() => validateChangePackage(packageWithSelfStorage), /package storage paths beneath changes\//);
++});
++
++test("all paths beneath changes/** are excluded from portable template-development patch while non-changes paths remain", (context) => {
++  const input = fixture(context);
++  git(input.source, ["checkout", "-B", "template-development", input.templateBase]);
++  commit(input.source, "changes/TASK-A/manifest.json", "pkgA\n", "Add pkg A");
++  commit(input.source, "changes/TASK-B.rev2/manifest.json", "pkgB\n", "Add pkg B");
++  commit(input.source, "changes/TASK-C-rev3/manifest.json", "pkgC\n", "Add pkg C");
++  commit(input.source, "changes/OTHER/template.patch", "pkgD\n", "Add pkg D");
++  commit(input.source, "docs/changes.md", "docs changes\n", "Add docs changes");
++  const head = commit(input.source, "scripts/changes.mjs", "scripts changes\n", "Add scripts changes");
++  git(input.source, ["remote", "add", "fixture", input.remote]);
++  git(input.source, ["push", "--force", "fixture", "template-development"]);
++  git(input.source, ["remote", "remove", "fixture"]);
++
++  const output = join(input.directory, "changes-excluded-package");
++  const result = createPackage(input, output, {
++    taskId: "TASK-NEW",
++    templateHead: head,
++  });
++  assert.match(result.stdout, /provenance-verified/);
++  const checked = validateChangePackage(output, "TASK-NEW");
++  assert.equal(checked.provenanceVerified, true);
++  const paths = checked.manifest.ranges["template-development"].changed_paths;
++  assert.deepEqual(paths, ["docs/changes.md", "scripts/changes.mjs"]);
++});
++
++test("preserves delete+add rename semantics under --no-renames and applies cleanly downstream", (context) => {
++  const input = fixture(context);
++  git(input.source, ["checkout", "-B", "template-development", input.templateBase]);
++  const baseWithOldFile = commit(input.source, "old-name.txt", "rename content\n", "Add old-name.txt to base");
++  git(input.source, ["rm", "old-name.txt"]);
++  const head = commit(input.source, "new-name.txt", "rename content\n", "Rename old-name to new-name");
++  git(input.source, ["remote", "add", "fixture", input.remote]);
++  git(input.source, ["push", "--force", "fixture", "template-development"]);
++  git(input.source, ["remote", "remove", "fixture"]);
++
++  const output = join(input.directory, "rename-package");
++  const result = createPackage(input, output, {
++    taskId: "TASK-RENAME",
++    templateBase: baseWithOldFile,
++    templateHead: head,
++  });
++  assert.match(result.stdout, /provenance-verified/);
++  const checked = validateChangePackage(output, "TASK-RENAME");
++  assert.equal(checked.provenanceVerified, true);
++  const paths = checked.manifest.ranges["template-development"].changed_paths;
++  assert.deepEqual(paths, ["new-name.txt", "old-name.txt"]);
++
++  // Apply downstream to a target containing old-name.txt
++  const target = join(input.directory, "rename-target");
++  mkdirSync(target);
++  git(target, ["init", "-b", "template-development"]);
++  commit(target, "ledger-base.txt", "template base\n", "target template base");
++  commit(target, "old-name.txt", "rename content\n", "target old-name");
++  const applied = run("node", [applyScript, "--package", output, "--repository", target, "--target", "template-development", "--apply"], root);
++  assert.match(applied.stdout, /provenance schema 3 verified/);
++  assert.equal(existsSync(join(target, "old-name.txt")), false);
++  assert.equal(readFileSync(join(target, "new-name.txt"), "utf8"), "rename content\n");
+ });
+ 
+-test("schema 3 rejects a template-development range that contains its own package storage", (context) => {
++test("schema 3 persisted package supersession lifecycle v1 -> rev2 -> rev3, relations, downstream selection, and fail-closed validation", (context) => {
+   const input = fixture(context);
++  const changesDir = join(input.directory, "changes");
++  mkdirSync(changesDir, { recursive: true });
++
++  git(input.source, ["checkout", "-B", "template-development", input.templateBase]);
++  const initialTemplateHead = commit(input.source, "workspace-runtime.txt", "workspace runtime\n", "Initial template change");
++  git(input.source, ["remote", "add", "fixture", input.remote]);
++  git(input.source, ["push", "--force", "fixture", "template-development"]);
++  git(input.source, ["remote", "remove", "fixture"]);
++
++  git(input.source, ["checkout", "-B", "developer", input.developerBase]);
++  const initialDeveloperHead = commit(input.source, "developer-only.txt", "developer change\n", "Initial developer change");
++  git(input.source, ["remote", "add", "fixture", input.remote]);
++  git(input.source, ["push", "--force", "fixture", "developer"]);
++  git(input.source, ["remote", "remove", "fixture"]);
++
++  const v1PackageDir = join(changesDir, "TASK-SUPER");
++  createPackage(input, v1PackageDir, {
++    taskId: "TASK-SUPER",
++    templateHead: initialTemplateHead,
++    developerHead: initialDeveloperHead,
++  });
++  const v1Checked = validateChangePackage(v1PackageDir, "TASK-SUPER");
++  assert.equal(v1Checked.provenanceVerified, true);
++  assert.equal(v1Checked.manifest.revision ?? 1, 1);
++  const v1ManifestBytes = readFileSync(join(v1PackageDir, "manifest.json"), "utf8");
++  const v1TemplatePatchBytes = readFileSync(join(v1PackageDir, "template-development.patch"), "utf8");
++
++  // Commit historical package v1 to template-development history
+   git(input.source, ["checkout", "template-development"]);
+-  const selfHead = commit(
++  commit(input.source, "changes/TASK-SUPER/manifest.json", v1ManifestBytes, "Package TASK-SUPER v1 manifest");
++  commit(input.source, "changes/TASK-SUPER/template-development.patch", v1TemplatePatchBytes, "Package TASK-SUPER v1 template patch");
++  commit(input.source, "changes/TASK-SUPER/developer.patch", readFileSync(join(v1PackageDir, "developer.patch"), "utf8"), "Package TASK-SUPER v1 dev patch");
++  commit(input.source, "changes/TASK-SUPER/web-orchestration.patch", readFileSync(join(v1PackageDir, "web-orchestration.patch"), "utf8"), "Package TASK-SUPER v1 web patch");
++
++  // Subsequent corrections: cycle 1
++  const supersededTemplateHead = commit(
+     input.source,
+-    "changes/TASK-SELF/generated.txt",
+-    "self-referential package bytes\n",
+-    "Add forbidden package bytes to reviewed range",
++    "workspace-fix.txt",
++    "corrected workspace fix\n",
++    "Fix review issue on template-development",
+   );
+   git(input.source, ["remote", "add", "fixture", input.remote]);
+   git(input.source, ["push", "fixture", "template-development"]);
+   git(input.source, ["remote", "remove", "fixture"]);
+-  const result = createPackage(input, join(input.directory, "self-package"), {
+-    taskId: "TASK-SELF",
+-    templateHead: selfHead,
+-  }, 1);
+-  assert.match(result.stderr, /must end before its own generated package storage/);
++
++  git(input.source, ["checkout", "developer"]);
++  const supersededDeveloperHead = commit(
++    input.source,
++    "developer-fix.txt",
++    "corrected developer fix\n",
++    "Fix review issue on developer",
++  );
++  git(input.source, ["remote", "add", "fixture", input.remote]);
++  git(input.source, ["push", "fixture", "developer"]);
++  git(input.source, ["remote", "remove", "fixture"]);
++
++  // Create distinct superseding package v2 in changes/TASK-SUPER.rev2
++  const v2PackageDir = join(changesDir, "TASK-SUPER.rev2");
++  const result = createPackage(input, v2PackageDir, {
++    taskId: "TASK-SUPER",
++    templateHead: supersededTemplateHead,
++    developerHead: supersededDeveloperHead,
++    supersedes: v1PackageDir,
++  });
++  assert.match(result.stdout, /provenance-verified/);
++
++  // Prove historical v1 package remains 100% byte-identical
++  assert.equal(readFileSync(join(v1PackageDir, "manifest.json"), "utf8"), v1ManifestBytes);
++  assert.equal(readFileSync(join(v1PackageDir, "template-development.patch"), "utf8"), v1TemplatePatchBytes);
++
++  // Validate both packages
++  const v1Recheck = validateChangePackage(v1PackageDir, "TASK-SUPER");
++  const v2Checked = validateChangePackage(v2PackageDir, "TASK-SUPER");
++  assert.equal(v1Recheck.provenanceVerified, true);
++  assert.equal(v2Checked.provenanceVerified, true);
++
++  // Prove supersession relation for rev2
++  assert.equal(v2Checked.manifest.revision, 2);
++  assert.equal(v2Checked.manifest.supersedes.package_path, "changes/TASK-SUPER");
++  assert.equal(v2Checked.manifest.supersedes.package_sha256, v1Checked.manifest.package_sha256);
++  assert.equal(v2Checked.manifest.supersedes.revision, 1);
++  assert.deepEqual(
++    v2Checked.manifest.ranges["template-development"].changed_paths,
++    ["workspace-fix.txt", "workspace-runtime.txt"],
++  );
++
++  const v2ManifestBytes = readFileSync(join(v2PackageDir, "manifest.json"), "utf8");
++  const v2TemplatePatchBytes = readFileSync(join(v2PackageDir, "template-development.patch"), "utf8");
++
++  // Commit package v2 to template-development history
++  git(input.source, ["checkout", "template-development"]);
++  commit(input.source, "changes/TASK-SUPER.rev2/manifest.json", v2ManifestBytes, "Package TASK-SUPER v2 manifest");
++  commit(input.source, "changes/TASK-SUPER.rev2/template-development.patch", v2TemplatePatchBytes, "Package TASK-SUPER v2 template patch");
++  commit(input.source, "changes/TASK-SUPER.rev2/developer.patch", readFileSync(join(v2PackageDir, "developer.patch"), "utf8"), "Package TASK-SUPER v2 dev patch");
++  commit(input.source, "changes/TASK-SUPER.rev2/web-orchestration.patch", readFileSync(join(v2PackageDir, "web-orchestration.patch"), "utf8"), "Package TASK-SUPER v2 web patch");
++
++  // Subsequent corrections: cycle 2
++  const supersededTemplateHead3 = commit(
++    input.source,
++    "workspace-fix-2.txt",
++    "second workspace fix\n",
++    "Second fix on template-development",
++  );
++  git(input.source, ["remote", "add", "fixture", input.remote]);
++  git(input.source, ["push", "fixture", "template-development"]);
++  git(input.source, ["remote", "remove", "fixture"]);
++
++  git(input.source, ["checkout", "developer"]);
++  const supersededDeveloperHead3 = commit(
++    input.source,
++    "developer-fix-2.txt",
++    "second developer fix\n",
++    "Second fix on developer",
++  );
++  git(input.source, ["remote", "add", "fixture", input.remote]);
++  git(input.source, ["push", "fixture", "developer"]);
++  git(input.source, ["remote", "remove", "fixture"]);
++
++  // Create distinct superseding package v3 in changes/TASK-SUPER.rev3
++  const v3PackageDir = join(changesDir, "TASK-SUPER.rev3");
++  const result3 = createPackage(input, v3PackageDir, {
++    taskId: "TASK-SUPER",
++    templateHead: supersededTemplateHead3,
++    developerHead: supersededDeveloperHead3,
++    supersedes: v2PackageDir,
++  });
++  assert.match(result3.stdout, /provenance-verified/);
++
++  // Prove historical v1 and v2 packages remain 100% byte-identical
++  assert.equal(readFileSync(join(v1PackageDir, "manifest.json"), "utf8"), v1ManifestBytes);
++  assert.equal(readFileSync(join(v1PackageDir, "template-development.patch"), "utf8"), v1TemplatePatchBytes);
++  assert.equal(readFileSync(join(v2PackageDir, "manifest.json"), "utf8"), v2ManifestBytes);
++  assert.equal(readFileSync(join(v2PackageDir, "template-development.patch"), "utf8"), v2TemplatePatchBytes);
++
++  // Validate all three packages
++  const v3Checked = validateChangePackage(v3PackageDir, "TASK-SUPER");
++  assert.equal(v3Checked.provenanceVerified, true);
++  assert.equal(v3Checked.manifest.revision, 3);
++  assert.equal(v3Checked.manifest.supersedes.package_path, "changes/TASK-SUPER.rev2");
++  assert.equal(v3Checked.manifest.supersedes.package_sha256, v2Checked.manifest.package_sha256);
++  assert.equal(v3Checked.manifest.supersedes.revision, 2);
++  assert.deepEqual(
++    v3Checked.manifest.ranges["template-development"].changed_paths,
++    ["workspace-fix-2.txt", "workspace-fix.txt", "workspace-runtime.txt"],
++  );
++  assert.deepEqual(
++    v3Checked.manifest.ranges.developer.changed_paths,
++    ["developer-fix-2.txt", "developer-fix.txt", "developer-only.txt"],
++  );
++
++  // Prove supersession chain validation and active package resolution returns rev3
++  const chain = validatePackageSupersessionChain(changesDir);
++  assert.equal(chain.packages.length, 3);
++  const resolved = resolveLatestChangePackage(changesDir, "TASK-SUPER");
++  assert.equal(resolved.directory, v3PackageDir);
++  assert.equal(resolved.manifest.revision, 3);
++
++  // Downstream application uses the corrected package rev3
++  const target = join(input.directory, "superseded-target");
++  mkdirSync(target);
++  git(target, ["init", "-b", "template-development"]);
++  commit(target, "ledger-base.txt", "template base\n", "target template base");
++  const applied = run("node", [applyScript, "--task-id", "TASK-SUPER", "--changes-dir", changesDir, "--repository", target, "--target", "template-development", "--apply"], root);
++  assert.match(applied.stdout, /provenance schema 3 verified/);
++  assert.equal(readFileSync(join(target, "workspace-runtime.txt"), "utf8"), "workspace runtime\n");
++  assert.equal(readFileSync(join(target, "workspace-fix.txt"), "utf8"), "corrected workspace fix\n");
++  assert.equal(readFileSync(join(target, "workspace-fix-2.txt"), "utf8"), "second workspace fix\n");
++
++  const patchesV2 = {
++    "template-development": readFileSync(join(v2PackageDir, "template-development.patch")),
++    developer: readFileSync(join(v2PackageDir, "developer.patch")),
++    "web-orchestration": readFileSync(join(v2PackageDir, "web-orchestration.patch")),
++  };
++
++  // Negative tests: Symlink entry under changes/ is rejected
++  const symlinkChangesDir = join(input.directory, "symlink-changes");
++  mkdirSync(symlinkChangesDir, { recursive: true });
++  spawnSync("cp", ["-r", v1PackageDir, join(symlinkChangesDir, "TASK-SUPER")]);
++  const outsidePkg = join(input.directory, "outside-package");
++  spawnSync("cp", ["-r", v2PackageDir, outsidePkg]);
++  symlinkSync(outsidePkg, join(symlinkChangesDir, "TASK-SUPER.rev2"));
++  assert.throws(() => validatePackageSupersessionChain(symlinkChangesDir), /Symlink entry is forbidden/);
++
++  // Negative tests: Tampered historical package fails closed
++  const tamperedChangesDir = join(input.directory, "tampered-changes");
++  mkdirSync(tamperedChangesDir, { recursive: true });
++  const tamperedV1 = join(tamperedChangesDir, "TASK-SUPER");
++  const tamperedV2 = join(tamperedChangesDir, "TASK-SUPER.rev2");
++  spawnSync("cp", ["-r", v1PackageDir, tamperedV1]);
++  spawnSync("cp", ["-r", v2PackageDir, tamperedV2]);
++  writeFileSync(join(tamperedV1, "template-development.patch"), "tampered patch bytes\n");
++  assert.throws(() => validatePackageSupersessionChain(tamperedChangesDir), /patch digest|digest mismatch/);
++
++  // Negative tests: Wrong package_path with correct digest fails closed
++  const wrongPathChangesDir = join(input.directory, "wrong-path-changes");
++  mkdirSync(wrongPathChangesDir, { recursive: true });
++  spawnSync("cp", ["-r", v1PackageDir, join(wrongPathChangesDir, "TASK-SUPER")]);
++  spawnSync("cp", ["-r", v2PackageDir, join(wrongPathChangesDir, "TASK-SUPER.rev2")]);
++  const wrongPathManifest = JSON.parse(readFileSync(join(wrongPathChangesDir, "TASK-SUPER.rev2", "manifest.json"), "utf8"));
++  wrongPathManifest.supersedes.package_path = "changes/NONEXISTENT-PATH";
++  const wrongPathCore = { ...wrongPathManifest };
++  delete wrongPathCore.package_sha256;
++  wrongPathManifest.package_sha256 = packageDigest(wrongPathCore, patchesV2);
++  writeFileSync(join(wrongPathChangesDir, "TASK-SUPER.rev2", "manifest.json"), `${JSON.stringify(wrongPathManifest, null, 2)}\n`);
++  assert.throws(() => validatePackageSupersessionChain(wrongPathChangesDir), /supersedes missing package/);
++
++  // Negative tests: Bare directory name in package_path fails closed
++  const bareDirChanges = join(input.directory, "bare-dir-changes");
++  mkdirSync(bareDirChanges, { recursive: true });
++  spawnSync("cp", ["-r", v1PackageDir, join(bareDirChanges, "TASK-SUPER")]);
++  spawnSync("cp", ["-r", v2PackageDir, join(bareDirChanges, "TASK-SUPER.rev2")]);
++  const bareManifest = JSON.parse(readFileSync(join(bareDirChanges, "TASK-SUPER.rev2", "manifest.json"), "utf8"));
++  bareManifest.supersedes.package_path = "TASK-SUPER";
++  const bareCore = { ...bareManifest };
++  delete bareCore.package_sha256;
++  bareManifest.package_sha256 = packageDigest(bareCore, patchesV2);
++  writeFileSync(join(bareDirChanges, "TASK-SUPER.rev2", "manifest.json"), `${JSON.stringify(bareManifest, null, 2)}\n`);
++  assert.throws(() => validatePackageSupersessionChain(bareDirChanges), /must have form 'changes\/<package-directory>'/);
++
++  // Negative tests: Traversal (../) in package_path fails closed
++  const traversalChangesDir = join(input.directory, "traversal-changes");
++  mkdirSync(traversalChangesDir, { recursive: true });
++  spawnSync("cp", ["-r", v1PackageDir, join(traversalChangesDir, "TASK-SUPER")]);
++  spawnSync("cp", ["-r", v2PackageDir, join(traversalChangesDir, "TASK-SUPER.rev2")]);
++  const traversalManifest = JSON.parse(readFileSync(join(traversalChangesDir, "TASK-SUPER.rev2", "manifest.json"), "utf8"));
++  traversalManifest.supersedes.package_path = "changes/../TASK-SUPER";
++  const traversalCore = { ...traversalManifest };
++  delete traversalCore.package_sha256;
++  traversalManifest.package_sha256 = packageDigest(traversalCore, patchesV2);
++  writeFileSync(join(traversalChangesDir, "TASK-SUPER.rev2", "manifest.json"), `${JSON.stringify(traversalManifest, null, 2)}\n`);
++  assert.throws(() => validatePackageSupersessionChain(traversalChangesDir), /must be a (?:single )?direct child under changes|invalid/);
++
++  // Negative tests: Absolute path in package_path fails closed
++  const absPathChangesDir = join(input.directory, "abs-path-changes");
++  mkdirSync(absPathChangesDir, { recursive: true });
++  spawnSync("cp", ["-r", v1PackageDir, join(absPathChangesDir, "TASK-SUPER")]);
++  spawnSync("cp", ["-r", v2PackageDir, join(absPathChangesDir, "TASK-SUPER.rev2")]);
++  const absPathManifest = JSON.parse(readFileSync(join(absPathChangesDir, "TASK-SUPER.rev2", "manifest.json"), "utf8"));
++  absPathManifest.supersedes.package_path = "/etc/passwd";
++  const absPathCore = { ...absPathManifest };
++  delete absPathCore.package_sha256;
++  absPathManifest.package_sha256 = packageDigest(absPathCore, patchesV2);
++  writeFileSync(join(absPathChangesDir, "TASK-SUPER.rev2", "manifest.json"), `${JSON.stringify(absPathManifest, null, 2)}\n`);
++  assert.throws(() => validatePackageSupersessionChain(absPathChangesDir), /must have form 'changes\/<package-directory>'/);
++
++  // Negative tests: Escaping changes directory in package_path fails closed
++  const escapeChangesDir = join(input.directory, "escape-changes");
++  mkdirSync(escapeChangesDir, { recursive: true });
++  spawnSync("cp", ["-r", v1PackageDir, join(escapeChangesDir, "TASK-SUPER")]);
++  spawnSync("cp", ["-r", v2PackageDir, join(escapeChangesDir, "TASK-SUPER.rev2")]);
++  const escapeManifest = JSON.parse(readFileSync(join(escapeChangesDir, "TASK-SUPER.rev2", "manifest.json"), "utf8"));
++  escapeManifest.supersedes.package_path = "docs/TASK-SUPER";
++  const escapeCore = { ...escapeManifest };
++  delete escapeCore.package_sha256;
++  escapeManifest.package_sha256 = packageDigest(escapeCore, patchesV2);
++  writeFileSync(join(escapeChangesDir, "TASK-SUPER.rev2", "manifest.json"), `${JSON.stringify(escapeManifest, null, 2)}\n`);
++  assert.throws(() => validatePackageSupersessionChain(escapeChangesDir), /must have form 'changes\/<package-directory>'/);
++
++  // Negative tests: Ambiguous duplicate revisions fail closed
++  const ambiguousChangesDir = join(input.directory, "ambiguous-changes");
++  mkdirSync(ambiguousChangesDir, { recursive: true });
++  spawnSync("cp", ["-r", v1PackageDir, join(ambiguousChangesDir, "TASK-SUPER")]);
++  spawnSync("cp", ["-r", v2PackageDir, join(ambiguousChangesDir, "TASK-SUPER.rev2")]);
++  const dupV2 = join(ambiguousChangesDir, "TASK-SUPER-rev2");
++  spawnSync("cp", ["-r", v2PackageDir, dupV2]);
++  assert.throws(() => validatePackageSupersessionChain(ambiguousChangesDir), /Ambiguous package revision/);
++
++  // Negative tests: Cyclic supersession fails closed
++  const cyclicChangesDir = join(input.directory, "cyclic-changes");
++  mkdirSync(cyclicChangesDir, { recursive: true });
++  const cycA = join(cyclicChangesDir, "TASK-CYC.rev1");
++  const cycB = join(cyclicChangesDir, "TASK-CYC.rev2");
++  spawnSync("cp", ["-r", v1PackageDir, cycA]);
++  spawnSync("cp", ["-r", v2PackageDir, cycB]);
++  const cycAManifest = JSON.parse(readFileSync(join(cycA, "manifest.json"), "utf8"));
++  const cycBManifest = JSON.parse(readFileSync(join(cycB, "manifest.json"), "utf8"));
++  const patchesA = {
++    "template-development": readFileSync(join(cycA, "template-development.patch")),
++    developer: readFileSync(join(cycA, "developer.patch")),
++    "web-orchestration": readFileSync(join(cycA, "web-orchestration.patch")),
++  };
++  const patchesB = {
++    "template-development": readFileSync(join(cycB, "template-development.patch")),
++    developer: readFileSync(join(cycB, "developer.patch")),
++    "web-orchestration": readFileSync(join(cycB, "web-orchestration.patch")),
++  };
++  cycAManifest.task_id = "TASK-CYC";
++  cycBManifest.task_id = "TASK-CYC";
++  cycBManifest.supersedes = { package_path: "changes/TASK-CYC.rev1", package_sha256: "0".repeat(64), revision: 1 };
++  cycBManifest.revision = 2;
++  const coreB = { ...cycBManifest };
++  delete coreB.package_sha256;
++  cycBManifest.package_sha256 = packageDigest(coreB, patchesB);
++  writeFileSync(join(cycB, "manifest.json"), `${JSON.stringify(cycBManifest, null, 2)}\n`);
++
++  cycAManifest.supersedes = { package_path: "changes/TASK-CYC.rev2", package_sha256: cycBManifest.package_sha256, revision: 2 };
++  cycAManifest.revision = 3;
++  const coreA = { ...cycAManifest };
++  delete coreA.package_sha256;
++  cycAManifest.package_sha256 = packageDigest(coreA, patchesA);
++  writeFileSync(join(cycA, "manifest.json"), `${JSON.stringify(cycAManifest, null, 2)}\n`);
++
++  cycBManifest.supersedes.package_sha256 = cycAManifest.package_sha256;
++  const coreB2 = { ...cycBManifest };
++  delete coreB2.package_sha256;
++  cycBManifest.package_sha256 = packageDigest(coreB2, patchesB);
++  writeFileSync(join(cycB, "manifest.json"), `${JSON.stringify(cycBManifest, null, 2)}\n`);
++  assert.throws(() => validatePackageSupersessionChain(cyclicChangesDir), /Package supersession cycle detected|supersedes tampered package/);
++
++  // Negative tests: Non-increasing revision fails closed
++  const lowerRevDir = join(input.directory, "lower-rev-changes");
++  mkdirSync(lowerRevDir, { recursive: true });
++  spawnSync("cp", ["-r", v1PackageDir, join(lowerRevDir, "TASK-SUPER")]);
++  spawnSync("cp", ["-r", v2PackageDir, join(lowerRevDir, "TASK-SUPER.rev2")]);
++  const v1Modified = JSON.parse(readFileSync(join(lowerRevDir, "TASK-SUPER", "manifest.json"), "utf8"));
++  v1Modified.revision = 3;
++  const v1Core = { ...v1Modified };
++  delete v1Core.package_sha256;
++  v1Modified.package_sha256 = packageDigest(v1Core, patchesA);
++  writeFileSync(join(lowerRevDir, "TASK-SUPER", "manifest.json"), `${JSON.stringify(v1Modified, null, 2)}\n`);
++
++  const lowerManifest = JSON.parse(readFileSync(join(lowerRevDir, "TASK-SUPER.rev2", "manifest.json"), "utf8"));
++  lowerManifest.revision = 2;
++  lowerManifest.supersedes.package_sha256 = v1Modified.package_sha256;
++  lowerManifest.supersedes.revision = 3;
++  const lowerCore = { ...lowerManifest };
++  delete lowerCore.package_sha256;
++  lowerManifest.package_sha256 = packageDigest(lowerCore, patchesB);
++  writeFileSync(join(lowerRevDir, "TASK-SUPER.rev2", "manifest.json"), `${JSON.stringify(lowerManifest, null, 2)}\n`);
++  assert.throws(() => validatePackageSupersessionChain(lowerRevDir), /must be strictly greater than superseded revision/);
++
++  // Negative tests: Cross-task supersession fails closed
++  const crossTaskDir = join(input.directory, "cross-task-changes");
++  mkdirSync(crossTaskDir, { recursive: true });
++  spawnSync("cp", ["-r", v1PackageDir, join(crossTaskDir, "TASK-SUPER")]);
++  spawnSync("cp", ["-r", v2PackageDir, join(crossTaskDir, "TASK-OTHER.rev2")]);
++  const crossManifest = JSON.parse(readFileSync(join(crossTaskDir, "TASK-OTHER.rev2", "manifest.json"), "utf8"));
++  crossManifest.task_id = "TASK-OTHER";
++  const crossCore = { ...crossManifest };
++  delete crossCore.package_sha256;
++  crossManifest.package_sha256 = packageDigest(crossCore, patchesB);
++  writeFileSync(join(crossTaskDir, "TASK-OTHER.rev2", "manifest.json"), `${JSON.stringify(crossManifest, null, 2)}\n`);
++  assert.throws(() => validatePackageSupersessionChain(crossTaskDir), /cannot supersede package from different task/);
++
++  // Negative tests: Active package containing raw session ID fails public safety check
++  const activeUnsafeDir = join(input.directory, "active-unsafe-changes");
++  mkdirSync(activeUnsafeDir, { recursive: true });
++  spawnSync("cp", ["-r", v1PackageDir, join(activeUnsafeDir, "TASK-SUPER")]);
++  spawnSync("cp", ["-r", v2PackageDir, join(activeUnsafeDir, "TASK-SUPER.rev2")]);
++  const syntheticSessionId = "ses_" + "a".repeat(20);
++  const unsafePatch = Buffer.concat([readFileSync(join(activeUnsafeDir, "TASK-SUPER.rev2", "template-development.patch")), Buffer.from(`\n+${syntheticSessionId}\n`)]);
++  writeFileSync(join(activeUnsafeDir, "TASK-SUPER.rev2", "template-development.patch"), unsafePatch);
++  const unsafeManifest = JSON.parse(readFileSync(join(activeUnsafeDir, "TASK-SUPER.rev2", "manifest.json"), "utf8"));
++  const unsafePatches = {
++    "template-development": unsafePatch,
++    developer: readFileSync(join(activeUnsafeDir, "TASK-SUPER.rev2", "developer.patch")),
++    "web-orchestration": readFileSync(join(activeUnsafeDir, "TASK-SUPER.rev2", "web-orchestration.patch")),
++  };
++  unsafeManifest.ranges["template-development"].patch_sha256 = sha256(unsafePatch);
++  const unsafeCore = { ...unsafeManifest };
++  delete unsafeCore.package_sha256;
++  unsafeManifest.package_sha256 = packageDigest(unsafeCore, unsafePatches);
++  writeFileSync(join(activeUnsafeDir, "TASK-SUPER.rev2", "manifest.json"), `${JSON.stringify(unsafeManifest, null, 2)}\n`);
++  assert.throws(() => validatePackageSupersessionChain(activeUnsafeDir), /raw OpenCode session identifier/);
+ });
+ 
+ test("legacy schema 1 packages remain integrity-compatible but are not provenance verified", (context) => {
