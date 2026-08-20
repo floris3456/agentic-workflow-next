@@ -137,11 +137,11 @@ Task record:
 `completed` requires a pushed exact 40-character `developer` SHA; all other
 statuses use `none`. A failed push is `blocked` with `none`.
 
-Select Luna by default. Use Sol immediately only when intrinsic complexity or
-ambiguity makes two Luna attempts predictably wasteful, or after two substantive
-Luna failures. Transport failures, defective briefs, missing access/information,
-external blockers, and trivial syntax retries are not substantive Luna failures.
-Only the web orchestrator changes route.
+Select `small` by default. Use `heavy` immediately only when intrinsic complexity
+or ambiguity makes two small-route attempts predictably wasteful, or after two
+substantive small-route failures. Transport failures, defective briefs, missing
+access/information, external blockers, and trivial syntax retries are not
+substantive small-route failures. Only the web orchestrator changes route.
 
 Before creating a mutating control issue, map all open
 `<bridge-control-label>` issues by authenticated exact task ID and search the
@@ -157,7 +157,7 @@ a fresh UUID and exact start-SHA guard:
 
 ```markdown
 <!-- agentic-bridge-command
-{"protocol":"agentic-bridge/1","sequence":1,"command_id":"00000000-0000-4000-8000-000000000000","task_id":"TASK-001","kind":"start","arguments":{"brief":"Public-safe delegated brief","agent":"luna"},"expected":{"developer_sha":"0000000000000000000000000000000000000000","ref":"developer"}}
+{"protocol":"agentic-bridge/1","sequence":1,"command_id":"00000000-0000-4000-8000-000000000000","task_id":"TASK-001","kind":"start","arguments":{"brief":"Public-safe delegated brief","agent":"small"},"expected":{"developer_sha":"0000000000000000000000000000000000000000","ref":"developer"}}
 -->
 ```
 
