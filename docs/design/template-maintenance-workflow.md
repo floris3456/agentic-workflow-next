@@ -16,14 +16,24 @@ operating workflow.
 3. Decide whether the reusable fix belongs in the template-development-rooted
    maintenance runtime/package machinery, on `developer`, on
    `web-orchestration`, or across those authorities.
-4. Select each source branch's implementation route proportionally: use bounded
-   direct connected-GitHub edits when exact scope is already known and remotely
-   provable; otherwise use isolated source worktrees when local context/tools or
-   independent implementation materially improve confidence. Keep normal source
-   task records and component AS-BUILT/deviations current in either route.
-5. Review the exact remote range for each changed branch. Record each
-   task's exact base and reviewed head in the maintenance record independently of
-   `source-lock.json` and independently of later branch work.
+4. Select each source branch's implementation route proportionally. For bounded
+   direct/delegated work executing under a source branch's own authoritative
+   context, follow that branch's normal task, durable-record, synchronization,
+   validation, and review procedure. For Workspace Maintenance, keep the stable
+   template-development-rooted Workspace authority instead of inheriting the
+   target agent workflow; inspect target rules as evidence and apply relevant
+   target compatibility/output constraints to the branch state being produced.
+   Applicable constraints include public safety, `main` authority,
+   synchronization, file placement/format, durable implementation truth, and
+   relevant validation. A target record may be maintained as an output artifact
+   without transferring target agent/task/handoff authority. If the task changes
+   a target rule itself, read the old rule to understand existing behavior and
+   impact, but do not let it veto its own authorized modification.
+5. Review the exact remote range for each changed branch. Record each task's exact
+   base and reviewed head in the maintenance record independently of
+   `source-lock.json` and independently of later branch work. A Workspace-routed
+   task has one Workspace handoff; review the exact pushed target SHA rather than
+   demanding a second target-agent handoff.
 6. Produce the portable package with `scripts/create-change-package.mjs`. The
    supplied checkout origin must match the canonical repository. The generator
    fetches current canonical `template-development`, `developer`, and
@@ -60,6 +70,19 @@ operating workflow.
     maintenance checkpoints. Package creation neither consumes nor advances this
     snapshot. Update integrated records and archive the approved maintenance task
     when its actual finalization requirements are met.
+
+## Workspace target-rule examples
+
+The route distinction is intentionally practical:
+
+- **Adding a missing file:** Workspace Maintenance reads applicable target rules
+  and follows relevant placement, naming, format, durable-record, and validation
+  requirements for the output.
+- **Changing the rule for file creation:** Workspace Maintenance reads the
+  existing rule to understand current behavior and downstream impact, then makes
+  the bounded authorized rule change under Workspace authority. The old rule is
+  evidence of the contract being changed, not authority to block the requested
+  change.
 
 ## One-request experience
 
