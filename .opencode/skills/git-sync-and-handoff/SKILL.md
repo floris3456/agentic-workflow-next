@@ -104,7 +104,7 @@ The finalization commit itself is pushed before response; no extra task snapshot
 
 ## Promotion
 
-Only after the human approves an exact reviewed `developer` SHA, the small/Luna developer runs:
+Only after the human approves an exact reviewed `developer` SHA, the small developer runs:
 
 ```bash
 ./scripts/promote-developer-to-main.sh <approved-developer-sha>

@@ -69,26 +69,17 @@ if (!suppliedRoot) {
 
 const webRoot = path.resolve(suppliedRoot);
 const projectRoot = path.join(webRoot, "chatgpt-project");
-
-function resolveProjectSource(...names) {
-  for (const name of names) {
-    const filePath = path.join(projectRoot, name);
-    if (fs.existsSync(filePath)) return { name, path: filePath, content: read(filePath, name) };
-  }
-  return { name: names[0], path: path.join(projectRoot, names[0]), content: read(path.join(projectRoot, names[0]), names[0]) };
-}
-
-const workflowSource = resolveProjectSource("source-workflow-mcp-on.md", "source-mcp-on-workflow.md", "skill-mcp-on-workflow.md");
-const scoutingSource = resolveProjectSource("source-scouting-mcp-on.md", "source-mcp-on-scouting.md", "skill-mcp-on-scouting.md");
+const workflowSource = { name: "skill-workflow.md", path: path.join(projectRoot, "skill-workflow.md"), content: read(path.join(projectRoot, "skill-workflow.md"), "skill-workflow.md") };
 const workflow = workflowSource.content;
-const scouting = scoutingSource.content;
 
 try {
-  execFileSync(process.execPath, [path.join(webRoot, "validate-package.mjs")], {\n    cwd: path.dirname(webRoot),
+  execFileSync(process.execPath, [path.join(webRoot, "validate-package.mjs")], {
+    cwd: path.dirname(webRoot),
     encoding: "utf8",
     stdio: "pipe",
   });
-} catch (error) {\n  fail(`Independent Project package validator failed: ${String(error.stderr || error.message).trim()}`);
+} catch (error) {
+  fail(`Independent Project package validator failed: ${String(error.stderr || error.message).trim()}`);
 }
 
 const commandSchema = parse(
@@ -104,6 +95,10 @@ const resultSchema = parse(
   "developer result schema",
 );
 const protocol = commandSchema.properties?.protocol?.const;
+
+if (!/Select `small` by default[\s\S]{0,700}Use `heavy` immediately[\s\S]{0,700}two substantive small-route failures/i.test(workflow)) {
+  fail("Project workflow does not expose the canonical small/heavy routing rule");
+}
 
 const commands = markerValues(workflow, "agentic-bridge-command", workflowSource.name);
 if (commands.length !== 1) fail(`Project package must contain one canonical command example; found ${commands.length}`);
@@ -121,7 +116,7 @@ for (const command of commands) {
   }
   if (!sameMembers(Object.keys(command.arguments ?? {}), ["brief", "agent"])
     || !["small", "heavy"].includes(command.arguments?.agent)) {
-    fail("Project start example arguments differ from the developer start contract");
+    fail("Project start example arguments differ from the developer small/heavy start contract");
   }
 }
 
@@ -159,8 +154,12 @@ const responseTemplate = read(
 if (workflow.split(responseTemplate).length - 1 !== 1) {
   fail("Project workflow and developer runtime do not share one exact six-field response contract");
 }
-for (const file of ["small-developer.md", "large-developer.md"]) {
+for (const [file, rolePhrase] of [
+  ["small-developer.md", "small local implementation developer"],
+  ["large-developer.md", "heavy local implementation developer"],
+]) {
   const agent = read(path.join(repositoryRoot, ".opencode/agents", file), file);
+  if (!agent.includes(rolePhrase)) fail(`${file} is missing its canonical small/heavy role identity`);
   if (!agent.includes(responseTemplate)) fail(`${file} is missing the cross-branch response contract`);
   if (!/\n\s*question:\s*allow\s*\n/.test(agent)) {
     fail(`${file} cannot produce a structured question for Project question.reply`);
@@ -169,6 +168,15 @@ for (const file of ["small-developer.md", "large-developer.md"]) {
     if (!agent.includes(status)) fail(`${file} is missing developer status ${status}`);
   }
 }
+
+const commandSource = read(path.join(repositoryRoot, "tools/opencode-bridge/src/commands.ts"), "developer bridge routing");
+const serviceSource = read(path.join(repositoryRoot, "tools/opencode-bridge/src/service.ts"), "developer bridge service routing");
+for (const [source, expected, label] of [
+  [commandSource, 'this.developerAgents = options.developerAgents ?? { small: "small-developer", heavy: "large-developer" };', "default developer mapping"],
+  [commandSource, 'this.workspaceAgents = options.workspaceAgents ?? { small: "small-workspace-maintainer", heavy: "workspace-maintainer" };', "default workspace mapping"],
+  [serviceSource, 'developerAgents: { small: "small-developer", heavy: "large-developer" }', "service developer mapping"],
+  [serviceSource, 'workspaceAgents: { small: "small-workspace-maintainer", heavy: "workspace-maintainer" }', "service workspace mapping"],
+]) if (!source.includes(expected)) fail(`Bridge is missing canonical ${label}`);
 
 if (fs.existsSync(path.join(repositoryRoot, ".opencode/agents/repository-scout.md"))) {
   fail("Developer Scout trust contract must not be owned by the inspected repository ref");
@@ -192,7 +200,7 @@ const bridgeProtocol = read(
 
 const hasContainment = projectFiles.some((file) => {
   const content = read(path.join(projectRoot, file), file);
-  return /One task ID has one canonical issue/i.test(content) && /post nothing on any later issue/i.test(content);
+  return /One task ID has one canonical issue/i.test(content) && /post nothing on (?:any )?later issue/i.test(content);
 });
 if (!/One task ID binds to exactly one issue/i.test(bridgeProtocol) || !hasContainment) {
   fail("Developer protocol and Project recovery disagree on duplicate task-issue containment");
@@ -228,4 +236,4 @@ try {
 } catch {
   // The deterministic content checks above also support an exported package.
 }
-console.log(`Web-orchestrator integration validation passed: protocol ${protocol}, ${expectedRequestKinds.length} request kinds, exact six-field handoff, Scout/runtime boundaries, and Project revision ${webRevision}.`);
+console.log(`Web-orchestrator integration validation passed: protocol ${protocol}, ${expectedRequestKinds.length} request kinds, small/heavy routing, exact six-field handoff, Scout/runtime boundaries, and Project revision ${webRevision}.`);

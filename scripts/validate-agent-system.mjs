@@ -56,19 +56,29 @@ try {
   fail(`opencode.json is invalid: ${error.message}`);
 }
 
-for (const [file, model, effort] of [
-  [".opencode/agents/small-developer.md", "cliproxyapi/gemini-3.7-flash-high", "high"],
-  [".opencode/agents/large-developer.md", "openai/gpt-5.6-sol", "high"],
+for (const [file, rolePhrase] of [
+  [".opencode/agents/small-developer.md", "small local implementation developer"],
+  [".opencode/agents/large-developer.md", "heavy local implementation developer"],
 ]) {
   assert(exists(file), `Missing approved developer definition: ${file}`);
   if (!exists(file)) continue;
   const text = read(file);
   const fm = frontmatter(text);
   assert(fm?.mode === "primary", `${file} must be primary`);
-  assert(fm?.model === model, `${file} model must be ${model}`);
-  assert(fm?.reasoningEffort === effort, `${file} reasoningEffort must be ${effort}`);
   assert(/\n\s*task:\s*deny\s*\n/.test(text), `${file} must deny task launches`);
+  assert(text.includes(rolePhrase), `${file} must identify its stable small/heavy role`);
 }
+
+const commandsSource = read("tools/opencode-bridge/src/commands.ts");
+assert(commandsSource.includes('this.developerAgents = options.developerAgents ?? { small: "small-developer", heavy: "large-developer" };'),
+  "Bridge default developer routing must map small/heavy to tracked developer agents");
+assert(commandsSource.includes('this.workspaceAgents = options.workspaceAgents ?? { small: "small-workspace-maintainer", heavy: "workspace-maintainer" };'),
+  "Bridge default workspace routing must map small/heavy to tracked workspace agents");
+const serviceSource = read("tools/opencode-bridge/src/service.ts");
+assert(serviceSource.includes('developerAgents: { small: "small-developer", heavy: "large-developer" }'),
+  "Bridge service developer routing must use small/heavy concrete agents");
+assert(serviceSource.includes('workspaceAgents: { small: "small-workspace-maintainer", heavy: "workspace-maintainer" }'),
+  "Bridge service workspace routing must use small/heavy concrete agents");
 
 const smallDeveloper = read(".opencode/agents/small-developer.md");
 assert(smallDeveloper.includes("repository-relative paths")

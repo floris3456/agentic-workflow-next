@@ -10,106 +10,61 @@ The system separates human acceptance, web orchestration, remote evidence, and l
 2. Remote Git is authoritative repository evidence.
 3. The web orchestrator independently reasons about and reviews that evidence.
 4. Developer responses and task-progress are navigation and developer reasoning, not proof.
-5. OpenCode Scout and optional symbol-scout reports are context only; synthesis
-   remains with the web orchestrator.
+5. OpenCode Scout and optional symbol-scout reports are context only; synthesis remains with the web orchestrator.
 
 ## Web orchestrator
 
-The web orchestrator is the primary reasoning, task-design, routing, steering, and review layer. Generalized installation instructions and the audited conditional Source inventory live under `web-orchestration-only/chatgpt-project/` on the independent branch. Its short permanent instructions keep universal safety/authority visible and route genuinely separate MCP-ON and MCP-OFF workflows, scouting procedures, and an exceptional template-maintenance procedure. The installed Project configuration, private conversations, connector credentials, and runtime service configuration remain outside Git.
+The web orchestrator is the primary reasoning, task-design, routing, steering, and review layer. Generalized installation instructions and the audited conditional Source inventory live under `web-orchestration-only/chatgpt-project/` on the independent branch. Permanent instructions keep universal safety, authority, capability-local execution, handoff reasoning, and completion rules visible; separate routed Sources own ordinary workflow, recovery, template maintenance, promotion, and prompt creation.
 
-In MCP-ON mode it uses:
+It uses the strongest relevant capability currently available: exact connected GitHub for remote evidence and bounded writes when available, public GitHub/web when that can prove a fact, read-only Scouts for useful independent repository context, and the outbound GitHub App bridge for delegated implementation, steering, recovery, finalization, Workspace Maintenance, and guarded promotion. Missing capability narrows only the dependent action and never authorizes pretending the effect occurred.
 
-- an authenticated native GitHub integration for exact remote evidence,
-  public-safe bridge-control actions, ordinary continuity writes limited to
-  `task-context/**`, and explicit template-maintenance continuity under
-  `docs/work/current/**` on `template-development`;
-- direct GitHub inspection for exact evidence; and
-- the outbound local GitHub App bridge to reach OpenCode indirectly for implementation delegation, steering, recovery, finalization, and guarded promotion.
-
-In MCP-OFF mode it uses the public GitHub website for repository inspection and cannot pretend delegation or direct orchestration writes occurred.
-
-For exact lookup MCP-ON uses connected GitHub directly. Focused Scout requests may
-run concurrently through the dedicated hardened local runtime but remain context,
-not exact remote proof. Review and verification are proportional
-to change size, complexity, uncertainty, risk, blast radius, reversibility, and
-stakes.
+Focused Scout requests may run concurrently through the dedicated hardened local runtime but remain context, not exact remote proof. Review and verification are proportional to change size, complexity, uncertainty, risk, blast radius, reversibility, and stakes.
 
 ## Local implementation
 
-The current approved implementation agents are:
+The public implementation-routing vocabulary is only `small` and `heavy`.
 
-- `small-developer`: default developer route, configured-provider Gemini 3.7 Flash (`cliproxyapi/gemini-3.7-flash-high`) at `high` reasoning effort;
-- `large-developer`: exceptional developer route, configured-provider GPT 5.6 Sol (`openai/gpt-5.6-sol`) at `high` reasoning effort;
-- `small-workspace-maintainer`: default workspace maintainer route, configured-provider Gemini 3.7 Flash (`cliproxyapi/gemini-3.7-flash-high`) at `high` reasoning effort;
-- `heavy-workspace-maintainer`: heavy workspace maintainer route, configured-provider GPT 5.6 Sol (`openai/gpt-5.6-sol`) at `max` reasoning effort.
+The current concrete implementation agents are:
 
-Public selector vocabulary for developer and workspace starts is model-agnostic `small` (default) or `heavy`. Developer route changes use `small|heavy`.
+- `small-developer`: the developer `small` route and normal default;
+- `large-developer`: the developer `heavy` route;
+- `small-workspace-maintainer`: the Workspace Maintenance `small` route and normal default;
+- `workspace-maintainer`: the Workspace Maintenance `heavy` route.
 
-No ref-owned `repository-scout` agent is tracked. The Luna/high non-implementation
-role is owned by an externally installed bridge runtime and exposes only contained
-`scout_read`, `scout_glob`, and `scout_grep` plus focused facts/unknowns. LSP,
-shell, mutation, delegation, skills, web, interactions, runtime package
-installation, ref-controlled processes, and tool-driven downloads are forbidden.
+The bridge maps only those two public selectors to the concrete agent names. Runtime/provider configuration is an internal implementation detail and does not define routing language.
 
-The web orchestrator chooses the agent. Local developers do not launch subagents, review their own work, select escalation, or accept changes.
+No ref-owned `repository-scout` agent is tracked. The read-only Scout role is owned by an externally installed bridge runtime and exposes only contained `scout_read`, `scout_glob`, and `scout_grep` plus focused facts/unknowns. LSP, shell, mutation, delegation, skills, web, interactions, runtime package installation, ref-controlled processes, and tool-driven downloads are forbidden.
 
-Both implementation developers explicitly allow OpenCode's structured question
-tool when a human answer is required. This produces a task-correlated event and
-public alias that the web orchestrator can answer through `question.reply`;
-ordinary assistant prose is not a substitute. The read-only Scout denies questions
-and cannot enter this interaction path.
+The web orchestrator chooses the route. Local developers do not launch subagents, review their own work, select escalation, or accept changes.
 
-The bridge is transport and local durability, not a new authority. It maps public task aliases to private OpenCode sessions, projects bounded status, and invokes the selected small or heavy implementation agent against the same loopback server a human can attach to with the normal TUI. Direct GitHub inspection remains the proof route.
+Both implementation developers explicitly allow OpenCode's structured question tool when a human answer is required. This produces a task-correlated event and public alias that the web orchestrator can answer through `question.reply`; ordinary assistant prose is not a substitute. The read-only Scout denies questions and cannot enter this interaction path.
 
-Routing policy is web-side and intentionally is not frozen through a validator that counts agent files.
+The bridge is transport and local durability, not a new authority. It maps public task aliases to private OpenCode sessions, projects bounded status, and invokes the selected small or heavy implementation route against the same loopback server a human can attach to with the normal TUI. Direct GitHub inspection remains the proof route.
 
 ## Branches
 
 - `developer`: active implementation and task-progress.
 - `main`: exact implementation deliberately accepted by the human.
 - `web-orchestration`: independent orphan-style tree containing only `web-orchestration-only/**`, including public-safe continuity and Project installation sources.
-- `template-development`: independent reusable-template maintenance ledger with
-  exact source locks, public-safe task/architecture/deviation records, and
-  deterministic cross-branch change packages.
+- `template-development`: independent reusable-template maintenance ledger with exact source locks, public-safe task/architecture/deviation records, deterministic cross-branch change packages, and the rooted Workspace Maintenance runtime.
 
 No normal merge crosses between `web-orchestration` and implementation branches.
 
 ## Scouting boundary
 
-The OpenCode Scout request lane remains separate from mutating task progress,
-finalization, or promotion. Each request names a focused question, exact remote
-developer SHA, scope, and expected evidence, and concurrent request admission and
-task/request status remain durable. Snapshot preparation uses `ls-tree` and
-`cat-file` against canonical `origin/developer`, not checkout/worktree, rejects
-gitlinks and `.git`, strips write/execute bits, and preserves symlinks only as
-evidence. Every reuse is fully revalidated; historical worktree mappings fail
-closed.
+The OpenCode Scout request lane remains separate from mutating task progress, finalization, or promotion. Each request names a focused question, exact remote developer SHA, scope, and expected evidence, and concurrent request admission and task/request status remain durable. Snapshot preparation uses `ls-tree` and `cat-file` against canonical `origin/developer`, not checkout/worktree, rejects gitlinks and `.git`, strips write/execute bits, and preserves symlinks only as evidence. Every reuse is fully revalidated; historical worktree mappings fail closed.
 
-The separate pinned `1.18.16` endpoint executes outside `repository_root` with
-sterile HOME/XDG/temp/environment, explicit provider auth, read-only trusted
-config, project/default-plugin/external-skill/watcher/LSP/formatter disablement,
-managed-config redirection into the immutable runtime, and no normal-server
-fallback. Bootstrap actively probes installation
-hashes, exact OpenAPI/version, Luna/high prompt/permissions, and tool inventory.
-Trusted tools never follow symlinks, enforce realpath containment and bounded
-UTF-8 operations, and expose no process/package/network API. Runtime absence or
-misconfiguration fails only Scout operation closed; normal developer OpenCode and
-TUI behavior remain unchanged.
+The separate pinned endpoint executes outside `repository_root` with sterile HOME/XDG/temp/environment, explicit provider auth, read-only trusted config, project/default-plugin/external-skill/watcher/LSP/formatter disablement, managed-config redirection into the immutable runtime, and no normal-server fallback. Bootstrap actively probes installation hashes, exact OpenAPI/version, the read-only Scout prompt/permissions, and tool inventory. Trusted tools never follow symlinks, enforce realpath containment and bounded UTF-8 operations, and expose no process/package/network API. Runtime absence or misconfiguration fails only Scout operation closed; normal developer OpenCode and TUI behavior remain unchanged.
 
-The configured optional symbol scout is likewise non-authoritative context.
-`.jcodemunch.jsonc` uses strict freshness and excludes evidence, research,
-archives, and retired local handoffs to improve relevance and minimize indexed
-data. A timeout may return an older index, so freshness must be checked before
-relying on it after edits. Provider, credential, and machine-service
-configuration remain outside Git and must be reviewed by the operator before use.
+The configured optional symbol scout is likewise non-authoritative context. `.jcodemunch.jsonc` uses strict freshness and excludes evidence, research, archives, and retired local handoffs to improve relevance and minimize indexed data. A timeout may return an older index, so freshness must be checked before relying on it after edits. Provider, credential, and machine-service configuration remain outside Git and must be reviewed by the operator before use.
 
 ## Persistent continuity
 
-- The local developer's task-progress file survives compaction, reconnects, multiple commits, steering, and Luna-to-Sol transition.
+- The local developer's task-progress file survives compaction, reconnects, multiple commits, steering, and small-to-heavy route transition.
 - Finalization moves the exact substantively approved task-progress blob to `docs/work/archive/` as immutable, non-authoritative benchmark history; archived records are excluded from active-task discovery and scouting.
 - AS-BUILT is live implementation memory and durable reality.
 - Deviation records are live intended-versus-actual truth.
-- The web orchestrator keeps concise task context, pre-publication command envelopes, command/result refs, human approval boundaries, and routing records under the two runtime-continuity directories on `web-orchestration` when its authenticated write capability is available.
+- The web orchestrator keeps concise task context, pre-publication command envelopes, command/result refs, human approval boundaries, and routing records under the runtime-continuity directories on `web-orchestration` when its authenticated write capability is available.
 
 ## Normative homes
 
@@ -130,4 +85,4 @@ configuration remain outside Git and must be reviewed by the operator before use
 
 ## Validation boundary
 
-Mechanical checks establish parseability, path/reference integrity, executable bits, templates, hook prerequisites, and other deterministic facts. They do not claim to prove implementation quality, AS-BUILT truth, deviation completeness, substantive attempts, or escalation judgment.
+Mechanical checks establish parseability, path/reference integrity, executable bits, templates, hook prerequisites, routing-name consistency, and other deterministic facts. They do not claim to prove implementation quality, AS-BUILT truth, deviation completeness, substantive attempts, or escalation judgment.

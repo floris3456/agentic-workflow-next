@@ -5,7 +5,7 @@
 | Branch | Meaning | Normal writer |
 | --- | --- | --- |
 | `developer` | Active shared implementation and task-progress | Delegated OpenCode developer |
-| `main` | Exact implementation deliberately accepted by the human | Luna through guarded promotion after approval |
+| `main` | Exact implementation deliberately accepted by the human | Small developer through guarded promotion after approval |
 | `web-orchestration` | Public-safe task context, routing memory, and generalized Project installation sources | Web orchestrator through connected/native GitHub integration |
 
 ## Developer synchronization
@@ -35,7 +35,7 @@ After implementation and finalization reviews pass, the web orchestrator asks th
 
 ## Promotion
 
-Promotion is a no-edit operation rather than an implementation task. It creates no task-progress file, task update, or handoff snapshot, because any such commit would invalidate exact-SHA approval. Luna runs:
+Promotion is a no-edit operation rather than an implementation task. It creates no task-progress file, task update, or handoff snapshot, because any such commit would invalidate exact-SHA approval. The small developer runs:
 
 ```bash
 ./scripts/promote-developer-to-main.sh <approved-developer-sha>

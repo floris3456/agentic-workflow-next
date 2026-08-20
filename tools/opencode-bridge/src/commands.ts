@@ -196,7 +196,7 @@ export class CommandExecutor {
     this.operationPolicy = options.operationPolicy;
     this.instanceId = options.instanceId;
     this.developerAgents = options.developerAgents ?? { small: "small-developer", heavy: "large-developer" };
-    this.workspaceAgents = options.workspaceAgents ?? { small: "small-workspace-maintainer", heavy: "heavy-workspace-maintainer" };
+    this.workspaceAgents = options.workspaceAgents ?? { small: "small-workspace-maintainer", heavy: "workspace-maintainer" };
     this.ptyEnabled = options.ptyEnabled === true;
     this.currentGitState = options.currentGitState;
     this.workspaceRuntime = options.workspaceRuntime;

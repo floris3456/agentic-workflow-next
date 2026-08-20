@@ -46,7 +46,7 @@ For a meaningful failed route, record:
 - whether abandoned; and
 - reusable lesson.
 
-Do not label an event a “substantive Luna attempt.” The web orchestrator makes that classification.
+Do not label an event a “substantive small-route attempt.” The web orchestrator makes that classification.
 
 ## Steering
 

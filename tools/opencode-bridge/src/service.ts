@@ -295,7 +295,7 @@ export class BridgeService {
         };
       },
       developerAgents: { small: "small-developer", heavy: "large-developer" },
-      workspaceAgents: { small: "small-workspace-maintainer", heavy: "heavy-workspace-maintainer" },
+      workspaceAgents: { small: "small-workspace-maintainer", heavy: "workspace-maintainer" },
       ...(config.policy.promotionEnabled ? { runPromotion: promotion(config) } : {}),
       onSessionStarted: (taskId) => this.startSessionRecovery(taskId),
       onSessionContinued: (taskId, sessionId) => this.reenrollSessionRecovery(taskId, sessionId),
@@ -601,7 +601,7 @@ export async function checkBridge(config: BridgeConfig, mutate: boolean): Promis
     await server.start();
     await probeScoutServer(scoutClient(config, manifest, config.opencode.scoutRuntimeRoot));
     scoutRuntimeReady = true;
-    scoutRuntimeReason = "pinned installation, OpenAPI manifest, agent, model, prompt, permissions, and trusted tools verified";
+    scoutRuntimeReason = "pinned installation, OpenAPI manifest, agent, prompt, permissions, and trusted tools verified";
   } catch (error) {
     scoutRuntimeReason = errorMessage(error);
   } finally {
