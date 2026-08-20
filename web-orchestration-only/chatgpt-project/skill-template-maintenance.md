@@ -62,6 +62,17 @@ the normal workflow's hardened Scout boundary is available and useful. Follow
 each source branch's own task/durable-record, AS-BUILT/deviation,
 synchronization, and validation rules regardless of execution route.
 
+When a source or maintainer handoff reports `blocked` or `needs decision`, apply
+the permanent claim-first rule before forwarding the proposed next step. Normally
+inspect the exact evidence and relevant accepted architecture, design, deviations,
+and responsibility boundaries, then decide whether the condition is a real
+external or human-owned blocker, an implementation misunderstanding, or an
+orchestration/design problem. Repeated or similar blockers require stronger
+orchestrator analysis before another steer, route change, or source request.
+Direct escalation is appropriate only when the blocker is already independently
+proven to be human-owned, a safety/authority boundary, an unavailable required
+capability, or an external condition that further reasoning cannot resolve.
+
 Acceptance-critical executable tests owned by an authoritative branch must be
 reachable through that branch's canonical push-triggered CI path. A web
 orchestrator must not depend on its own local execution environment to obtain
