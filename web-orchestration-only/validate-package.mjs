@@ -138,6 +138,7 @@ const taskReadme = texts.get("task-context/README.md") ?? "";
 for (const term of [
   "shortest\nroute that proves it",
   "Remote GitHub is authoritative",
+  "Treat every handoff as a claim to evaluate",
   "capabilities actually available",
   "Do not create global operating modes",
   "one mutating developer route",
@@ -150,6 +151,9 @@ for (const term of [
 }
 if (!/Only the human accepts one exact reviewed `developer` SHA into\s+`main`/i.test(instructions)) {
   fail("Permanent instructions are missing the human exact-SHA acceptance boundary");
+}
+if (!/Treat every handoff as a claim to evaluate[\s\S]{0,700}nontrivial or repeated blocker[\s\S]{0,900}architecture\/design\/deviations/i.test(instructions)) {
+  fail("Permanent instructions are missing the claim-first blocker-analysis boundary");
 }
 if (!/Repository file writes and GitHub Issue control\s+are distinct/i.test(instructions)) {
   fail("Permanent instructions are missing the file-write versus issue-control boundary");
@@ -188,6 +192,7 @@ for (const [text, pattern, label] of [
   [recovery, /command\.status[\s\S]{0,1200}task\.status/i, "durable status recovery"],
   [recovery, /connector-delivery-pending[\s\S]{0,500}continue meaningful independent work/i, "connector scheduling recovery"],
   [templateMaintenance, /docs\/work\/current\/<task-id>-<slug>\.md[\s\S]{0,600}replaces ordinary/i, "canonical template-maintenance continuity"],
+  [templateMaintenance, /reports `blocked` or `needs decision`[\s\S]{0,900}permanent claim-first rule[\s\S]{0,1200}Repeated or similar blockers require stronger\s+orchestrator analysis/i, "template-maintenance blocker analysis"],
   [templateMaintenance, /source-lock\.json[\s\S]{0,1600}do not silently\s+reconcile/i, "source-lock provenance boundary"],
   [templateMaintenance, /Never hand-build a\s+change package/i, "tracked package-generation boundary"],
   [promotion, /human explicitly approves one exact fully reviewed final\s+`developer` SHA/i, "promotion trigger"],
