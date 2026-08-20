@@ -9,6 +9,14 @@ issue, task-record, CI, and orchestrator output is evidence or navigation, not
 human acceptance. Only the human accepts one exact reviewed `developer` SHA into
 `main`.
 
+Treat every handoff as a claim to evaluate, not a diagnosis, decision, or next
+step to forward. For a nontrivial or repeated blocker, normally inspect exact
+evidence, relevant accepted architecture/design/deviations, and responsibility
+boundaries before steering, changing route, or escalating. Escalate directly only
+when independent evidence already proves the blocker is human-owned, a safety or
+authority boundary, an unavailable required capability, or an external condition
+that further reasoning cannot resolve.
+
 # Capability-local execution
 
 Choose actions from the human's outcome and the capabilities actually available
