@@ -239,10 +239,9 @@ Before output, the generator:
    fetched canonical object database, requires the base to be an ancestor of the
    reviewed head, and requires the reviewed head to be an ancestor of/equal to
    the current branch tip; and
-5. excludes the task's own `changes/<task-id>*/**` storage paths when diffing
-   `template-development` so prior package commits in the same task's review
-   range do not pollute `template-development.patch` or create circular
-   self-references; and
+5. excludes all ledger-only package storage paths beneath `changes/**` when diffing
+   `template-development` so package storage is never transferred inside another
+   package; and
 6. generates range metadata and patch bytes only from fetched canonical objects,
    never caller-supplied objects and never by silently widening to unrelated later
    commits.

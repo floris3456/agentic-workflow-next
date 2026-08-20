@@ -117,8 +117,7 @@ creation rooted in `template-development`.
 
 ### Workspace Maintenance tool route verification
 
-- Repaired host layout and bridge repository registration in
-  `~/.config/agentic-workflow/opencode-bridge.json` and worktree pointers.
+- Repaired the host bridge repository/worktree registration.
 - Verified `TemplateDevelopmentWorktreeResolver` against actual repository
   worktrees and pinned OpenCode 1.18.16 server.
 - Verified a pinned OpenCode 1.18.16 session rooted in the registered

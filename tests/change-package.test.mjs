@@ -1,11 +1,13 @@
 import assert from "node:assert/strict";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, copyFileSync, chmodSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync, copyFileSync, chmodSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join, resolve } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 import { spawnSync, execFileSync } from "node:child_process";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 import {
+  assertPackagePublicSafe,
+  isPackageStoragePath,
   isTaskPackagePath,
   validateChangePackage,
   validatePackageSupersessionChain,
@@ -165,7 +167,7 @@ test("rejects deceptive local origin, non-ancestor range base, and forged local 
   assert.match(result.stderr, /did not resolve exactly from canonical fetch|not an ancestor of the current canonical tip/);
 });
 
-test("schema 3 validation detects source-snapshot, template patch, provenance, and package-binding tampering", (context) => {
+test("schema 3 validation detects source-snapshot, template patch, provenance, package-binding tampering, and changes/ paths", (context) => {
   const input = fixture(context);
   const output = join(input.directory, "package");
   createPackage(input, output);
@@ -200,77 +202,66 @@ test("schema 3 validation detects source-snapshot, template patch, provenance, a
   selfStorageManifest.ranges["template-development"].changed_paths.push("changes/TASK-001/foo.txt");
   selfStorageManifest.ranges["template-development"].changed_paths.sort();
   writeFileSync(selfStorageManifestPath, `${JSON.stringify(selfStorageManifest, null, 2)}\n`);
-  assert.throws(() => validateChangePackage(packageWithSelfStorage), /must end before its own generated package storage/);
+  assert.throws(() => validateChangePackage(packageWithSelfStorage), /package storage paths beneath changes\//);
 });
 
-test("isTaskPackagePath and create-change-package precisely filter exact task family and preserve near-collision task paths", (context) => {
-  const taskId = "TASK-001";
-  const positive = [
-    "changes/TASK-001",
-    "changes/TASK-001/manifest.json",
-    "changes/TASK-001.rev2",
-    "changes/TASK-001.rev2/manifest.json",
-    "changes/TASK-001.rev3",
-    "changes/TASK-001.rev3/template-development.patch",
-    "changes/TASK-001.r2",
-    "changes/TASK-001.r2/developer.patch",
-    "changes/TASK-001-rev2",
-    "changes/TASK-001-rev2/web-orchestration.patch",
-    "changes/TASK-001-r2",
-    "changes/TASK-001-r2/manifest.json",
-  ];
-  for (const path of positive) {
-    assert.equal(isTaskPackagePath(path, taskId), true, `Expected ${path} to be a task package member of ${taskId}`);
-  }
-
-  const negative = [
-    "changes/TASK-001.UNRELATED",
-    "changes/TASK-001.UNRELATED/manifest.json",
-    "changes/TASK-001-revision2",
-    "changes/TASK-001-revision2/manifest.json",
-    "changes/TASK-001-revX",
-    "changes/TASK-001-revX/manifest.json",
-    "changes/TASK-001-extra",
-    "changes/TASK-001-extra/manifest.json",
-    "changes/TASK-0012",
-    "changes/TASK-0012/manifest.json",
-    "changes/TASK-001_OTHER",
-    "changes/TASK-001_OTHER/manifest.json",
-    "docs/changes/TASK-001/manifest.json",
-  ];
-  for (const path of negative) {
-    assert.equal(isTaskPackagePath(path, taskId), false, `Expected ${path} NOT to be a task package member of ${taskId}`);
-  }
-
-  // Test that create-change-package retains non-member near-collision paths in the generated patch
+test("all paths beneath changes/** are excluded from portable template-development patch while non-changes paths remain", (context) => {
   const input = fixture(context);
   git(input.source, ["checkout", "-B", "template-development", input.templateBase]);
-  commit(input.source, "changes/TASK-001/manifest.json", "member1\n", "Add member 1");
-  commit(input.source, "changes/TASK-001.rev2/manifest.json", "member2\n", "Add member 2");
-  commit(input.source, "changes/TASK-001-rev3/manifest.json", "member3\n", "Add member 3");
-  commit(input.source, "changes/TASK-001.UNRELATED/manifest.json", "unrelated1\n", "Add unrelated 1");
-  commit(input.source, "changes/TASK-001-extra/manifest.json", "unrelated2\n", "Add unrelated 2");
-  commit(input.source, "changes/TASK-0012/manifest.json", "unrelated3\n", "Add unrelated 3");
-  const headWithMix = commit(input.source, "changes/TASK-001_OTHER/manifest.json", "unrelated4\n", "Add unrelated 4");
+  commit(input.source, "changes/TASK-A/manifest.json", "pkgA\n", "Add pkg A");
+  commit(input.source, "changes/TASK-B.rev2/manifest.json", "pkgB\n", "Add pkg B");
+  commit(input.source, "changes/TASK-C-rev3/manifest.json", "pkgC\n", "Add pkg C");
+  commit(input.source, "changes/OTHER/template.patch", "pkgD\n", "Add pkg D");
+  commit(input.source, "docs/changes.md", "docs changes\n", "Add docs changes");
+  const head = commit(input.source, "scripts/changes.mjs", "scripts changes\n", "Add scripts changes");
   git(input.source, ["remote", "add", "fixture", input.remote]);
   git(input.source, ["push", "--force", "fixture", "template-development"]);
   git(input.source, ["remote", "remove", "fixture"]);
 
-  const output = join(input.directory, "near-collision-package");
+  const output = join(input.directory, "changes-excluded-package");
   const result = createPackage(input, output, {
-    taskId: "TASK-001",
-    templateHead: headWithMix,
+    taskId: "TASK-NEW",
+    templateHead: head,
   });
   assert.match(result.stdout, /provenance-verified/);
-  const checked = validateChangePackage(output, "TASK-001");
+  const checked = validateChangePackage(output, "TASK-NEW");
   assert.equal(checked.provenanceVerified, true);
-  const changedPaths = checked.manifest.ranges["template-development"].changed_paths;
-  assert.deepEqual(changedPaths, [
-    "changes/TASK-001-extra/manifest.json",
-    "changes/TASK-001.UNRELATED/manifest.json",
-    "changes/TASK-0012/manifest.json",
-    "changes/TASK-001_OTHER/manifest.json",
-  ]);
+  const paths = checked.manifest.ranges["template-development"].changed_paths;
+  assert.deepEqual(paths, ["docs/changes.md", "scripts/changes.mjs"]);
+});
+
+test("preserves delete+add rename semantics under --no-renames and applies cleanly downstream", (context) => {
+  const input = fixture(context);
+  git(input.source, ["checkout", "-B", "template-development", input.templateBase]);
+  const baseWithOldFile = commit(input.source, "old-name.txt", "rename content\n", "Add old-name.txt to base");
+  git(input.source, ["rm", "old-name.txt"]);
+  const head = commit(input.source, "new-name.txt", "rename content\n", "Rename old-name to new-name");
+  git(input.source, ["remote", "add", "fixture", input.remote]);
+  git(input.source, ["push", "--force", "fixture", "template-development"]);
+  git(input.source, ["remote", "remove", "fixture"]);
+
+  const output = join(input.directory, "rename-package");
+  const result = createPackage(input, output, {
+    taskId: "TASK-RENAME",
+    templateBase: baseWithOldFile,
+    templateHead: head,
+  });
+  assert.match(result.stdout, /provenance-verified/);
+  const checked = validateChangePackage(output, "TASK-RENAME");
+  assert.equal(checked.provenanceVerified, true);
+  const paths = checked.manifest.ranges["template-development"].changed_paths;
+  assert.deepEqual(paths, ["new-name.txt", "old-name.txt"]);
+
+  // Apply downstream to a target containing old-name.txt
+  const target = join(input.directory, "rename-target");
+  mkdirSync(target);
+  git(target, ["init", "-b", "template-development"]);
+  commit(target, "ledger-base.txt", "template base\n", "target template base");
+  commit(target, "old-name.txt", "rename content\n", "target old-name");
+  const applied = run("node", [applyScript, "--package", output, "--repository", target, "--target", "template-development", "--apply"], root);
+  assert.match(applied.stdout, /provenance schema 3 verified/);
+  assert.equal(existsSync(join(target, "old-name.txt")), false);
+  assert.equal(readFileSync(join(target, "new-name.txt"), "utf8"), "rename content\n");
 });
 
 test("schema 3 persisted package supersession lifecycle v1 -> rev2 -> rev3, relations, downstream selection, and fail-closed validation", (context) => {
@@ -449,6 +440,15 @@ test("schema 3 persisted package supersession lifecycle v1 -> rev2 -> rev3, rela
     "web-orchestration": readFileSync(join(v2PackageDir, "web-orchestration.patch")),
   };
 
+  // Negative tests: Symlink entry under changes/ is rejected
+  const symlinkChangesDir = join(input.directory, "symlink-changes");
+  mkdirSync(symlinkChangesDir, { recursive: true });
+  spawnSync("cp", ["-r", v1PackageDir, join(symlinkChangesDir, "TASK-SUPER")]);
+  const outsidePkg = join(input.directory, "outside-package");
+  spawnSync("cp", ["-r", v2PackageDir, outsidePkg]);
+  symlinkSync(outsidePkg, join(symlinkChangesDir, "TASK-SUPER.rev2"));
+  assert.throws(() => validatePackageSupersessionChain(symlinkChangesDir), /Symlink entry is forbidden/);
+
   // Negative tests: Tampered historical package fails closed
   const tamperedChangesDir = join(input.directory, "tampered-changes");
   mkdirSync(tamperedChangesDir, { recursive: true });
@@ -491,12 +491,12 @@ test("schema 3 persisted package supersession lifecycle v1 -> rev2 -> rev3, rela
   spawnSync("cp", ["-r", v1PackageDir, join(traversalChangesDir, "TASK-SUPER")]);
   spawnSync("cp", ["-r", v2PackageDir, join(traversalChangesDir, "TASK-SUPER.rev2")]);
   const traversalManifest = JSON.parse(readFileSync(join(traversalChangesDir, "TASK-SUPER.rev2", "manifest.json"), "utf8"));
-  traversalManifest.supersedes.package_path = "../TASK-SUPER";
+  traversalManifest.supersedes.package_path = "changes/../TASK-SUPER";
   const traversalCore = { ...traversalManifest };
   delete traversalCore.package_sha256;
   traversalManifest.package_sha256 = packageDigest(traversalCore, patchesV2);
   writeFileSync(join(traversalChangesDir, "TASK-SUPER.rev2", "manifest.json"), `${JSON.stringify(traversalManifest, null, 2)}\n`);
-  assert.throws(() => validatePackageSupersessionChain(traversalChangesDir), /must have form 'changes\/<package-directory>'/);
+  assert.throws(() => validatePackageSupersessionChain(traversalChangesDir), /must be a (?:single )?direct child under changes|invalid/);
 
   // Negative tests: Absolute path in package_path fails closed
   const absPathChangesDir = join(input.directory, "abs-path-changes");
@@ -609,6 +609,26 @@ test("schema 3 persisted package supersession lifecycle v1 -> rev2 -> rev3, rela
   crossManifest.package_sha256 = packageDigest(crossCore, patchesB);
   writeFileSync(join(crossTaskDir, "TASK-OTHER.rev2", "manifest.json"), `${JSON.stringify(crossManifest, null, 2)}\n`);
   assert.throws(() => validatePackageSupersessionChain(crossTaskDir), /cannot supersede package from different task/);
+
+  // Negative tests: Active package containing raw session ID fails public safety check
+  const activeUnsafeDir = join(input.directory, "active-unsafe-changes");
+  mkdirSync(activeUnsafeDir, { recursive: true });
+  spawnSync("cp", ["-r", v1PackageDir, join(activeUnsafeDir, "TASK-SUPER")]);
+  spawnSync("cp", ["-r", v2PackageDir, join(activeUnsafeDir, "TASK-SUPER.rev2")]);
+  const unsafePatch = Buffer.concat([readFileSync(join(activeUnsafeDir, "TASK-SUPER.rev2", "template-development.patch")), Buffer.from("\n+ses_fe0c04342ffeSLjnFNcMQ9SIHs\n")]);
+  writeFileSync(join(activeUnsafeDir, "TASK-SUPER.rev2", "template-development.patch"), unsafePatch);
+  const unsafeManifest = JSON.parse(readFileSync(join(activeUnsafeDir, "TASK-SUPER.rev2", "manifest.json"), "utf8"));
+  const unsafePatches = {
+    "template-development": unsafePatch,
+    developer: readFileSync(join(activeUnsafeDir, "TASK-SUPER.rev2", "developer.patch")),
+    "web-orchestration": readFileSync(join(activeUnsafeDir, "TASK-SUPER.rev2", "web-orchestration.patch")),
+  };
+  unsafeManifest.ranges["template-development"].patch_sha256 = sha256(unsafePatch);
+  const unsafeCore = { ...unsafeManifest };
+  delete unsafeCore.package_sha256;
+  unsafeManifest.package_sha256 = packageDigest(unsafeCore, unsafePatches);
+  writeFileSync(join(activeUnsafeDir, "TASK-SUPER.rev2", "manifest.json"), `${JSON.stringify(unsafeManifest, null, 2)}\n`);
+  assert.throws(() => validatePackageSupersessionChain(activeUnsafeDir), /raw OpenCode session identifier/);
 });
 
 test("legacy schema 1 packages remain integrity-compatible but are not provenance verified", (context) => {

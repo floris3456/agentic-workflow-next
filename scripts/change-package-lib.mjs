@@ -148,6 +148,11 @@ export function baseTaskId(identifier) {
   return identifier.replace(/(?:\.|\-)rev\d+$/i, "").replace(/(?:\.|\-)r\d+$/i, "");
 }
 
+export function isPackageStoragePath(path) {
+  if (typeof path !== "string") return false;
+  return path === "changes" || path.startsWith("changes/");
+}
+
 export function isTaskPackagePath(path, taskId) {
   if (typeof path !== "string" || typeof taskId !== "string" || !taskId) return false;
   const prefix = `changes/${taskId}`;
@@ -183,7 +188,23 @@ export function resolveSupersededPath(packagePath, changesDir) {
   return { dirName, targetDir, normalizedPath: `changes/${dirName}` };
 }
 
-export function validateChangePackage(directory, expectedTaskId) {
+export function assertPackagePublicSafe(pkg) {
+  const dir = pkg.directory;
+  const manifestRaw = readFileSync(join(dir, "manifest.json"), "utf8");
+  if (/\bses_[0-9A-Za-z]{16,}\b/.test(manifestRaw)) {
+    throw new Error(`Package ${pkg.directoryName ?? basename(dir)} manifest contains a raw OpenCode session identifier`);
+  }
+  for (const [target, patch] of Object.entries(pkg.patches)) {
+    if (patch && patch.length > 0) {
+      const text = patch.toString("utf8");
+      if (/\bses_[0-9A-Za-z]{16,}\b/.test(text)) {
+        throw new Error(`Package ${pkg.directoryName ?? basename(dir)} ${target} patch contains a raw OpenCode session identifier`);
+      }
+    }
+  }
+}
+
+export function validateChangePackage(directory, expectedTaskId, options = {}) {
   const manifest = JSON.parse(readFileSync(resolve(directory, "manifest.json"), "utf8"));
   if (typeof manifest.task_id !== "string" || manifest.task_id.length === 0) throw new Error("Package task_id is invalid");
   if (expectedTaskId) {
@@ -255,8 +276,8 @@ export function validateChangePackage(directory, expectedTaskId) {
     const files = readdirSync(resolve(directory)).sort();
     const expectedFiles = ["manifest.json", ...targets.map((target) => patchNames[target])].sort();
     if (files.join("\0") !== expectedFiles.join("\0")) throw new Error("Schema 3 package file inventory is invalid");
-    if (manifest.ranges["template-development"].changed_paths.some((path) => isTaskPackagePath(path, manifest.task_id))) {
-      throw new Error("template-development range must end before its own generated package storage");
+    if (options.strictPackageStorage !== false && manifest.ranges["template-development"].changed_paths.some(isPackageStoragePath)) {
+      throw new Error("template-development range must not contain package storage paths beneath changes/");
     }
   }
   if (!/^[0-9a-f]{64}$/.test(manifest.package_sha256 ?? "")) throw new Error("Package binding digest is invalid");
@@ -280,25 +301,29 @@ export function validatePackageSupersessionChain(changesDir) {
   const resolvedChanges = resolve(changesDir);
   const entries = readdirSync(resolvedChanges, { withFileTypes: true });
   const packages = [];
+  const byDirectoryName = new Map();
+  const byTaskId = new Map();
+
   for (const entry of entries) {
-    if (!entry.isDirectory() || entry.name.startsWith(".")) continue;
+    if (entry.isSymbolicLink()) {
+      throw new Error(`Symlink entry is forbidden in change package directory: ${entry.name}`);
+    }
+    if (entry.name === "README.md" || entry.name === ".gitkeep" || entry.name.startsWith(".")) continue;
+    if (!entry.isDirectory()) {
+      throw new Error(`Unexpected non-directory file in changes: ${entry.name}`);
+    }
     const pkgDir = resolve(resolvedChanges, entry.name);
     try {
-      const checked = validateChangePackage(pkgDir, entry.name);
-      packages.push({ ...checked, directoryName: entry.name });
+      const checked = validateChangePackage(pkgDir, entry.name, { strictPackageStorage: false });
+      const pkgRecord = { ...checked, directoryName: entry.name };
+      packages.push(pkgRecord);
+      byDirectoryName.set(entry.name, pkgRecord);
+      const taskId = checked.manifest.task_id;
+      if (!byTaskId.has(taskId)) byTaskId.set(taskId, []);
+      byTaskId.get(taskId).push(pkgRecord);
     } catch (error) {
       throw new Error(`Invalid change package ${entry.name}: ${error.message}`);
     }
-  }
-
-  const byTaskId = new Map();
-  const byDirectoryName = new Map();
-
-  for (const pkg of packages) {
-    const taskId = pkg.manifest.task_id;
-    if (!byTaskId.has(taskId)) byTaskId.set(taskId, []);
-    byTaskId.get(taskId).push(pkg);
-    byDirectoryName.set(pkg.directoryName, pkg);
   }
 
   const activePackages = new Map();
@@ -318,17 +343,10 @@ export function validatePackageSupersessionChain(changesDir) {
     for (const pkg of taskPkgs) {
       if (pkg.manifest.supersedes) {
         const { package_path, package_sha256, revision: targetRev } = pkg.manifest.supersedes;
-        const { dirName, targetDir } = resolveSupersededPath(package_path, resolvedChanges);
-        let superseded = byDirectoryName.get(dirName);
+        const { dirName } = resolveSupersededPath(package_path, resolvedChanges);
+        const superseded = byDirectoryName.get(dirName);
         if (!superseded) {
-          if (!existsSync(targetDir) || !statSync(targetDir).isDirectory()) {
-            throw new Error(`Package ${pkg.directoryName} supersedes missing package ${package_path}`);
-          }
-          try {
-            superseded = validateChangePackage(targetDir, dirName);
-          } catch (error) {
-            throw new Error(`Package ${pkg.directoryName} supersedes invalid package ${package_path}: ${error.message}`);
-          }
+          throw new Error(`Package ${pkg.directoryName} supersedes missing package ${package_path}`);
         }
         if (superseded.manifest.task_id !== taskId) {
           throw new Error(`Package ${pkg.directoryName} for task ${taskId} cannot supersede package from different task ${superseded.manifest.task_id}`);
@@ -369,7 +387,12 @@ export function validatePackageSupersessionChain(changesDir) {
     if (activeList.length > 1) {
       throw new Error(`Ambiguous package supersession for task ${taskId}: multiple active packages`);
     }
-    activePackages.set(taskId, activeList[0]);
+    const active = activeList[0];
+    if (active.manifest.schema_version === 3 && active.manifest.ranges["template-development"]?.changed_paths.some(isPackageStoragePath)) {
+      throw new Error(`Active package ${active.directoryName} template-development range contains package storage paths beneath changes/`);
+    }
+    assertPackagePublicSafe(active);
+    activePackages.set(taskId, active);
   }
 
   return { packages, byTaskId, activePackages };

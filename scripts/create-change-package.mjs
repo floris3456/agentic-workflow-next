@@ -5,7 +5,9 @@ import { basename, dirname, join, relative, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 import {
+  assertPackagePublicSafe,
   assertRemoteMatchesCanonical,
+  isPackageStoragePath,
   isTaskPackagePath,
   packageDigest,
   resolveSupersededPath,
@@ -73,7 +75,7 @@ function range(repository, base, head, label, env, filterFn) {
   } catch {
     fail(`${label} range base is not an ancestor of canonical head`);
   }
-  const rawNames = runGit(repository, ["diff", "--name-only", "-z", base, head, "--"], { encoding: "buffer", env });
+  const rawNames = runGit(repository, ["diff", "--no-renames", "--name-only", "-z", base, head, "--"], { encoding: "buffer", env });
   const allPaths = rawNames.toString("utf8").split("\0").filter(Boolean);
   const paths = filterFn ? allPaths.filter(filterFn).sort() : allPaths.sort();
   let patch = Buffer.alloc(0);
@@ -221,9 +223,9 @@ try {
     }
   }
 
-  const template = range(canonicalRepo, templateBase, templateHead, "template-development", env, (path) => !isTaskPackagePath(path, taskId));
-  if (template.paths.some((path) => isTaskPackagePath(path, taskId))) {
-    fail("template-development range must end before its own generated package storage");
+  const template = range(canonicalRepo, templateBase, templateHead, "template-development", env, (path) => !isPackageStoragePath(path));
+  if (template.paths.some(isPackageStoragePath)) {
+    fail("template-development range must not contain package storage paths beneath changes/");
   }
   const developer = range(canonicalRepo, developerBase, developerHead, "developer", env);
   const web = range(canonicalRepo, webBase, webHead, "web-orchestration", env);
@@ -293,6 +295,7 @@ try {
   writeFileSync(resolve(output, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
   const checked = validateChangePackage(output, taskId);
   if (!checked.provenanceVerified || checked.schemaVersion !== 3) fail("newly generated package did not validate as provenance schema 3");
+  assertPackagePublicSafe(checked);
   console.log(`Created provenance-verified template change package ${taskId}${targetRevision ? ` (rev ${targetRevision})` : ""}: template-development ${template.paths.length} path(s), developer ${developer.paths.length} path(s), web-orchestration ${web.paths.length} path(s).`);
 } finally {
   rmSync(temporary, { recursive: true, force: true });

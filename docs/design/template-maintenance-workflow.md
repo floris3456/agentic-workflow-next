@@ -31,16 +31,18 @@ operating workflow.
    supplied base and reviewed head must resolve exactly from fetched canonical
    objects; the base must be an ancestor of the reviewed head, and the reviewed
    head must be an ancestor of (or equal to) the current canonical tip. The
-   template-development reviewed head must precede the new package storage;
-   the generator automatically excludes the task's own package storage paths
-   (`changes/<task-id>*/**`) so prior package commits in the same task's review
-   range do not pollute `template-development.patch` or create circular
-   self-references. When superseding a previous package, store the new package in
-   a distinct directory (e.g. `changes/<task-id>.rev2/`) referencing the
-   superseded package with `--supersedes`, preserving the historical package
-   unchanged. Patch bytes are generated from those exact reviewed ranges using
-   only fetched canonical objects, so later unrelated branch commits are observed
-   but not silently added. Package range bases do not have to equal the
+   template-development reviewed head must precede the new package storage.
+   All paths beneath `changes/**` are ledger-only change-package storage and
+   are never included in any generated portable `template-development.patch`.
+   The generator computes changed paths with `--no-renames`, removes all
+   `changes/**` paths, and generates the patch from the remaining exact paths
+   using literal pathspecs (`:(literal)<path>`). When superseding a previous
+   package, store the new package in a distinct directory (e.g.
+   `changes/<task-id>.rev2/`) referencing the superseded package with
+   `--supersedes changes/<package-directory>`, preserving the historical
+   package unchanged. Patch bytes are generated from those exact reviewed ranges
+   using only fetched canonical objects, so later unrelated branch commits are
+   observed but not silently added. Package range bases do not have to equal the
    repository source snapshot, and that snapshot does not acquire a circular
    template-development/resulting-commit field.
 7. Validate the package offline. Schema 3 remains provenance-verified when the
