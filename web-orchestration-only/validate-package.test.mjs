@@ -83,6 +83,16 @@ test("routing contract uses only small and heavy", () => {
   assert.match(taskTemplate, /^- Small substantive-attempt count: 0 \| 1 \| 2$/m);
 });
 
+test("template maintenance keeps workspace authority while applying target rules", () => {
+  const maintenance = fs.readFileSync(path.join(root, "chatgpt-project", "skill-template-maintenance.md"), "utf8");
+  assert.match(maintenance, /For Workspace Maintenance[\s\S]{0,900}do \*\*not\*\* transfer the target branch's instruction\s+authority/i);
+  assert.match(maintenance, /apply relevant compatibility\/output requirements[\s\S]{0,700}file placement\/format[\s\S]{0,700}durable implementation truth[\s\S]{0,700}validation\/check requirements/i);
+  assert.match(maintenance, /adding a missing target file[\s\S]{0,500}placement[\s\S]{0,500}validation requirements/i);
+  assert.match(maintenance, /changing the target rule[\s\S]{0,500}read(?:ing)? the existing\s+rule[\s\S]{0,500}old rule as a veto/i);
+  assert.match(maintenance, /one Workspace handoff[\s\S]{0,500}Do not demand a second\s+handoff/i);
+  assert.match(maintenance, /target-specific durable record[\s\S]{0,500}without pretending Workspace\s+became the target agent/i);
+});
+
 test("rejects routing vocabulary outside small and heavy", () => {
   expectFailure((target) => {
     replace(target, "task-context/TEMPLATE.md", "- Selected developer: none | small | heavy", "- Selected developer: none | small | other");
