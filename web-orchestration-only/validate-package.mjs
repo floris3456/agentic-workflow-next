@@ -86,10 +86,10 @@ function taskContextInventory() {
       if (!text.startsWith(`# Task context: ${taskId}\n`)) fail(`${label} has the wrong task heading`);
       if (!text.includes(`- Task ID: ${taskId}\n`)) fail(`${label} has the wrong task identity`);
       if (!text.includes("## Routing\n")) fail(`${label} lacks integrated routing continuity`);
-      if (!/^- Selected developer: (?:none|Luna|Sol)$/m.test(text)) fail(`${label} lacks one concrete none/Luna/Sol route`);
+      if (!/^- Selected developer: (?:none|small|heavy)$/m.test(text)) fail(`${label} lacks one concrete none/small/heavy route`);
       if (!text.includes("- Related control issues:")) fail(`${label} lacks related-issue continuity`);
       if (!text.includes("- Highest accepted bridge sequence:")) fail(`${label} lacks derived sequence continuity`);
-      // Historical records may truthfully retain the retired mode field. New
+      // Historical records may truthfully retain retired routing fields. New
       // architecture is enforced by TEMPLATE.md and permanent package sources.
     }
   } catch (error) {
@@ -161,7 +161,7 @@ if (!/Repository file writes and GitHub Issue control\s+are distinct/i.test(inst
 if (!/Before emitting a final response[\s\S]{0,500}every route you launched must be\s+terminal and absorbed[\s\S]{0,500}active, unknown, indeterminate, or otherwise unresolved[\s\S]{0,500}continue reconciliation instead of ending[\s\S]{0,500}Elapsed time[\s\S]{0,300}never blockers or completion conditions/i.test(instructions)) {
   fail("Permanent instructions are missing the hard final-response reconciliation gate");
 }
-for (const stale of ["MCP-ON", "MCP-OFF", "MCP-ON/Sol", "MCP-OFF/Pro", "skill-mcp-"]) {
+for (const stale of ["MCP-ON", "MCP-OFF", "skill-mcp-"]) {
   if (instructions.includes(stale)) fail(`Permanent instructions retain stale mode architecture: ${stale}`);
 }
 for (const detail of ["agentic-bridge-command", "agentic-bridge-request", "command.status", "task.status", "promotion.apply"]) {
@@ -187,6 +187,7 @@ for (const [text, pattern, label] of [
   [workflow, /lookup answerable[\s\S]{0,220}Do not create a Scout, control\s+issue, task record/i, "quick fast path"],
   [workflow, /hardened Scout runtime ready[\s\S]{0,1200}never fall back to\s+ordinary developer OpenCode/i, "hardened Scout readiness boundary"],
   [workflow, /Direct GitHub:[\s\S]{0,900}Delegated developer:/i, "direct-versus-delegated implementation routes"],
+  [workflow, /Select `small` by default[\s\S]{0,700}Use `heavy` immediately[\s\S]{0,700}two substantive small-route failures/i, "small-heavy routing rule"],
   [workflow, /Conditional finalization[\s\S]{0,1400}Git blob OID/i, "conditional finalization proof"],
   [recovery, /never by replaying an\s+uncertain mutation/i, "uncertain-mutation no-replay"],
   [recovery, /command\.status[\s\S]{0,1200}task\.status/i, "durable status recovery"],
@@ -222,7 +223,7 @@ if (commandExamples.length !== 1) fail(`Workflow must contain exactly one comman
 for (const envelope of commandExamples) {
   if (!exactKeys(envelope, ["protocol", "sequence", "command_id", "task_id", "kind", "arguments", "expected"])) fail("Command example has incorrect top-level fields");
   if (envelope.protocol !== protocol || envelope.sequence !== 1 || envelope.kind !== "start") fail("Command example must be protocol start sequence 1");
-  if (!exactKeys(envelope.arguments, ["brief", "agent"]) || !["luna", "sol"].includes(envelope.arguments?.agent)) fail("Command example has invalid start arguments");
+  if (!exactKeys(envelope.arguments, ["brief", "agent"]) || !["small", "heavy"].includes(envelope.arguments?.agent)) fail("Command example has invalid small/heavy start arguments");
   if (!exactKeys(envelope.expected, ["developer_sha", "ref"]) || envelope.expected?.ref !== "developer" || !/^[0-9a-f]{40}$/.test(envelope.expected?.developer_sha ?? "")) fail("Command example has invalid expected guard");
 }
 
@@ -247,6 +248,8 @@ for (const stale of ["skill-mcp-on-", "skill-mcp-off-", "skill-prompt-destinatio
 }
 
 if (!taskTemplate.includes("- Material capability limits:")) fail("task-context/TEMPLATE.md must record only material capability limits");
+if (!/^- Selected developer: none \| small \| heavy$/m.test(taskTemplate)) fail("task-context/TEMPLATE.md must use only none/small/heavy developer routing");
+if (!/^- Small substantive-attempt count: 0 \| 1 \| 2$/m.test(taskTemplate)) fail("task-context/TEMPLATE.md must use small-route attempt continuity");
 if (taskTemplate.includes("Last orchestration mode") || /MCP-ON\s*\|\s*MCP-OFF/.test(taskTemplate)) fail("task-context/TEMPLATE.md retains mode metadata");
 if (!/Historical records remain truthful history/i.test(taskReadme)) fail("task-context README must preserve historical-record truth");
 if (!/do not snapshot the Project's transient tool\s+surface or create mode metadata/i.test(taskReadme)) fail("task-context README lacks transient-capability boundary");
@@ -274,4 +277,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log(`Orchestration package validation passed: ${skills.length} exact conditionally routed Project Sources, capability-local workflow, unified prompt creation/craft, integrated task continuity, and canonical evidence/safety/promotion boundaries.`);
+console.log(`Orchestration package validation passed: ${skills.length} exact conditionally routed Project Sources, capability-local workflow, small/heavy routing, unified prompt creation/craft, integrated task continuity, and canonical evidence/safety/promotion boundaries.`);
