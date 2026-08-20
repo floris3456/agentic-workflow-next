@@ -6,7 +6,7 @@ TEMPLATE-ROLE-ROUTING-CONTRACT-001
 
 ## Status
 
-queued
+in_progress
 
 ## Task-start template-development SHA
 
@@ -14,163 +14,169 @@ queued
 
 ## Review-base template-development SHA
 
-Not yet established. This task is queued and must establish a fresh exact remote
-`template-development` review base immediately before activation and source
-mutation.
+2e68078f542b811540e945ce6094e2d7841ac5f3
 
 ## Public-safe task brief
 
-Create one canonical, model-neutral role-selection contract across the web
-orchestrator, bridge protocol, concrete OpenCode agent inventory, architecture,
-and validators.
+Create one canonical role-selection contract across the web orchestrator, bridge
+protocol, concrete OpenCode agent inventory, branch-specific agent instructions,
+architecture, and validators.
 
-The current system has a real cross-branch contradiction: web-orchestration uses
-Luna/Sol language for implementation routing and its command example can send
-`agent: "luna"`, while the bridge command schema and implementation accept only
-`small|heavy`. Workspace heavy routing also maps to a concrete agent name that is
-not present in the current tracked template-development agent inventory.
+All routing language must use only `small` and `heavy`. Do not use model/provider
+names as routing vocabulary or explanatory routing labels. Concrete agent files
+may retain whatever runtime configuration they need internally, but their
+instructional prose and the cross-branch routing contract must describe their
+role only as small/heavy.
 
-The public routing vocabulary should be model-neutral. Model names are
-implementation details/descriptions, not protocol selector values. The web
-orchestrator owns route selection; implementation agents do not choose or
-recommend their own escalation.
+The web orchestrator owns route selection. Implementation/workspace agents do not
+choose or recommend their own escalation.
 
-Preferred smallest direction: keep the already-established bridge selector
-vocabulary `small|heavy`, make web instructions/examples/task continuity use that
-same vocabulary, and make each selector resolve to one exact tracked agent name.
-For workspace heavy routing, prefer mapping `heavy` to the existing tracked Sol
-workspace agent unless exact runtime/inventory evidence proves a rename is safer.
-Do not rename roles merely for cosmetic consistency.
+The bridge protocol already uses `small|heavy`; web instructions, continuity,
+validators, and branch-specific agent instructions must align with that contract.
+Every selector must resolve to one exact tracked agent that exists on the relevant
+branch.
+
+Preferred smallest direction:
+
+- developer `small` -> existing small developer agent;
+- developer `heavy` -> existing heavy developer agent;
+- workspace `small` -> existing small workspace maintainer agent;
+- workspace `heavy` -> existing workspace maintainer agent;
+- do not rename agent files merely for cosmetic consistency when a mapping change
+  is sufficient and safer.
 
 ## Current objective
 
-When this queued task is activated, remove selector/agent-name drift and add a
-cross-branch regression that fails whenever web instructions, protocol schema,
-bridge mapping, or tracked agent inventory disagree.
+Remove routing-language drift and make small/heavy the only routing vocabulary
+through the full path:
+
+web decision -> public command -> bridge schema -> bridge mapping -> tracked
+agent instructions/inventory.
 
 ## Current position
 
-Planning-only task record. No source mutation has been made for this task.
+The human explicitly authorized the web orchestrator to implement this task
+directly after the handoff-reasoning source work became non-mutating.
 
-Exact evidence at task creation:
+Exact refs at activation:
 
 - `main`: `6127611113dfdb66f93a0cfd2d355359aa370833`
 - `developer`: `c6b747f00ad7509c1340fc11fca1466abb8eb1f9`
-- `web-orchestration`: `64e9aacd0168053d5be5b4931d9d22cb5762edb7`
-- `template-development`: task record created from
-  `448f7a74f14f32a051b60eefd375812664393ed6`
+- `web-orchestration`: `cc5a521c70f4198947ec0360cf60cb95876dff3b`
+- `template-development`: `2e68078f542b811540e945ce6094e2d7841ac5f3`
 
-Current conflicting evidence includes:
+Expected source authorities:
 
-- `web-orchestration-only/chatgpt-project/skill-workflow.md` selects Luna/Sol and
-  contains a start example using `agent: "luna"`.
-- `web-orchestration-only/validate-package.mjs` validates the web example against
-  Luna/Sol rather than the bridge protocol selector vocabulary.
-- `contracts/opencode-bridge/command.schema.json` permits only `small|heavy`.
-- `tools/opencode-bridge/src/commands.ts` accepts only `small|heavy` and maps
-  those selectors to concrete agent names.
-- developer concrete agents are `small-developer` and `large-developer`.
-- template-development currently tracks `small-workspace-maintainer`,
-  `workspace-maintainer`, and `template-maintainer`, while the bridge heavy
-  workspace mapping names `heavy-workspace-maintainer`.
-- `docs/architecture/agent-system.md` contains role naming that must be reconciled
-  with the actual tracked inventory and bridge mapping.
+- `web-orchestration`: routing prose, command example, task continuity, package
+  validator/tests;
+- `developer`: bridge concrete mapping, developer agent instruction prose,
+  protocol/architecture/integration checks where they encode the contract;
+- `template-development`: workspace agent instruction prose, workspace/maintenance
+  architecture and validators where they encode the contract.
+
+No `main` mutation is authorized.
 
 ## Source ranges
 
-No task source ranges have started. Establish exact bases at activation.
-
-Planning refs only:
-
-- `developer`: `c6b747f00ad7509c1340fc11fca1466abb8eb1f9`
-- `web-orchestration`: `64e9aacd0168053d5be5b4931d9d22cb5762edb7`
-- `template-development`: `448f7a74f14f32a051b60eefd375812664393ed6`
+Task source ranges start from the activation refs above. Final reviewed heads are
+not yet established.
 
 ## Observed
 
-- The web and bridge currently use different selector vocabularies for the same
-  start operation.
-- A web-orchestrator command can therefore be valid under the web package's own
-  validator and still be rejected by the bridge schema.
-- The bridge's heavy workspace mapping names a role that is not present in the
-  tracked template-development agent inventory.
-- Current validation is mostly branch-local; each branch can validate its own
-  representation while the cross-branch contract is broken.
-- The repository already has a developer-side cross-branch integration validator,
-  but its current assumptions/source discovery must be reviewed against the
-  present five-source web package before relying on it as the canonical guard.
-- The human confirmed this is a real structural issue.
+- The bridge command schema uses only `small|heavy`.
+- The web workflow still uses a different routing vocabulary and its start command
+  example does not match the bridge selector contract.
+- The web task-context template and standalone validator repeat the old routing
+  vocabulary.
+- The bridge heavy workspace mapping points to a concrete agent name that is not
+  present in the tracked template-development agent inventory.
+- Some branch-specific agent descriptions/prose still describe implementation
+  roles through runtime/model specifics instead of the small/heavy role contract.
+- Architecture records also contain obsolete routing/model descriptions that can
+  confuse future maintenance even when runtime code is correct.
+- The human explicitly requires no model-specific routing language for now: only
+  small/heavy.
 
 ## Interpretation
 
-Role selection is one cross-branch contract and needs one canonical vocabulary.
-A selector should survive this whole path without translation ambiguity:
+Role selection is one cross-branch contract. The user-facing and instruction-level
+selector vocabulary should remain stable even if runtime implementation details
+change later.
 
-web route decision -> public command -> bridge schema -> bridge concrete mapping
--> tracked OpenCode agent.
-
-Model/provider names may change without changing the public selector. Concrete
-agent filenames may also evolve, but the bridge mapping and validators must point
-to roles that actually exist at the exact reviewed refs.
+Concrete file names do not have to match public selector words if the bridge owns
+an explicit, validated mapping. Renaming stable agent files purely for naming
+symmetry would add unnecessary compatibility risk.
 
 ## Attempts
 
 1. A read-only role/handoff stress test compared web instructions, bridge schema,
-   bridge runtime mapping, architecture, and current agent inventories.
-2. The stress test reproduced deterministic failure for a web command using the
-   current `agent: "luna"` example and found the missing heavy workspace target.
-3. The human accepted the finding and requested a proper task record before any
-   implementation.
+   runtime mapping, architecture, and current agent inventories.
+2. The test found deterministic selector mismatch and a missing heavy workspace
+   mapping target.
+3. The human accepted the issue, required small/heavy-only language, and
+   authorized direct implementation.
 
 ## Changed approach
 
-None. This is a newly queued maintenance task.
+The earlier planning record allowed model names as descriptions. The human has
+now tightened the desired contract: instruction/routing language should use only
+small/heavy. Runtime configuration fields may remain internal implementation
+configuration where required by OpenCode, but they must not define or explain
+routing semantics.
 
 ## Checks
 
-Planning-only evidence review completed against exact remote files/refs.
-No implementation checks have run because no task source mutation has started.
+Planning evidence reviewed against exact activation refs.
+Implementation checks have not yet run.
 
 ## Blockers / required decisions
 
-- No human design decision is currently required.
-- This task must remain non-mutating until the currently active template-
-  maintenance task is completed/finalized or the human explicitly reprioritizes
-  the active task.
+- No human design decision remains for this task.
+- No `main` or destructive action is authorized.
+- Portable package generation remains a later networked-maintainer step and does
+  not block source correction/review.
 
 ## Remaining work
 
-1. Re-establish exact live refs and activate this task with a fresh review base.
-2. Define one canonical public selector vocabulary, expected to be `small|heavy`.
-3. Reconcile web instructions/examples/continuity, bridge schema/runtime mapping,
-   agent inventory, and architecture with that contract.
-4. Resolve the heavy workspace concrete agent mapping without unnecessary role
-   renaming or compatibility churn.
-5. Update or replace the cross-branch integration regression so it validates the
-   current web package against the current bridge schema and proves every mapped
-   concrete agent exists.
-6. Run authoritative branch checks, independently review exact source ranges,
-   package the reviewed change, and complete normal maintenance handoff.
+1. Change web workflow routing prose and start example to small/heavy only.
+2. Change web task continuity and validator/tests to small/heavy only.
+3. Change branch-specific developer/workspace agent instructional prose so their
+   role identity is small/heavy without model-specific explanation.
+4. Fix the bridge heavy workspace mapping to the existing tracked workspace
+   maintainer rather than inventing a missing role.
+5. Update architecture/protocol/integration validation where they encode obsolete
+   role-selection or concrete-mapping facts.
+6. Add cross-branch regression coverage proving current web command values are
+   schema-valid and every bridge mapping points to an actual tracked agent.
+7. Run authoritative branch checks where observable and independently review the
+   exact ranges on all changed branches.
+8. Mark source work complete/package pending, then activate the authorized
+   Workspace target-rule task.
 
 ## Next action
 
-Remain queued. On activation, first re-read current role inventories and the exact
-bridge/web selector contracts before choosing the smallest compatibility-safe
-implementation.
+Inspect every current small/heavy selector consumer and concrete agent mapping,
+then publish the smallest cross-branch correction without renaming stable agents
+unless exact evidence makes a rename necessary.
 
 ## Relevant durable records
 
 - `web-orchestration-only/chatgpt-project/skill-workflow.md`
+- `web-orchestration-only/task-context/TEMPLATE.md`
 - `web-orchestration-only/validate-package.mjs`
+- `web-orchestration-only/validate-package.test.mjs`
 - `contracts/opencode-bridge/command.schema.json`
+- `contracts/opencode-bridge/protocol.md`
 - `tools/opencode-bridge/src/commands.ts`
 - `.opencode/agents/small-developer.md`
 - `.opencode/agents/large-developer.md`
 - `.opencode/agents/small-workspace-maintainer.md`
 - `.opencode/agents/workspace-maintainer.md`
 - `docs/architecture/agent-system.md`
+- `docs/architecture/opencode-bridge.md`
+- `docs/architecture/AS-BUILT.md` on `template-development`
 - `scripts/validate-web-orchestrator-integration.mjs`
-- `docs/deviations.md`
+- `scripts/validate-template-development.mjs`
 
 ## Last handoff commit
 
