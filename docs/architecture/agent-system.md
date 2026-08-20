@@ -41,6 +41,8 @@ Both implementation developers explicitly allow OpenCode's structured question t
 
 The bridge is transport and local durability, not a new authority. It maps public task aliases to private OpenCode sessions, projects bounded status, and invokes the selected small or heavy implementation route against the same loopback server a human can attach to with the normal TUI. Direct GitHub inspection remains the proof route.
 
+Routing policy is web-side and intentionally is not frozen through a validator that counts agent files.
+
 ## Branches
 
 - `developer`: active implementation and task-progress.
@@ -54,7 +56,7 @@ No normal merge crosses between `web-orchestration` and implementation branches.
 
 The OpenCode Scout request lane remains separate from mutating task progress, finalization, or promotion. Each request names a focused question, exact remote developer SHA, scope, and expected evidence, and concurrent request admission and task/request status remain durable. Snapshot preparation uses `ls-tree` and `cat-file` against canonical `origin/developer`, not checkout/worktree, rejects gitlinks and `.git`, strips write/execute bits, and preserves symlinks only as evidence. Every reuse is fully revalidated; historical worktree mappings fail closed.
 
-The separate pinned endpoint executes outside `repository_root` with sterile HOME/XDG/temp/environment, explicit provider auth, read-only trusted config, project/default-plugin/external-skill/watcher/LSP/formatter disablement, managed-config redirection into the immutable runtime, and no normal-server fallback. Bootstrap actively probes installation hashes, exact OpenAPI/version, the read-only Scout prompt/permissions, and tool inventory. Trusted tools never follow symlinks, enforce realpath containment and bounded UTF-8 operations, and expose no process/package/network API. Runtime absence or misconfiguration fails only Scout operation closed; normal developer OpenCode and TUI behavior remain unchanged.
+The separate pinned `1.18.16` endpoint executes outside `repository_root` with sterile HOME/XDG/temp/environment, explicit provider auth, read-only trusted config, project/default-plugin/external-skill/watcher/LSP/formatter disablement, managed-config redirection into the immutable runtime, and no normal-server fallback. Bootstrap actively probes installation hashes, exact OpenAPI/version, the read-only Scout prompt/permissions, and tool inventory. Trusted tools never follow symlinks, enforce realpath containment and bounded UTF-8 operations, and expose no process/package/network API. Runtime absence or misconfiguration fails only Scout operation closed; normal developer OpenCode and TUI behavior remain unchanged.
 
 The configured optional symbol scout is likewise non-authoritative context. `.jcodemunch.jsonc` uses strict freshness and excludes evidence, research, archives, and retired local handoffs to improve relevance and minimize indexed data. A timeout may return an older index, so freshness must be checked before relying on it after edits. Provider, credential, and machine-service configuration remain outside Git and must be reviewed by the operator before use.
 
