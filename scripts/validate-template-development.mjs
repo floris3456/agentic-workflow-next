@@ -23,6 +23,7 @@ const required = [
   "scripts/bootstrap-template-development.sh", "scripts/recover-template-development-sync.sh",
   "scripts/validate-template-development.sh", "tests/change-package.test.mjs",
   "scripts/validate-workspace-opencode-runtime.mjs", "tests/workspace-maintenance.test.mjs",
+  "tests/workspace-target-rules.test.mjs",
 ];
 for (const path of required) if (!existsSync(join(root, path))) fail(`Missing required path: ${path}`);
 
@@ -99,7 +100,10 @@ for (const route of workspaceAgentRoutes) {
     "workspace_grep: allow", "workspace_exec: allow", "workspace_publish: allow",
     "workspace_bridge_inspect: allow", "workspace_bridge_start: ask", "workspace_bridge_reconcile: allow",
     "load\n`workspace-maintenance`",
-    "Reading them never transfers",
+    "relevant target evidence",
+    "target task lifecycle",
+    "old rule veto its own authorized modification",
+    "completion contract is owned by `workspace-maintenance`",
   ]) if (!agent.includes(term)) fail(`${route.path} is missing required boundary: ${term}`);
   if (!agent.includes(`You are the ${route.role} repository-wide Workspace Maintenance Agent`)) {
     fail(`${route.path} does not identify the ${route.role} routing role`);
@@ -119,7 +123,9 @@ if (existsSync(join(root, "AGENTS.md"))) {
     "Workspace Maintenance uses only the public selectors `small` and `heavy`",
     "small-workspace-maintainer", "`workspace-maintainer`",
     "Both Workspace Maintenance agents are the explicit exception", "OpenCode project remains",
-    "inspectable evidence only", "does not transfer", "human exact-SHA boundary",
+    "Target-branch instructions are still important evidence",
+    "does not transfer instruction authority", "target task lifecycle", "target handoff shape",
+    "old rule", "cannot veto its own authorized modification", "human exact-SHA boundary",
     ".opencode/skills/workspace-maintenance/SKILL.md",
   ]) if (!instructions.includes(term)) fail(`AGENTS.md is missing workspace route boundary: ${term}`);
 }
@@ -128,11 +134,29 @@ if (existsSync(join(root, ".opencode/skills/workspace-maintenance/SKILL.md"))) {
   const skill = read(".opencode/skills/workspace-maintenance/SKILL.md");
   for (const term of [
     "name: workspace-maintenance", "Remain in the OpenCode project",
-    "Reading them never transfers instruction authority", "git worktree list --porcelain -z",
-    "Targets are selected only by a registered local branch name",
+    "target evidence and compatibility/output", "never transfers instruction authority",
+    "target task lifecycle", "Add a missing file", "Change the rule that governs file creation",
+    "A Workspace handoff is the only agent handoff", "second developer-agent",
+    "git worktree list --porcelain -z", "Targets are selected only by a registered local branch name",
     "exact returned `head` and `status_digest`", "Never mutate or promote",
     "explicit human exact-SHA authority", "failed or ambiguous push stops",
   ]) if (!skill.includes(term)) fail(`workspace-maintenance skill is missing required boundary: ${term}`);
+}
+
+if (existsSync(join(root, ".opencode/skills/template-maintenance/SKILL.md"))) {
+  const skill = read(".opencode/skills/template-maintenance/SKILL.md");
+  for (const term of [
+    "When source work executes in a source branch's own authoritative context",
+    "When the selected route is Workspace Maintenance",
+    "do not inherit the target",
+    "target agent/task/handoff procedure",
+    "target compatibility/output obligations",
+    "A Workspace-routed source task uses the Workspace completion shape",
+    "does not create a second",
+  ]) if (!skill.includes(term)) fail(`template-maintenance skill is missing route-sensitive source boundary: ${term}`);
+  if (/Follow each source branch's own agent instructions[\s\S]{0,200}regardless of execution\s+route/i.test(skill)) {
+    fail("template-maintenance skill still applies target agent workflow regardless of execution route");
+  }
 }
 
 if (existsSync(join(root, ".opencode/plugins/workspace-maintenance.ts"))) {
