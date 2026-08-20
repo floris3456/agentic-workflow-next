@@ -49,14 +49,20 @@ test("canonical package validates", () => {
   assert.match(result.stdout, /unified prompt creation\/craft/);
 });
 
-test("canonical push CI is read-only and reaches validator plus discovered Node tests", () => {
+test("canonical push CI is read-only except exact-SHA status reporting", () => {
   const workflow = fs.readFileSync(path.join(root, "..", ".github", "workflows", "validate-web-orchestration.yml"), "utf8");
   assert.match(workflow, /push:\s*\n\s+branches:\s*\[web-orchestration\]/);
-  assert.match(workflow, /permissions:\s*\n\s+contents:\s+read/);
+  assert.match(workflow, /permissions:\s*\n\s+contents:\s+read\s*\n\s+statuses:\s+write/);
   assert.match(workflow, /persist-credentials:\s*false/);
   assert.match(workflow, /run:\s+node web-orchestration-only\/validate-package\.mjs/);
   assert.match(workflow, /run:\s+node --test\s*(?:\n|$)/);
-  assert.doesNotMatch(workflow, /\bwrite\b/);
+  assert.match(workflow, /Publish exact-SHA validation status/);
+  assert.match(workflow, /always\(\) && github\.event_name == 'push'/);
+  assert.match(workflow, /agentic-template\/validate-web-orchestration/);
+  assert.match(workflow, /statuses\/\$\{GITHUB_SHA\}/);
+  assert.match(workflow, /Authorization: Bearer \$\{GH_STATUS_TOKEN\}/);
+  assert.match(workflow, /actions\/runs\/\$\{\{ github\.run_id \}\}/);
+  assert.doesNotMatch(workflow, /contents:\s*write/);
   assert.doesNotMatch(workflow, /\bsecrets\./);
 });
 
