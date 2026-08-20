@@ -51,14 +51,17 @@ range is independently reviewed against exact remote GitHub.
 
 ## Workspace Maintenance Agent
 
-`workspace-maintainer` is a dedicated Sol/high primary agent whose OpenCode
-project remains the registered `template-development` worktree for its whole
-session. Unlike the generic `template-maintainer` source route, it does not enter
-another worktree's OpenCode context or inherit that target's agent workflow. Its
-stable repository instruction authority is the template-development root
-`AGENTS.md`, its own agent definition, and the `workspace-maintenance` skill.
-Target `AGENTS.md`, skills, agents, and other instruction-shaped files remain
-inspectable compatibility evidence only.
+Workspace Maintenance exposes only the public routes `small` and `heavy`.
+`small` maps to `small-workspace-maintainer`; `heavy` maps to
+`workspace-maintainer`. The web orchestrator selects the route and neither agent
+selects or recommends its own escalation. Both agents keep their OpenCode project
+rooted in the registered `template-development` worktree for the whole session.
+Unlike the generic `template-maintainer` source route, they do not enter another
+worktree's OpenCode context or inherit that target's agent workflow. Their stable
+repository instruction authority is the template-development root `AGENTS.md`,
+the selected agent definition, and the `workspace-maintenance` skill. Target
+`AGENTS.md`, skills, agents, and other instruction-shaped files remain inspectable
+compatibility evidence only.
 
 The template-development-owned OpenCode plugin exposes `workspace_list`,
 `workspace_inspect`, `workspace_read`, `workspace_write`, `workspace_delete`,
