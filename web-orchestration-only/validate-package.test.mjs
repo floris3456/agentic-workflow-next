@@ -59,6 +59,13 @@ test("canonical push CI is read-only and reaches validator plus discovered Node 
   assert.doesNotMatch(workflow, /\bsecrets\./);
 });
 
+test("workflow requires orchestrator analysis before forwarding blocker handoffs", () => {
+  const workflow = fs.readFileSync(path.join(root, "chatgpt-project", "skill-workflow.md"), "utf8");
+  assert.match(workflow, /Treat every developer handoff as a claim to evaluate[\s\S]{0,900}`blocked` or `needs decision`[\s\S]{0,900}investigate the claimed blocker yourself before steering or escalating/i);
+  assert.match(workflow, /consult relevant accepted architecture, design, and deviation[\s\S]{0,900}implementation misunderstanding[\s\S]{0,900}orchestration\/design problem/i);
+  assert.match(workflow, /Repeated or similar blockers raise the bar[\s\S]{0,700}deeper orchestrator analysis[\s\S]{0,900}human-owned decision[\s\S]{0,900}unavailable required capability/i);
+});
+
 test("rejects a superseded MCP skill in the package inventory", () => {
   expectFailure((target) => {
     fs.writeFileSync(path.join(target, "chatgpt-project", "skill-mcp-on-workflow.md"), "# stale\n");
