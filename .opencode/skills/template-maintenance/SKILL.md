@@ -34,9 +34,19 @@ compatibility: template-development ledger branch
   package machinery, and their cross-branch records on `template-development`.
   Treat those files as this branch's intentional maintenance implementation, not
   as copied developer or web source.
-- Follow each source branch's own agent instructions, task lifecycle, AS-BUILT,
-  deviations, push recovery, and review boundaries regardless of execution
-  route.
+- When source work executes in a source branch's own authoritative context,
+  follow that branch's normal agent/task lifecycle, AS-BUILT/deviation,
+  synchronization, validation, and review boundaries.
+- When the selected route is Workspace Maintenance, do not inherit the target
+  branch's agent/task/handoff procedure. The Workspace authority contract in
+  `AGENTS.md` and `workspace-maintenance` remains controlling. Read target rules
+  as evidence and apply relevant target compatibility/output obligations,
+  including public safety, `main` authority, synchronization, file/format
+  requirements, durable implementation truth, and relevant validation. A target
+  record may be maintained as an output artifact when required without adopting
+  the target agent workflow. If the task intentionally changes a target rule,
+  read the old rule for existing behavior/impact but do not let it veto its own
+  authorized modification.
 - Treat source commits as implementation evidence only after remote readback.
 - A change may have independently pushed/reviewed `template-development`,
   `developer`, and `web-orchestration` ranges. It is not made atomic by merging
@@ -99,6 +109,12 @@ Task record:
 `completed` requires the exact pushed ledger SHA; all other statuses use `none`.
 A `completed` handoff ends the working cycle but does not by itself finalize or
 archive the task record.
+
+A Workspace-routed source task uses the Workspace completion shape defined by
+`workspace-maintenance`; changing a target branch does not create a second
+handoff obligation for that target's normal agent. The web reviewer still
+independently reviews each exact pushed target SHA and applicable target
+constraints.
 
 ## Finalization
 
