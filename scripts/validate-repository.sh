@@ -6,6 +6,7 @@ cd "$repo_root"
 
 node scripts/validate-preimplementation.mjs
 node scripts/validate-agent-system.mjs
+node scripts/validate-ci-status.mjs
 
 node scripts/validate-research.mjs
 node scripts/generate-research-evidence-manifest.mjs --check
