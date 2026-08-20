@@ -4,7 +4,7 @@
   "recorded_at": "2026-08-20T22:13:29Z",
   "sources": {
     "main": "6127611113dfdb66f93a0cfd2d355359aa370833",
-    "developer": "593ce467d7f529978463bbd436b5f36ce040fcf4",
+    "developer": "1bd5cbaefcd01245e181dfc7319ae04e2d2e0c68",
     "web-orchestration": "3b534650f886bcd8b0644bcf8393f5b9ab48b4d2"
   },
   "last_reconciled_task": "TEMPLATE-ROLE-ROUTING-CONTRACT-001",
