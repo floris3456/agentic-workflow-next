@@ -55,12 +55,43 @@ Choose each source execution route proportionally:
   remote readback plus focused checks can prove the result more simply;
 - use the repository's isolated/local maintainer or delegated developer route
   when local context/tools, interacting changes, nontrivial generation/tests,
-  uncertainty, or independent implementation materially improves confidence.
+  uncertainty, or independent implementation materially improves confidence;
+- use Workspace Maintenance when the template-development-rooted workspace
+  authority and its verified cross-worktree tools are the appropriate execution
+  surface.
 
 Only one mutating source route runs at a time. Read-only Scouts may overlap when
-the normal workflow's hardened Scout boundary is available and useful. Follow
-each source branch's own task/durable-record, AS-BUILT/deviation,
-synchronization, and validation rules regardless of execution route.
+the normal workflow's hardened Scout boundary is available and useful.
+
+For direct/delegated work executing in a source branch's own authoritative
+context, follow that branch's normal task/durable-record, AS-BUILT/deviation,
+synchronization, validation, and review procedure.
+
+For Workspace Maintenance, do **not** transfer the target branch's instruction
+authority or automatically require its agent/task/handoff lifecycle. Workspace
+continues under the template-development root, selected Workspace agent,
+`workspace-maintenance` skill, and bounded orchestrator request. Inspect target
+rules as evidence and apply relevant compatibility/output requirements to the
+resulting branch state, including applicable public safety, `main` authority,
+synchronization, file placement/format, durable implementation truth, and
+validation/check requirements. A target-specific durable record may be created
+or updated as an output artifact when required without pretending Workspace
+became the target agent. If the requested task intentionally changes a target
+rule itself, read the old rule to understand current behavior and impact, but do
+not let it veto its own authorized modification.
+
+Use the practical distinction explicitly:
+
+- adding a missing target file normally follows applicable target placement,
+  format, record, and validation requirements;
+- changing the target rule that governs such a file requires reading the existing
+  rule, then making the authorized rule change under Workspace authority rather
+  than treating the old rule as a veto.
+
+A Workspace-routed task produces one Workspace handoff. Do not demand a second
+handoff from the target branch's normal agent merely because Workspace published
+a target commit. Independently review the exact pushed target SHA and the
+applicable target constraints instead.
 
 When a source or maintainer handoff reports `blocked` or `needs decision`, apply
 the permanent claim-first rule before forwarding the proposed next step. Normally
