@@ -61,7 +61,7 @@ function exact(value, label) {
   return value;
 }
 
-function range(repository, base, head, label, env, excludePrefixes) {
+function range(repository, base, head, label, env, filterFn) {
   const resolvedBase = runGit(repository, ["rev-parse", `${base}^{commit}`], { env }).trim();
   const resolvedHead = runGit(repository, ["rev-parse", `${head}^{commit}`], { env }).trim();
   if (resolvedBase !== base || resolvedHead !== head) fail(`${label} range did not resolve exactly from canonical fetch`);
@@ -73,15 +73,15 @@ function range(repository, base, head, label, env, excludePrefixes) {
   } catch {
     fail(`${label} range base is not an ancestor of canonical head`);
   }
-  const prefixList = Array.isArray(excludePrefixes)
-    ? excludePrefixes
-    : excludePrefixes ? [excludePrefixes] : [];
-  const pathspec = prefixList.length > 0
-    ? ["--", ".", ...prefixList.map((prefix) => `:(exclude)${prefix}`)]
-    : ["--"];
-  const patch = runGit(repository, ["diff", "--binary", "--full-index", "--no-renames", base, head, ...pathspec], { env });
-  const rawNames = runGit(repository, ["diff", "--name-only", "-z", base, head, ...pathspec], { encoding: "buffer", env });
-  const paths = rawNames.toString("utf8").split("\0").filter(Boolean).sort();
+  const rawNames = runGit(repository, ["diff", "--name-only", "-z", base, head, "--"], { encoding: "buffer", env });
+  const allPaths = rawNames.toString("utf8").split("\0").filter(Boolean);
+  const paths = filterFn ? allPaths.filter(filterFn).sort() : allPaths.sort();
+  let patch = Buffer.alloc(0);
+  if (paths.length > 0) {
+    const pathspecs = paths.map((p) => `:(literal)${p}`);
+    const rawPatch = runGit(repository, ["diff", "--binary", "--full-index", "--no-renames", base, head, "--", ...pathspecs], { encoding: "buffer", env });
+    patch = Buffer.from(rawPatch);
+  }
   return { patch, paths };
 }
 
@@ -221,21 +221,15 @@ try {
     }
   }
 
-  const taskExcludePatterns = [
-    `changes/${taskId}`,
-    `changes/${taskId}.*`,
-    `changes/${taskId}-rev*`,
-    `changes/${taskId}-r*`,
-  ];
-  const template = range(canonicalRepo, templateBase, templateHead, "template-development", env, taskExcludePatterns);
+  const template = range(canonicalRepo, templateBase, templateHead, "template-development", env, (path) => !isTaskPackagePath(path, taskId));
   if (template.paths.some((path) => isTaskPackagePath(path, taskId))) {
     fail("template-development range must end before its own generated package storage");
   }
   const developer = range(canonicalRepo, developerBase, developerHead, "developer", env);
   const web = range(canonicalRepo, webBase, webHead, "web-orchestration", env);
-  const templatePatch = Buffer.from(template.patch);
-  const developerPatch = Buffer.from(developer.patch);
-  const webPatch = Buffer.from(web.patch);
+  const templatePatch = template.patch;
+  const developerPatch = developer.patch;
+  const webPatch = web.patch;
   const sourceDate = process.env.SOURCE_DATE_EPOCH;
   const createdAt = sourceDate && /^\d+$/.test(sourceDate)
     ? new Date(Number(sourceDate) * 1000).toISOString()

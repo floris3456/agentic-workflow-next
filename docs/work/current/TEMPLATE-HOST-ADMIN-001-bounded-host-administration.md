@@ -32,7 +32,7 @@ outside this task.
 ## Current objective
 
 Package and hand off the corrected bounded host-administration capability with
-superseding change package and verified workspace maintenance tool route.
+active rev4 change package and verified workspace maintenance tool route.
 
 ## Current position
 
@@ -44,11 +44,10 @@ Exact canonical source refs independently established:
 - `template-development`: `af4813144c15e5f4f93a39c61e8453d8571d5b94`
 
 The bounded-host-administration source corrections have been completed and
-verified across all branches. The historical change package at
-`changes/TEMPLATE-HOST-ADMIN-001/` remains immutable historical evidence. The
-corrected change package has been generated and validated as
-`changes/TEMPLATE-HOST-ADMIN-001.rev2/` with provenance schema 3 and an explicit
-supersession link to the historical package.
+verified across all branches. The active change package is
+`changes/TEMPLATE-HOST-ADMIN-001.rev4/`, generated from the exact reviewed
+source ranges without absorbing later unrelated work. Historical packages remain
+immutable historical evidence.
 
 The normal Workspace Maintenance tool route has been independently verified
 through `TemplateDevelopmentWorktreeResolver` and pinned OpenCode 1.18.16 session
@@ -103,18 +102,18 @@ creation rooted in `template-development`.
    `AGENTIC_WORKFLOW_LIVE_BRIDGE_MUTATION_ACCEPTANCE=1`; it is not matched by the
    canonical `tests/*.test.mjs` default suite.
 6. **Operator contract:** `.opencode/skills/workspace-maintenance/SKILL.md` and
-   `docs/deviations.md` now state the live-read, exact service binding,
-   identity/health, and explicit live-mutation boundaries. The cross-branch
+   `docs/deviations.md` now state the live-read, exact service binding,\n   identity/health, and explicit live-mutation boundaries. The cross-branch
    `docs/architecture/AS-BUILT.md` remained accurate at its architecture level and
    did not require a material rewrite for these implementation-level corrections.
 
 ### Package state
 
-- Historical package: `changes/TEMPLATE-HOST-ADMIN-001/` remains unchanged as
-  immutable historical evidence (schema 3, rev 1, `package_sha256: 64354b1b...`).
-- Corrected package: `changes/TEMPLATE-HOST-ADMIN-001.rev2/` generated from exact
-  corrected reviewed ranges, validated as provenance schema 3, with explicit
-  `supersedes` metadata binding the historical package SHA-256 digest.
+- Historical packages (immutable historical evidence):
+  - `changes/TEMPLATE-HOST-ADMIN-001/` (schema 3, rev 1, `package_sha256: 64354b1b...`, rejected during initial review)
+  - `changes/TEMPLATE-HOST-ADMIN-001.rev2/` (schema 3, rev 2, superseded)
+  - `changes/TEMPLATE-HOST-ADMIN-001.rev3/` (schema 3, rev 3, superseded; had widened range)
+- Active package:
+  - `changes/TEMPLATE-HOST-ADMIN-001.rev4/` (schema 3, rev 4, exact reviewed endpoints, `package_sha256: 6a5f48f6...`, supersedes rev 3)
 
 ### Workspace Maintenance tool route verification
 
@@ -122,15 +121,15 @@ creation rooted in `template-development`.
   `~/.config/agentic-workflow/opencode-bridge.json` and worktree pointers.
 - Verified `TemplateDevelopmentWorktreeResolver` against actual repository
   worktrees and pinned OpenCode 1.18.16 server.
-- Verified that a pinned OpenCode 1.18.16 session rooted in the registered
+- Verified a pinned OpenCode 1.18.16 session rooted in the registered
   template-development worktree succeeds, with full discovery of workspace tools
   and permissions.
 
 ## Interpretation
 
 All 10 source defects have been corrected and verified across both branches. The
-package supersession mechanism enables the corrected package to coexist with the
-historical package while preserving immutable historical evidence and allowing
+package supersession mechanism enables the active rev4 package to coexist with
+historical packages while preserving immutable historical evidence and allowing
 deterministic downstream resolution. The workspace maintenance execution route
 is proven healthy.
 
@@ -141,7 +140,7 @@ is proven healthy.
 3. Updated `workspace-maintenance-host.mjs` on `template-development` with real `BridgeState` queries, `ask` permission, post-start health checks, strict unit bindings, and developer synchronization proof.
 4. Expanded test suite with 20 test suites on `template-development` and 123 tests on `developer`.
 5. Implemented package supersession in `create-change-package.mjs` and `change-package-lib.mjs`.
-6. Generated corrected change package `changes/TEMPLATE-HOST-ADMIN-001.rev2/`.
+6. Generated corrected active change package `changes/TEMPLATE-HOST-ADMIN-001.rev4/`.
 7. Verified workspace tool route into actual OpenCode session.
 
 ## Changed approach
@@ -153,7 +152,7 @@ None.
 - `developer`: `npm test` (123 tests) and `./scripts/validate-repository.sh` passed.
 - `template-development`: `node --test tests/*.test.mjs` (20 tests) and `./scripts/validate-template-development.sh` passed.
 - `git diff --check`: clean across all branches.
-- Real OpenCode 1.18.16 session created rooted in `template-development`.
+- Real OpenCode 1.18.16 session verified rooted in `template-development`.
 
 ## Blockers / required decisions
 
@@ -176,6 +175,7 @@ Handoff with status `completed`.
 - `changes/TEMPLATE-HOST-ADMIN-001/manifest.json`
 - `changes/TEMPLATE-HOST-ADMIN-001.rev2/manifest.json`
 - `changes/TEMPLATE-HOST-ADMIN-001.rev3/manifest.json`
+- `changes/TEMPLATE-HOST-ADMIN-001.rev4/manifest.json`
 
 ## Last handoff commit
 

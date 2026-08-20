@@ -1,0 +1,89 @@
+{
+  "schema_version": 3,
+  "task_id": "TEMPLATE-HOST-ADMIN-001",
+  "revision": 4,
+  "supersedes": {
+    "package_path": "changes/TEMPLATE-HOST-ADMIN-001.rev3",
+    "package_sha256": "5c5ec94dc938c2edb4da5aa5f481afdc82656b1904fbda704a2d8146dec42800",
+    "revision": 3
+  },
+  "canonical_repository": "https://github.com/floris3456/agentic-workflow-template.git",
+  "created_at": "2026-08-20T14:05:01.267Z",
+  "provenance": {
+    "mode": "canonical-remote-fetch-v2",
+    "source_lock": {
+      "schema_version": 1,
+      "canonical_repository": "https://github.com/floris3456/agentic-workflow-template.git",
+      "recorded_at": "2026-08-20T13:40:00Z",
+      "sources": {
+        "main": "6127611113dfdb66f93a0cfd2d355359aa370833",
+        "developer": "c6b747f00ad7509c1340fc11fca1466abb8eb1f9",
+        "web-orchestration": "7e29c07e6ac9fc65a2cb2a8957514bc03500cc17"
+      },
+      "last_reconciled_task": "TEMPLATE-PACKAGE-SUPERSESSION-001",
+      "last_change_package": "changes/TEMPLATE-PACKAGE-SUPERSESSION-001.rev3/manifest.json"
+    },
+    "source_lock_sha256": "59e2bb5c22a335728e67d203df710414d66ab6f84b996aef5d377d325a0faca4",
+    "canonical_tips": {
+      "template-development": "131366d62d9455521877e0d03be9c9e3a41472c3",
+      "developer": "c6b747f00ad7509c1340fc11fca1466abb8eb1f9",
+      "web-orchestration": "7e29c07e6ac9fc65a2cb2a8957514bc03500cc17"
+    },
+    "head_relations": {
+      "template-development": "reviewed-head-ancestor-of-canonical-tip",
+      "developer": "reviewed-head-ancestor-of-canonical-tip",
+      "web-orchestration": "reviewed-head-ancestor-of-canonical-tip"
+    }
+  },
+  "ranges": {
+    "template-development": {
+      "base": "d274bd8fe41af2ed88b9d00074c1a0e9dc3ca3b7",
+      "head": "af4813144c15e5f4f93a39c61e8453d8571d5b94",
+      "changed_paths": [
+        ".opencode/agents/small-workspace-maintainer.md",
+        ".opencode/agents/workspace-maintainer.md",
+        ".opencode/plugins/workspace-maintenance.ts",
+        ".opencode/skills/workspace-maintenance/SKILL.md",
+        "docs/architecture/AS-BUILT.md",
+        "docs/deviations.md",
+        "docs/work/current/TEMPLATE-HOST-ADMIN-001-bounded-host-administration.md",
+        "scripts/validate-template-development.mjs",
+        "scripts/validate-workspace-opencode-runtime.mjs",
+        "scripts/workspace-maintenance-host.mjs",
+        "scripts/workspace-maintenance-lib.mjs",
+        "source-lock.json",
+        "tests/workspace-bridge-host-live.acceptance.mjs",
+        "tests/workspace-bridge-host.test.mjs"
+      ],
+      "patch": "template-development.patch",
+      "patch_sha256": "cde7c264fdb56f79056dcaaf0d7a2f586bb60e6fd6103948edbee4847a51f6d1"
+    },
+    "developer": {
+      "base": "784337f93f7b3042047c8fde898e1414dc8285b2",
+      "head": "c6b747f00ad7509c1340fc11fca1466abb8eb1f9",
+      "changed_paths": [
+        "docs/architecture/opencode-bridge.md",
+        "docs/work/current/TEMPLATE-HOST-ADMIN-001-bounded-host-administration.md",
+        "scripts/watch-developer-sync.sh",
+        "tools/opencode-bridge/AS-BUILT.md",
+        "tools/opencode-bridge/README.md",
+        "tools/opencode-bridge/config.example.json",
+        "tools/opencode-bridge/src/admin.ts",
+        "tools/opencode-bridge/src/cli.ts",
+        "tools/opencode-bridge/src/config.ts",
+        "tools/opencode-bridge/src/service.ts",
+        "tools/opencode-bridge/tests/admin.test.ts"
+      ],
+      "patch": "developer.patch",
+      "patch_sha256": "87163554ef9cf2bae428340f77cbfaebcec5ccfc4b12dc2d7803042601b4272a"
+    },
+    "web-orchestration": {
+      "base": "7e29c07e6ac9fc65a2cb2a8957514bc03500cc17",
+      "head": "7e29c07e6ac9fc65a2cb2a8957514bc03500cc17",
+      "changed_paths": [],
+      "patch": "web-orchestration.patch",
+      "patch_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "package_sha256": "6a5f48f68a1367e71619f5c4cf4ca5a7c00f16800b19661df70ae492e8d145d0"
+}

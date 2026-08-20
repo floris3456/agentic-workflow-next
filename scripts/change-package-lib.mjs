@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { basename, dirname, join, relative, resolve } from "node:path";
 
 const exactSha = /^[0-9a-f]{40}$/;
@@ -164,23 +164,16 @@ export function resolveSupersededPath(packagePath, changesDir) {
   if (/[\r\n\0\\]/.test(packagePath)) {
     throw new Error(`Package supersedes.package_path contains invalid characters: ${packagePath}`);
   }
-  if (packagePath.startsWith("/") || /^[A-Za-z]:[/\\]/.test(packagePath)) {
-    throw new Error(`Package supersedes.package_path must be repository-relative, got absolute path: ${packagePath}`);
+  if (!packagePath.startsWith("changes/")) {
+    throw new Error(`Package supersedes.package_path must have form 'changes/<package-directory>', got: ${packagePath}`);
   }
   const segments = packagePath.split("/");
-  if (segments.some((s) => s === "" || s === "." || s === "..")) {
-    throw new Error(`Package supersedes.package_path must not contain traversal segments: ${packagePath}`);
+  if (segments.length !== 2 || segments[0] !== "changes") {
+    throw new Error(`Package supersedes.package_path must be a single direct child under changes, got: ${packagePath}`);
   }
-  let dirName;
-  if (segments.length === 2 && segments[0] === "changes") {
-    dirName = segments[1];
-  } else if (segments.length === 1) {
-    dirName = segments[0];
-  } else {
-    throw new Error(`Package supersedes.package_path must point directly beneath changes directory: ${packagePath}`);
-  }
-  if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(dirName)) {
-    throw new Error(`Package supersedes.package_path contains invalid directory name: ${packagePath}`);
+  const dirName = segments[1];
+  if (!dirName || dirName === "." || dirName === ".." || !/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(dirName)) {
+    throw new Error(`Package supersedes.package_path contains invalid directory segment: ${packagePath}`);
   }
   const resolvedChanges = resolve(changesDir);
   const targetDir = resolve(resolvedChanges, dirName);
@@ -209,16 +202,17 @@ export function validateChangePackage(directory, expectedTaskId) {
       throw new Error("Package supersedes must be an object");
     }
     const { package_path, package_sha256, revision } = manifest.supersedes;
-    if (typeof package_path !== "string" || package_path.length === 0) {
-      throw new Error("Package supersedes.package_path is invalid");
+    if (typeof package_path !== "string" || !package_path.startsWith("changes/")) {
+      throw new Error(`Package supersedes.package_path must have form 'changes/<package-directory>', got: ${package_path}`);
     }
-    if (/[\r\n\0\\]/.test(package_path) || package_path.startsWith("/") || package_path.split("/").some((s) => s === ".." || s === "." || s === "")) {
-      throw new Error(`Package supersedes.package_path is invalid: ${package_path}`);
+    const segments = package_path.split("/");
+    if (segments.length !== 2 || segments[0] !== "changes" || !/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(segments[1])) {
+      throw new Error(`Package supersedes.package_path must be a direct child under changes: ${package_path}`);
     }
     if (!/^[0-9a-f]{64}$/.test(package_sha256 ?? "")) {
       throw new Error("Package supersedes.package_sha256 must be an exact 64-character SHA-256");
     }
-    if (revision !== undefined && (typeof revision !== "number" || !Number.isInteger(revision) || revision < 1)) {
+    if (revision === undefined || typeof revision !== "number" || !Number.isInteger(revision) || revision < 1) {
       throw new Error("Package supersedes.revision must be a positive integer");
     }
   }
@@ -324,10 +318,17 @@ export function validatePackageSupersessionChain(changesDir) {
     for (const pkg of taskPkgs) {
       if (pkg.manifest.supersedes) {
         const { package_path, package_sha256, revision: targetRev } = pkg.manifest.supersedes;
-        const { dirName } = resolveSupersededPath(package_path, resolvedChanges);
-        const superseded = byDirectoryName.get(dirName);
+        const { dirName, targetDir } = resolveSupersededPath(package_path, resolvedChanges);
+        let superseded = byDirectoryName.get(dirName);
         if (!superseded) {
-          throw new Error(`Package ${pkg.directoryName} supersedes missing package ${package_path}`);
+          if (!existsSync(targetDir) || !statSync(targetDir).isDirectory()) {
+            throw new Error(`Package ${pkg.directoryName} supersedes missing package ${package_path}`);
+          }
+          try {
+            superseded = validateChangePackage(targetDir, dirName);
+          } catch (error) {
+            throw new Error(`Package ${pkg.directoryName} supersedes invalid package ${package_path}: ${error.message}`);
+          }
         }
         if (superseded.manifest.task_id !== taskId) {
           throw new Error(`Package ${pkg.directoryName} for task ${taskId} cannot supersede package from different task ${superseded.manifest.task_id}`);
@@ -335,13 +336,13 @@ export function validatePackageSupersessionChain(changesDir) {
         if (superseded.manifest.package_sha256 !== package_sha256) {
           throw new Error(`Package ${pkg.directoryName} supersedes tampered package ${package_path}: digest mismatch`);
         }
-        const pkgRev = pkg.manifest.revision ?? 1;
         const supersededRev = superseded.manifest.revision ?? 1;
+        if (targetRev !== supersededRev) {
+          throw new Error(`Package ${pkg.directoryName} supersedes revision ${targetRev} but target package is revision ${supersededRev}`);
+        }
+        const pkgRev = pkg.manifest.revision ?? 1;
         if (pkgRev <= supersededRev) {
           throw new Error(`Package ${pkg.directoryName} revision (${pkgRev}) must be strictly greater than superseded revision (${supersededRev})`);
-        }
-        if (targetRev !== undefined && targetRev !== supersededRev) {
-          throw new Error(`Package ${pkg.directoryName} supersedes revision ${targetRev} but target package is revision ${supersededRev}`);
         }
         supersededSet.add(superseded.manifest.package_sha256);
       }
