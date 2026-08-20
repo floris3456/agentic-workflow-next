@@ -12,7 +12,8 @@ const required = [
   "README.md", "AGENTS.md", "source-lock.json", "opencode.json",
   ".github/workflows/validate-template-development.yml",
   ".opencode/agents/template-maintainer.md", ".opencode/skills/template-maintenance/SKILL.md",
-  ".opencode/agents/workspace-maintainer.md", ".opencode/skills/workspace-maintenance/SKILL.md",
+  ".opencode/agents/small-workspace-maintainer.md", ".opencode/agents/workspace-maintainer.md",
+  ".opencode/skills/workspace-maintenance/SKILL.md",
   ".opencode/plugins/workspace-maintenance.ts", ".opencode/.gitignore", ".opencode/package.json",
   "scripts/workspace-maintenance-lib.mjs", "scripts/workspace-maintenance-host.mjs",
   "docs/architecture/AS-BUILT.md", "docs/architecture/decisions/0001-template-development-ledger.md",
@@ -74,10 +75,23 @@ try {
   fail(`.opencode/package.json is invalid: ${error.message}`);
 }
 
-if (existsSync(join(root, ".opencode/agents/workspace-maintainer.md"))) {
-  const agent = read(".opencode/agents/workspace-maintainer.md");
+const workspaceAgentRoutes = [
+  {
+    path: ".opencode/agents/small-workspace-maintainer.md",
+    role: "small",
+    configTerms: ["mode: primary", "model: cliproxyapi/gemini-3.7-flash-high", "reasoningEffort: high"],
+  },
+  {
+    path: ".opencode/agents/workspace-maintainer.md",
+    role: "heavy",
+    configTerms: ["mode: primary", "model: openai/gpt-5.6-sol", "reasoningEffort: max"],
+  },
+];
+for (const route of workspaceAgentRoutes) {
+  if (!existsSync(join(root, route.path))) continue;
+  const agent = read(route.path);
   for (const term of [
-    "mode: primary", "model: openai/gpt-5.6-sol", "reasoningEffort: max",
+    ...route.configTerms,
     '"*": deny', "task: deny", "bash: deny", "edit: deny", "question: allow", "external_directory: deny",
     "skill:\n    \"*\": deny\n    workspace-maintenance: allow",
     "workspace_list: allow", "workspace_inspect: allow", "workspace_read: allow",
@@ -86,13 +100,25 @@ if (existsSync(join(root, ".opencode/agents/workspace-maintainer.md"))) {
     "workspace_bridge_inspect: allow", "workspace_bridge_start: ask", "workspace_bridge_reconcile: allow",
     "load\n`workspace-maintenance`",
     "Reading them never transfers",
-  ]) if (!agent.includes(term)) fail(`workspace-maintainer is missing required boundary: ${term}`);
+  ]) if (!agent.includes(term)) fail(`${route.path} is missing required boundary: ${term}`);
+  if (!agent.includes(`You are the ${route.role} repository-wide Workspace Maintenance Agent`)) {
+    fail(`${route.path} does not identify the ${route.role} routing role`);
+  }
+  if (!/web\s+orchestrator selects the route/i.test(agent)) {
+    fail(`${route.path} must leave route selection with the web orchestrator`);
+  }
+  const description = agent.match(/^description:\s*(.*)$/m)?.[1] ?? "";
+  if (/(?:Gemini|GPT|Luna|Sol|OpenAI|cliproxy)/i.test(description)) {
+    fail(`${route.path} description must use only small/heavy routing language`);
+  }
 }
 
 if (existsSync(join(root, "AGENTS.md"))) {
   const instructions = read("AGENTS.md");
   for (const term of [
-    "`workspace-maintainer` is the explicit exception", "OpenCode project remains",
+    "Workspace Maintenance uses only the public selectors `small` and `heavy`",
+    "small-workspace-maintainer", "`workspace-maintainer`",
+    "Both Workspace Maintenance agents are the explicit exception", "OpenCode project remains",
     "inspectable evidence only", "does not transfer", "human exact-SHA boundary",
     ".opencode/skills/workspace-maintenance/SKILL.md",
   ]) if (!instructions.includes(term)) fail(`AGENTS.md is missing workspace route boundary: ${term}`);
