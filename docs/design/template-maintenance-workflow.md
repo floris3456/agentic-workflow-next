@@ -31,12 +31,16 @@ operating workflow.
    supplied base and reviewed head must resolve exactly from fetched canonical
    objects; the base must be an ancestor of the reviewed head, and the reviewed
    head must be an ancestor of (or equal to) the current canonical tip. The
-   template-development reviewed head must precede package storage and its range
-   may not contain `changes/<task-id>/**`. Patch bytes are generated from those
-   exact reviewed ranges using only fetched canonical objects, so later unrelated
-   branch commits are observed but not silently added. Package range bases do not
-   have to equal the repository source snapshot, and that snapshot does not
-   acquire a circular template-development/resulting-commit field.
+   template-development reviewed head must precede the new package storage;
+   when regenerating or superseding a package on a task with prior package
+   storage, `changes/<task-id>/**` is excluded from the diff and changed paths
+   so prior package commits in the same task's review range do not pollute
+   `template-development.patch` or create circular self-references. Patch bytes
+   are generated from those exact reviewed ranges using only fetched canonical
+   objects, so later unrelated branch commits are observed but not silently
+   added. Package range bases do not have to equal the repository source
+   snapshot, and that snapshot does not acquire a circular
+   template-development/resulting-commit field.
 7. Validate the package offline. Schema 3 remains provenance-verified when the
    embedded generation-time source snapshot and digest, exact ranges,
    canonical-tip/head-relation fields, per-patch digests, and package binding all

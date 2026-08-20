@@ -183,25 +183,118 @@ test("schema 3 validation detects source-snapshot, template patch, provenance, a
   createdAtTamper.created_at = "2030-01-01T00:00:00.000Z";
   writeFileSync(packageBoundManifest, `${JSON.stringify(createdAtTamper, null, 2)}\n`);
   assert.throws(() => validateChangePackage(packageBound), /binding digest/);
+
+  const packageWithSelfStorage = join(input.directory, "package-self-storage");
+  createPackage(input, packageWithSelfStorage);
+  const selfStorageManifestPath = join(packageWithSelfStorage, "manifest.json");
+  const selfStorageManifest = JSON.parse(readFileSync(selfStorageManifestPath, "utf8"));
+  selfStorageManifest.ranges["template-development"].changed_paths.push("changes/TASK-001/foo.txt");
+  selfStorageManifest.ranges["template-development"].changed_paths.sort();
+  writeFileSync(selfStorageManifestPath, `${JSON.stringify(selfStorageManifest, null, 2)}\n`);
+  assert.throws(() => validateChangePackage(packageWithSelfStorage), /must end before its own generated package storage/);
 });
 
-test("schema 3 rejects a template-development range that contains its own package storage", (context) => {
+test("schema 3 package supersession excludes historical same-task package storage and captures subsequent template corrections", (context) => {
   const input = fixture(context);
+
+  git(input.source, ["checkout", "-B", "template-development", input.templateBase]);
+  const initialTemplateHead = commit(input.source, "workspace-runtime.txt", "workspace runtime\n", "Initial template change");
+  git(input.source, ["remote", "add", "fixture", input.remote]);
+  git(input.source, ["push", "--force", "fixture", "template-development"]);
+  git(input.source, ["remote", "remove", "fixture"]);
+
+  git(input.source, ["checkout", "-B", "developer", input.developerBase]);
+  const initialDeveloperHead = commit(input.source, "developer-only.txt", "developer change\n", "Initial developer change");
+  git(input.source, ["remote", "add", "fixture", input.remote]);
+  git(input.source, ["push", "--force", "fixture", "developer"]);
+  git(input.source, ["remote", "remove", "fixture"]);
+
+  const initialOutput = join(input.directory, "initial-package");
+  createPackage(input, initialOutput, {
+    taskId: "TASK-SUPER",
+    templateHead: initialTemplateHead,
+    developerHead: initialDeveloperHead,
+  });
+  const initialChecked = validateChangePackage(initialOutput, "TASK-SUPER");
+  assert.equal(initialChecked.provenanceVerified, true);
+  assert.deepEqual(initialChecked.manifest.ranges["template-development"].changed_paths, ["workspace-runtime.txt"]);
+
   git(input.source, ["checkout", "template-development"]);
-  const selfHead = commit(
+  commit(
     input.source,
-    "changes/TASK-SELF/generated.txt",
-    "self-referential package bytes\n",
-    "Add forbidden package bytes to reviewed range",
+    "changes/TASK-SUPER/manifest.json",
+    readFileSync(join(initialOutput, "manifest.json"), "utf8"),
+    "Package TASK-SUPER initial handoff",
+  );
+  commit(
+    input.source,
+    "changes/TASK-SUPER/template-development.patch",
+    readFileSync(join(initialOutput, "template-development.patch"), "utf8"),
+    "Package TASK-SUPER template patch",
+  );
+  commit(
+    input.source,
+    "changes/TASK-SUPER/developer.patch",
+    readFileSync(join(initialOutput, "developer.patch"), "utf8"),
+    "Package TASK-SUPER developer patch",
+  );
+  commit(
+    input.source,
+    "changes/TASK-SUPER/web-orchestration.patch",
+    readFileSync(join(initialOutput, "web-orchestration.patch"), "utf8"),
+    "Package TASK-SUPER web patch",
+  );
+
+  const supersededTemplateHead = commit(
+    input.source,
+    "workspace-fix.txt",
+    "corrected workspace fix\n",
+    "Fix review issue on template-development",
   );
   git(input.source, ["remote", "add", "fixture", input.remote]);
   git(input.source, ["push", "fixture", "template-development"]);
   git(input.source, ["remote", "remove", "fixture"]);
-  const result = createPackage(input, join(input.directory, "self-package"), {
-    taskId: "TASK-SELF",
-    templateHead: selfHead,
-  }, 1);
-  assert.match(result.stderr, /must end before its own generated package storage/);
+
+  git(input.source, ["checkout", "developer"]);
+  const supersededDeveloperHead = commit(
+    input.source,
+    "developer-fix.txt",
+    "corrected developer fix\n",
+    "Fix review issue on developer",
+  );
+  git(input.source, ["remote", "add", "fixture", input.remote]);
+  git(input.source, ["push", "fixture", "developer"]);
+  git(input.source, ["remote", "remove", "fixture"]);
+
+  const supersededOutput = join(input.directory, "superseded-package");
+  const result = createPackage(input, supersededOutput, {
+    taskId: "TASK-SUPER",
+    templateHead: supersededTemplateHead,
+    developerHead: supersededDeveloperHead,
+  });
+  assert.match(result.stdout, /provenance-verified/);
+
+  const checked = validateChangePackage(supersededOutput, "TASK-SUPER");
+  assert.equal(checked.schemaVersion, 3);
+  assert.equal(checked.provenanceVerified, true);
+  assert.deepEqual(
+    checked.manifest.ranges["template-development"].changed_paths,
+    ["workspace-fix.txt", "workspace-runtime.txt"],
+  );
+  assert.deepEqual(
+    checked.manifest.ranges.developer.changed_paths,
+    ["developer-fix.txt", "developer-only.txt"],
+  );
+
+  const target = join(input.directory, "superseded-target");
+  mkdirSync(target);
+  git(target, ["init", "-b", "template-development"]);
+  commit(target, "ledger-base.txt", "template base\n", "target template base");
+  const applied = run("node", [applyScript, "--package", supersededOutput, "--repository", target, "--target", "template-development", "--apply"], root);
+  assert.match(applied.stdout, /provenance schema 3 verified/);
+  assert.equal(readFileSync(join(target, "workspace-runtime.txt"), "utf8"), "workspace runtime\n");
+  assert.equal(readFileSync(join(target, "workspace-fix.txt"), "utf8"), "corrected workspace fix\n");
+  assert.equal(existsSync(join(target, "changes")), false);
 });
 
 test("legacy schema 1 packages remain integrity-compatible but are not provenance verified", (context) => {

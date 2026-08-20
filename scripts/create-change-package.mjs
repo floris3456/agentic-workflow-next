@@ -59,7 +59,7 @@ function exact(value, label) {
   return value;
 }
 
-function range(repository, base, head, label, env) {
+function range(repository, base, head, label, env, excludePrefix) {
   const resolvedBase = runGit(repository, ["rev-parse", `${base}^{commit}`], { env }).trim();
   const resolvedHead = runGit(repository, ["rev-parse", `${head}^{commit}`], { env }).trim();
   if (resolvedBase !== base || resolvedHead !== head) fail(`${label} range did not resolve exactly from canonical fetch`);
@@ -71,8 +71,9 @@ function range(repository, base, head, label, env) {
   } catch {
     fail(`${label} range base is not an ancestor of canonical head`);
   }
-  const patch = runGit(repository, ["diff", "--binary", "--full-index", "--no-renames", base, head, "--"], { env });
-  const rawNames = runGit(repository, ["diff", "--name-only", "-z", base, head, "--"], { encoding: "buffer", env });
+  const pathspec = excludePrefix ? ["--", ".", `:(exclude)${excludePrefix}`] : ["--"];
+  const patch = runGit(repository, ["diff", "--binary", "--full-index", "--no-renames", base, head, ...pathspec], { env });
+  const rawNames = runGit(repository, ["diff", "--name-only", "-z", base, head, ...pathspec], { encoding: "buffer", env });
   const paths = rawNames.toString("utf8").split("\0").filter(Boolean).sort();
   return { patch, paths };
 }
@@ -173,8 +174,8 @@ try {
     }
   }
 
-  const template = range(canonicalRepo, templateBase, templateHead, "template-development", env);
   const packagePrefix = `changes/${taskId}/`;
+  const template = range(canonicalRepo, templateBase, templateHead, "template-development", env, packagePrefix.slice(0, -1));
   if (template.paths.some((path) => path === packagePrefix.slice(0, -1) || path.startsWith(packagePrefix))) {
     fail("template-development range must end before its own generated package storage");
   }
