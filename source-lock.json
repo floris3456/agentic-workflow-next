@@ -1,12 +1,12 @@
 {
   "schema_version": 1,
   "canonical_repository": "https://github.com/floris3456/agentic-workflow-template.git",
-  "recorded_at": "2026-08-20T22:13:29Z",
+  "recorded_at": "2026-08-20T22:22:36Z",
   "sources": {
     "main": "6127611113dfdb66f93a0cfd2d355359aa370833",
     "developer": "1bd5cbaefcd01245e181dfc7319ae04e2d2e0c68",
-    "web-orchestration": "3b534650f886bcd8b0644bcf8393f5b9ab48b4d2"
+    "web-orchestration": "d642359993fc1d819517b3fc10e4e704810a03a7"
   },
-  "last_reconciled_task": "TEMPLATE-ROLE-ROUTING-CONTRACT-001",
+  "last_reconciled_task": "TEMPLATE-WORKSPACE-TARGET-RULES-001",
   "last_change_package": "changes/TEMPLATE-PACKAGE-SUPERSESSION-001.rev5/manifest.json"
 }
