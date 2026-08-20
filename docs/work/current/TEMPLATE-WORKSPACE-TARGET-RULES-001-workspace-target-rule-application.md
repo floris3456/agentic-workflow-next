@@ -6,7 +6,7 @@ TEMPLATE-WORKSPACE-TARGET-RULES-001
 
 ## Status
 
-queued
+in_progress
 
 ## Task-start template-development SHA
 
@@ -14,9 +14,7 @@ queued
 
 ## Review-base template-development SHA
 
-Not yet established. This task is queued and must establish a fresh exact remote
-`template-development` review base immediately before activation and source
-mutation.
+141cfac3051a4a420e34b743d69d08df556521f2
 
 ## Public-safe task brief
 
@@ -24,11 +22,11 @@ Clarify how Workspace Maintenance must treat the rules of a target branch withou
 losing its stable instruction authority.
 
 The Workspace Maintenance Agent must remain controlled by the
-`template-development` root, its own agent definition, the `workspace-maintenance`
-skill, and the web orchestrator's bounded request. Reading a target branch's
-`AGENTS.md`, skills, agent files, or similar rule files must not transfer
-instruction authority or automatically trigger the target branch's agent
-workflow.
+`template-development` root, its selected Workspace Maintenance agent definition,
+the `workspace-maintenance` skill, and the web orchestrator's bounded request.
+Reading a target branch's `AGENTS.md`, skills, agent files, or similar rule files
+must not transfer instruction authority or automatically trigger the target
+branch's agent workflow.
 
 At the same time, target-branch rules are not irrelevant. When Workspace
 Maintenance changes a specific branch, it must inspect and take applicable target
@@ -62,135 +60,124 @@ Required examples:
 
 ## Current objective
 
-When activated, replace the current all-or-nothing wording with a precise
-"stable authority + applicable target constraints" rule that gives both the
-Workspace Maintenance Agent and web reviewer one clear ownership model.
+Replace the current all-or-nothing wording with one precise rule shared by the
+Workspace agents, Workspace skill, template-maintenance procedures, and web
+reviewer: stable Workspace authority plus applicable target compatibility/output
+constraints.
 
 ## Current position
 
-Planning-only task record. No source mutation has been made for this task.
+The human explicitly authorized the web orchestrator to implement this task
+directly after the small/heavy routing source work became non-mutating.
 
-Exact planning evidence:
+Exact refs at activation:
 
 - `main`: `6127611113dfdb66f93a0cfd2d355359aa370833`
-- `developer`: `c6b747f00ad7509c1340fc11fca1466abb8eb1f9`
-- `web-orchestration`: `64e9aacd0168053d5be5b4931d9d22cb5762edb7`
-- `template-development`: task record created from
-  `2d36d96043a21550b1b4c23ba85678a5d4de5172`
+- `developer`: `1bd5cbaefcd01245e181dfc7319ae04e2d2e0c68`
+- `web-orchestration`: `3b534650f886bcd8b0644bcf8393f5b9ab48b4d2`
+- `template-development`: `141cfac3051a4a420e34b743d69d08df556521f2`
 
-Current instructions contain both sides of the conflict:
-
-- Workspace Maintenance says target `AGENTS.md`, skills, agents, and instructions
-  are inspectable evidence only and do not transfer instruction authority.
-- Template-maintenance procedures say source work follows each source branch's
-  own agent instructions, task lifecycle, AS-BUILT/deviation, synchronization,
-  and validation requirements regardless of execution route.
-- The developer branch normally requires its own task-progress lifecycle and
-  developer-specific handoff snapshot/response.
-- Workspace Maintenance explicitly owns a different branch-neutral handoff and is
-  told not to inherit a developer-specific handoff merely because the target is
-  `developer`.
+No `main` mutation is authorized. Developer branch instructions are target
+evidence for this design, not a new developer source-mutation requirement unless
+review finds a developer-owned fact that actually must change.
 
 ## Source ranges
 
-No task source ranges have started. Establish exact bases at activation.
-
-Planning refs only:
-
-- `developer`: `c6b747f00ad7509c1340fc11fca1466abb8eb1f9`
-- `web-orchestration`: `64e9aacd0168053d5be5b4931d9d22cb5762edb7`
-- `template-development`: `2d36d96043a21550b1b4c23ba85678a5d4de5172`
+Task source ranges begin from the activation refs above. Final reviewed heads are
+not yet established.
 
 ## Observed
 
 - Workspace role isolation is intentional and protects against target branch
   instruction injection/authority transfer.
-- The generic template-maintenance wording is also intentional in trying to keep
-  source-branch implementation records and safety constraints correct.
-- Taken literally together, they create an ownership conflict when Workspace
-  Maintenance publishes a change to `developer`: one rule says not to inherit the
-  developer workflow, while another says source branch task lifecycle applies
-  regardless of route.
-- A web steer telling Workspace Maintenance to follow developer instructions can
-  itself violate the Workspace Maintenance authority contract.
-- The human confirmed the right model is not "ignore target rules" and not
+- Generic template-maintenance wording currently says source work follows each
+  source branch's own agent/task lifecycle regardless of execution route.
+- Taken literally with the Workspace contract, that creates an ownership loop for
+  a Workspace-published `developer` change: Workspace must not inherit developer
+  workflow authority, while generic maintenance appears to require it.
+- The human confirmed the right model is neither "ignore target rules" nor
   "inherit them strictly". Applicable target rules must be taken into account,
-  while the workspace role continues to execute under its own authority and the
-  web-orchestrator request.
+  while Workspace continues under its own authority and the bounded web request.
+- Small/heavy routing is now a separate completed source contract and does not
+  change this authority distinction.
 
 ## Interpretation
 
-The system needs to distinguish two concepts that are currently mixed together:
+The system must distinguish:
 
-1. **Instruction authority** — which role/procedure controls what the agent does.
-2. **Target compatibility obligations** — which properties the resulting branch
-   state should satisfy when they are relevant to the requested change.
+1. **Instruction authority** — which role/procedure controls what Workspace does.
+2. **Target compatibility/output obligations** — properties the resulting target
+   branch state should satisfy when relevant to the requested change.
 
-Workspace Maintenance keeps the first. It must reason about and normally honor
-the second.
+Workspace keeps the first. It must inspect and normally honor the second.
 
-Target rules should be treated like other repository evidence: they can define
-important expected outputs, checks, record locations, or invariants, but they do
-not become higher authority than an explicit bounded request whose purpose is to
-change those same rules.
+Applicable target constraints include public safety, `main` authority,
+synchronization, file/output placement and format, durable AS-BUILT/deviation
+truth, and relevant validation/check requirements. Target agent selection, target
+skills as controlling procedure, target task lifecycle, and target handoff shape
+do not automatically transfer.
+
+A target record may still need to be created or updated because the produced
+branch state requires that durable artifact. Workspace may maintain that artifact
+under Workspace authority without pretending to become the target branch's agent.
+
+If the bounded task intentionally changes a target rule itself, Workspace reads
+that rule to understand the current behavior and compatibility impact, but the old
+rule cannot veto its own authorized modification.
 
 ## Attempts
 
-1. A read-only structural stress test simulated Workspace Maintenance publishing
-   a `developer` change while both roles followed their real instructions.
-2. The simulation reached a deterministic ownership loop: workspace correctly
-   refused target instruction authority, while template-maintenance review could
-   correctly complain that developer lifecycle rules had not been followed.
+1. Read-only structural stress testing simulated Workspace Maintenance publishing
+   a developer change while both roles followed their real instructions.
+2. The simulation reached a deterministic ownership loop between Workspace
+   authority isolation and generic source-lifecycle wording.
 3. The human accepted the issue and supplied the intended distinction plus two
-   concrete examples, which are captured in this task before implementation.
+   concrete examples.
+4. The prerequisite small/heavy routing task was completed to a non-mutating
+   source state before this task was activated.
 
 ## Changed approach
 
-None. This is a newly queued maintenance task.
+This task is now active with the human-approved authority/compatibility
+separation as its fixed design direction.
 
 ## Checks
 
-Planning-only instruction/evidence review completed.
-No implementation checks have run because no task source mutation has started.
+Activation refs independently re-read before source mutation.
+No implementation check is claimed yet.
 
 ## Blockers / required decisions
 
-- No human design decision is currently required; the human has already stated
-  the intended ownership model.
-- This task must remain non-mutating until the currently active template-
-  maintenance task is completed/finalized or the human explicitly reprioritizes
-  the active task.
+No human design decision remains. No destructive action or `main` mutation is
+authorized.
+
+Portable package generation remains a later networked-maintainer step and does
+not block source correction/review.
 
 ## Remaining work
 
-1. Re-establish exact live refs and activate this task with a fresh review base.
-2. Update template-development root/Workspace Maintenance instructions so stable
-   workspace authority is preserved while applicable target rules are explicitly
-   considered.
-3. Update both repository-owned and web-orchestrator template-maintenance
-   procedures to remove the misleading "follow every source branch workflow
-   regardless of route" interpretation.
-4. State exactly which target obligations remain hard/applicable by default:
-   public safety, `main` authority, synchronization, relevant AS-BUILT/deviation
-   truth, file/output constraints, and relevant validation.
-5. State that target-specific agent/task/handoff procedures do not automatically
-   transfer; if a target-specific record is needed for the resulting branch state,
-   the workspace role may maintain it as an artifact under its own authority
-   without inheriting that target agent's workflow.
-6. Protect the two required regression scenarios: adding a missing file under
-   applicable target rules, and deliberately changing the rule that governs file
-   creation without letting the old rule block its authorized change.
-7. Add a workspace-to-`developer` publication regression proving the web reviewer
-   receives one unambiguous workspace handoff and does not demand a second
-   developer-agent handoff.
-8. Run authoritative checks, independently review exact ranges, package the change,
-   and complete normal maintenance handoff.
+1. Update template-development root and both Workspace agent instructions so
+   stable Workspace authority is preserved while applicable target constraints
+   must be read and applied to output.
+2. Update `workspace-maintenance` with the authority/compatibility distinction,
+   including both required examples and explicit non-transfer of target
+   agent/task/handoff procedures.
+3. Update repository-owned and web template-maintenance procedures so generic
+   source-branch lifecycle wording is route-sensitive rather than universal.
+4. Update durable design/AS-BUILT records where they describe this authority
+   contract.
+5. Add mechanical regression coverage for missing-file compatibility, authorized
+   rule modification, and one Workspace handoff without a second developer-agent
+   handoff.
+6. Independently review exact changed ranges and reconcile source snapshot.
+7. Record source-complete/package-pending state and continue to the next authorized
+   task only after this one is non-mutating.
 
 ## Next action
 
-Remain queued. On activation, convert the human-approved distinction into the
-smallest consistent rule shared by Workspace Maintenance and both template-
-maintenance orchestrator procedures.
+Read the current Workspace and template-maintenance authority surfaces together,
+then apply the smallest wording/test change that gives them one consistent
+ownership model.
 
 ## Relevant durable records
 
@@ -203,8 +190,11 @@ maintenance orchestrator procedures.
 - `AGENTS.md` on `developer`
 - `.opencode/skills/task-workflow/SKILL.md` on `developer`
 - `.opencode/skills/implementation-records/SKILL.md` on `developer`
-- `docs/architecture/agent-system.md`
+- `docs/architecture/AS-BUILT.md`
+- `docs/design/template-maintenance-workflow.md`
 - `docs/deviations.md`
+- `scripts/validate-template-development.mjs`
+- `tests/workspace-maintenance.test.mjs`
 
 ## Last handoff commit
 
