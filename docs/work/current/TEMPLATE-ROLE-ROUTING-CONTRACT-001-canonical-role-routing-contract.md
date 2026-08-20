@@ -6,7 +6,7 @@ TEMPLATE-ROLE-ROUTING-CONTRACT-001
 
 ## Status
 
-in_progress
+source complete; package and CI observation pending
 
 ## Task-start template-development SHA
 
@@ -31,133 +31,149 @@ role only as small/heavy.
 The web orchestrator owns route selection. Implementation/workspace agents do not
 choose or recommend their own escalation.
 
-The bridge protocol already uses `small|heavy`; web instructions, continuity,
-validators, and branch-specific agent instructions must align with that contract.
-Every selector must resolve to one exact tracked agent that exists on the relevant
-branch.
-
-Preferred smallest direction:
-
-- developer `small` -> existing small developer agent;
-- developer `heavy` -> existing heavy developer agent;
-- workspace `small` -> existing small workspace maintainer agent;
-- workspace `heavy` -> existing workspace maintainer agent;
-- do not rename agent files merely for cosmetic consistency when a mapping change
-  is sufficient and safer.
+Every public selector must resolve to one exact tracked agent that exists on the
+relevant branch.
 
 ## Current objective
 
-Remove routing-language drift and make small/heavy the only routing vocabulary
-through the full path:
-
-web decision -> public command -> bridge schema -> bridge mapping -> tracked
-agent instructions/inventory.
+Preserve the reviewed small/heavy routing contract. No further source mutation is
+planned unless later authoritative checks expose a defect. Portable package
+creation and exact push-CI observation remain follow-up evidence work.
 
 ## Current position
 
-The human explicitly authorized the web orchestrator to implement this task
-directly after the handoff-reasoning source work became non-mutating.
+The authorized direct implementation is complete across all three source
+branches.
 
-Exact refs at activation:
+Exact reconciled source heads:
 
-- `main`: `6127611113dfdb66f93a0cfd2d355359aa370833`
-- `developer`: `c6b747f00ad7509c1340fc11fca1466abb8eb1f9`
-- `web-orchestration`: `cc5a521c70f4198947ec0360cf60cb95876dff3b`
-- `template-development`: `2e68078f542b811540e945ce6094e2d7841ac5f3`
+- `main`: `6127611113dfdb66f93a0cfd2d355359aa370833` — unchanged.
+- `developer`: `1bd5cbaefcd01245e181dfc7319ae04e2d2e0c68` — final developer task-progress handoff; substantive routing source was complete at `593ce467d7f529978463bbd436b5f36ce040fcf4`.
+- `web-orchestration`: `3b534650f886bcd8b0644bcf8393f5b9ab48b4d2`.
+- `template-development`: source/ledger state before this progress snapshot is `a20254dfd309d5fb06ccb8fe0453b71ead199708`.
 
-Expected source authorities:
+Implemented routing contract:
 
-- `web-orchestration`: routing prose, command example, task continuity, package
-  validator/tests;
-- `developer`: bridge concrete mapping, developer agent instruction prose,
-  protocol/architecture/integration checks where they encode the contract;
-- `template-development`: workspace agent instruction prose, workspace/maintenance
-  architecture and validators where they encode the contract.
-
-No `main` mutation is authorized.
+- public and instructional route names are only `small` and `heavy`;
+- developer `small` -> `small-developer`;
+- developer `heavy` -> `large-developer`;
+- workspace `small` -> `small-workspace-maintainer`;
+- workspace `heavy` -> existing `workspace-maintainer`;
+- the web orchestrator selects routes; implementation/workspace agents do not
+  select or recommend their own escalation;
+- runtime configuration fields remain implementation detail and do not define
+  routing semantics.
 
 ## Source ranges
 
-Task source ranges start from the activation refs above. Final reviewed heads are
-not yet established.
+- `main`: unchanged at `6127611113dfdb66f93a0cfd2d355359aa370833`.
+- `web-orchestration`: `cc5a521c70f4198947ec0360cf60cb95876dff3b..3b534650f886bcd8b0644bcf8393f5b9ab48b4d2`.
+- `developer`: `c6b747f00ad7509c1340fc11fca1466abb8eb1f9..1bd5cbaefcd01245e181dfc7319ae04e2d2e0c68`.
+- `template-development`: `2e68078f542b811540e945ce6094e2d7841ac5f3..a20254dfd309d5fb06ccb8fe0453b71ead199708` before this progress snapshot.
 
 ## Observed
 
-- The bridge command schema uses only `small|heavy`.
-- The web workflow still uses a different routing vocabulary and its start command
-  example does not match the bridge selector contract.
-- The web task-context template and standalone validator repeat the old routing
-  vocabulary.
-- The bridge heavy workspace mapping points to a concrete agent name that is not
-  present in the tracked template-development agent inventory.
-- Some branch-specific agent descriptions/prose still describe implementation
-  roles through runtime/model specifics instead of the small/heavy role contract.
-- Architecture records also contain obsolete routing/model descriptions that can
-  confuse future maintenance even when runtime code is correct.
-- The human explicitly requires no model-specific routing language for now: only
-  small/heavy.
+- The bridge schema already accepted only `small|heavy`; the web package used a
+  conflicting route vocabulary.
+- The bridge heavy workspace mapping pointed at a concrete agent name that did
+  not exist in the tracked template-development inventory.
+- Branch-specific developer and workspace agent prose described route identity
+  using runtime/model language instead of the stable small/heavy role contract.
+- Web continuity and validators repeated the obsolete vocabulary.
+- Direct implementation aligned web instructions, web task continuity, bridge
+  mapping, developer/workspace agent prose, architecture, and validators.
+- The first developer architecture rewrite changed the right routing facts but
+  compressed unrelated technical detail too broadly. Independent review caught
+  this before acceptance.
+- Corrective developer commits restored the unrelated bridge, recovery,
+  projection, version, and security detail while retaining only the intended
+  routing changes.
+- Template-development now validates both workspace concrete roles and records
+  the small/heavy mapping in root instructions and AS-BUILT.
+- `source-lock.json` now records the final developer handoff and web routing head.
 
 ## Interpretation
 
-Role selection is one cross-branch contract. The user-facing and instruction-level
-selector vocabulary should remain stable even if runtime implementation details
-change later.
+The routing defect is corrected. Public selector vocabulary is independent of
+runtime/provider implementation, and every route now resolves to a tracked
+concrete agent.
 
-Concrete file names do not have to match public selector words if the bridge owns
-an explicit, validated mapping. Renaming stable agent files purely for naming
-symmetry would add unnecessary compatibility risk.
+The architecture-correction episode did not change the desired design; it fixed
+an overly broad documentation edit. Unrelated technical documentation remains
+valid and was restored rather than intentionally simplified.
+
+The remaining limitations are evidence/package execution limitations, not source
+implementation blockers. They do not require another routing change and do not
+prevent the separately authorized Workspace target-rule task from proceeding.
 
 ## Attempts
 
-1. A read-only role/handoff stress test compared web instructions, bridge schema,
-   runtime mapping, architecture, and current agent inventories.
-2. The test found deterministic selector mismatch and a missing heavy workspace
-   mapping target.
-3. The human accepted the issue, required small/heavy-only language, and
-   authorized direct implementation.
+1. Read-only stress testing found the web/bridge selector mismatch and missing
+   heavy workspace target.
+2. The human approved the issue and tightened the desired contract to
+   small/heavy-only instructional language.
+3. Web routing/continuity/validation were changed directly.
+4. Developer bridge/agent/validator/architecture changes were published directly.
+5. Independent developer range review found accidental over-compression of three
+   architecture files.
+6. The unrelated technical detail was restored in corrective commits while the
+   routing changes were retained.
+7. Template workspace agents, root routing instructions, validator, and AS-BUILT
+   were aligned to the same contract.
+8. Source snapshot was reconciled from exact current remote refs.
 
 ## Changed approach
 
-The earlier planning record allowed model names as descriptions. The human has
-now tightened the desired contract: instruction/routing language should use only
-small/heavy. Runtime configuration fields may remain internal implementation
-configuration where required by OpenCode, but they must not define or explain
-routing semantics.
+The initial direct developer architecture edit was too broad. The correction used
+targeted restoration: preserve existing detailed architecture and change only
+route/mapping statements. No route-design decision changed.
 
 ## Checks
 
-Planning evidence reviewed against exact activation refs.
-Implementation checks have not yet run.
+- Exact final remote refs independently re-read for developer, web-orchestration,
+  and template-development.
+- Developer exact range compared remotely; review caught and corrected the broad
+  documentation edit.
+- Web package validator source now accepts only `small|heavy`, and its Node test
+  suite includes a regression against other route vocabularies.
+- Developer validation now checks the small/heavy route contract and concrete
+  mapped-agent existence rather than using model/provider names as routing
+  semantics.
+- Template-development validation now requires both workspace agent files,
+  verifies their small/heavy role prose and web-owned route selection, and keeps
+  runtime configuration checks separate.
+- Final bridge readback maps workspace heavy to `workspace-maintainer`.
+- Canonical branch-push CI for these final exact heads is not observable through
+  the currently exposed connected workflow-run lookup; no CI pass is claimed.
+- Portable change-package generation has not run because the tracked generator
+  still requires a legitimate networked maintainer execution surface.
 
 ## Blockers / required decisions
 
-- No human design decision remains for this task.
-- No `main` or destructive action is authorized.
-- Portable package generation remains a later networked-maintainer step and does
-  not block source correction/review.
+No human design decision or source correction is required.
+
+Remaining non-source work:
+
+- observe exact canonical push-CI results when an authoritative run view is
+  available;
+- generate the deterministic portable package when a legitimate networked
+  maintainer execution surface is available.
+
+Neither requires keeping this task as the active mutating template-maintenance
+task.
 
 ## Remaining work
 
-1. Change web workflow routing prose and start example to small/heavy only.
-2. Change web task continuity and validator/tests to small/heavy only.
-3. Change branch-specific developer/workspace agent instructional prose so their
-   role identity is small/heavy without model-specific explanation.
-4. Fix the bridge heavy workspace mapping to the existing tracked workspace
-   maintainer rather than inventing a missing role.
-5. Update architecture/protocol/integration validation where they encode obsolete
-   role-selection or concrete-mapping facts.
-6. Add cross-branch regression coverage proving current web command values are
-   schema-valid and every bridge mapping points to an actual tracked agent.
-7. Run authoritative branch checks where observable and independently review the
-   exact ranges on all changed branches.
-8. Mark source work complete/package pending, then activate the authorized
-   Workspace target-rule task.
+1. Observe canonical push-CI results for the final exact source heads when the run
+   evidence is accessible.
+2. Generate, validate, and review this task's deterministic change package on an
+   authorized networked maintainer execution surface.
+3. Finalize/archive the task after required package/evidence review.
 
 ## Next action
 
-Inspect every current small/heavy selector consumer and concrete agent mapping,
-then publish the smallest cross-branch correction without renaming stable agents
-unless exact evidence makes a rename necessary.
+Treat routing source work as non-mutating and activate
+`TEMPLATE-WORKSPACE-TARGET-RULES-001` as explicitly authorized by the human.
 
 ## Relevant durable records
 
@@ -166,17 +182,20 @@ unless exact evidence makes a rename necessary.
 - `web-orchestration-only/validate-package.mjs`
 - `web-orchestration-only/validate-package.test.mjs`
 - `contracts/opencode-bridge/command.schema.json`
-- `contracts/opencode-bridge/protocol.md`
 - `tools/opencode-bridge/src/commands.ts`
+- `tools/opencode-bridge/src/service.ts`
 - `.opencode/agents/small-developer.md`
 - `.opencode/agents/large-developer.md`
 - `.opencode/agents/small-workspace-maintainer.md`
 - `.opencode/agents/workspace-maintainer.md`
-- `docs/architecture/agent-system.md`
-- `docs/architecture/opencode-bridge.md`
-- `docs/architecture/AS-BUILT.md` on `template-development`
+- `AGENTS.md` on `template-development`
+- `docs/architecture/agent-system.md` on `developer`
+- `docs/architecture/opencode-bridge.md` on `developer`
+- `docs/architecture/AS-BUILT.md` on both source branches
+- `scripts/validate-agent-system.mjs`
 - `scripts/validate-web-orchestrator-integration.mjs`
 - `scripts/validate-template-development.mjs`
+- `source-lock.json`
 
 ## Last handoff commit
 
