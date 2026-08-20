@@ -138,10 +138,10 @@ Task record:
 statuses use `none`. A failed push is `blocked` with `none`.
 
 Select `small` by default. Use `heavy` immediately only when intrinsic complexity
-or ambiguity makes two small-route attempts predictably wasteful, or after two
-substantive small-route failures. Transport failures, defective briefs, missing
-access/information, external blockers, and trivial syntax retries are not
-substantive small-route failures. Only the web orchestrator changes route.
+or ambiguity makes two small-route attempts predictably wasteful, or after two substantive small-route failures.
+Transport failures, defective briefs, missing access/information, external
+blockers, and trivial syntax retries are not substantive small-route failures.
+Only the web orchestrator changes route.
 
 Before creating a mutating control issue, map all open
 `<bridge-control-label>` issues by authenticated exact task ID and search the
@@ -195,7 +195,7 @@ diagnosis or architecture merely because it reported the blocker.
 Repeated or similar blockers raise the bar. Before another steer, route change,
 or implementation request, do deeper orchestrator analysis and narrow the next
 request from that reasoning. Skip extra analysis only when the blocker is already
-independently proven to be a human-owned decision, safety or authority boundary,
+independently proven to be a human-owned decision, safety/authority boundary,
 unavailable required capability, or external condition that further reasoning
 cannot resolve. Keep this proportional; simple proven blockers do not need
 additional ceremony.
