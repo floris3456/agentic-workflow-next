@@ -42,12 +42,18 @@ The web orchestrator selects source routes proportionally:
   remote readback plus focused checks can prove the outcome more simply;
 - isolated/local or delegated source execution when repository context/tools,
   interacting edits, generation/tests, uncertainty, or independent
-  implementation materially improves confidence.
+  implementation materially improves confidence; and
+- Workspace Maintenance when the template-development-rooted authority and
+  verified cross-worktree tool boundary are the appropriate execution surface.
 
 Only one mutating source route runs at a time. Read-only Scouts may overlap when
-the hardened Scout boundary is ready. Each source branch keeps its own task,
-AS-BUILT/deviation, synchronization, and validation contract. Every changed source
-range is independently reviewed against exact remote GitHub.
+the hardened Scout boundary is ready. Direct/delegated work executing inside a
+source branch's own authoritative context follows that branch's normal task,
+AS-BUILT/deviation, synchronization, validation, and handoff procedure. Workspace
+Maintenance is route-sensitive instead: it keeps its template-development-rooted
+instruction authority while reading target rules as evidence and applying the
+relevant compatibility/output obligations to the branch state it produces. Every
+changed source range is independently reviewed against exact remote GitHub.
 
 ## Workspace Maintenance Agent
 
@@ -59,9 +65,27 @@ rooted in the registered `template-development` worktree for the whole session.
 Unlike the generic `template-maintainer` source route, they do not enter another
 worktree's OpenCode context or inherit that target's agent workflow. Their stable
 repository instruction authority is the template-development root `AGENTS.md`,
-the selected agent definition, and the `workspace-maintenance` skill. Target
-`AGENTS.md`, skills, agents, and other instruction-shaped files remain inspectable
-compatibility evidence only.
+the selected agent definition, the `workspace-maintenance` skill, and the bounded
+web-orchestrator request.
+
+Target `AGENTS.md`, skills, agent definitions, durable-record rules, and other
+instruction-shaped files remain important target evidence. Workspace reads and
+applies requirements that are relevant to the branch state it produces, including
+applicable public safety, `main` authority, synchronization, file placement and
+format, durable AS-BUILT/deviation truth, and validation/check requirements.
+Reading those files does not transfer instruction authority or automatically
+trigger target agent selection, target skills as controlling procedure, target
+task lifecycle, or target handoff shape. A target-specific durable record may be
+created or updated as an output artifact when required without converting the
+Workspace agent into the target branch's normal agent.
+
+If the bounded task intentionally changes a target rule itself, Workspace reads
+the current rule to understand existing behavior and compatibility impact, then
+executes the authorized rule change under Workspace authority. The old rule is
+evidence of the contract being changed, not authority to veto its own requested
+modification. Conversely, when adding a missing file under an existing target
+contract, Workspace follows the applicable placement, naming, format,
+durable-record, and validation requirements for that file.
 
 The template-development-owned OpenCode plugin exposes `workspace_list`,
 `workspace_inspect`, `workspace_read`, `workspace_write`, `workspace_delete`,
@@ -116,6 +140,11 @@ Registered access is technical capability only. A `main` worktree is inspectable
 and technically reachable when registered, but consequential main mutation or
 promotion still requires the repository's existing explicit human exact-SHA
 authority.
+
+A Workspace-routed task returns the branch-neutral Workspace completion shape.
+Publishing a target such as `developer` does not create a second developer-agent
+handoff obligation; the web orchestrator independently reviews the exact pushed
+target SHA and the applicable target constraints.
 
 ## Bounded host-bridge administration
 
@@ -402,15 +431,16 @@ package membership or a self-referential commit identity.
   recovery no-replay, template-maintenance provenance, human exact-SHA
   promotion, bridge-envelope shapes, public safety, and new task-context schema.
 - `web-orchestration-only/validate-package.test.mjs` provides focused negative
-  fixtures for those architectural boundaries and a CI-contract test for the
-  branch-owned push workflow.
+  fixtures for those architectural boundaries, the small/heavy contract,
+  claim-first blocker reasoning, the route-sensitive Workspace target-rule
+  contract, and the branch-owned push-CI contract.
 - `web-orchestration` push Actions run `31917651395` succeeded at exact source SHA
   `3891a17bd62b8e4871310766f2a05175aa42cf87`; later procedure-source updates run
   through the same canonical push validation path.
 - `scripts/validate-template-development.mjs` validates ledger structure, source
   snapshot shape, task/archive rules, forbidden source-tree absence, executable
-  bits, the Workspace Maintenance Agent/tool/instruction boundary, and committed
-  change packages through the shared verifier.
+  bits, both Workspace route identities, the route-sensitive target-rule
+  authority contract, and committed change packages through the shared verifier.
 - `tests/change-package.test.mjs` covers deterministic schema-3 three-range
   generation with a source snapshot intentionally independent from range bases,
   deceptive origin, wrong/non-ancestor bases, forged heads, later canonical
@@ -423,6 +453,10 @@ package membership or a self-referential commit identity.
   Bubblewrap-contained command execution. Harmless sentinels prove outside
   read/write, foreign Git routing, symlink, injected-secret, network, local-origin,
   main-publication, transport-redirection, and stale-remote boundaries.
+- `tests/workspace-target-rules.test.mjs` protects the stable-Workspace-authority
+  plus applicable-target-constraints distinction, the missing-file and
+  rule-modification examples, and the one-Workspace-handoff rule for target
+  publication.
 - `scripts/validate-workspace-opencode-runtime.mjs` starts real OpenCode `1.18.16`
   with sterile local state and queries its agent, skill, and tool inventories. It
   proves the rooted custom agent/plugin load and evaluates the runtime's ordered
