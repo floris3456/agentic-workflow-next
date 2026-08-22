@@ -40,7 +40,7 @@ Do not create a dual control plane in the new repository. GitHub Issues remain o
 
 ## Current objective
 
-Turn the completed architectural analysis into a safe implementation migration for `agentic-workflow-next`: first make the copied repository independently canonical and establish a dedicated local checkout/worktree set, then replace bridge transport with a small private direct-host/OpenCode adapter, retain and extract the useful Scout and Workspace security boundaries, remove the obsolete package broker and bridge administration surfaces, update all branch-specific instructions/validators/documentation, and prove the replacement end-to-end before deleting the old transport implementation from this repository.
+Turn the completed architectural analysis into a safe implementation migration for `agentic-workflow-next`: first make the copied repository independently canonical and establish a dedicated local checkout/worktree set, then replace bridge transport with direct Remote Desktop Commander plus native OpenCode session control, retain and extract the useful Scout and Workspace security boundaries, remove the obsolete package broker and bridge administration surfaces, update all branch-specific instructions/validators/documentation, and prove the replacement end-to-end before deleting the old transport implementation from this repository. A proposed private fixed-operation direct-host adapter is intentionally out of scope for this task and is preserved separately under `TEMPLATE-DIRECT-HOST-ADAPTER-001`.
 
 ## Current position
 
@@ -113,24 +113,11 @@ Keep and adapt:
 10. Deterministic change packages, canonical provenance, supersession validation, downstream application, and source-lock semantics.
 11. No-replay recovery: an interrupted/timed-out host or OpenCode action is ambiguous until the existing process/session, local Git, and remote Git state prove the outcome. Never start a replacement session or repeat a mutation merely because one tool call failed to return cleanly.
 
-### Replacement control surface
+### Deferred direct-host adapter
 
-Do not replace the bridge with unrestricted ad-hoc shell use as the normal protocol. Build a small private fixed-operation direct-host adapter whose standard operations cover registered repository/worktree inspection, developer start/continue/status/answer, Workspace start/continue/status/answer, and hardened Scout start/status. The exact command names are implementation detail.
+A private fixed-operation adapter that narrows normal Commander/OpenCode operations is intentionally out of scope for this migration. Preserve the idea under the separate queued task `TEMPLATE-DIRECT-HOST-ADAPTER-001`; do not make completion of this migration depend on implementing that adapter.
 
-The adapter must:
-
-- resolve only operator-registered repository/worktree identities;
-- reject foreign, symlinked, wrong-origin, dirty/diverged, or stale start state where relevant;
-- require exact start SHA guards for mutating agent work;
-- accept only public route selectors `small` and `heavy` and derive concrete agent/model internally;
-- reject arbitrary model/variant/directory/share/auto-approval overrides in the standard route;
-- privately bind one task to one OpenCode session/process and never persist those raw identifiers to Git;
-- prevent overlapping mutating sessions on the same worktree;
-- reconcile the existing process/session before any retry after timeout/interruption;
-- return only bounded public-safe summaries to the web orchestrator;
-- verify remote Git after any claimed push.
-
-Private host state may contain task ID, route kind, exact start SHA, private OpenCode session/process mapping, last action identity, and terminal/nonterminal state, but must remain outside tracked Git with restrictive local permissions.
+For this task, use direct Commander plus native OpenCode session controls while retaining the existing hard boundaries: exact worktree/ref verification before mutation, web-only `small`/`heavy` route choice, one mutating route per worktree, private treatment of host/session/process identifiers, no broad auto-approval, same-session continuation, no automatic replay after ambiguous interruption, exact remote Git review, and human-only `main` promotion.
 
 ### Required instruction changes
 
@@ -186,6 +173,8 @@ Canonical GitHub Actions validation is deliberately retained because it provides
 
 Scout and Workspace hardening are also deliberately retained because their purpose is containment and authority separation, not remote transport.
 
+The human explicitly deferred the proposed private fixed-operation direct-host adapter to a separate task. This migration therefore uses direct Commander/native OpenCode as the replacement transport and must not expand scope to build that adapter.
+
 ## Checks
 
 - Exact GitHub branch readback at task creation:
@@ -217,26 +206,25 @@ Implementation sequence:
 1. Establish a dedicated local `agentic-workflow-next` clone and registered worktrees.
 2. Re-establish exact new-repository refs and migrate canonical repository identity/source lock.
 3. Choose/pin one OpenCode version and add compatibility checks.
-4. Implement the small private fixed-operation direct-host/OpenCode adapter.
-5. Acceptance-test small/heavy developer start, private session mapping, structured question, permission response, same-session steering/continuation, timeout reconciliation, exact pushed handoff, and small-to-heavy route transition without overlapping mutation.
-6. Extract/repackage the hardened Scout independent of the GitHub-Issue bridge and prove exact-SHA snapshot isolation, no process/network/package/LSP capability, symlink containment, and repository-instruction non-authority.
-7. Update web/developer instructions for the direct-host architecture.
-8. Remove GitHub-Issue bridge transport/protocol/daemon/recovery/projection code and tests from the new repository.
-9. Remove Workspace bridge-host administration tools while preserving Workspace worktree/sandbox/publish safety.
-10. Remove the package-generation Action broker and make direct tracked generator execution the maintenance path.
-11. Update Workspace publication for the chosen Git authentication path.
-12. Migrate imported task/package active-state presentation without rewriting historical blobs/manifests.
-13. Update AS-BUILT, architecture, design, deviations, SECURITY/README, branch validators, web package validator/tests, and canonical CI.
-14. Run proportional local tests plus full affected repository validation through the direct host capability.
-15. Push exact source branches, independently review exact remote ranges, and require fresh canonical push-CI results.
-16. Generate and validate the migration change package directly on the authorized maintainer host.
-17. Finalize/archive this task only after exact source/package/downstream review required by the maintenance contract. Do not promote `main` without separate human exact-SHA approval.
+4. Acceptance-test direct Commander/native OpenCode small/heavy developer start, structured question, permission response, same-session steering/continuation, timeout reconciliation, exact pushed handoff, and small-to-heavy route transition without overlapping mutation.
+5. Extract/repackage the hardened Scout independent of the GitHub-Issue bridge and prove exact-SHA snapshot isolation, no process/network/package/LSP capability, symlink containment, and repository-instruction non-authority.
+6. Update web/developer instructions for the direct-host architecture.
+7. Remove GitHub-Issue bridge transport/protocol/daemon/recovery/projection code and tests from the new repository.
+8. Remove Workspace bridge-host administration tools while preserving Workspace worktree/sandbox/publish safety.
+9. Remove the package-generation Action broker and make direct tracked generator execution the maintenance path.
+10. Update Workspace publication for the chosen Git authentication path.
+11. Migrate imported task/package active-state presentation without rewriting historical blobs/manifests.
+12. Update AS-BUILT, architecture, design, deviations, SECURITY/README, branch validators, web package validator/tests, and canonical CI.
+13. Run proportional local tests plus full affected repository validation through the direct host capability.
+14. Push exact source branches, independently review exact remote ranges, and require fresh canonical push-CI results.
+15. Generate and validate the migration change package directly on the authorized maintainer host.
+16. Finalize/archive this task only after exact source/package/downstream review required by the maintenance contract. Do not promote `main` without separate human exact-SHA approval.
 
 Required replacement acceptance includes at minimum:
 
 - small and heavy developer start only through web-selected public routing;
 - same-session question/permission response and steering;
-- private session/process identifiers never persisted;
+- private host/session/process identifiers never persisted;
 - timeout/interruption reconciliation without duplicate mutation;
 - exact remote pushed handoff and canonical CI visibility;
 - synchronization recovery on failed push;
@@ -276,6 +264,7 @@ Create a completely separate local clone/worktree set for `floris3456/agentic-wo
 - web `web-orchestration-only/chatgpt-project/skill-template-maintenance.md`
 - web `web-orchestration-only/chatgpt-project/skill-promotion.md`
 - web `web-orchestration-only/task-context/TEMPLATE.md`
+- `docs/work/current/TEMPLATE-DIRECT-HOST-ADAPTER-001-direct-host-safety-adapter.md` (separate queued follow-up; out of scope here)
 
 ## Last handoff commit
 
