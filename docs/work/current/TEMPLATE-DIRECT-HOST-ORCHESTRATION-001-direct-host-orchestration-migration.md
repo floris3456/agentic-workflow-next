@@ -85,6 +85,12 @@ Task-start source heads:
 
 ## Interpretation
 
+### Implementation route preference
+
+For normal or nontrivial implementation, prefer Remote Desktop Commander against the verified local worktree because it provides surrounding repository context, multi-file editing, search, `git diff`, local tests, generators, and normal commit/push behavior in one execution surface. Use direct GitHub mutation only when the change is tiny and precisely known, the exact paths and edits are already established, no local-only tooling or broad context is needed, and remote write/readback is simpler than using the worktree.
+
+Commander implementation and direct GitHub mutation are alternative mutating routes for the same work; do not overlap them. After Commander work is pushed, use GitHub as the independent exact-SHA evidence route to verify the remote head, changed range, and canonical CI. This routing preference does not change authority: remote Git remains authoritative, and local worktree or agent output remains implementation evidence only.
+
 ### Obsolete in `agentic-workflow-next`
 
 Remove after the direct replacement is proven:
