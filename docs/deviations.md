@@ -88,8 +88,11 @@
 - Observed reality: the accepted Workspace Maintenance Agent, its sole skill
   authority, contained worktree tools, package machinery, and their executable
   validation intentionally run with `template-development` as their project and
-  source root. A two-range package could carry the developer bridge route while
-  omitting the agent/runtime that route requires.
+  source root. At the time this deviation was accepted, a two-range package could
+  carry the then-current developer bridge route while omitting the agent/runtime
+  that route required. The bridge has since been retired; the three-range package
+  design remains current because template-development still owns executable
+  maintenance runtime and transfer state.
 - Reason the plan could not remain: describing executable maintenance assets as
   neutral ledger state hid a real authority boundary, and omitting that branch's
   reviewed range produced incomplete downstream transfer.
