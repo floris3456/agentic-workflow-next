@@ -4,6 +4,12 @@ mode: subagent
 model: cliproxyapi/gemini-3.7-flash-high
 reasoningEffort: high
 permission:
+  read: allow
+  edit: allow
+  glob: allow
+  grep: allow
+  list: allow
+  bash: allow
   task: deny
   external_directory: ask
   question: deny
