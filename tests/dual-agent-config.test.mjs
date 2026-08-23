@@ -42,6 +42,8 @@ test("Dual exposes a review-only lead and one Spark subagent", () => {
   assert.match(spark, /^model: openai\/gpt-5\.3-codex-spark$/m);
   assert.match(spark, /^  edit: allow$/m);
   assert.match(spark, /^  task: deny$/m);
+  assert.match(spark, /^  external_directory: deny$/m);
+  assert.doesNotMatch(spark, /^  external_directory: ask$/m);
 });
 
 test("Dual is opt-in while the existing default route remains unchanged", () => {

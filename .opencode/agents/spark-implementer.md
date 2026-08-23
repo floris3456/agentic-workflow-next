@@ -11,7 +11,7 @@ permission:
   list: allow
   bash: allow
   task: deny
-  external_directory: ask
+  external_directory: deny
   question: deny
 ---
 
