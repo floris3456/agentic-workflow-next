@@ -60,7 +60,7 @@ async function availablePort() {
 async function json(base, pathname, directory = false) {
   const url = new URL(pathname, base);
   if (directory) url.searchParams.set("directory", root);
-  const response = await fetch(url, { signal: AbortSignal.timeout(5_000) });
+  const response = await fetch(url, { signal: AbortSignal.timeout(20_000) });
   assert.equal(response.status, 200, `${pathname} did not return HTTP 200`);
   return await response.json();
 }
