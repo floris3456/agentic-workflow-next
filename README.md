@@ -18,6 +18,14 @@ This repository is a reusable template for human-controlled, web-orchestrated so
 
 Dual (`lead-developer` + `spark-implementer`) is the default substantive route for non-trivial local implementation. `small-developer` and `heavy-developer` are direct bounded alternatives when Dual is unnecessary.
 
+## Agent memory
+
+Advisory agent memory is provided via `.opencode/tools/agentmemory.ts` and `scripts/agentmemory-server.sh` (pinned to `@agentmemory/agentmemory@0.9.22`).
+- Roles: `lead-developer`, `spark-implementer`, `small-developer`, and `heavy-developer`.
+- Recall scopes: Spark defaults to `own`; Lead/Small/Heavy default to `team`. Any role may explicitly select `own` or `team`. All recalls render the author role visibly.
+- Invariants: Memory is strictly advisory; durable repository truth (Git state, canonical task records, AS-BUILT) always takes precedence.
+- Safety: Capture is concise and explicit only; reasoning traces, credentials/secrets, private runtime IDs, absolute host paths, and raw logs are rejected. Local server uses runtime Git common directory storage (`.git/agentmemory`) and unsets external provider keys to ensure no cloud leakage. Failures degrade cleanly with advisory fallbacks and never block work.
+
 ## Records and evidence
 
 - Canonical task records and optional task-progress are in `docs/work/`.

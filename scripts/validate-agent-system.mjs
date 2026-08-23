@@ -162,6 +162,7 @@ for (const relative of [
   ".githooks/pre-commit",
   ".githooks/pre-merge-commit",
   ".githooks/pre-push",
+  "scripts/agentmemory-server.sh",
   "scripts/bootstrap-agent-workflow.sh",
   "scripts/initialize-template-branches.sh",
   "scripts/promote-developer-to-main.sh",

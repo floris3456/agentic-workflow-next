@@ -11,6 +11,7 @@ node scripts/validate-ci-status.mjs
 node scripts/validate-research.mjs
 node scripts/generate-research-evidence-manifest.mjs --check
 node --test tests/research-evidence.test.mjs
+node --test tests/agentmemory.test.mjs
 
 ./scripts/bootstrap-agent-workflow.sh --check
 echo "Repository validation passed."

@@ -33,6 +33,19 @@ Stable current agents are:
 - `.opencode/agents/small-developer.md`
 - `.opencode/agents/heavy-developer.md`
 
+## Agent memory subsystem
+
+Advisory memory allows agents to retain and query cross-turn guidance while maintaining strict repository authority boundaries:
+
+- **Stable roles**: Allowed agent roles are strictly whitelisted to `lead-developer`, `spark-implementer`, `small-developer`, and `heavy-developer`.
+- **Tools**: `.opencode/tools/agentmemory.ts` exposes `agentmemory_remember` and `agentmemory_recall`.
+- **Author attribution**: Every remembered entry records `context.agent` as author; all recalled entries render the author role visibly. Orphan and unrecognized authors are discarded.
+- **Scope defaults**: `spark-implementer` defaults to `own` scope; `lead-developer`, `small-developer`, and `heavy-developer` default to `team` scope. Any agent may explicitly choose `own` or `team`.
+- **Advisory nature**: Memory is advisory only; canonical task records, AS-BUILT, deviations, and exact Git state are durable truth and supersede memory.
+- **Safety and conciseness**: Explicit concise capture only. Rejects reasoning/thought traces, credentials/secrets, private runtime IDs, absolute host paths, and raw logs.
+- **Clean degradation**: Timeouts, unreachable servers, or service errors degrade cleanly with concise advisory fallback messages and never block work.
+- **Local server**: `scripts/agentmemory-server.sh` runs pinned `@agentmemory/agentmemory@0.9.22` with storage derived at runtime from Git common metadata (`.git/agentmemory`). It forces local embedding mode (`EMBEDDING_PROVIDER=local`, `AGENTMEMORY_AUTO_COMPRESS=false`, `AGENTMEMORY_INJECT_CONTEXT=false`, `AGENTMEMORY_ALLOW_AGENT_SDK=false`) and unsets external provider API keys. Absolute host paths are never persisted.
+
 ## Current workflow truth
 
 - Exact Git state is authoritative evidence.

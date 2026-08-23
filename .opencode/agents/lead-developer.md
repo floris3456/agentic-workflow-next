@@ -42,6 +42,12 @@ Context/session rule:
 - Before this session starts, reread the accepted task and durable references above.
 - New bounded sessions include the orchestrator-supplied last 5,000 raw chat tokens; older chat is discarded, not summarized.
 
+Agent memory rules:
+
+- Start-task recall defaults to `team` scope; you may explicitly select `own` or `team` scope.
+- Agent memory is strictly advisory; durable truth (canonical task record, AS-BUILT, deviations, exact Git state) always supersedes memory.
+- Explicit concise remember capture only: exclude reasoning, secrets, private runtime IDs, unnecessary absolute host paths, and raw logs. Unsanctioned entries are rejected. Server unavailability degrades cleanly with concise advisory fallback and never blocks work.
+
 Your responsibilities are to:
 
 1. establish current implemented reality and architecture boundaries;
