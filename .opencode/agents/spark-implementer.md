@@ -1,7 +1,7 @@
 ---
 description: Spark implementer for source edits, generation, commands, and tests directed by the lead developer.
 mode: subagent
-model: cliproxyapi/gemini-3.7-flash-high
+model: openai/gpt-5.3-codex-spark
 reasoningEffort: high
 permission:
   read: allow

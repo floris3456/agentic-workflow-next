@@ -13,14 +13,34 @@ function frontmatter(text) {
   return match[1];
 }
 
+function extractBlock(text, key) {
+  const lines = text.split("\n");
+  const index = lines.findIndex((line) => line.trim() === `${key}:`);
+  assert.notEqual(index, -1, `missing key: ${key}`);
+  const keyIndent = lines[index].match(/^\s*/)[0].length;
+  const block = [];
+  for (let i = index + 1; i < lines.length; i++) {
+    const line = lines[i];
+    if (!line.trim()) continue;
+    const lineIndent = line.match(/^\s*/)[0].length;
+    if (lineIndent <= keyIndent) break;
+    block.push(line.trim());
+  }
+  return block.join("\n");
+}
+
 test("Dual exposes a review-only lead and one Spark subagent", () => {
   const lead = frontmatter(read(".opencode/agents/lead-developer.md"));
   const spark = frontmatter(read(".opencode/agents/spark-implementer.md"));
 
   assert.match(lead, /^mode: primary$/m);
+  assert.match(lead, /^model: openai\/gpt-5\.6-sol$/m);
   assert.match(lead, /^  edit: deny$/m);
-  assert.match(lead, /^    spark-implementer: allow$/m);
+  assert.equal(extractBlock(lead, "task"), '"*": deny\nspark-implementer: allow');
+
   assert.match(spark, /^mode: subagent$/m);
+  assert.match(spark, /^model: openai\/gpt-5\.3-codex-spark$/m);
+  assert.match(spark, /^  edit: allow$/m);
   assert.match(spark, /^  task: deny$/m);
 });
 
