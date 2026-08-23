@@ -3,164 +3,99 @@
 ## Trigger
 
 Use only when the human explicitly asks to evaluate, test, change, package, or
-transfer the reusable workflow template itself: its bridge, Project package,
-agents, skills, branch workflow, validators, or maintenance system. Do not load
+transfer the reusable workflow template itself: its Project package, agents,
+skills, branch workflow, validators, runtime, or maintenance assets. Do not load
 for ordinary project work or an incidental template observation.
 
-## Authority
+## Canonical authority
 
-The current explicit human request controls the requested outcome and may replace
-a routine template default. It never overrides platform instructions, public
-safety, no-replay boundaries, human-owned risk decisions, or exact-SHA human
-promotion authority. When routine procedure conflicts with the requested outcome,
-use the smallest equivalent safe route that preserves those hard boundaries.
+The accepted canonical task-record on `template-development` is the durable
+instruction authority. Read it first, together with useful separate
+task-progress, applicable AS-BUILT and formal deviations, relevant architecture
+and actionable docs, `source-lock.json` when source provenance matters, and exact
+current remote refs and Git state.
 
-## Canonical continuity
+Use exactly one canonical task-record for consequential template work. Keep
+optional progress concise and non-authoritative. A material authorized outcome,
+scope, or constraint change updates the task-record. Historical task-context and
+task records remain historical evidence; never rewrite them merely because
+current terminology or procedure changed.
 
-1. Inspect the exact `template-development` branch first. Read its `AGENTS.md`,
-   `.opencode/skills/template-maintenance/SKILL.md`, task template, and
-   `source-lock.json`; those repository-owned files are the maintenance contract.
-2. Create or resume exactly one
-   `docs/work/current/<task-id>-<slug>.md` record on `template-development`
-   before consequential source publication. Preserve a concise public-safe brief:
-   requested outcome, scope, constraints, material decisions, exact live refs,
-   and material unknowns—never private chat, secrets, personal data, host-local
-   absolute paths, or raw private agent identifiers.
-3. That maintenance record replaces ordinary `web-orchestration-only/task-context`
-   continuity for the entire template task. Do not create both merely to satisfy
-   another workflow shape.
-4. Keep public-safe issue/control journals, active work, pending publication,
-   findings, decisions, source ranges, checks, and next action in the maintenance
-   record when those facts exist. Confirm each protective ledger write remotely
-   before publishing the source effect it protects.
-5. Read exact live `main`, `developer`, and `web-orchestration` refs and compare
-   them with `source-lock.json`. The lock is the latest reconciled canonical source
-   snapshot, not a package review-base lock. Reconcile it only from independently
-   verified exact remote refs; do not silently reconcile it from stale claims,
-   inferred refs, or package range endpoints.
+Use zero compaction and no fallback. A resumed bounded session receives the last
+5,000 raw chat tokens and re-reads the durable records it needs.
 
-If the required maintenance contract is absent, malformed, or cannot be updated
-safely, inspect what can be proven and prepare the strongest safe predecessor
-outcome rather than claiming maintenance completed.
+## Source work and routes
 
-## Source work
+Actual source edits remain on their authoritative branches. Identify which
+requested effects belong on `template-development`, `developer`,
+`web-orchestration`, or another expressly authorized branch. Do not merge
+independent branch histories or treat a maintenance ledger as implementation
+truth for another branch.
 
-Keep actual edits on their authoritative source branches. Identify whether each
-fact belongs on `developer`, `web-orchestration`, or both. Never make one source
-branch depend on the other's working history.
+Select the source route from the task:
 
-Choose each source execution route proportionally:
+- direct web/GitHub for a tiny exact low-risk edit;
+- `small` for very simple bounded local work;
+- `heavy` for difficult or subtle but still small bounded work;
+- `dual` by default for substantive work.
 
-- use bounded direct connected-GitHub edits when exact paths/edits are known and
-  remote readback plus focused checks can prove the result more simply;
-- use the repository's isolated/local maintainer or delegated developer route
-  when local context/tools, interacting changes, nontrivial generation/tests,
-  uncertainty, or independent implementation materially improves confidence;
-- use Workspace Maintenance when the template-development-rooted workspace
-  authority and its verified cross-worktree tools are the appropriate execution
-  surface.
+Only one mutating source route runs at a time. Read-only research may overlap
+where safe. `small` and `heavy` are not retries or substitutes for Spark inside
+Dual. If Dual is unavailable, reconcile existing effects and make a fresh route
+decision.
 
-Only one mutating source route runs at a time. Read-only Scouts may overlap when
-the normal workflow's hardened Scout boundary is available and useful.
+For Dual, the Lead owns deep current-state inspection, concrete implementation
+architecture, detailed Spark direction, diff and check review, and correction
+steering while remaining non-editing for implementation source. Spark alone
+performs edits and implementation commands. The web orchestrator independently
+verifies the exact remote result against the accepted template outcome and
+cross-system constraints without routinely duplicating the Lead's full review.
 
-For direct/delegated work executing in a source branch's own authoritative
-context, follow that branch's normal task/durable-record, AS-BUILT/deviation,
-synchronization, validation, and review procedure.
+Review every resulting source range against exact remote Git. Reports and CI are
+evidence; they do not replace inspection or human promotion authority.
 
-For Workspace Maintenance, do **not** transfer the target branch's instruction
-authority or automatically require its agent/task/handoff lifecycle. Workspace
-continues under the template-development root, selected Workspace agent,
-`workspace-maintenance` skill, and bounded orchestrator request. Inspect target
-rules as evidence and apply relevant compatibility/output requirements to the
-resulting branch state, including applicable public safety, `main` authority,
-synchronization, file placement/format, durable implementation truth, and
-validation/check requirements. A target-specific durable record may be created
-or updated as an output artifact when required without pretending Workspace
-became the target agent. If the requested task intentionally changes a target
-rule itself, read the old rule to understand current behavior and impact, but do
-not let it veto its own authorized modification.
+## Durable implementation truth
 
-Use the practical distinction explicitly:
+Before each mutating handoff, assess AS-BUILT, formal deviations, actionable
+documentation, source-lock/provenance effects, and whether transfer or release
+packaging is actually required.
 
-- adding a missing target file normally follows applicable target placement,
-  format, record, and validation requirements;
-- changing the target rule that governs such a file requires reading the existing
-  rule, then making the authorized rule change under Workspace authority rather
-  than treating the old rule as a veto.
+For every changed code file, identify the applicable AS-BUILT scope. Keep that
+AS-BUILT complete and accurate for every code file in its directory, enough to
+reconstruct current implemented reality. Update ordinary docs only when the
+implementation makes them false, materially incomplete, or misleading.
 
-A Workspace-routed task produces one Workspace handoff. Do not demand a second
-handoff from the target branch's normal agent merely because Workspace published
-a target commit. Independently review the exact pushed target SHA and the
-applicable target constraints instead.
+A formal deviation records final current implementation that materially differs
+from an applicable prior normative expected state. It is not a future proposal.
+In Dual, Spark's single task-scoped `proposed-deviations.md` is temporary working
+state for Lead disposition and must have no unresolved proposal at completion.
 
-When a source or maintainer handoff reports `blocked` or `needs decision`, apply
-the permanent claim-first rule before forwarding the proposed next step. Normally
-inspect the exact evidence and relevant accepted architecture, design, deviations,
-and responsibility boundaries, then decide whether the condition is a real
-external or human-owned blocker, an implementation misunderstanding, or an
-orchestration/design problem. Repeated or similar blockers require stronger
-orchestrator analysis before another steer, route change, or source request.
-Direct escalation is appropriate only when the blocker is already independently
-proven to be human-owned, a safety/authority boundary, an unavailable required
-capability, or an external condition that further reasoning cannot resolve.
+Keep `source-lock.json` accurate when the task reaches a meaningful source
+provenance checkpoint. Reconcile it only from independently verified exact remote
+refs; do not infer source state from reports or package endpoints.
 
-Acceptance-critical executable tests owned by an authoritative branch must be
-reachable through that branch's canonical push-triggered CI path. A web
-orchestrator must not depend on its own local execution environment to obtain
-authoritative execution of those tests.
+## Conditional packages and transfer
 
-Review every changed source range independently against exact remote GitHub.
-Agent reports, bridge results, task records, and checks are navigation/perceived
-results, not proof or human acceptance.
+Source work can complete without a package. Generate or apply a package only when
+the accepted task requests transfer, downstream application, or release
+packaging. When requested, use the tracked deterministic generator, verifier, and
+provenance contract on an authorized execution surface. Never hand-build package
+contents, silently widen reviewed ranges, or treat package generation as a
+completion ceremony.
 
-If a required source-write capability is unavailable, finish safe independent
-inspection and preserve the exact limitation in the maintenance record. Do not
-simulate an unavailable mutation or hand-build an artifact whose tracked
-procedure requires another execution surface.
+Keep source-lock concepts and exact package base/head provenance distinct. Review
+the pushed package bytes and manifest when a package is an accepted output.
+Downstream conflict is an explicit adaptation task, not permission to alter the
+canonical package silently.
 
-## Change packages
+## Checkpoints and completion
 
-After exact source review, use the tracked template-maintenance generator and
-validator on an authorized maintainer execution surface. Never hand-build a
-change package, merge the ledger branch into a source branch, or widen a package
-range to absorb unrelated later commits.
+Do not require push-after-every-commit, handoff-only snapshot commits, mandatory
+finalization, or archive movement. Push when remote durability, handoff, review,
+session/worktree transfer, interruption recovery, or CI evidence is useful.
+Archival is outside the critical path.
 
-`source-lock.json` records the latest reconciled canonical source snapshot. It
-may advance from independently verified exact live source refs without waiting
-for package generation. Package provenance remains defined by each package's
-exact reviewed base/head ranges, canonical fetch/ancestry proof, observed
-canonical tips, patch digests, and package binding. A package range base does not
-have to equal the repository source snapshot.
-
-A package is trustworthy only when the tracked generator produced it from the
-canonical repository under the current provenance contract, validation passed,
-and the exact package bytes/manifest are pushed and independently reviewed.
-
-Apply a reviewed package to downstream repositories only on matching source
-branches through their normal task, validation, commit, push, and review
-procedures. Patch conflict is an explicit adaptation task; never silently alter
-the canonical package.
-
-## Durable records
-
-Bring the integrated AS-BUILT, design/deviation records, source ranges, checks,
-package state, remaining work, and next action current when the change materially
-alters those truths. Historical task records remain historical evidence; do not
-rewrite them merely because current terminology or architecture changed.
-
-Keep `source-lock.json` current from independently verified exact canonical refs
-at meaningful maintenance checkpoints. Package creation does not consume, freeze,
-or advance the lock; it records its own exact reviewed ranges and provenance.
-
-## Finalization
-
-A successful working-cycle handoff does not itself finalize the maintenance task.
-After source/package/downstream review required by the repository contract,
-preserve the approved task-record Git blob unchanged when moving it from
-`docs/work/current/` to the same basename under `docs/work/archive/`. Refuse an
-archive collision or blob mismatch. Finalization never implies `main` promotion
-or human acceptance.
-
-Before any final response, every launched Scout/developer/source route must be
-terminal and absorbed and every claimed source/package commit must exist remotely.
-`main` remains human-only.
+Completion requires the accepted template outcome, affected source ranges,
+durable truth, relevant checks, and unresolved risks to be independently
+accounted for. `main` remains unchanged unless the human separately invokes the
+exact-SHA promotion procedure.

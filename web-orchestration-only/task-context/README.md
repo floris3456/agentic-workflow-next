@@ -1,40 +1,40 @@
-# Task-context files
+# Task records and progress
 
-Create one concise public-safe file per ordinary orchestration task that actually
-needs durable continuity, using `TEMPLATE.md`. Quick lookups and self-contained
-non-mutating answers do not need a task-context record.
+Use `TEMPLATE.md` as the canonical ordinary task-record template when
+consequential work benefits from durable instruction authority. Tiny one-turn
+work may skip a durable record when continuity and audit value are negligible.
 
-When the human explicitly commissions reusable-template evaluation or
-maintenance, the canonical record under `docs/work/current/**` on
-`template-development` replaces this record; do not duplicate it here merely to
-satisfy the ordinary workflow.
+Keep exactly one canonical task-record. It contains the accepted outcome,
+material scope, constraints, required outputs and checks, accepted design, and
+explicit exceptions. Do not duplicate that plan elsewhere. A material authorized
+change to outcome, scope, or constraints updates the task-record.
 
-For a delegated task, the task ID must match the developer task and bridge
-envelope. For a direct mutation route, use the same stable task identity and
-record `Selected developer: none` with `direct GitHub` as the selection route.
+Create a separate `<task-id>-progress.md` only when it materially helps another
+session resume. Use this concise shape:
 
-Before any protected GitHub publication, persist its exact public-safe arguments
-as `prepared`; after exact readback, add its ref and mark it `posted`. Use
-`connector-delivery-pending` when a required effect is definitely absent after
-one bounded delivery window. That state pauses only dependent work: continue
-meaningful independent work and retry the same logical publication at a later
-natural checkpoint. Journal every refusal even if a later attempt succeeds.
+```markdown
+# Task progress: <task-id>
 
-Record the canonical bound issue, related/duplicate issue dispositions,
-control-issue state, latest command UUID/kind/lifecycle, highest accepted sequence
-derived from trusted lifecycle, distinct finalization and human-approval SHAs,
-and verified promotion refs when they exist. Keep one `Active work` entry per
-launched Scout/developer route until its correlated terminal result is read and
-absorbed. One task ID never receives a replacement issue; recovery reconstructs
-and reuses the canonical issue.
+- Task ID: <task-id>
 
-The same file owns developer-route selection, substantive-attempt classification,
-route changes, result, and retrospective. Do not create a separate routing
-record. Record a capability limitation only when an unavailable action or evidence
-source materially affects the task; do not snapshot the Project's transient tool
-surface or create mode metadata.
+## Current position
+## Material observations
+## Meaningful failed attempts and route changes
+## Blockers and decisions
+## Checks run
+## Remaining work
+## Next action
+```
 
-Historical records remain truthful history. During upgrade, do not rewrite old
-MCP-ON/MCP-OFF terminology merely to match the current architecture. Remove
-obsolete mode fields only when an active record is otherwise being updated, and
-preserve any decision-relevant historical meaning in `Migration notes`.
+Progress is execution state, not authority. Include only decision-relevant
+position, observations, failed attempts or route changes, blockers and decisions,
+checks already run, remaining work, and one next action. Do not duplicate the
+task plan, dump commands or private reasoning, or silently change scope.
+
+Explicit reusable-template maintenance uses its canonical accepted task record on
+`template-development`; do not create a competing ordinary record here.
+
+Historical records remain truthful history. They may retain old schemas, routing,
+bridge, mode, finalization, or other retired terminology. Do not rewrite them
+merely to match the current workflow. The validator accepts them as historical
+public-safe Markdown rather than imposing the current template retroactively.

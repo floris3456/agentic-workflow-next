@@ -28,25 +28,30 @@ function withCopy(mutator) {
   }
 }
 
+function filePath(target, relative) {
+  return path.join(target, ...relative.split("/"));
+}
+
 function replace(target, relative, from, to) {
-  const file = path.join(target, relative);
+  const file = filePath(target, relative);
   const text = fs.readFileSync(file, "utf8");
   assert.ok(text.includes(from), `${relative} fixture source not found: ${from}`);
   fs.writeFileSync(file, text.replace(from, to));
 }
 
-function expectFailure(mutator) {
+function expectFailure(mutator, pattern) {
   const result = withCopy(mutator);
   assert.notEqual(result.status, 0, `validator unexpectedly passed\nstdout: ${result.stdout}\nstderr: ${result.stderr}`);
+  if (pattern) assert.match(result.stderr, pattern);
 }
 
-test("canonical package validates", () => {
+test("canonical package validates with simplified architecture checks", () => {
   const result = runValidator();
   assert.equal(result.status, 0, `stdout: ${result.stdout}\nstderr: ${result.stderr}`);
-  assert.match(result.stdout, /5 exact conditionally routed Project Sources/);
-  assert.match(result.stdout, /capability-local workflow/);
-  assert.match(result.stdout, /small\/heavy routing/);
-  assert.match(result.stdout, /unified prompt creation\/craft/);
+  assert.match(result.stdout, /exact package inventories/);
+  assert.match(result.stdout, /5 routed Project Sources/);
+  assert.match(result.stdout, /flexible public-safe task history/);
+  assert.match(result.stdout, /no-replay\/human exact-SHA promotion guards/);
 });
 
 test("canonical push CI is read-only except exact-SHA status reporting", () => {
@@ -66,141 +71,154 @@ test("canonical push CI is read-only except exact-SHA status reporting", () => {
   assert.doesNotMatch(workflow, /\bsecrets\./);
 });
 
-test("workflow requires orchestrator analysis before forwarding blocker handoffs", () => {
-  const workflow = fs.readFileSync(path.join(root, "chatgpt-project", "skill-workflow.md"), "utf8");
-  assert.match(workflow, /Treat every developer handoff as a claim to evaluate[\s\S]{0,900}`blocked` or `needs decision`[\s\S]{0,900}investigate the claimed blocker yourself before steering or escalating/i);
-  assert.match(workflow, /consult relevant accepted architecture, design, and deviation[\s\S]{0,900}implementation misunderstanding[\s\S]{0,900}orchestration\/design\s+problem/i);
-  assert.match(workflow, /Repeated or similar blockers raise the bar[\s\S]{0,700}deeper orchestrator analysis[\s\S]{0,900}human-owned decision[\s\S]{0,900}unavailable required capability/i);
-});
-
-test("permanent and template routes preserve claim-first blocker reasoning", () => {
-  const instructions = fs.readFileSync(path.join(root, "chatgpt-project", "developer-instructions.md"), "utf8");
-  const maintenance = fs.readFileSync(path.join(root, "chatgpt-project", "skill-template-maintenance.md"), "utf8");
-  assert.match(instructions, /Treat every handoff as a claim to evaluate[\s\S]{0,700}nontrivial or repeated blocker[\s\S]{0,900}architecture\/design\/deviations/i);
-  assert.match(maintenance, /reports `blocked` or `needs decision`[\s\S]{0,900}permanent claim-first rule[\s\S]{0,1200}Repeated or similar blockers require stronger\s+orchestrator analysis/i);
-});
-
-test("routing contract uses only small and heavy", () => {
-  const workflow = fs.readFileSync(path.join(root, "chatgpt-project", "skill-workflow.md"), "utf8");
-  const taskTemplate = fs.readFileSync(path.join(root, "task-context", "TEMPLATE.md"), "utf8");
-  assert.match(workflow, /Select `small` by default[\s\S]{0,700}Use `heavy` immediately[\s\S]{0,700}two substantive small-route failures/i);
-  assert.match(workflow, /"agent":"small"/);
-  assert.match(taskTemplate, /^- Selected developer: none \| small \| heavy$/m);
-  assert.match(taskTemplate, /^- Small substantive-attempt count: 0 \| 1 \| 2$/m);
-});
-
-test("template maintenance keeps workspace authority while applying target rules", () => {
-  const maintenance = fs.readFileSync(path.join(root, "chatgpt-project", "skill-template-maintenance.md"), "utf8");
-  assert.match(maintenance, /For Workspace Maintenance[\s\S]{0,900}do \*\*not\*\* transfer the target branch's instruction\s+authority/i);
-  assert.match(maintenance, /apply relevant compatibility\/output requirements[\s\S]{0,700}file placement\/format[\s\S]{0,700}durable implementation truth[\s\S]{0,700}validation\/check requirements/i);
-  assert.match(maintenance, /adding a missing target file[\s\S]{0,500}placement[\s\S]{0,500}validation requirements/i);
-  assert.match(maintenance, /changing the target rule[\s\S]{0,500}read(?:ing)? the existing\s+rule[\s\S]{0,500}old rule as a veto/i);
-  assert.match(maintenance, /one Workspace handoff[\s\S]{0,500}Do not demand a second\s+handoff/i);
-  assert.match(maintenance, /target-specific durable record[\s\S]{0,500}without pretending Workspace\s+became the target agent/i);
-});
-
-test("rejects routing vocabulary outside small and heavy", () => {
+test("rejects package inventory drift", () => {
   expectFailure((target) => {
-    replace(target, "task-context/TEMPLATE.md", "- Selected developer: none | small | heavy", "- Selected developer: none | small | other");
-  });
+    fs.writeFileSync(path.join(target, "unexpected.md"), "# Unexpected\n");
+  }, /web-orchestration-only root inventory differs/);
 });
 
-test("rejects loss of permanent claim-first blocker reasoning", () => {
+test("rejects Project Source inventory drift", () => {
   expectFailure((target) => {
-    replace(target, "chatgpt-project/developer-instructions.md", "Treat every handoff as a claim to evaluate", "Forward every handoff as the next instruction");
-  });
+    fs.writeFileSync(path.join(target, "chatgpt-project", "skill-obsolete.md"), "# Obsolete\n\n## Trigger\n");
+  }, /Project package inventory differs/);
 });
 
-test("rejects loss of template-maintenance blocker reasoning", () => {
+test("rejects a non-regular required file", () => {
   expectFailure((target) => {
-    replace(target, "chatgpt-project/skill-template-maintenance.md", "apply\nthe permanent claim-first rule", "forward\nthe maintainer's proposed next step");
-  });
+    const file = path.join(target, "chatgpt-project", "skill-recovery.md");
+    fs.rmSync(file);
+    fs.mkdirSync(file);
+  }, /Required path is not a regular file/);
 });
 
-test("rejects a superseded MCP skill in the package inventory", () => {
+test("rejects NUL bytes", () => {
   expectFailure((target) => {
-    fs.writeFileSync(path.join(target, "chatgpt-project", "skill-mcp-on-workflow.md"), "# stale\n");
-  });
+    fs.writeFileSync(path.join(target, "task-context", "NUL.md"), Buffer.from("# Broken\0\n"));
+  }, /contains NUL bytes: task-context\/NUL\.md/);
 });
 
-test("rejects global MCP mode semantics in permanent instructions", () => {
+test("rejects invalid UTF-8", () => {
   expectFailure((target) => {
-    replace(target, "chatgpt-project/developer-instructions.md", "# Capability-local execution", "# Capability-local execution\n\nMCP-ON is the active mode.");
-  });
+    fs.writeFileSync(path.join(target, "task-context", "UTF8.md"), Buffer.from([0x23, 0x20, 0xc3, 0x28, 0x0a]));
+  }, /is not valid UTF-8: task-context\/UTF8\.md/);
 });
 
-test("rejects loss of capability-local permanent behavior", () => {
+test("rejects blank text", () => {
   expectFailure((target) => {
-    replace(target, "chatgpt-project/developer-instructions.md", "Do not create global operating modes", "Create global operating modes");
-  });
+    fs.writeFileSync(path.join(target, "task-context", "BLANK.md"), " \n\t\n");
+  }, /is blank: task-context\/BLANK\.md/);
 });
 
-test("rejects a missing routed skill", () => {
+test("accepts historical task records without retired schema enforcement", () => {
+  const result = withCopy((target) => {
+    fs.writeFileSync(path.join(target, "task-context", "HISTORY-001.md"), "# Historical note\n\nThis record predates the current task template.\n");
+  });
+  assert.equal(result.status, 0, `stdout: ${result.stdout}\nstderr: ${result.stderr}`);
+});
+
+test("accepts a separate concise task-progress record", () => {
+  const result = withCopy((target) => {
+    fs.writeFileSync(path.join(target, "task-context", "TASK-001-progress.md"), "# Task progress: TASK-001\n\n## Current position\n\nImplementation is under review.\n");
+  });
+  assert.equal(result.status, 0, `stdout: ${result.stdout}\nstderr: ${result.stderr}`);
+});
+
+test("rejects invalid task-context entries", () => {
   expectFailure((target) => {
-    const file = path.join(target, "chatgpt-project", "developer-instructions.md");
-    const text = fs.readFileSync(file, "utf8");
-    fs.writeFileSync(file, text.replace(/^\| Human asks for a ready-to-use prompt.*\n/m, ""));
-  });
+    fs.writeFileSync(path.join(target, "task-context", "not markdown.txt"), "not allowed\n");
+  }, /invalid Markdown entry/);
 });
 
-test("rejects loss of the hardened Scout readiness boundary", () => {
+test("rejects a missing routed Source and an unknown routed Source", () => {
   expectFailure((target) => {
-    replace(target, "chatgpt-project/skill-workflow.md", "hardened Scout runtime ready", "Scout runtime ready");
-  });
-});
-
-test("rejects loss of mutation no-replay recovery", () => {
+    replace(target, "chatgpt-project/developer-instructions.md", "| Human asks for a ready-to-use prompt for another execution context | `skill-prompt-creation.md` |\n", "");
+  }, /exactly one trigger row/);
   expectFailure((target) => {
-    replace(target, "chatgpt-project/skill-recovery.md", "never by replaying an\nuncertain mutation", "by replaying an\nuncertain mutation");
-  });
+    replace(target, "chatgpt-project/developer-instructions.md", "`skill-prompt-creation.md`", "`skill-unknown.md`");
+  }, /(?:unknown Project Source|exactly one trigger row)/);
 });
 
-test("rejects loss of the exact-SHA human promotion trigger", () => {
+test("rejects a skill without basic title or Trigger structure", () => {
   expectFailure((target) => {
-    replace(target, "chatgpt-project/skill-promotion.md", "human explicitly approves one exact fully reviewed final\n`developer` SHA", "automation approves a reviewed final\n`developer` SHA");
-  });
-});
-
-test("rejects loss of prompt context-transfer evidence roles", () => {
+    replace(target, "chatgpt-project/skill-workflow.md", "# Web orchestration workflow", "Web orchestration workflow");
+  }, /must begin with a Markdown title/);
   expectFailure((target) => {
-    replace(target, "chatgpt-project/skill-prompt-creation.md", "- **Interpretation:**", "- **Opinion:**");
-  });
+    replace(target, "chatgpt-project/skill-recovery.md", "## Trigger", "## Use");
+  }, /must declare a Trigger section/);
 });
 
-test("rejects loss of prompt craft technique coverage", () => {
+test("rejects an incomplete installation Source inventory", () => {
   expectFailure((target) => {
-    replace(target, "chatgpt-project/skill-prompt-creation.md", "### Exploration and anchoring control", "### Exploration");
-  });
+    replace(target, "chatgpt-project/README.md", "   - `skill-recovery.md`\n", "");
+  }, /Installation inventory must name skill-recovery\.md exactly once/);
 });
 
-test("rejects loss of the prompt craft no-op option", () => {
-  expectFailure((target) => {
-    replace(target, "chatgpt-project/skill-prompt-creation.md", "Applying no extra craft technique is a valid and common result.", "Always apply an extra craft technique.");
-  });
-});
-
-test("rejects malformed bridge start command shape", () => {
-  expectFailure((target) => {
-    replace(target, "chatgpt-project/skill-workflow.md", '"expected":{"developer_sha"', '"guard":{"developer_sha"');
-  });
-});
-
-test("rejects retired mode metadata in the new task template", () => {
-  expectFailure((target) => {
-    replace(target, "task-context/TEMPLATE.md", "- Material capability limits: <task-relevant unavailable action/evidence or none>", "- Last orchestration mode: MCP-ON | MCP-OFF");
-  });
-});
-
-test("rejects loss of historical-record migration semantics", () => {
-  expectFailure((target) => {
-    replace(target, "task-context/README.md", "Historical records remain truthful history.", "Historical records should be rewritten.");
-  });
-});
-
-test("rejects an incomplete five-source installation inventory", () => {
+test("rejects missing deterministic rendering placeholders", () => {
   expectFailure((target) => {
     const file = path.join(target, "chatgpt-project", "README.md");
     const text = fs.readFileSync(file, "utf8");
-    fs.writeFileSync(file, text.replace("   - `skill-recovery.md`\n", ""));
-  });
+    fs.writeFileSync(file, text.replaceAll("https://github.com/<owner>/<repository>", "https://github.com/example/rendered-repository"));
+  }, /chatgpt-project\/README\.md is missing required render placeholder/);
+  expectFailure((target) => {
+    replace(target, "chatgpt-project/developer-instructions.md", "<owner>/<repository>", "example/rendered-repository");
+  }, /chatgpt-project\/developer-instructions\.md is missing required render placeholder/);
+});
+
+test("rejects current task template section loss and progress mixing", () => {
+  expectFailure((target) => {
+    replace(target, "task-context/TEMPLATE.md", "## Required checks", "## Verification");
+  }, /exactly one Required checks section/);
+  expectFailure((target) => {
+    replace(target, "task-context/TEMPLATE.md", "## Explicit exceptions", "## Current position\n\n<pending>\n\n## Explicit exceptions");
+  }, /keep task-progress state separate/);
+});
+
+test("rejects loss of historical truth and task-progress separation", () => {
+  expectFailure((target) => {
+    const file = path.join(target, "task-context", "README.md");
+    const text = fs.readFileSync(file, "utf8");
+    fs.writeFileSync(file, text.replace(/\nHistorical records[\s\S]*$/, "\nHistorical files should be normalized to the current schema.\n"));
+  }, /separate task progress from authority and preserve historical truth/);
+});
+
+test("rejects loss of the public-persistence safety boundary", () => {
+  expectFailure((target) => {
+    const file = path.join(target, "chatgpt-project", "developer-instructions.md");
+    const text = fs.readFileSync(file, "utf8");
+    fs.writeFileSync(file, text.replace(/Anything persisted to GitHub is public\.[\s\S]*?identifiers\. /, "Repository content may be persisted as needed. "));
+  }, /Permanent instructions must retain the public-persistence safety boundary/);
+});
+
+test("rejects public-unsafe content in dynamic task context", () => {
+  expectFailure((target) => {
+    const hostPath = "/ho" + "me/alice/private-repository/";
+    fs.writeFileSync(path.join(target, "task-context", "UNSAFE-001.md"), `# Note\n\nWorkspace: ${hostPath}\n`);
+  }, /task-context\/UNSAFE-001\.md contains a host-local absolute path/);
+  expectFailure((target) => {
+    fs.writeFileSync(path.join(target, "task-context", "TOKEN-001.md"), `# Note\n\nToken: ghp_${"a".repeat(24)}\n`);
+  }, /task-context\/TOKEN-001\.md contains a credential-like token/);
+});
+
+test("rejects loss of uncertain-mutation no-replay", () => {
+  expectFailure((target) => {
+    replace(target, "chatgpt-project/skill-recovery.md", "Never automatically repeat an uncertain mutation.", "Automatically repeat an uncertain mutation.");
+  }, /prohibit automatic replay of uncertain mutations/);
+});
+
+test("rejects loss of human exact-SHA permanent authority", () => {
+  expectFailure((target) => {
+    replace(target, "chatgpt-project/developer-instructions.md", "Only the human\nmay approve one exact reviewed `developer` SHA", "Automation\nmay approve one reviewed `developer` SHA");
+  }, /human exact-SHA approval/);
+});
+
+test("rejects weakened promotion trigger, opportunistic content, or replay safety", () => {
+  expectFailure((target) => {
+    replace(target, "chatgpt-project/skill-promotion.md", "human explicitly approves one exact, fully reviewed final\n`developer` SHA", "automation selects a reviewed\n`developer` SHA");
+  }, /explicit human exact developer SHA trigger/);
+  expectFailure((target) => {
+    replace(target, "chatgpt-project/skill-promotion.md", "Do not add cleanup, formatting,\n   refactoring, fixes, generated changes, or any other opportunistic content.", "Add useful cleanup and opportunistic content.");
+  }, /prohibit opportunistic content and automatic replay/);
+  expectFailure((target) => {
+    replace(target, "chatgpt-project/skill-promotion.md", "Never improvise conflict resolution or automatically replay promotion.", "Automatically replay promotion after a failure.");
+  }, /prohibit opportunistic content and automatic replay/);
 });

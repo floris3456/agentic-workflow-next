@@ -1,88 +1,35 @@
-# Task context: <task-id>
+# Task record: <task-id>
 
-- Continuity schema: agentic-bridge/1
 - Task ID: <task-id>
-- Human goal: <public-safe goal>
-- Current orchestration objective: <current objective>
-- Task-start developer SHA: <sha>
-- Last reviewed developer SHA: <sha or none>
-- Current handoff developer SHA: <sha or none>
-- Substantive implementation approval SHA: <sha or none>
-- Finalization handoff developer SHA: <sha or none>
-- Human-approved promotion SHA: <sha or none>
-- Human approval date/reference: <public-safe date/reference or none>
-- Verified post-promotion main SHA: <sha or none>
-- Verified post-promotion developer SHA: <sha or none>
-- Relevant repository refs: <refs>
-- Material capability limits: <task-relevant unavailable action/evidence or none>
-- Bridge control issue: <canonical bound url/number or none>
-- Related control issues: <url/number and disposition, or none>
-- Bridge control issue state: open | closed | none
-- Highest accepted bridge sequence: <positive integer or none>
-- Last bridge command: <uuid, kind, and lifecycle state or none>
+- Status: accepted | superseded | completed
+- Relevant exact refs: <refs or none>
 
-## Routing
+## Accepted outcome
 
-- Selected developer: none | small | heavy
-- Small substantive-attempt count: 0 | 1 | 2
-- Selection route: none | direct GitHub | default small | immediate heavy | heavy after two substantive small failures
-- Reason: <concise orchestrator reasoning or none>
-- Attempt classifications: <attempt/ref and basis, or none>
-- Route changes: <date, issue/command ref, old -> new, and reason, or none>
-- Result: <outcome or pending>
-- Retrospective: <concise routing lesson or pending>
+<public-safe observable outcome and success condition>
 
-## Active work
+## Material scope
 
-- <Scout/developer route and request/command ID>: <current state; correlated terminal result or none; absorbed yes/no; concise effect on the decision>
+- In scope: <material work>
+- Out of scope: <material exclusions>
 
-## Pending publication
+## Constraints
 
-- State: none | prepared | connector-delivery-pending | posted | pre-ledger-rejected | terminal-unresolved | cancelled
-- Operation and target: <issue/label/comment/request/command and target, or none>
-- Prepared at: <date/time or none>
-- Delivery window/attempt: <window and attempt, or none>
-- Last remote readback: <method and confirmed effect, or none>
-- Command-comment ref: <url/number or none>
-- Result-comment ref: <url/number or none>
-- Exact public-safe arguments/envelope: <arguments or one-line JSON, or none>
+- <authority, safety, compatibility, or implementation constraint>
 
-## Bridge command journal
+## Required outputs
 
-- <uuid/sequence/kind>: <command-comment ref, result-comment ref, lifecycle state, and concise resolution>
+- <source, test, generated, documentation, or evidence output>
 
-## Scout request journal
+## Required checks
 
-- <request uuid/task/issue/exact ref>: <focus, result ref, lifecycle, and concise disposition>
+- <proportional check or exact evidence>
 
-## Connector refusal log
+## Accepted design
 
-- <date/time, phase, tool/target, delivery window/attempt, content class, exact safe arguments, exact error, remote readback, confirmed effect, and resolution; or none>
+<accepted architecture or approach needed to preserve the outcome; omit detail
+that the selected developer route should decide>
 
-## Delegations issued
+## Explicit exceptions
 
-- <date, issue/command ref, and concise public-safe delegated outcome>
-
-## Review findings
-
-- <exact range and concise finding>
-
-## Steering issued
-
-- <issue/command ref and changed approach, rollback, or recovery direction>
-
-## Unresolved questions
-
-- <question or none>
-
-## Human decisions required
-
-- <exact decision or none>
-
-## Migration notes
-
-- <non-authoritative historical context or none>
-
-## Current next action
-
-<one concrete next orchestration action>
+- <authorized exception or none>
