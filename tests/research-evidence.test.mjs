@@ -18,13 +18,19 @@ function runScript(scriptRelativePath, args = []) {
 test("research validator and manifest generator reject symlinked file entries beneath research tree", (context) => {
   const tempDir = fs.mkdtempSync(path.join(tmpdir(), "research-symlink-file-test-"));
   const outsideTarget = path.join(tempDir, "outside-target.md");
-  const secretContent = "OUTSIDE_EVIDENCE_SECRET_CONTENT_12345\n".repeat(5);
+  const secretContent = "# Outside Heading\n" + "OUTSIDE_EVIDENCE_SECRET_CONTENT_12345\n".repeat(5);
   fs.writeFileSync(outsideTarget, secretContent, "utf8");
 
   const symlinkPath = path.join(root, "research", "implementation", "batches", "temp-symlink-result.md");
   fs.symlinkSync(outsideTarget, symlinkPath);
 
+  const linkingFilePath = path.join(root, "research", "implementation", "temp-link-file.md");
+  fs.writeFileSync(linkingFilePath, "# Temporary Link File\n[outside link](./batches/temp-symlink-result.md#outside-heading)\n", "utf8");
+
   context.after(() => {
+    try {
+      fs.unlinkSync(linkingFilePath);
+    } catch {}
     try {
       fs.unlinkSync(symlinkPath);
     } catch {}
@@ -33,7 +39,7 @@ test("research validator and manifest generator reject symlinked file entries be
 
   const relativeSymlink = "research/implementation/batches/temp-symlink-result.md";
 
-  // Validate research must fail with a clear stable message naming the repo-relative path
+  // Validate research must fail with a clear stable message naming the repo-relative path and stop before post-walk link resolution
   const valResult = runScript("scripts/validate-research.mjs");
   assert.notEqual(valResult.status, 0, "validate-research.mjs should fail on symlinked file");
   assert.match(valResult.stderr, new RegExp(`Research tree contains symlink: ${relativeSymlink}`));

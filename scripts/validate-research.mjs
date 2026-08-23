@@ -47,6 +47,11 @@ if (!fs.existsSync(researchRoot)) {
 }
 
 const files = walk(researchRoot);
+if (failures.length) {
+  console.error(`Research validation failed (${failures.length}):`);
+  for (const failure of failures) console.error(`- ${failure}`);
+  process.exit(1);
+}
 const textFiles = files.filter(isText);
 
 for (const file of files) {
@@ -196,8 +201,12 @@ for (const file of textFiles.filter((item) => !isResult(item) && path.basename(i
     if (/^(?:https?:|mailto:)/i.test(target)) continue;
     const [targetPath, anchor] = target.split("#");
     const resolvedPath = targetPath ? path.resolve(path.dirname(file), targetPath) : file;
-    if (!fs.existsSync(resolvedPath)) {
-      fail(`${rel(file)} has unresolved Markdown link: ${target}`);
+    if (!fs.existsSync(resolvedPath) || fs.lstatSync(resolvedPath).isSymbolicLink()) {
+      if (fs.existsSync(resolvedPath) && fs.lstatSync(resolvedPath).isSymbolicLink()) {
+        fail(`Research tree contains symlink: ${rel(resolvedPath)}`);
+      } else {
+        fail(`${rel(file)} has unresolved Markdown link: ${target}`);
+      }
       continue;
     }
     if (anchor && fs.statSync(resolvedPath).isFile()) {
