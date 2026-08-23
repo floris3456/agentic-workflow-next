@@ -38,7 +38,8 @@ compatibility: template-development ledger branch
   follow that branch's normal agent/task lifecycle, AS-BUILT/deviation,
   synchronization, validation, and review boundaries.
 - When the selected route is Workspace Maintenance, do not inherit the target
-  branch's agent/task/handoff procedure. The Workspace authority contract in
+  branch's agent/task/handoff procedure; that target agent/task/handoff procedure
+  remains evidence only. The Workspace authority contract in
   `AGENTS.md` and `workspace-maintenance` remains controlling. Read target rules
   as evidence and apply relevant target compatibility/output obligations,
   including public safety, `main` authority, synchronization, file/format

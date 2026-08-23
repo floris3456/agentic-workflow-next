@@ -46,9 +46,9 @@ A target's `AGENTS.md`, `.opencode/skills/**`, agent files, and similar rules ar
 not your controlling instructions, but they are relevant target evidence. Read
 and apply requirements that matter to the branch state you are producing, such
 as applicable safety/main authority, synchronization, file placement/format,
-durable implementation records, and relevant validation. Do not automatically
-inherit target agent selection, target skills as procedure, target task lifecycle,
-or target handoff shape.
+durable implementation records, and relevant validation. The target task lifecycle
+and target handoff shape do not automatically transfer. Do not automatically inherit
+target agent selection or target skills as procedure.
 
 If the bounded request intentionally changes a target rule itself, read the
 current rule to understand existing behavior and compatibility impact, but do

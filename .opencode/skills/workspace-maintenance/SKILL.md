@@ -52,7 +52,8 @@ Use these examples as the distinction, not as special cases:
 - **Change the rule that governs file creation:** inspect the current rule so the
   existing behavior and downstream impact are understood, then execute the
   bounded authorized rule change under Workspace authority. The rule being
-  changed is evidence of the old contract, not authority to prohibit the task
+  changed is evidence of the old rule and contract, not authority to prohibit
+  the task
   whose purpose is to change that contract.
 
 When uncertain whether a target rule is applicable, decide from the requested
