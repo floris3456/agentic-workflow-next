@@ -169,6 +169,10 @@ for (const relative of [
   "scripts/validate-preimplementation.mjs",
   "scripts/validate-repository.sh",
   "scripts/validate-opencode-bridge.sh",
+  "scripts/bootstrap-opencode-bridge.sh",
+  "scripts/opencode-bridge-status.sh",
+  "scripts/opencode-attach.sh",
+  "scripts/watch-developer-sync.sh",
 ]) {
   assert(exists(relative), `Required executable is missing: ${relative}`);
   assert(isExecutable(relative), `Executable bit is missing: ${relative}`);
