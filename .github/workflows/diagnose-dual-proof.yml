@@ -1,4 +1,4 @@
-name: Diagnose Dual proof
+name: Diagnose Dual proof activation
 
 on:
   push:
@@ -7,7 +7,6 @@ on:
       - .github/workflows/diagnose-dual-proof.yml
 
 permissions:
-  actions: read
   contents: write
 
 jobs:
@@ -17,34 +16,17 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 2
-      - name: Record all workflow runs for the proof target
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TARGET_SHA: 5cce0711555d84ee9e0134dbe07c142dee0a4424
+      - name: Publish activation marker
         run: |
           set -euo pipefail
-          runs_json="$(gh api "/repos/${GITHUB_REPOSITORY}/actions/runs?head_sha=${TARGET_SHA}&per_page=100")"
           mkdir -p docs/work/progress
-          {
-            echo '# Dual proof diagnostic'
-            echo
-            echo "Target SHA: \`${TARGET_SHA}\`"
-            echo
-            echo '## Workflow runs'
-            if [ "$(jq '.workflow_runs | length' <<<"$runs_json")" -eq 0 ]; then
-              echo '- none'
-            else
-              jq -r '.workflow_runs[] | "- \(.id): \(.name) | \(.path) | \(.status) / \(.conclusion // \"pending\")"' <<<"$runs_json"
-            fi
-            proof_id="$(jq -r '.workflow_runs[] | select(.path == ".github/workflows/dual-opt-in-proof.yml") | .id' <<<"$runs_json" | head -1)"
-            if [ -n "$proof_id" ]; then
-              echo
-              echo '## Proof job steps'
-              gh api "/repos/${GITHUB_REPOSITORY}/actions/runs/${proof_id}/jobs" --jq '.jobs[0].steps[] | "- \(.number). \(.name): \(.status) / \(.conclusion // \"pending\")"'
-            fi
-          } > docs/work/progress/DUAL-PROOF-DIAGNOSTIC.md
+          cat > docs/work/progress/DUAL-PROOF-DIAGNOSTIC.md <<'EOF'
+          # Dual proof diagnostic
+
+          Workflow activation: passed
+          EOF
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add docs/work/progress/DUAL-PROOF-DIAGNOSTIC.md
-          git commit -m "chore: record Dual proof workflow state"
+          git commit -m "chore: record Dual diagnostic activation"
           git push origin HEAD:developer
