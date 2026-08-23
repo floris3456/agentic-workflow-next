@@ -1,0 +1,185 @@
+name: Dual opt-in proof
+
+on:
+  push:
+    branches: [developer]
+    paths:
+      - .github/workflows/dual-opt-in-proof.yml
+
+permissions:
+  contents: write
+  models: read
+
+concurrency:
+  group: dual-opt-in-proof
+  cancel-in-progress: false
+
+jobs:
+  prove-dual:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Guard the exact proof baseline
+        env:
+          EXPECTED_PARENT: 77a4e50c622be690cd0a43bdb52d4b9e9463194f
+          EXPECTED_TEMPLATE: 9e70433d5b3932ac43d8377da4678195664672d4
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "$EXPECTED_PARENT"
+          git fetch --no-tags origin refs/heads/template-development:refs/remotes/origin/template-development
+          test "$(git rev-parse refs/remotes/origin/template-development)" = "$EXPECTED_TEMPLATE"
+          mkdir -p .dual-proof
+          git show refs/remotes/origin/template-development:docs/work/current/TEMPLATE-DUAL-DEVELOPER-001-dual-developer-architecture.md > .dual-proof/task-record.md
+          printf '%s\n' '.dual-proof/' >> .git/info/exclude
+
+      - name: Install pinned native OpenCode
+        run: |
+          set -euo pipefail
+          npm install --global opencode-ai@1.18.18
+          test "$(opencode --version)" = "1.18.18"
+
+      - name: Configure a temporary GitHub Models provider
+        env:
+          PROOF_CONFIG: ${{ runner.temp }}/dual-opencode.json
+          PROOF_CONFIG_DIR: ${{ runner.temp }}/dual-opencode
+        run: |
+          set -euo pipefail
+          mkdir -p "$PROOF_CONFIG_DIR/agents"
+          python3 - <<'PY'
+          import os
+          import re
+          from pathlib import Path
+
+          target = Path(os.environ["PROOF_CONFIG_DIR"]) / "agents"
+          for name in ("lead-developer.md", "spark-implementer.md"):
+              source = Path(".opencode/agents") / name
+              text = source.read_text()
+              text, count = re.subn(
+                  r"^model: .+$",
+                  "model: github-models/openai/gpt-4o",
+                  text,
+                  count=1,
+                  flags=re.MULTILINE,
+              )
+              if count != 1:
+                  raise SystemExit(f"expected one model field in {source}")
+              (target / name).write_text(text)
+          PY
+          cat > "$PROOF_CONFIG" <<'JSON'
+          {
+            "$schema": "https://opencode.ai/config.json",
+            "share": "disabled",
+            "compaction": { "auto": false },
+            "provider": {
+              "github-models": {
+                "npm": "@ai-sdk/openai-compatible",
+                "name": "GitHub Models",
+                "options": {
+                  "baseURL": "https://models.github.ai/inference",
+                  "apiKey": "{env:GITHUB_TOKEN}"
+                },
+                "models": {
+                  "openai/gpt-4o": {
+                    "name": "GitHub Models GPT-4o",
+                    "limit": { "context": 128000, "output": 8192 }
+                  }
+                }
+              }
+            }
+          }
+          JSON
+
+      - name: Prove lead to Spark to lead-review
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          OPENCODE_CONFIG: ${{ runner.temp }}/dual-opencode.json
+          OPENCODE_CONFIG_DIR: ${{ runner.temp }}/dual-opencode
+          OPENCODE_DISABLE_AUTOUPDATE: "true"
+          OPENCODE_DISABLE_AUTOCOMPACT: "true"
+          OPENCODE_AUTO_SHARE: "false"
+          XDG_CONFIG_HOME: ${{ runner.temp }}/xdg-config
+          XDG_DATA_HOME: ${{ runner.temp }}/xdg-data
+          XDG_CACHE_HOME: ${{ runner.temp }}/xdg-cache
+          NO_COLOR: "1"
+        run: |
+          set -euo pipefail
+          cat > "${RUNNER_TEMP}/dual-proof-prompt.txt" <<'PROMPT'
+          Execute the accepted bounded opt-in Dual proof in this checkout.
+
+          First read `.dual-proof/task-record.md`, `docs/architecture/AS-BUILT.md`, `docs/architecture/dual-developer.md`, `docs/architecture/agent-system.md`, `opencode.json`, both Dual agent files, the current Dual test, and exact Git state. Do not use the bridge, GitHub Issues, MCP, compaction, package finalization, or another developer route. Do not commit or push.
+
+          Architect the implementation, then delegate all source editing and implementation commands to `spark-implementer`. Spark must make exactly these outcome-level changes:
+
+          1. Update `docs/architecture/agent-system.md` so current reality includes the opt-in Dual route, the lead/Spark responsibility boundary, the one-file proposed-deviation mechanism, and the fact that small/heavy remain independent and the current default remains small. Do not rewrite unrelated bridge-era sections during this bounded proof.
+          2. Strengthen `tests/dual-agent-config.test.mjs` so ordinary tests prove the lead cannot edit, Spark can edit and run bash, Spark cannot delegate, and the default remains `small-developer` during the opt-in phase.
+          3. Run the targeted Dual test and the full existing repository validation.
+
+          Review Spark's actual diff and exact check output. The lead must not edit any file or use shell redirection to bypass its denied edit permission. After the first Spark return, use a second Spark call to make any needed correction and to create `docs/work/progress/TEMPLATE-DUAL-DEVELOPER-001.md`. That progress file must be concise and contain only: exact starting Git SHA, files changed, checks run and outcomes, whether a proposed-deviations file was used and its resolution, and lead review disposition. It must not contain private reasoning, raw logs, secrets, session IDs, or host-local paths.
+
+          Review the final diff and checks again. No proposed-deviations working file may remain unresolved. Finish with these exact machine-readable lines:
+
+          DUAL_PROOF_RESULT=PASS
+          SPARK_USED=yes
+          LEAD_REVIEW=pass
+          PROPOSED_DEVIATIONS=none-or-resolved
+          PROMPT
+
+          timeout 35m opencode --pure run \
+            --agent lead-developer \
+            --format default \
+            --title "TEMPLATE-DUAL-DEVELOPER-001 opt-in proof" \
+            --dir "$GITHUB_WORKSPACE" \
+            "$(cat "${RUNNER_TEMP}/dual-proof-prompt.txt")" \
+            | tee "${RUNNER_TEMP}/dual-proof.log"
+
+          grep -Fxq 'DUAL_PROOF_RESULT=PASS' "${RUNNER_TEMP}/dual-proof.log"
+          grep -Fxq 'SPARK_USED=yes' "${RUNNER_TEMP}/dual-proof.log"
+          grep -Fxq 'LEAD_REVIEW=pass' "${RUNNER_TEMP}/dual-proof.log"
+          grep -Fxq 'PROPOSED_DEVIATIONS=none-or-resolved' "${RUNNER_TEMP}/dual-proof.log"
+
+      - name: Independently verify and publish the proof result
+        run: |
+          set -euo pipefail
+          rm -rf .dual-proof
+
+          python3 - <<'PY'
+          import subprocess
+
+          expected = {
+              "docs/architecture/agent-system.md",
+              "docs/work/progress/TEMPLATE-DUAL-DEVELOPER-001.md",
+              "tests/dual-agent-config.test.mjs",
+          }
+          output = subprocess.check_output(
+              ["git", "status", "--porcelain=v1"], text=True
+          )
+          changed = {
+              line[3:].strip()
+              for line in output.splitlines()
+              if line.strip()
+          }
+          if changed != expected:
+              raise SystemExit(f"unexpected proof paths: {sorted(changed)}")
+          PY
+
+          test -z "$(find . -type f -iname '*proposed-deviations*' -print -quit)"
+          grep -Eq '^Exact starting Git SHA: `77a4e50c622be690cd0a43bdb52d4b9e9463194f`$' docs/work/progress/TEMPLATE-DUAL-DEVELOPER-001.md
+          grep -Eq '^Lead review disposition: passed$' docs/work/progress/TEMPLATE-DUAL-DEVELOPER-001.md
+          grep -Eq '^Proposed deviations: (none|resolved)$' docs/work/progress/TEMPLATE-DUAL-DEVELOPER-001.md
+          git diff --check
+          node --test tests/dual-agent-config.test.mjs
+          ./scripts/validate-repository.sh
+
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add docs/architecture/agent-system.md docs/work/progress/TEMPLATE-DUAL-DEVELOPER-001.md tests/dual-agent-config.test.mjs
+          git commit -m "docs: prove opt-in Dual route"
+          git push origin HEAD:developer
