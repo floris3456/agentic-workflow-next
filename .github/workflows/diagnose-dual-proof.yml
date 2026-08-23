@@ -1,0 +1,56 @@
+name: Diagnose Dual proof
+
+on:
+  push:
+    branches: [developer]
+    paths:
+      - .github/workflows/diagnose-dual-proof.yml
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Record the prior proof run and step conclusions
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET_SHA: 5cce0711555d84ee9e0134dbe07c142dee0a4424
+        run: |
+          set -euo pipefail
+          run_json="$(gh api "/repos/${GITHUB_REPOSITORY}/actions/runs?head_sha=${TARGET_SHA}&per_page=100" --jq '.workflow_runs[] | select(.path == ".github/workflows/dual-opt-in-proof.yml")' | head -1)"
+          test -n "$run_json"
+          run_id="$(jq -r '.id' <<<"$run_json")"
+          status="$(jq -r '.status' <<<"$run_json")"
+          conclusion="$(jq -r '.conclusion // "pending"' <<<"$run_json")"
+          jobs_json="$(gh api "/repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/jobs")"
+          job_id="$(jq -r '.jobs[0].id' <<<"$jobs_json")"
+          job_name="$(jq -r '.jobs[0].name' <<<"$jobs_json")"
+          job_status="$(jq -r '.jobs[0].status' <<<"$jobs_json")"
+          job_conclusion="$(jq -r '.jobs[0].conclusion // "pending"' <<<"$jobs_json")"
+          mkdir -p docs/work/progress
+          {
+            echo '# Dual proof diagnostic'
+            echo
+            echo "Target SHA: \`${TARGET_SHA}\`"
+            echo "Run ID: \`${run_id}\`"
+            echo "Run status: ${status}"
+            echo "Run conclusion: ${conclusion}"
+            echo "Job ID: \`${job_id}\`"
+            echo "Job: ${job_name}"
+            echo "Job status: ${job_status}"
+            echo "Job conclusion: ${job_conclusion}"
+            echo
+            echo '## Steps'
+            jq -r '.jobs[0].steps[] | "- \(.number). \(.name): \(.status) / \(.conclusion // \"pending\")"' <<<"$jobs_json"
+          } > docs/work/progress/DUAL-PROOF-DIAGNOSTIC.md
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add docs/work/progress/DUAL-PROOF-DIAGNOSTIC.md
+          git commit -m "chore: record Dual proof failure location"
+          git push origin HEAD:developer
