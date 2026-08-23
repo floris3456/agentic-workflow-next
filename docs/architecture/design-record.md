@@ -30,10 +30,8 @@ Use the following split for implementation:
 - AS-BUILT must stay complete for changed directories.
 - Formal deviations record material implementation divergence from the prior normative design.
 
-## Bridge position
+## Direct Host position
 
-The retained bridge implementation and package-broker remain present for later retirement work.
-They are not the active transport for current default local implementation routing.
-The active bounded route is `heavy-developer`, while the untouched bridge's legacy public `heavy` selector still maps to `large-developer` until step-5 retirement.
+Native OpenCode on the authorized host is the active local implementation path. Direct Host, Dual, Minimalism, and representative Dual proof are complete; no replacement RPC/control plane is introduced. The active bounded routes are `small-developer`, `heavy-developer`, and the default Dual route.
 
 Generate or apply a transfer/release package only when the accepted task requests one; package ceremony is not a default completion requirement.

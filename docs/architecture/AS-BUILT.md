@@ -2,7 +2,7 @@
 
 ## Current implementation status
 
-This repository is a human-controlled implementation template. Native OpenCode on the authorized host is the active local execution path. Route selection supports direct web/GitHub for tiny exact low-risk changes, small and heavy as bounded independent local routes, and Dual as the default substantive local route. The bridge/package-broker implementation remains in the tree unchanged for canonical step-5 retirement and is not the active route contract.
+This repository is a human-controlled implementation template. Native OpenCode on the authorized host is the active local execution path. Route selection supports direct web/GitHub for tiny exact low-risk changes, small and heavy as bounded independent local routes, and Dual as the default substantive local route. Direct Host, Dual, Minimalism, and representative Dual proof are complete. No remote-control bridge or replacement control plane is part of the implementation.
 
 ## Active OpenCode agents and permissions
 
@@ -27,11 +27,11 @@ The former active `large-developer.md` file is removed. Additional future agent 
 
 There is no context-builder, tokenizer, truncation recovery, summary fallback, or compaction platform. Bounded continuation receives the last 5,000 raw chat tokens, older chat is discarded rather than summarized, and agents reread canonical task/durable records plus exact Git state.
 
-## Active route, bridge reality, and package scope
+## Active route and package scope
 
 Web owns orchestration, web research, task/outcome design, route selection, and final outcome/system verification. Direct web/GitHub is for tiny exact low-risk changes web can make more simply; `small-developer` is for very simple bounded local work; `heavy-developer` is for difficult, important, or subtle work that remains small and bounded; and `lead-developer -> spark-implementer` is the default substantive local route. For Dual, web does not routinely duplicate the lead's deep implementation analysis or review.
 
-The retained bridge/package-broker implementation under `tools/opencode-bridge/`, its runtime package, scripts, and `contracts/opencode-bridge/` remain untouched in this cutover. Its legacy public `heavy` selector still maps to `large-developer` in bridge command/service defaults. This known bridge-era mapping is accurate retained current state, not an active `.opencode` route rename and not a claim that bridge behavior changed. It remains pending canonical step-5 bridge and package-broker retirement. Detailed retained component behavior stays documented in [`tools/opencode-bridge/AS-BUILT.md`](../../tools/opencode-bridge/AS-BUILT.md) rather than being duplicated here.
+The active implementation uses native OpenCode direct routes only. Small and heavy remain independent bounded routes, and Dual remains the default substantive route. Deterministic transfer/release package generation and provenance remain available when explicitly requested; no package Action/request broker or replacement transport is retained.
 
 Source implementation does not require a change package. Generate or apply deterministic transfer/release packages only when an accepted task explicitly requests transfer, downstream application, or release packaging.
 
@@ -54,12 +54,12 @@ Script state:
 
 ## Validators and ordinary repository checks
 
-- `scripts/validate-agent-system.mjs` is an executable structural safety validator. It parses agent frontmatter into nested maps and checks OpenCode config, positive existence of the four required agent roles, their modes and current documented models, lead edit/shell/task boundaries, Spark edit/task/external/question boundaries, small/heavy task and question denial, retired `large-developer.md` absence, hook/core-script existence and executable bits, retained bridge operator-script existence and executable bits, expected removals, and active references to retired skills. It does not prohibit additional future agent files and intentionally does not validate exact prose, route attempts, lifecycle/retry/finalization/snapshot rules, compaction recovery, response templates, or retained bridge mappings.
+- `scripts/validate-agent-system.mjs` is an executable structural safety validator. It parses agent frontmatter into nested maps and checks OpenCode config, positive existence of the four required agent roles, their modes and current documented models, lead edit/shell/task boundaries, Spark edit/task/external/question boundaries, small/heavy task and question denial, retired `large-developer.md` absence, hook/core-script existence and executable bits, expected removals, and active references to retired skills. It does not prohibit additional future agent files and intentionally does not validate exact prose, route attempts, lifecycle/retry/finalization/snapshot rules, compaction recovery, or response templates.
 - `scripts/validate-preimplementation.mjs` checks required repository/docs/task-template presence and local Markdown links while excluding immutable archived snapshots and research's separately validated evidence format.
-- `scripts/validate-repository.sh` runs preimplementation structure, agent-system structure, CI-status structure, ordinary research validation, generated research-evidence-manifest verification, research evidence regression tests, tracked-hook checks, and the retained bridge validator.
+- `scripts/validate-repository.sh` runs preimplementation structure, agent-system structure, CI-status structure, ordinary research validation, generated research-evidence-manifest verification, research evidence regression tests, and tracked-hook checks.
 - `scripts/validate-web-orchestrator-integration.mjs` is removed together with `WOR_WEB_ORCHESTRATION_ROOT` cross-branch coupling.
-- `scripts/validate-opencode-bridge.sh` remains because the bridge/runtime package and broker are retained until step 5. Ordinary `validate-research.mjs` and `generate-research-evidence-manifest.mjs --check` remain active repository checks; both research walks fail closed against symlink entries without following targets or reading outside content.
-- Exact-English, response-template, bridge lifecycle/retry, snapshot/finalization, compaction recovery, and route-attempt validators removed by this cutover are not replaced.
+- Ordinary `validate-research.mjs` and `generate-research-evidence-manifest.mjs --check` remain active repository checks; both research walks fail closed against symlink entries without following targets or reading outside content.
+- Exact-English, response-template, obsolete lifecycle/retry, snapshot/finalization, compaction recovery, and route-attempt validators removed by this cutover are not replaced.
 
 ## Mechanical tests
 

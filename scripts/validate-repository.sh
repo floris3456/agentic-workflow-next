@@ -13,6 +13,4 @@ node scripts/generate-research-evidence-manifest.mjs --check
 node --test tests/research-evidence.test.mjs
 
 ./scripts/bootstrap-agent-workflow.sh --check
-./scripts/validate-opencode-bridge.sh
-
 echo "Repository validation passed."

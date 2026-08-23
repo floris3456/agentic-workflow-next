@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This repository uses native OpenCode on the authorized host for active local implementation, with retained bridge components pending later retirement.
+This repository uses native OpenCode on the authorized host for active local implementation.
 
 ## Authorities
 
@@ -32,8 +32,6 @@ Stable current agents are:
 - `.opencode/agents/spark-implementer.md`
 - `.opencode/agents/small-developer.md`
 - `.opencode/agents/heavy-developer.md`
-
-The retained bridge/package runtime is not the active route inventory. Its legacy public `heavy` selector still targets `large-developer`; that untouched bridge-era mapping remains until canonical step-5 retirement and must not be read as the active `.opencode` heavy route.
 
 ## Current workflow truth
 

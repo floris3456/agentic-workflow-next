@@ -16,7 +16,7 @@
 │   └── ...
 ├── scripts/
 ├── tests/
-├── tools/                         retained bridge/runtime implementation
+├── tools/                         repository-owned utilities and generators
 ├── contracts/
 └── research/
 ```
@@ -28,9 +28,8 @@
 - Implemented task truth and durable process references: `docs/work/`
 - Branch and acceptance contracts: `docs/architecture/`
 - Script-level mechanics: `scripts/`
-- Retained bridge implementation: `tools/opencode-bridge/` and `contracts/opencode-bridge/`
+- Repository-owned utilities and generators: `tools/`
 - Active implementation agents: `.opencode/agents/{lead-developer,spark-implementer,small-developer,heavy-developer}.md`
-- The retained bridge's legacy public `heavy` selector still maps to `large-developer`; that bridge-era mapping is separate from the active `.opencode` agent inventory and remains pending step-5 bridge retirement.
 
 ## Cleanup principle
 

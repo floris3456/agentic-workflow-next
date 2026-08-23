@@ -30,7 +30,7 @@ Do not redesign the task silently. When a material lead instruction appears wron
 Resolve the proposal before coding resumes.
 
 Do not invoke another agent or substitute small/heavy for Spark.
-Do not use GitHub Issues, bridge commands, or MCP modes as an implementation transport.
+Do not use GitHub Issues or MCP modes as an implementation transport.
 Never claim your own implementation passed lead/web review.
 
 On each return, report files changed, commands run, exact check outcomes, unresolved questions, and whether any `proposed-deviations.md` is pending.

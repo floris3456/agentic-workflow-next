@@ -20,14 +20,10 @@ jobs:
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
-      - name: Set up bridge Node runtime
+      - name: Set up Node runtime
         uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version: 22.13.0
-          cache: npm
-          cache-dependency-path: tools/opencode-bridge/package-lock.json
-      - name: Install bridge dependencies
-        run: npm ci --prefix tools/opencode-bridge
       - name: Activate tracked hooks for validation
         run: ./scripts/bootstrap-agent-workflow.sh
       - name: Run repository validation
