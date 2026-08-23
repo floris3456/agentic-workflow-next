@@ -72,9 +72,9 @@ test("workspace_exec exposes only current sanitized Git state, not private commo
   const value = await fixture(t);
   const common = (await git(value.template, "rev-parse", "--git-common-dir")).stdout;
   const commonPath = common.startsWith("/") ? common : join(value.template, common);
-  const privateDirectory = join(commonPath, "opencode-bridge", "security-fixture");
+  const privateDirectory = join(commonPath, "private-runtime", "security-fixture");
   await mkdir(privateDirectory, { recursive: true });
-  await writeFile(join(privateDirectory, "bridge.sqlite"), "private-common-git-sentinel\n", "utf8");
+  await writeFile(join(privateDirectory, "private-state.sqlite"), "private-common-git-sentinel\n", "utf8");
 
   const worktreeGit = (await git(value.developer, "rev-parse", "--absolute-git-dir")).stdout;
   await writeFile(join(worktreeGit, `sharedindex.${"a".repeat(40)}`), "private-stale-shared-index-sentinel\n", "utf8");
@@ -95,12 +95,12 @@ test("workspace_exec exposes only current sanitized Git state, not private commo
       "-e",
       [
         "const fs=require('node:fs');",
-        "const probes=['/repo.git/opencode-bridge/security-fixture/bridge.sqlite','/worktree.git/opencode-bridge/security-fixture/bridge.sqlite','/git-view/opencode-bridge/security-fixture/bridge.sqlite'];",
+        "const probes=['/repo.git/private-runtime/security-fixture/private-state.sqlite','/worktree.git/private-runtime/security-fixture/private-state.sqlite','/git-view/private-runtime/security-fixture/private-state.sqlite'];",
         "let visible=false;",
         "for (const path of probes) { try { if (fs.readFileSync(path,'utf8').includes('private-common-git-sentinel')) visible=true; } catch {} }",
         "let names=[];",
         "for (const root of ['/git-view','/workspace/.git']) { try { const stat=fs.lstatSync(root); names.push(root); if (stat.isDirectory()) { const entries=fs.readdirSync(root); names.push(...entries); for (const name of entries.filter(v=>v.startsWith('sharedindex.'))) { try { if (fs.readFileSync(root+'/'+name,'utf8').includes('private-stale-shared-index-sentinel')) visible=true; } catch {} } } else names.push(fs.readFileSync(root,'utf8')); } catch {} }",
-        "process.stdout.write(visible || names.some(v=>String(v).includes('opencode-bridge')) ? 'private-git-state-visible' : 'private-git-state-absent');",
+        "process.stdout.write(visible || names.some(v=>String(v).includes('private-runtime')) ? 'private-git-state-visible' : 'private-git-state-absent');",
       ].join(""),
     ],
     state.head,
@@ -108,7 +108,7 @@ test("workspace_exec exposes only current sanitized Git state, not private commo
   );
   assert.equal(privateRead.exit_code, 0, privateRead.stderr);
   assert.equal(privateRead.stdout, "private-git-state-absent");
-  assert.doesNotMatch(JSON.stringify(privateRead), /private-common-git-sentinel|private-stale-shared-index-sentinel|opencode-bridge\/security-fixture/);
+  assert.doesNotMatch(JSON.stringify(privateRead), /private-common-git-sentinel|private-stale-shared-index-sentinel|private-runtime\/security-fixture/);
 
   state = privateRead.target_state;
   const unreachableRead = await value.gate.execute(
