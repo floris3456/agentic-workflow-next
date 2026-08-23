@@ -401,8 +401,8 @@ test("workspace.start supports model-agnostic small and heavy routes and rejects
     { template_development_sha: "e".repeat(40), ref: "template-development" },
   ), 76).command!;
   assert.equal((await executor.execute(heavyStart)).state, "succeeded");
-  assert.equal(state.getTaskSession("TASK-WORKSPACE-HEAVY")?.agent, "heavy-workspace-maintainer");
-  assert.equal((workspaceRequests[0]?.args.body as Record<string, JsonValue>)?.agent, "heavy-workspace-maintainer");
+  assert.equal(state.getTaskSession("TASK-WORKSPACE-HEAVY")?.agent, "workspace-maintainer");
+  assert.equal((workspaceRequests[0]?.args.body as Record<string, JsonValue>)?.agent, "workspace-maintainer");
 
   const smallStart = state.acceptCommand(command(
     "TASK-WORKSPACE-SMALL",
