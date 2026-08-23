@@ -29,12 +29,12 @@ This branch contains maintenance instructions, provenance, design/decision
 records, task records, deterministic change packages, tests, validation, Git
 synchronization hooks, and the template-development-rooted Workspace Maintenance
 Agent/runtime. It contains no copy of `developer`, `main`,
-`web-orchestration-only/**`, bridge implementation, or downstream project source.
+`web-orchestration-only/**`, retired bridge transport implementation, or downstream project source.
 Source histories are never merged into this independent branch.
 
 ## Source execution
 
-Product, bridge, and Project-package edits stay on the authoritative `developer`
+Product and Project-package edits stay on the authoritative `developer`
 and `web-orchestration` branches. The maintenance agent/runtime and portable
 package machinery are the explicit template-development-owned implementation.
 The web orchestrator selects source routes proportionally:
@@ -91,8 +91,6 @@ durable-record, and validation requirements for that file.
 The template-development-owned OpenCode plugin exposes `workspace_list`,
 `workspace_inspect`, `workspace_read`, `workspace_write`, `workspace_delete`,
 `workspace_glob`, `workspace_grep`, `workspace_exec`, `workspace_publish`,
-`workspace_bridge_inspect`, `workspace_bridge_start`, and
-`workspace_bridge_reconcile`.
 The agent uses a real default-deny permission inventory, explicitly allows only
 these tools plus structured questions, and denies every skill before allowing
 only `workspace-maintenance`. Built-in task, shell, read/edit, web, planning, and
@@ -147,54 +145,6 @@ Publishing a target such as `developer` does not create a second developer-agent
 handoff obligation; the web orchestrator independently reviews the exact pushed
 target SHA and the applicable target constraints.
 
-## Bounded host-bridge administration
-
-The Workspace Maintenance Agent possesses bounded operations for inspecting,
-starting, and reconciling the existing OpenCode bridge service associated with
-the repository without obtaining arbitrary host shell, DBus, filesystem, or
-configuration access.
-
-The operations are:
-- `workspace_bridge_inspect`: discovers the private bridge configuration for
-  the calling repository from the operator's host configuration directory
-  (`~/.config/agentic-workflow/` or `$AGENTIC_WORKFLOW_CONFIG_DIR`), validates
-  ownership and Git repository identity, inspects the associated `systemd --user`
-  unit state and live bridge admin socket (or reads durable SQLite metadata when
-  stopped), and returns bounded public-safe status (service state, running status,
-  heartbeat freshness, queue counts, active session counts, loopback OpenCode
-  endpoint health, and safety flags).
-- `workspace_bridge_start`: idempotently starts an existing registered bridge
-  service via `systemctl --user start <unit>` after proving that `developer` is
-  clean and synchronized and no conflicting active lock is held. It never accepts
-  user-supplied unit names or paths, never executes bootstrap or instance disposal,
-  and verifies post-start health.
-- `workspace_bridge_reconcile`: connects to the running bridge's private Unix
-  domain socket (`admin.sock`, mode 0600) and triggers the bridge's normal
-  canonical recovery and response delivery pass for mapped sessions. It never
-  creates, prompts, routes, or aborts sessions, nor fabricates terminal state.
-
-Security invariants:
-- The agent supplies no host paths, unit names, DBus addresses, or command arguments.
-- Consequential service start is governed by the permission system (`workspace_bridge_start: ask`), while read-only inspection and idempotent reconciliation use `allow`.
-- Service start requires an explicit operator-owned `service_unit` registration whose systemd `WorkingDirectory` and `ExecStart` match the canonical developer checkout and configuration.
-- Stopped-state inspection queries the production `BridgeState` SQLite schema directly with strict schema-validation; schema drift or query failure fails closed to blocked, never silently zeroed.
-- Private configuration, credentials, secrets, raw host paths, and database contents are never returned in public tool responses.
-- The `workspace_exec` Bubblewrap sandbox cannot access host DBus, `$XDG_RUNTIME_DIR`, or the host admin socket.
-- Missing, ambiguous, foreign, or diverged configurations fail closed.
-
-## Architectural boundary: bridge self-recovery
-
-`workspace_bridge_start` resides within the Workspace Maintenance OpenCode plugin.
-Consequently, a remote web orchestrator that communicates with the repository
-solely through the OpenCode bridge cannot invoke Workspace Maintenance tools if
-the bridge process itself is stopped or unreachable. The host broker provides
-a secure, bounded mechanism for a local Workspace Maintenance session or
-operator-supervised workflow to start and recover the bridge without manual
-`systemctl` terminal interaction; recovering a completely dead bridge from a
-purely remote web orchestrator requires a separate, always-available host
-supervisory control plane (which is outside the scope of this template
-maintenance task).
-
 ## Acceptance-test CI reachability
 
 Acceptance-critical executable tests owned by an authoritative branch are
@@ -206,7 +156,7 @@ GitHub.
 The current authoritative branches satisfy that invariant as follows:
 
 - `developer`: `.github/workflows/validate-repository.yml` runs on pushes to
-  `developer` and reaches the repository validator, bridge tests, and
+  `developer` and reaches the repository validator and
   `tests/template-branches.test.mjs` through the canonical validation scripts.
 - `web-orchestration`: `.github/workflows/validate-web-orchestration.yml` runs on
   pushes to `web-orchestration`, executes

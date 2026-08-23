@@ -27,7 +27,7 @@ compatibility: template-development ledger branch
 
 ## Source work
 
-- Keep product, bridge, and Project-package edits on the canonical repository's
+- Keep product and Project-package edits on the canonical repository's
   real `developer` and `web-orchestration` branches. Substantive developer work
   uses the Dual developer route by default (`dual`), with `small` and `heavy` as
   bounded shortcuts. Never materialize source trees in this ledger.
@@ -90,23 +90,10 @@ generator proves every endpoint against freshly fetched canonical branch history
 
 When the current maintainer execution surface can run that tracked generator with
 canonical network access, run it directly and validate the resulting package. If
-that capability is unavailable, use the repository-owned fixed-operation package
-broker rather than hand-building package bytes. Create or update exactly one
-`docs/work/package-requests/<task-id>.json` request containing only a fresh public-
-safe request UUID, task/revision/supersession metadata, and the exact reviewed
-three-branch base/head ranges. The request cannot choose a command, output path,
-repository, credential, or arbitrary argument.
-
-A valid request commit changes exactly that one JSON file. The push-triggered
-`generate-change-package.yml` workflow runs the same tracked generator on GitHub
-Actions with canonical network access, validates schema-3 provenance/public
-safety, and may publish only the completed request plus the derived four-file
-`changes/<task-id>[.revN]/` package. It must prove `template-development` still
-equals the triggering request SHA immediately before publication. Branch movement,
-unexpected paths, malformed requests, existing output, failed validation, or an
-ambiguous push fail closed. The request commit is the trigger and the subsequent
-package/result commit is the effect; reconcile remote state before any retry and
-never replay an uncertain publication.
+canonical network access is unavailable, preserve the reviewed source state and
+record the blocker; never hand-build package bytes or weaken provenance and
+permissions. The generator remains a direct, deterministic operation rather than
+a remote command or request broker.
 
 Apply each non-empty patch to the downstream repository's matching branch using
 `scripts/apply-change-package.mjs`. Application only updates the working tree;

@@ -145,27 +145,6 @@ export default async function WorkspaceMaintenanceTools() {
           )));
         },
       }),
-      workspace_bridge_inspect: tool({
-        description: "Inspect the existing OpenCode bridge installation associated with this repository. Returns bounded public-safe state including service state, running status, heartbeat freshness, pending queues, active sessions, endpoint health, and whether starting/reconciliation is needed.",
-        args: {},
-        async execute(_args, context) {
-          return await publicResult(async () => json(await gate(context).bridgeInspect()));
-        },
-      }),
-      workspace_bridge_start: tool({
-        description: "Idempotently start the existing registered bridge service when stopped. Verifies repository identity and clean developer state before starting via systemd, and checks post-start health. Does not run bootstrap, dispose instances, or modify state.",
-        args: {},
-        async execute(_args, context) {
-          return await publicResult(async () => json(await gate(context).bridgeStart()));
-        },
-      }),
-      workspace_bridge_reconcile: tool({
-        description: "Ask the existing running bridge to perform its normal canonical recovery and response delivery pass for already-mapped sessions. Does not create, prompt, or abort sessions.",
-        args: {},
-        async execute(_args, context) {
-          return await publicResult(async () => json(await gate(context).bridgeReconcile()));
-        },
-      }),
     },
   };
 }

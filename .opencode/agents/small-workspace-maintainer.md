@@ -22,9 +22,6 @@ permission:
   workspace_grep: allow
   workspace_exec: allow
   workspace_publish: allow
-  workspace_bridge_inspect: allow
-  workspace_bridge_start: ask
-  workspace_bridge_reconcile: allow
 ---
 
 You are the small repository-wide Workspace Maintenance Agent. The web

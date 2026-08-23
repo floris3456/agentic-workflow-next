@@ -70,10 +70,10 @@
   reviewed head, local-only/forged heads, source-snapshot/patch/package tampering,
   determinism, and downstream apply. Remote template-development Actions executes
   these fixtures through the canonical push validation path.
-- Effect: newly generated packages remain provenance-verified while exact reviewed
-  task ranges are independent from later canonical state and from other pending
-  package work. Historical schema-1 packages remain integrity-compatible for
-  downstream use but are explicitly not reclassified as provenance-verified;
+- Effect: newly generated packages remain provenance-verified while exact
+  reviewed task ranges are independent from later canonical state and from other
+  pending package work. Historical schema-1 packages remain integrity-compatible
+  for downstream use but are explicitly not reclassified as provenance-verified;
   existing schema-2 packages remain valid as a subset of the relaxed snapshot
   relation.
 - Remaining limitation: generation still needs legitimate network access to the
@@ -104,8 +104,8 @@
   digest, preserving immutable historical evidence while enabling downstream
   resolution of the latest active package. The independently reconciled source
   lock remains a three-source snapshot (`main`, `developer`,
-  `web-orchestration`) and is not required to contain a self-referential
-  resulting SHA.
+  `web-orchestration`) and is not required to contain a self-referential resulting
+  SHA.
 - Evidence: generator/application fixtures cover template range ancestry,
   canonical advance, self-package rejection, digest tampering, wrong-base dry
   run, and clean application; the real pinned OpenCode inventory check loads the
@@ -116,55 +116,5 @@
 - Remaining limitation: arbitrary repository commands require non-root Linux and
   `/usr/bin/bwrap`; unsupported hosts fail closed instead of receiving a weaker
   cwd-only process boundary.
-
-## TD-005 — Bounded host-administration capability for bridge lifecycle recovery
-
-- Planned behavior: Workspace Maintenance operates exclusively via contained
-  Bubblewrap sandbox commands (`workspace_exec`) without host service interaction.
-- Observed reality: recovering a stopped bridge service previously required
-  human operator intervention via manual `systemctl --user start ...` because
-  `workspace_exec` intentionally cannot access host DBus, `$XDG_RUNTIME_DIR`,
-  or operator configuration.
-- Reason the plan was not followed: exposing host DBus, `$XDG_RUNTIME_DIR`, or
-  arbitrary `systemctl` to `workspace_exec` or the model would violate sandbox
-  containment and risk unconstrained host execution.
-- Selected alternative: introduce a narrowly typed, repository-owned host
-  bridge broker exposing `workspace_bridge_inspect`, `workspace_bridge_start`,
-  and `workspace_bridge_reconcile`. The broker derives the registered bridge
-  configuration from the operator host registry (`~/.config/agentic-workflow/`)
-  keyed by canonical repository identity, verifies that the calling worktree
-  shares the Git common directory and origin remote, communicates with systemd
-  user services without caller-supplied unit names or arguments, and talks to the
-  running bridge over a private Unix domain socket (`admin.sock`, mode 0600).
-  Start safety contacts live `origin/developer` with a non-mutating remote query
-  while requiring the local checkout and tracking ref to remain clean and exact;
-  it does not fetch or update refs. The registered systemd unit must expose the
-  exact developer `WorkingDirectory` and exactly one effective `--config`
-  argument whose following argument is the registered private config path.
-  A live admin endpoint is trusted only when it reports the exact registered
-  instance and repository; start additionally requires `running:true` and a fresh
-  heartbeat, and reconcile proves the same live identity/health before sending
-  its fixed request.
-- Evidence: deterministic tests cover production-schema stopped inspection,
-  duplicate registrations, local divergence, stale local remote-tracking state
-  with a newer live canonical developer, missing/substring-matching systemd
-  `ExecStart` binding, fresh and already-active admin identity/health rejection,
-  and refusal to reconcile an untrusted endpoint. The ordinary discovered
-  real-host test is inspection-only; live start/reconcile acceptance lives in a
-  separate file that requires explicit operator opt-in rather than running under
-  the canonical default validator. Containment fixtures continue to prove that
-  `workspace_exec` cannot access host DBus or admin sockets.
-- Effect: an already-reachable Workspace Maintenance session can use a bounded
-  permission-gated start operation and fixed reconciliation without weakening the
-  Bubblewrap sandbox or granting arbitrary host administration. Wrong, stale, or
-  unprovable host mappings fail closed rather than becoming mutation targets.
-- Remaining limitation: bridge start via systemd requires a Linux host with an
-  active systemd user session and configured bridge unit. More importantly, a
-  remote web orchestrator that reaches Workspace Maintenance only through this
-  bridge cannot invoke the plugin after the bridge is completely down; fully
-  remote dead-bridge recovery still requires a separate always-available host
-  supervisor/control surface or a local operator. Other unsupported or
-  unconfigured hosts fail closed safely.
-
 
 No other current deviation is known.

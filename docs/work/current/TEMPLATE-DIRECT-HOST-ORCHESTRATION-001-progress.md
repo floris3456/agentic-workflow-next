@@ -15,6 +15,7 @@ Resumable execution state for the accepted Direct Host, Dual Developer, Instruct
 - Native Dual opt-in is proven on `developer`: lead architecture -> Spark implementation -> lead defect finding -> Spark correction -> lead re-review -> ordinary checks -> push/readback/CI.
 - `developer` is remotely at `aa46a2820864abbf8ec7264e9150afded09d133d`; the follow-up hardening makes Spark external-directory access fail closed and has successful ordinary CI.
 - Instruction Minimalism is in progress. An uncommitted developer-worktree cutover effect exists from Spark execution and must be reviewed/recovered rather than recreated.
+- Direct Host retirement step 5 is implemented on `template-development`: the package Action/request broker and bridge-only Workspace host administration are removed while deterministic change-package generation/provenance and ordinary Workspace capabilities remain.
 
 ## Material observations
 
@@ -40,7 +41,7 @@ The authorized Direct Host device is currently offline after the ambiguous legac
 - Continue the existing developer cutover effect through one sequential lead review/Spark correction path; do not restart it from the remote baseline.
 - Complete the required web-orchestration and template instruction cutover as separate sequential branch passes and independently review their exact remote results.
 - Run one representative substantive implementation through the operative Dual workflow and web final review.
-- Retire obsolete bridge/runtime/Workspace and package Action/request-broker machinery while retaining deterministic change-package generator/provenance capability.
+- Reconcile the pushed retirement batch and keep the accepted task record current.
 - Implement AgentMemory as an advisory non-blocking enhancement, then perform the final comprehensive repository review and corrections.
 - Leave `main` unchanged and leave the historical-public-residue decision to explicit human authority.
 

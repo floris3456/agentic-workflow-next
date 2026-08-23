@@ -82,27 +82,9 @@ inheriting the target agent workflow or by ignoring target constraints.
    the Node executable hosting the gate are read-only; the host `PATH`, runtime
    tree, credentials, and environment are absent. It is not a push or commit
    route. Use the separate fixed-operation `workspace_publish` broker for
-   an authorized non-main commit plus exact-branch push. Use
-   `workspace_bridge_inspect`, `workspace_bridge_start`, and
-   `workspace_bridge_reconcile` for bounded host bridge inspection, start, and
-   reconciliation without supplying paths, unit names, or DBus addresses.
+   an authorized non-main commit plus exact-branch push.
    These tools keep OpenCode rooted in template-development and do not grant
    blanket trust to a parent directory.
-5. Treat `workspace_bridge_inspect` as read-only even though start-safety proof
-   contacts live `origin/developer`: it may use non-mutating remote queries but
-   must not fetch, update refs, replace the developer checkout, start a service,
-   or reconcile bridge state. `workspace_bridge_start` remains the explicit
-   permission-gated host mutation. It may report `already-running` only after the
-   same registered-instance, repository, running, and fresh-heartbeat proof used
-   after a fresh start. Reconciliation must prove that same live endpoint identity
-   and health before sending the fixed reconcile request.
-6. The broker trusts only the operator-registered service unit whose effective
-   systemd `WorkingDirectory` matches the registered developer checkout and whose
-   effective `ExecStart` contains exactly one `--config` argument whose following
-   argument is the exact registered private config path. Missing, ambiguous, or
-   merely substring-matching command data fails closed. A reachable admin socket
-   with missing or wrong instance/repository identity is untrusted and must not
-   supply inspection counts or receive reconciliation.
 
 ## Bounded task procedure
 

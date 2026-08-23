@@ -48,21 +48,7 @@ operating workflow.
    portable `template-development.patch`. The generator computes changed paths
    with `--no-renames`, removes all `changes/**` paths, and generates the patch
    from the remaining exact paths using literal pathspecs (`:(literal)<path>`).
-7. If the maintainer execution surface cannot provide the generator's required
-   canonical network access, create one strict
-   `docs/work/package-requests/<task-id>.json` request instead of hand-building a
-   package. The request carries only task/revision/supersession metadata plus the
-   exact three reviewed ranges; output path and generator command are derived by
-   repository code. A request commit changes exactly that JSON file. The
-   push-triggered `generate-change-package.yml` workflow invokes the same tracked
-   generator on GitHub Actions, validates the result, proves the remote
-   `template-development` tip still equals the triggering request SHA, stages only
-   the request plus the derived four package files, commits them, pushes only to
-   `template-development`, and independently reads that ref back. Any branch
-   movement, unexpected path, malformed request, existing output, validation
-   failure, or ambiguous push fails closed. A completed package publication is
-   recovered by remote inspection, never by replaying an uncertain request.
-8. Validate the package offline. Schema 3 remains provenance-verified when the
+7. Validate the package offline. Schema 3 remains provenance-verified when the
    embedded generation-time source snapshot and digest, exact ranges,
    canonical-tip/head-relation fields, per-patch digests, and package binding all
    recompute for all three branches. Supersession chains are verified for
@@ -70,28 +56,12 @@ operating workflow.
    revisions, and acyclicity. Historical schema 1 remains integrity-compatible
    but explicitly is not provenance-verified; existing schema 2 remains
    provenance-compatible.
-9. Apply each patch to the downstream matching branch under a new normal task.
-10. Review downstream exact ranges and use ordinary human-only promotion.
-11. Reconcile `source-lock.json` directly from independently verified exact live
+8. Apply each patch to the downstream matching branch under a new normal task.
+9. Review downstream exact ranges and use ordinary human-only promotion.
+10. Reconcile `source-lock.json` directly from independently verified exact live
     canonical `main`, `developer`, and `web-orchestration` refs at meaningful
     maintenance checkpoints. Package creation neither consumes nor advances this
     snapshot. Task completion is not blocked on ceremonial archival.
-
-## Package broker boundary
-
-The package broker is an execution surface for one operation, not a remote shell.
-Its request schema cannot carry commands, repository URLs, output locations,
-credentials, environment values, or arbitrary generator arguments. Revision 1
-writes `changes/<task-id>`; later revisions use the deterministic `.revN` path
-and must supersede the immediately preceding revision for the same task.
-
-The workflow has repository-content write permission because the package itself
-must become durable ledger state, but checkout credentials are not persisted.
-The generator step receives no explicit GitHub token and obtains source evidence
-through the generator's canonical public fetch. The token is supplied only to the
-final bounded publication step after validation and remote-tip freshness proof.
-A successful request therefore creates at most one package/result commit for the
-exact request SHA.
 
 ## Workspace target-rule examples
 
@@ -131,11 +101,6 @@ promotion.
 - Reviewed template-development changed paths contain its own package storage path:
   reject; the generator excludes package storage and superseding packages use
   distinct revision directories.
-- Package request contains an unknown field, arbitrary command/output, wrong path,
-  invalid range, invalid supersession, or pre-existing output: reject before
-  generator execution.
-- Package-request publication sees a moved `template-development` tip: do not
-  commit or push generated output; reconcile the request from exact remote state.
 - Invalid, missing, tampered, ambiguous, or cyclic supersession chain: fail closed
   before package generation or application.
 - A stale source snapshot is an observation to reconcile from exact remote refs;
@@ -148,6 +113,6 @@ promotion.
   adaptation as an explicit downstream implementation decision.
 - One source branch succeeds and the other fails: record the partial exact state;
   never imply cross-branch atomicity.
-- Both direct generator access and the fixed package broker are unavailable:
-  preserve the reviewed source state and explicit blocker; do not hand-build a
-  package or weaken provenance/permissions.
+- Canonical generator access is unavailable: preserve the reviewed source state
+  and explicit blocker; do not hand-build a package or weaken
+  provenance/permissions.

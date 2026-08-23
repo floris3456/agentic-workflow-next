@@ -24,9 +24,6 @@ const allowedTools = new Set([
   "workspace_grep",
   "workspace_exec",
   "workspace_publish",
-  "workspace_bridge_inspect",
-  "workspace_bridge_start",
-  "workspace_bridge_reconcile",
 ]);
 
 function wildcard(pattern, value) {
@@ -152,9 +149,6 @@ try {
     workspace_grep: "allow",
     workspace_exec: "allow",
     workspace_publish: "allow",
-    workspace_bridge_inspect: "allow",
-    workspace_bridge_start: "ask",
-    workspace_bridge_reconcile: "allow",
   };
 
   for (const tool of toolIds) {

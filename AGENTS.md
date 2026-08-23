@@ -18,7 +18,7 @@ branch.
 - Keep every persisted value public-safe. Never store credentials, private chat,
   personal data, host-local absolute paths, or raw private agent identifiers.
 - Record exact remote refs; reports and task notes are navigation, not proof.
-- Do not copy source trees into this branch. Product, bridge, and Project-package
+- Do not copy source trees into this branch. Product and Project-package
   edits belong on their canonical source branches. The default substantive source
   developer route is Dual (`dual`), with `small` and `heavy` as small bounded
   shortcuts. The explicitly template-development-rooted Workspace Maintenance
