@@ -1,15 +1,15 @@
 # Dual Developer architecture
 
-Status: opt-in implementation route
+Status: default substantive route
 
-Dual separates implementation design and review from source editing.
+Dual is the default route for non-trivial implementation work.
 
-- `lead-developer` is a primary OpenCode agent configured with `openai/gpt-5.6-sol` (a suitable replacement under accepted architecture). It inspects current reality, designs the change, gives detailed instructions to Spark, reviews the resulting diff and checks, and steers corrections. Its edit permission is denied and its shell permission is limited to read/review commands.
-- `spark-implementer` is the only source editor inside Dual, configured with `openai/gpt-5.3-codex-spark`. It is a subagent available to the lead through OpenCode's native task tool. It edits files, generates artifacts, runs implementation commands and tests, and reports exact results. It cannot launch subagents.
-- Model identities are configuration rather than permanent route semantics.
-- `small-developer` and the current heavy developer remain independent routes during this opt-in phase. They are not fallbacks or substitutes within Dual.
-- Web selects the route, sequences cross-task work, and performs final independent outcome review. Web does not become an implementation editor or mechanically repeat every lead review step.
+- `lead-developer` is a primary route owner. It has edit deny and keeps only one task permission: `spark-implementer`.
+- `spark-implementer` is the sole source editor in Dual and cannot delegate further.
+- Model identities are replaceable configuration.
+- `small-developer` and `heavy-developer` are independent bounded routes and are not Spark substitutes.
 
-A Spark implementation disagreement uses one task-scoped `proposed-deviations.md` working file. Spark records the proposal before implementing the departure; the lead accepts or rejects it. The working file must be resolved before developer completion. Formal deviations remain the durable record when implemented reality materially differs from a prior normative expected state.
+If a material lead instruction must change, Spark must create/update exactly one task-scoped `proposed-deviations.md` file.
+The lead resolves it before implementation continues.
 
-Dual uses direct repository and Git evidence. It does not require GitHub Issues as a command bus, bridge mailbox sequencing, MCP modes, compaction recovery, or package finalization.
+Web remains responsible for route selection and final outcome verification; small/heavy routes remain available only when Dual is intentionally unnecessary.

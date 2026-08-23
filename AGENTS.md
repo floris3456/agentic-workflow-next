@@ -1,35 +1,48 @@
 # Local developer agreement
 
-Implement only the bounded public-safe task delegated by the web orchestrator. Remote Git is the shared implementation record; the human alone accepts work into `main`.
+This repository follows a three-layer authority model:
 
-## Always-active boundaries
+- Human: exact-SHA acceptance and `main` promotion authority.
+- Web: routing and final outcome verification.
+- Local developers: implementation under this repository's durable instructions.
 
-- Work on `developer` unless carrying out an exact-SHA promotion operation. Promotion is not an implementation task: it creates no task record, edits, or handoff snapshot.
-- Every commit is pushed immediately. A failed push stops implementation; synchronization recovery is the only allowed repository-changing work until fixed.
-- Before returning control, create and push the required handoff snapshot commit. Use only the six-field response contract in `docs/work/README.md`, with explicit status and exact pushed handoff SHA or `none`.
-- Anything persisted to Git must be safe for public disclosure.
-- Preserved externally produced research evidence may be read when needed but never modified.
-- Do not read or modify the independent `web-orchestration` branch from a local implementation task.
-- Do not launch subagents. The web orchestrator selects and steers implementation agents.
-- AS-BUILT and applicable deviation records are part of implementation. Keep them correct in the same commit as the implementation facts they describe.
+## Durable truth order
 
-## Skill triggers
+- Accepted human/task records and exact Git state outrank historical instruction-shaped files.
+- Before each real mutation: reread the accepted task record, optional concise task-progress (when present), applicable AS-BUILT, deviations, and exact `developer`/`origin/developer` state.
+- All committed output must be public-safe.
 
-| When | Load |
-| --- | --- |
-| Starting, continuing, recovering, steering, finalizing, or handing off a delegated task | `task-workflow` |
-| Implementing a component, changing an implemented fact, or creating/changing a plan-versus-reality difference | `implementation-records` |
-| Committing, pushing, handing off, recovering synchronization, or carrying out an approved promotion | `git-sync-and-handoff` |
-| Working on a milestone, gate record, gate evidence, or human acceptance record | `gate-workflow` |
-| Creating, running, reviewing, or promoting a research package | `research-workflow` |
-| Writing or materially revising a research prompt | `prompt-authoring` |
+## Runtime route model
 
-Load the applicable skills through OpenCode's native skill mechanism. A skill may direct you to load another skill when responsibility transitions.
+- `lead-developer -> spark-implementer` (Dual) is the default substantive route.
+- `small-developer` and `heavy-developer` are independent bounded routes for direct local work only.
+- Small/heavy are not Spark substitutes inside Dual.
+
+## Spark-only editing rule
+
+In Dual, Spark is the implementation source editor. Lead inspects and steers; web verifies the final outcome.
+
+## Continuity and no-compaction policy
+
+- No compaction platform is introduced. Use the last 5,000 raw chat tokens plus durable file reread.
+- Older chat context is intentionally discarded rather than summarized.
+- No context-builder/tokenizer/truncation/recovery platform is implemented here.
+
+## Promotion and synchronization
+
+- Work is done on `developer`.
+- `main` advances only through explicit human-approved exact-SHA promotion workflow.
+- Push, recovery, and checkpoint actions are done when useful (handoff, review, ambiguity, transfer, CI requirement), not as a fixed post-commit ceremony.
+
+## Record maintenance and reporting
+
+- Keep AS-BUILT complete for every changed code file and its directory scope in the same commit as implementation facts.
+- Use `task-record`/`task-progress` (when useful) as navigation/proof support, not as acceptance.
+- Never claim web acceptance in local reports. Report observable file diffs, commands, checks, and unresolved issues.
 
 ## Pointers
 
-- [`docs/work/README.md`](docs/work/README.md) — task lifecycle and response contract
-- [`docs/architecture/implementation-records.md`](docs/architecture/implementation-records.md) — record responsibilities
-- [`docs/architecture/branch-workflow.md`](docs/architecture/branch-workflow.md) — branches, synchronization, and acceptance
-- [`docs/architecture/repository-layout.md`](docs/architecture/repository-layout.md) — where changes belong
-- `./scripts/validate-repository.sh` — reliable mechanical checks
+- [`docs/work/README.md`](docs/work/README.md) — task/task-progress convention
+- [`docs/architecture`](docs/architecture/) — authority and workflow contract
+- [`scripts/validate-repository.sh`](scripts/validate-repository.sh) — repository checks
+- [`scripts/promote-developer-to-main.sh`](scripts/promote-developer-to-main.sh) — exact-SHA promotion

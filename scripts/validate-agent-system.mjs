@@ -5,246 +5,212 @@ import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const failures = [];
-const exists = (p) => fs.existsSync(path.join(root, p));
-const read = (p) => fs.readFileSync(path.join(root, p), "utf8");
-const fail = (m) => failures.push(m);
-const assert = (condition, message) => { if (!condition) fail(message); };
+const resolve = (relative) => path.join(root, relative);
+const read = (relative) => fs.readFileSync(resolve(relative), "utf8");
+const exists = (relative) => fs.existsSync(resolve(relative));
 
-function listSkillNames() {
-  const dir = path.join(root, ".opencode/skills");
-  if (!fs.existsSync(dir)) return [];
-  return fs.readdirSync(dir, { withFileTypes: true })
-    .filter((e) => e.isDirectory() && fs.existsSync(path.join(dir, e.name, "SKILL.md")))
-    .map((e) => e.name);
+function fail(message) {
+  failures.push(message);
 }
 
-function frontmatter(text) {
-  if (!text.startsWith("---\n")) return null;
-  const end = text.indexOf("\n---\n", 4);
-  if (end < 0) return null;
-  const result = {};
-  for (const line of text.slice(4, end).split("\n")) {
-    const match = line.match(/^([A-Za-z][A-Za-z0-9_-]*):\s*(.*)$/);
-    if (match) result[match[1]] = match[2].trim();
+function assert(condition, message) {
+  if (!condition) fail(message);
+}
+
+function isExecutable(relative) {
+  return exists(relative) && (fs.statSync(resolve(relative)).mode & 0o111) !== 0;
+}
+
+function scalar(value) {
+  const trimmed = value.trim();
+  if (trimmed === "") return {};
+  if (trimmed === "true") return true;
+  if (trimmed === "false") return false;
+  if (trimmed === "null") return null;
+  if (/^-?\d+(?:\.\d+)?$/.test(trimmed)) return Number(trimmed);
+  if ((trimmed.startsWith('"') && trimmed.endsWith('"'))
+    || (trimmed.startsWith("'") && trimmed.endsWith("'"))) {
+    return trimmed.slice(1, -1);
   }
-  return result;
+  return trimmed;
 }
 
-function allRepositoryFiles(directory) {
-  const entries = fs.readdirSync(directory, { withFileTypes: true });
-  return entries.flatMap((entry) => {
-    if (entry.name === ".git" || entry.name === "node_modules") return [];
-    const fullPath = path.join(directory, entry.name);
-    return entry.isDirectory() ? allRepositoryFiles(fullPath) : [fullPath];
-  });
+function parseFrontmatter(relative) {
+  const text = read(relative);
+  const match = text.match(/^---\n([\s\S]*?)\n---(?:\n|$)/);
+  if (!match) {
+    fail(`${relative} must contain YAML frontmatter`);
+    return {};
+  }
+
+  const document = {};
+  const stack = [{ indent: -1, value: document }];
+  for (const line of match[1].split("\n")) {
+    if (!line.trim() || line.trimStart().startsWith("#")) continue;
+    const parsed = line.match(/^(\s*)([^:]+):(?:\s*(.*))?$/);
+    if (!parsed) {
+      fail(`${relative} has unsupported frontmatter line: ${line.trim()}`);
+      continue;
+    }
+    const indent = parsed[1].length;
+    const key = parsed[2].trim().replace(/^(?:"([\s\S]*)"|'([\s\S]*)')$/, "$1$2");
+    while (stack.at(-1).indent >= indent) stack.pop();
+    const parent = stack.at(-1).value;
+    const value = scalar(parsed[3] ?? "");
+    parent[key] = value;
+    if (value && typeof value === "object") stack.push({ indent, value });
+  }
+  return document;
 }
 
-// OpenCode config: validate current references, not an eternal agent count.
+function assertExactMap(actual, expected, label) {
+  assert(actual && typeof actual === "object" && !Array.isArray(actual), `${label} must be a map`);
+  if (!actual || typeof actual !== "object" || Array.isArray(actual)) return;
+  const actualKeys = Object.keys(actual).sort();
+  const expectedKeys = Object.keys(expected).sort();
+  if (JSON.stringify(actualKeys) !== JSON.stringify(expectedKeys)
+    || expectedKeys.some((key) => actual[key] !== expected[key])) {
+    fail(`${label} must equal ${JSON.stringify(expected)}`);
+  }
+}
+
 try {
   const config = JSON.parse(read("opencode.json"));
-  assert(config.default_agent === "small-developer", "default_agent must be small-developer");
-  assert(config.share === "disabled", "OpenCode sharing must be disabled");
-  assert(config.permission?.task === "deny", "task/subagent launches must be denied");
-  assert(config.permission?.external_directory === "ask", "external_directory must remain approval-gated");
-  const defaultPath = `.opencode/agents/${config.default_agent}.md`;
-  assert(exists(defaultPath), `Configured default agent does not exist: ${defaultPath}`);
-  if (exists(defaultPath)) {
-    const fm = frontmatter(read(defaultPath));
-    assert(fm?.mode === "primary", "Configured default agent must be primary");
-  }
+  assert(config.default_agent === "lead-developer", "opencode default_agent must be lead-developer");
+  assert(config.share === "disabled", "opencode sharing must be disabled");
+  assert(config.permission?.task === "deny", "global task permission must be deny");
+  assert(config.permission?.external_directory === "ask", "global external_directory permission must be ask");
+  assert(config.compaction?.auto === false, "compaction.auto must be false");
+  assert(config.compaction?.prune === false, "compaction.prune must be false");
 } catch (error) {
   fail(`opencode.json is invalid: ${error.message}`);
 }
 
-for (const [file, rolePhrase] of [
-  [".opencode/agents/small-developer.md", "small local implementation developer"],
-  [".opencode/agents/large-developer.md", "heavy local implementation developer"],
-]) {
-  assert(exists(file), `Missing approved developer definition: ${file}`);
-  if (!exists(file)) continue;
-  const text = read(file);
-  const fm = frontmatter(text);
-  assert(fm?.mode === "primary", `${file} must be primary`);
-  assert(/\n\s*task:\s*deny\s*\n/.test(text), `${file} must deny task launches`);
-  assert(text.includes(rolePhrase), `${file} must identify its stable small/heavy role`);
+const agentFiles = {
+  lead: ".opencode/agents/lead-developer.md",
+  spark: ".opencode/agents/spark-implementer.md",
+  small: ".opencode/agents/small-developer.md",
+  heavy: ".opencode/agents/heavy-developer.md",
+};
+for (const relative of Object.values(agentFiles)) {
+  assert(exists(relative), `Missing required agent file: ${relative}`);
 }
 
-const commandsSource = read("tools/opencode-bridge/src/commands.ts");
-assert(commandsSource.includes('this.developerAgents = options.developerAgents ?? { small: "small-developer", heavy: "large-developer" };'),
-  "Bridge default developer routing must map small/heavy to tracked developer agents");
-assert(commandsSource.includes('this.workspaceAgents = options.workspaceAgents ?? { small: "small-workspace-maintainer", heavy: "workspace-maintainer" };'),
-  "Bridge default workspace routing must map small/heavy to tracked workspace agents");
-const serviceSource = read("tools/opencode-bridge/src/service.ts");
-assert(serviceSource.includes('developerAgents: { small: "small-developer", heavy: "large-developer" }'),
-  "Bridge service developer routing must use small/heavy concrete agents");
-assert(serviceSource.includes('workspaceAgents: { small: "small-workspace-maintainer", heavy: "workspace-maintainer" }'),
-  "Bridge service workspace routing must use small/heavy concrete agents");
+if (Object.values(agentFiles).every(exists)) {
+  const lead = parseFrontmatter(agentFiles.lead);
+  assert(lead.mode === "primary", "lead-developer mode must be primary");
+  assert(lead.model === "openai/gpt-5.6-sol", "lead-developer model must match current AS-BUILT configuration");
+  assert(lead.permission?.edit === "deny", "lead-developer edit permission must be deny");
+  assertExactMap(lead.permission?.task, { "*": "deny", "spark-implementer": "allow" }, "lead-developer task permission");
+  assertExactMap(lead.permission?.bash, {
+    "*": "deny",
+    "pwd": "allow",
+    "ls *": "allow",
+    "find *": "allow",
+    "cat *": "allow",
+    "sed -n *": "allow",
+    "grep *": "allow",
+    "rg *": "allow",
+    "git status*": "allow",
+    "git diff*": "allow",
+    "git log*": "allow",
+    "git show*": "allow",
+    "git rev-parse*": "allow",
+    "git ls-files*": "allow",
+    "git grep*": "allow",
+    "git ls-tree*": "allow",
+    "node --test*": "allow",
+    "npm test*": "allow",
+    "npm run *": "allow",
+    "bash scripts/validate-repository.sh": "allow",
+  }, "lead-developer bash permission");
 
-const smallDeveloper = read(".opencode/agents/small-developer.md");
-assert(smallDeveloper.includes("repository-relative paths")
-  && smallDeveloper.includes("exact current `cwd`/repository root")
-  && smallDeveloper.includes("never reconstruct")
-  && smallDeveloper.includes("retype the checkout basename")
-  && smallDeveloper.includes("parent or sibling directories")
-  && smallDeveloper.includes("widen the task")
-  && smallDeveloper.includes("external_directory"),
-  "small-developer must keep normal work repository-relative and external access approval-gated");
+  const spark = parseFrontmatter(agentFiles.spark);
+  assert(spark.mode === "subagent", "spark-implementer mode must be subagent");
+  assert(spark.model === "openai/gpt-5.6-sol", "spark-implementer model must match current AS-BUILT configuration");
+  assert(spark.permission?.edit === "allow", "spark-implementer edit permission must be allow");
+  assert(spark.permission?.task === "deny", "spark-implementer task permission must be deny");
+  assert(spark.permission?.external_directory === "deny", "spark-implementer external_directory permission must be deny");
+  assert(spark.permission?.question === "deny", "spark-implementer question permission must be deny");
 
-assert(!exists(".opencode/agents/repository-scout.md"),
-  "repository-scout must not be ref-owned; the hardened runtime owns its contract");
-const scoutSource = read("tools/opencode-bridge/src/scout.ts");
-assert(scoutSource.includes("allowedTools = new Set([\"scout_read\", \"scout_glob\", \"scout_grep\"])") && !scoutSource.includes("\"scout_read\", \"scout_glob\", \"scout_grep\", \"lsp\""),
-  "Scout contract must exclude LSP");
-assert(exists("tools/opencode-bridge/scout-runtime/opencode.json") && exists("tools/opencode-bridge/scout-runtime/plugins/scout-tools.mjs"),
-  "Scout trusted runtime/config/tools must be bridge-owned");
-
-const skills = new Set(listSkillNames());
-for (const requiredSkill of [
-  "task-workflow", "implementation-records", "git-sync-and-handoff",
-  "gate-workflow", "research-workflow", "prompt-authoring",
-]) {
-  assert(skills.has(requiredSkill), `Missing reusable skill: ${requiredSkill}`);
-}
-for (const name of skills) {
-  const file = `.opencode/skills/${name}/SKILL.md`;
-  const text = read(file);
-  const fm = frontmatter(text);
-  assert(fm !== null, `${file} needs YAML frontmatter`);
-  assert(fm?.name === name, `${file} name must match its directory`);
-  assert(typeof fm?.description === "string" && fm.description.length > 0, `${file} needs a description`);
-  assert(/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(name), `Invalid skill name: ${name}`);
-}
-
-const agents = read("AGENTS.md");
-const triggerSection = agents.split("## Skill triggers")[1]?.split("## Pointers")[0] ?? "";
-for (const match of triggerSection.matchAll(/`([a-z0-9]+(?:-[a-z0-9]+)*)`/g)) {
-  assert(skills.has(match[1]), `AGENTS.md references missing skill: ${match[1]}`);
-}
-
-const expectedResponse = [
-  "Status:",
-  "Handoff developer SHA:",
-  "Files changed:",
-  "Checks + perceived results:",
-  "Blockers/decisions:",
-  "Task record:",
-].join("\n") + "\n";
-assert(read("docs/work/templates/developer-response-template.md") === expectedResponse,
-  "Developer response template must contain exactly the six canonical fields");
-const handoffSkill = read(".opencode/skills/git-sync-and-handoff/SKILL.md");
-assert(handoffSkill.includes("report the resulting current handoff SHA in `Handoff developer SHA`"),
-  "git-sync-and-handoff must assign the handoff SHA to its dedicated field");
-assert(!handoffSkill.includes("handoff SHA in `Status`"),
-  "git-sync-and-handoff must not assign the handoff SHA to Status");
-for (const file of [
-  ".opencode/agents/small-developer.md",
-  ".opencode/agents/large-developer.md",
-]) {
-  assert(read(file).includes(expectedResponse.trim()), `${file} does not contain the canonical response fields`);
-}
-for (const file of [".opencode/agents/small-developer.md", ".opencode/agents/large-developer.md"]) {
-  const agent = read(file);
-  assert(/\n\s*question:\s*allow\s*\n/.test(agent), `${file} must allow structured question interactions`);
-  assert(agent.includes("Do not substitute ordinary") && agent.includes("question-tool interaction"),
-    `${file} must require the structured question pathway when a human answer is needed`);
-  for (const status of ["completed", "blocked", "failed", "needs decision"]) {
-    assert(agent.includes(status), `${file} is missing developer status ${status}`);
+  for (const [name, relative, model] of [
+    ["small-developer", agentFiles.small, "cliproxyapi/gemini-3.7-flash-high"],
+    ["heavy-developer", agentFiles.heavy, "openai/gpt-5.6-sol"],
+  ]) {
+    const agent = parseFrontmatter(relative);
+    assert(agent.mode === "primary", `${name} mode must be primary`);
+    assert(agent.model === model, `${name} model must match current AS-BUILT configuration`);
+    assert(agent.permission?.task === "deny", `${name} task permission must be deny`);
+    assert(agent.permission?.question === "deny", `${name} question permission must be deny`);
   }
-  assert(/completed[\s\S]{0,180}pushed/i.test(agent) && /failed\s+push[\s\S]{0,100}blocked[\s\S]{0,50}none/i.test(agent),
-    `${file} is missing pushed-completion/failed-push semantics`);
-  assert(/successful snapshot push[\s\S]{0,180}(?:last tool action|do not edit, run another tool)/i.test(agent),
-    `${file} must make the pushed handoff snapshot terminal for its working cycle`);
 }
-assert(handoffSkill.includes("immediately return the limited response") && handoffSkill.includes("only at the start of a later working cycle"),
-  "git-sync-and-handoff must not create a same-cycle post-handoff commit");
 
-const finalizationPolicyFiles = [
+assert(!exists(".opencode/agents/large-developer.md"), "active large-developer agent must be absent");
+
+for (const retiredSkill of [
+  "gate-workflow",
+  "git-sync-and-handoff",
+  "implementation-records",
+  "prompt-authoring",
+  "research-workflow",
+  "task-workflow",
+]) {
+  assert(!exists(`.opencode/skills/${retiredSkill}/SKILL.md`), `Retired skill must be absent: ${retiredSkill}`);
+}
+
+for (const relative of [
+  ".githooks/pre-commit",
+  ".githooks/pre-merge-commit",
+  ".githooks/pre-push",
+  "scripts/bootstrap-agent-workflow.sh",
+  "scripts/initialize-template-branches.sh",
+  "scripts/promote-developer-to-main.sh",
+  "scripts/validate-agent-system.mjs",
+  "scripts/validate-preimplementation.mjs",
+  "scripts/validate-repository.sh",
+  "scripts/validate-opencode-bridge.sh",
+]) {
+  assert(exists(relative), `Required executable is missing: ${relative}`);
+  assert(isExecutable(relative), `Executable bit is missing: ${relative}`);
+}
+
+for (const retired of [
+  ".githooks/post-commit",
+  "scripts/recover-remote-sync.sh",
+  "scripts/validate-web-orchestrator-integration.mjs",
+  "docs/work/templates/developer-response-template.md",
+]) {
+  assert(!exists(retired), `Retired path must be absent: ${retired}`);
+}
+
+for (const activeReference of [
+  ".github/copilot-instructions.md",
+  ".opencode/agents/lead-developer.md",
+  ".opencode/agents/spark-implementer.md",
+  ".opencode/agents/small-developer.md",
+  ".opencode/agents/heavy-developer.md",
+  "AGENTS.md",
   "README.md",
   "CONTRIBUTING.md",
-  ".opencode/skills/task-workflow/SKILL.md",
-  ".opencode/skills/git-sync-and-handoff/SKILL.md",
-  ".opencode/skills/implementation-records/SKILL.md",
+  "docs/architecture/agent-system.md",
+  "docs/architecture/branch-workflow.md",
+  "docs/architecture/design-record.md",
+  "docs/architecture/dual-developer.md",
+  "docs/architecture/implementation-records.md",
+  "docs/architecture/repository-layout.md",
   "docs/work/README.md",
   "docs/work/current/README.md",
   "docs/work/archive/README.md",
-  "docs/architecture/implementation-records.md",
-  "docs/architecture/repository-layout.md",
-  "docs/architecture/agent-system.md",
-  "docs/architecture/AS-BUILT.md",
-];
-const obsoleteTaskRemoval = /(?:(?:delet|remov)\w*\s+(?:the\s+)?task(?:-progress|\s+record)|task(?:-progress|\s+record)[^\n.]{0,80}\b(?:delet|remov)\w*)/i;
-for (const file of finalizationPolicyFiles) {
-  const text = read(file);
-  assert(!obsoleteTaskRemoval.test(text), `${file} still prescribes task-record removal`);
-}
-
-const taskFinalization = read(".opencode/skills/task-workflow/SKILL.md").split("## Finalization")[1] ?? "";
-for (const term of ["substantive-approval SHA", "exact approved Git blob", "same basename", "already exists", "`git mv`", "hashes to the approved blob", "non-authoritative benchmark history"]) {
-  assert(taskFinalization.includes(term), `task-workflow finalization is missing archive guard: ${term}`);
-}
-const finalizationResponse = read(".opencode/skills/git-sync-and-handoff/SKILL.md").split("## Finalization response")[1]?.split("## Promotion")[0] ?? "";
-for (const term of ["docs/work/archive/<task>.md", "archived unchanged", "substantive-approval SHA", "immutable", "non-authoritative"]) {
-  assert(finalizationResponse.includes(term), `git-sync finalization response is missing archive contract: ${term}`);
-}
-const archivePolicy = read("docs/work/archive/README.md");
-for (const term of ["immutable", "benchmark", "exact substantively approved blob", "same basename", "non-authoritative", "excluded from active-task discovery", "Do not edit, replace, or reuse"]) {
-  assert(archivePolicy.includes(term), `Work archive policy is missing: ${term}`);
-}
-
-for (const file of [
-  ".githooks/pre-commit", ".githooks/pre-merge-commit", ".githooks/post-commit", ".githooks/pre-push",
-  "scripts/bootstrap-agent-workflow.sh", "scripts/recover-remote-sync.sh",
-  "scripts/promote-developer-to-main.sh", "scripts/initialize-template-branches.sh",
-  "scripts/bootstrap-opencode-bridge.sh", "scripts/opencode-bridge-status.sh",
-  "scripts/opencode-attach.sh", "scripts/watch-developer-sync.sh", "scripts/validate-opencode-bridge.sh",
-  "scripts/validate-web-orchestrator-integration.mjs", "scripts/validate-repository.sh",
+  "docs/work/templates/task-template.md",
+  "docs/work/templates/task-progress-template.md",
+  "research/README.md",
+  "research/templates/README.md",
+  "research/templates/package-card.md",
+  "research/templates/study/README.md",
 ]) {
-  assert(exists(file), `Missing required executable: ${file}`);
-  if (exists(file) && process.platform !== "win32") {
-    assert((fs.statSync(path.join(root, file)).mode & 0o111) !== 0, `Executable bit missing: ${file}`);
-  }
-}
-
-try {
-  const raw = read(".jcodemunch.jsonc");
-  const parsed = JSON.parse(raw.replace(/^\s*\/\/.*$/gm, ""));
-  for (const required of ["raw-evidence", "raw-evidence/**", "research/**", "evidence/**", "docs/work/archive/**"]) {
-    assert(parsed.extra_ignore_patterns?.includes(required), `.jcodemunch.jsonc missing relevance exclusion: ${required}`);
-    assert(parsed.watch_extra_ignore?.includes(required), `.jcodemunch.jsonc missing watch exclusion: ${required}`);
-  }
-  assert(!/confidential|protected[- ]path|protected lane/i.test(raw), "jCodeMunch exclusions must not act as protected-path access control");
-} catch (error) {
-  fail(`.jcodemunch.jsonc is invalid: ${error.message}`);
-}
-
-for (const file of ["README.md", "SECURITY.md", "evidence/README.md", "docs/architecture/agent-system.md", "docs/architecture/design-record.md"]) {
-  assert(!/repository (?:itself )?must remain private|keep the github repository private/i.test(read(file)),
-    `${file} still requires private repository hosting`);
-}
-
-// Deliberately narrow residual scan: exact source names/identifiers only, not
-// generic substrings that may legitimately occur in another project.
-const sourceProjectTerms = [
-  { value: ["User", "Activity", "Monitor"].join(" "), label: "source product name" },
-  { value: ["u", "a", "m", "-modernization"].join(""), label: "source repository identifier" },
-  { value: ["U", "A", "M", "-overdracht"].join(""), label: "source handover identifier" },
-  { value: ["legacy", "_", "u", "a", "m"].join(""), label: "source legacy identifier" },
-  { value: ["2026", "-07-23"].join(""), label: "source dated path" },
-  { value: ["ADR", "-FS-"].join(""), label: "source ADR identifier" },
-  { value: ["G0", "-001"].join(""), label: "source task identifier" },
-  { value: ["U", "A", "M"].join(""), label: "source acronym" },
-];
-for (const file of allRepositoryFiles(root)) {
-  const bytes = fs.readFileSync(file);
-  if (bytes.includes(0)) continue;
-  const relative = path.relative(root, file).split(path.sep).join("/");
-  if (relative.startsWith("docs/work/archive/")) continue;
-  const text = bytes.toString("utf8");
-  for (const term of sourceProjectTerms) {
-    if (text.toLocaleLowerCase().includes(term.value.toLocaleLowerCase())) {
-      fail(`${relative} contains ${term.label}`);
-    }
-  }
+  const text = read(activeReference);
+  assert(!/\b(?:gate-workflow|git-sync-and-handoff|implementation-records|prompt-authoring|research-workflow|task-workflow)\b/.test(text),
+    `${activeReference} references a retired skill`);
 }
 
 if (failures.length) {
@@ -252,4 +218,5 @@ if (failures.length) {
   for (const failure of failures) console.error(`- ${failure}`);
   process.exit(1);
 }
+
 console.log("Agent-system validation passed.");

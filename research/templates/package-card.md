@@ -10,7 +10,7 @@
 
 (how many lanes, which steps depend on which)
 
-## Ingredients chosen (from the prompt-authoring skill)
+## Ingredients chosen
 
 | Ingredient | Included | Why |
 | --- | --- | --- |
@@ -26,4 +26,4 @@
 
 ## Completion rule
 
-Studies validated, conclusions disposed by the accountable human, hash ledger current, status `complete`. Rejected routes recorded in `research/README.md`.
+Studies validated, conclusions recorded with the accountable human, hash ledger current, status `complete`.

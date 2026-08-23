@@ -1,7 +1,7 @@
 # Current work
 
-Task files in this directory are either active or completed and awaiting
-web-orchestrator/human review. The status inside each file is authoritative for
-its process state; presence here is not evidence that work remains incomplete.
+Keep in this directory records that are currently live: queued, executing, blocked, or awaiting decision.
 
-When the web orchestrator delegates a task, create exactly one public-safe `docs/work/current/<task-id>-<slug>.md` from [`../templates/task-progress-template.md`](../templates/task-progress-template.md) before substantive work. After approval and durable reconciliation, finalization moves the exact approved file unchanged to the same basename under `../archive/`.
+- One canonical task-record represents the authoritative accepted plan for consequential tasks.
+- Task-progress entries are optional and should remain concise continuity notes.
+- Completed or superseded records are optional to move out and do not require ceremony.

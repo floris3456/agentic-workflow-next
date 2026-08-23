@@ -15,7 +15,6 @@ cd "$repo_root"
 ./scripts/bootstrap-agent-workflow.sh --check >/dev/null
 [[ -z "$(git status --porcelain)" ]] || { echo "Working tree must be clean." >&2; exit 1; }
 git_dir="$(git rev-parse --git-dir)"
-[[ ! -f "$git_dir/agent-workflow-sync-failed" ]] || { echo "Resolve synchronization failure before promotion." >&2; exit 1; }
 
 authorization="$git_dir/agent-workflow-promotion-authorized"
 pending="$git_dir/agent-workflow-promotion-sync-pending"

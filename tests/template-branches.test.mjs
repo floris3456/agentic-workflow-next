@@ -39,7 +39,7 @@ function populate(repository, marker) {
   writeFileSync(join(repository, "tree-marker.txt"), `${marker}\n`);
   copyExecutable(join(root, "scripts", "bootstrap-agent-workflow.sh"), join(repository, "scripts", "bootstrap-agent-workflow.sh"));
   copyExecutable(join(root, "scripts", "initialize-template-branches.sh"), join(repository, "scripts", "initialize-template-branches.sh"));
-  for (const hook of ["pre-commit", "pre-merge-commit", "post-commit", "pre-push"]) {
+  for (const hook of ["pre-commit", "pre-merge-commit", "pre-push"]) {
     copyExecutable(join(root, ".githooks", hook), join(repository, ".githooks", hook));
   }
 }
@@ -194,15 +194,5 @@ test("an active task record is refused", (context) => {
   const result = spawnSync("./scripts/initialize-template-branches.sh", [], { cwd: checkout, env: identity, encoding: "utf8" });
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /blocked by an active task record/);
-  assert.equal(git(checkout, ["rev-parse", "origin/developer"]), developer);
-});
-
-test("a synchronization-failure marker is refused", (context) => {
-  const { checkout, developer } = fixture(context);
-  const gitDirectory = resolve(checkout, git(checkout, ["rev-parse", "--git-dir"]));
-  writeFileSync(join(gitDirectory, "agent-workflow-sync-failed"), `${developer} developer\n`);
-  const result = spawnSync("./scripts/initialize-template-branches.sh", [], { cwd: checkout, env: identity, encoding: "utf8" });
-  assert.notEqual(result.status, 0);
-  assert.match(result.stderr, /Resolve synchronization failure/);
   assert.equal(git(checkout, ["rev-parse", "origin/developer"]), developer);
 });

@@ -2,56 +2,36 @@
 
 ```text
 /
-├── README.md
 ├── AGENTS.md
+├── README.md
 ├── CONTRIBUTING.md
-├── SECURITY.md
 ├── opencode.json
-├── .jcodemunch.jsonc
-├── .githooks/                       tracked local enforcement
+├── .githooks/                     tracked local hooks
 ├── .opencode/
-│   ├── agents/                      local implementation agents
-│   └── skills/                      conditional local procedures
-├── .github/                         CI and contribution templates
+│   ├── agents/
+│   └── package.json
 ├── docs/
-│   ├── architecture/                current system truth
-│   ├── governance/                  human authority/ownership roles
-│   ├── milestones/                  gate plans and evidence
-│   ├── plain-language/              first-reader explanation
-│   └── work/
-│       ├── current/                 active task-progress
-│       ├── archive/                 immutable non-authoritative benchmark snapshots
-│       ├── future/                  non-normative proposals
-│       └── templates/
-├── contracts/                       versioned schemas/examples
-│   └── opencode-bridge/             pinned bridge compatibility and operation inventory
-├── src/                             deployable implementation and component AS-BUILT
-├── tests/                           automated tests and fictional fixtures
-├── tools/ and scripts/              deterministic repository utilities
-│   └── opencode-bridge/             isolated TypeScript bridge implementation and tests
-├── research/                        research packages and workflow
-├── evidence/                        sanitized derived evidence/provenance
-└── raw-evidence/                    optional immutable external evidence
+│   ├── architecture/
+│   ├── work/
+│   └── ...
+├── scripts/
+├── tests/
+├── tools/                         retained bridge/runtime implementation
+├── contracts/
+└── research/
 ```
 
-The independent `web-orchestration` branch contains only `web-orchestration-only/**` and is not part of the normal implementation tree. It holds public-safe continuity plus a generalized ChatGPT Project installation source. Installed Project state, private conversations, connector credentials, and project-specific private context are deliberately not stored in Git.
+`web-orchestration` is a separate branch with independent content; it is not a root path in this tree.
 
-Bridge runtime configuration, GitHub App keys/tokens, OpenCode passwords, `secret_ref` files, SQLite state, locks, and generated package output remain outside tracked paths. Bridge contracts are tracked; operator values are not.
+### Placement rules
 
-## Placement rules
+- Implemented task truth and durable process references: `docs/work/`
+- Branch and acceptance contracts: `docs/architecture/`
+- Script-level mechanics: `scripts/`
+- Retained bridge implementation: `tools/opencode-bridge/` and `contracts/opencode-bridge/`
+- Active implementation agents: `.opencode/agents/{lead-developer,spark-implementer,small-developer,heavy-developer}.md`
+- The retained bridge's legacy public `heavy` selector still maps to `large-developer`; that bridge-era mapping is separate from the active `.opencode` agent inventory and remains pending step-5 bridge retirement.
 
-| Change | Location |
-| --- | --- |
-| Active task process | `docs/work/current/<task>.md` |
-| Closed task benchmark snapshot | `docs/work/archive/<task>.md`, moved unchanged during finalization |
-| Current implemented component facts | `src/<component>/AS-BUILT.md` or the component's established AS-BUILT location |
-| Planned-versus-actual difference | applicable milestone/component deviation record |
-| Architecture authority/branch model | `docs/architecture/` |
-| Human gate evidence | `docs/milestones/` |
-| Conditional local agent procedure | `.opencode/skills/<name>/SKILL.md` |
-| Repeatable command | `scripts/` or `tools/` |
-| Source evidence | existing immutable evidence root; never rewrite |
+## Cleanup principle
 
-## Cleanup
-
-Remove obsolete agents, skills, templates, scripts, validators, and active references together. Do not preserve old agent-system chronology in current architecture records. Do not add empty product frameworks before their milestone.
+Active architecture should describe the current operative route model. Historical or archived notes may still contain legacy ceremony.

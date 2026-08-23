@@ -1,30 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-git_dir="$(git rev-parse --git-dir)"
 branch="$(git symbolic-ref --quiet --short HEAD || true)"
+git_dir="$(git rev-parse --git-dir)"
 
 if [[ "$branch" == "main" && ! -f "$git_dir/agent-workflow-promotion-authorized" ]]; then
   echo "A merge commit on main requires the guarded human-approved promotion script." >&2
   exit 1
-fi
-
-marker="$git_dir/agent-workflow-sync-failed"
-if [[ "$branch" == "developer" && -f "$marker" ]]; then
-  recovery_authorized="$git_dir/agent-workflow-sync-recovery-authorized"
-  local_sha=""
-  remote_sha=""
-  read -r local_sha remote_sha < "$recovery_authorized" 2>/dev/null || true
-  marker_branch="$(sed -n '1p' "$marker" 2>/dev/null || true)"
-  marker_sha="$(sed -n '2p' "$marker" 2>/dev/null || true)"
-  if [[ -n "$local_sha" && -n "$remote_sha" && "$marker_branch" == "developer" && "$marker_sha" == "$local_sha" \
-    && "$(git rev-parse HEAD)" == "$local_sha" \
-    && "$(git rev-parse refs/remotes/origin/developer 2>/dev/null || true)" == "$remote_sha" ]]; then
-    exit 0
-  fi
-  if [[ -f "$recovery_authorized" ]]; then
-    echo "Recovery merge authorization did not match the marker, current head, and fetched remote head." >&2
-  fi
 fi
 
 "$(git rev-parse --show-toplevel)/.githooks/pre-commit"

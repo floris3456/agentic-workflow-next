@@ -13,4 +13,4 @@
 
 ## Completion rule
 
-The result is saved verbatim, reviewed with the review checklist, validated (`node scripts/validate-research.mjs`), and converted into explicit ADR proposals, human decisions, or CLI experiments through the conclusions sheet.
+The result is saved verbatim, reviewed with the review checklist, validated (`node scripts/validate-research.mjs`), and converted into explicit human decisions or ADR proposals in relevant durable records.

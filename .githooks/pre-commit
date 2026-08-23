@@ -1,10 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-repo_root="$(git rev-parse --show-toplevel)"
-git_dir="$(git rev-parse --git-dir)"
 branch="$(git symbolic-ref --quiet --short HEAD || true)"
-marker="$git_dir/agent-workflow-sync-failed"
+git_dir="$(git rev-parse --git-dir)"
 promotion_pending="$git_dir/agent-workflow-promotion-sync-pending"
 
 if [[ -f "$promotion_pending" ]]; then
@@ -20,15 +18,6 @@ fi
 if [[ "$branch" != "developer" && "$branch" != "main" ]]; then
   echo "Commits are allowed only on developer; current state is ${branch:-detached HEAD}." >&2
   exit 1
-fi
-
-if [[ -f "$marker" ]]; then
-  marker_branch="$(sed -n '1p' "$marker" 2>/dev/null || true)"
-  if [[ -z "$marker_branch" || "$marker_branch" == "$branch" ]]; then
-    echo "A previous push failed for ${marker_branch:-this branch}. Further commits are blocked until remote synchronization is restored." >&2
-    echo "Run scripts/recover-remote-sync.sh only as directed by the web orchestrator." >&2
-    exit 1
-  fi
 fi
 
 exit 0

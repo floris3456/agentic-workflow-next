@@ -10,7 +10,6 @@ cd "$repo_root"
 [[ -z "$(git status --porcelain)" ]] || { echo "Working tree must be clean." >&2; exit 1; }
 [[ "$(git rev-parse --is-shallow-repository)" == "false" ]] || { echo "Fetch complete branch history before template branch initialization." >&2; exit 1; }
 git_dir="$(git rev-parse --git-dir)"
-[[ ! -f "$git_dir/agent-workflow-sync-failed" ]] || { echo "Resolve synchronization failure before branch initialization." >&2; exit 1; }
 
 git fetch --no-tags origin main developer
 main="$(git rev-parse origin/main)"

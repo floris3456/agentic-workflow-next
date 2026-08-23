@@ -1,45 +1,32 @@
-# TASK-ID - Human decision outcome
+# Task record template
 
-**Status:** Draft
-**Gate/milestone:**
-**Accountable human:** UNASSIGNED
+## Task ID
 
-Use this template only for a human decision or gate-preparation brief. Delegated implementation work uses `task-progress-template.md`.
+## Outcome objective
 
-## Useful outcome
+What must become true for this task to be considered complete?
 
-What decision becomes explicit, and what work becomes possible or safer?
+## Outcome and scope
 
-## In scope
+- Intended change and boundary:
+- Explicitly excluded work:
 
--
+## Constraints
 
-## Out of scope
+- Immutable rules and limits:
+- Human decisions required:
 
--
+## Required work and outputs
 
-## Inputs and source of truth
+- Files/areas touched:
+- Expected checks/tests/CI:
+- Deliverables:
 
--
+## Deviations and exceptions
 
-## Constraints and human decisions
+- Expected exceptions:
+- Relevant records to keep aligned (`AS-BUILT`, `deviations`, etc.):
 
--
+## Relevant durable records
 
-## Acceptance evidence
-
-1.
-
-## Failure, recovery, and rollback
-
--
-
-## Validation commands
-
-```text
-commands go here
-```
-
-## Next safe action
-
-Name the next action that is safe only after the recorded human decision.
+- Start with exact Git context links and accepted source files.

@@ -1,49 +1,15 @@
-# Work lifecycle
+# Work records and continuity
 
-`docs/work/current/` contains one task-progress file per active delegated implementation task. It is public-safe procedural memory, not authoritative implementation evidence. `docs/work/archive/` retains each final approved task-progress blob as immutable, non-authoritative benchmark history after the task leaves the active lifecycle. A pre-existing human decision brief, such as a gate-owner decision, may also remain in `current/` but does not use the implementation handoff lifecycle.
+Consolidated local work is described through durable records:
 
-## Task lifecycle
+- **Canonical task-records** for consequential work (`docs/work/current/`): one accepted source of instruction and scope.
+- **Task-progress** when useful: short continuity notes for ongoing routing or implementation state.
 
-1. The web orchestrator assigns a stable task ID and a bounded public-safe brief.
-2. The developer creates `docs/work/current/<task-id>-<slug>.md` before substantive implementation.
-3. The original delegated brief is preserved verbatim.
-4. Task-progress, AS-BUILT, and applicable deviations are maintained during work.
-5. Every commit is pushed immediately.
-6. Before returning control, the developer creates and pushes a dedicated
-   handoff snapshot commit. That successful push ends the working cycle; the
-   developer immediately returns the six fields without another edit or commit.
-7. The web orchestrator independently reviews the exact remote range.
-8. After substantive approval, the implementing developer reconciles durable records and moves the exact approved task-progress blob unchanged to the same basename under `docs/work/archive/` in the finalization commit.
-9. The web orchestrator reviews finalization.
-10. The human may approve an exact `developer` SHA for promotion to `main`.
+Tiny work with negligible continuity value may omit both.
 
-## Record responsibilities
+## Record expectations
 
-- Task-progress: current task process, attempts, observations, interpretations, steering, remaining work, next action.
-- AS-BUILT: continuously accurate implementation reality and live developer memory.
-- Deviation: continuously accurate intended-versus-actual differences.
-
-## Developer response contract
-
-The six field names and order have one canonical owner:
-[`templates/developer-response-template.md`](templates/developer-response-template.md).
-
-`Status` is exactly `completed`, `blocked`, `failed`, or `needs decision`.
-`completed` is valid only after the handoff commit is pushed, and `Handoff
-developer SHA` is that exact 40-character remote commit. All other statuses use
-`none`; in particular, a failed push is `blocked` with `none`. No narrative
-summary, full files, reproduced diff, long rationale, or correctness claim.
-`Files changed` covers the entire current review range. The response is
-navigation, not proof.
-
-## Review bases
-
-- First handoff: task-start `developer` SHA to current handoff SHA.
-- Later handoff: last reviewed `developer` SHA to current handoff SHA.
-- Finalization: substantive-approval SHA to finalization SHA.
-
-The task-progress template carries the task-start and orchestrator-supplied review-base SHAs. The web task context remains the normative home for reviewed and substantive-approval boundaries.
-
-## Completion
-
-Move durable facts into their proper records before archival. Confirm the archive target does not already exist, preserve the substantively approved task-progress blob without cleanup or summarization, and use `git mv` so it leaves `docs/work/current/` in the finalization commit. A target collision or content mismatch is a blocker; never overwrite, rename around, or rewrite benchmark history. Archived task-progress is not active work, durable implementation truth, or a substitute for AS-BUILT and deviation records.
+- Task-records carry outcome scope, constraints, required checks, and durable references.
+- Optional task-progress carries current position, meaningful failed attempts, route changes, blockers, checks, and next action.
+- Task-progress is not authority.
+- If a `main`-approval route is used, it is done from exact Git state and the durable task instructions.

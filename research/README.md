@@ -14,7 +14,7 @@ Start with package cards and conclusions. Open individual preserved results only
 
 ## Workflow
 
-See [`WORKFLOW.md`](WORKFLOW.md) and load the OpenCode `research-workflow` skill when working here.
+See [`WORKFLOW.md`](WORKFLOW.md) for research expectations and optional local workflow.
 
 ```bash
 node scripts/validate-research.mjs

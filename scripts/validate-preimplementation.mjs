@@ -11,8 +11,7 @@ const required = [
   "docs/architecture/implementation-records.md", "docs/architecture/repository-layout.md",
   "docs/architecture/AS-BUILT.md", "docs/architecture/deviations.md",
   "docs/work/README.md", "docs/work/current/README.md", "docs/work/archive/README.md",
-  "docs/work/templates/task-progress-template.md",
-  "docs/work/templates/developer-response-template.md",
+  "docs/work/templates/task-template.md", "docs/work/templates/task-progress-template.md",
 ];
 for (const file of required) if (!fs.existsSync(path.join(root, file))) failures.push(`Missing ${file}`);
 

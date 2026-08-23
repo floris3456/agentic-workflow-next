@@ -20,7 +20,7 @@ if [[ -z "$repo_root" ]] || [[ ! -f "$repo_root/AGENTS.md" ]] || [[ ! -f "$repo_
 fi
 cd "$repo_root"
 
-required=(.githooks/pre-commit .githooks/pre-merge-commit .githooks/post-commit .githooks/pre-push)
+required=(.githooks/pre-commit .githooks/pre-merge-commit .githooks/pre-push)
 for hook in "${required[@]}"; do
   [[ -f "$hook" ]] || { echo "Missing tracked hook: $hook" >&2; exit 1; }
 done
