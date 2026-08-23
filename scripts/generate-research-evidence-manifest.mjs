@@ -13,8 +13,12 @@ function walk(directory) {
   const result = [];
   for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
     const fullPath = path.join(directory, entry.name);
+    if (entry.isSymbolicLink()) {
+      const relative = path.relative(repoRoot, fullPath).split(path.sep).join("/");
+      throw new Error(`Research tree contains symlink: ${relative}`);
+    }
     if (entry.isDirectory()) result.push(...walk(fullPath));
-    else result.push(fullPath);
+    else if (entry.isFile()) result.push(fullPath);
   }
   return result;
 }

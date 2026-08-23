@@ -10,12 +10,21 @@ const warnings = [];
 const fail = (message) => failures.push(message);
 const warn = (message) => warnings.push(message);
 
+function rel(absolutePath) {
+  return path.relative(repoRoot, absolutePath).split(path.sep).join("/");
+}
+
 function walk(directory) {
   const result = [];
   for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
     const fullPath = path.join(directory, entry.name);
-    if (entry.isDirectory()) result.push(...walk(fullPath));
-    else result.push(fullPath);
+    if (entry.isSymbolicLink()) {
+      fail(`Research tree contains symlink: ${rel(fullPath)}`);
+    } else if (entry.isDirectory()) {
+      result.push(...walk(fullPath));
+    } else if (entry.isFile()) {
+      result.push(fullPath);
+    }
   }
   return result;
 }
@@ -24,12 +33,11 @@ function directories(directory) {
   return [
     directory,
     ...fs.readdirSync(directory, { withFileTypes: true })
-      .filter((entry) => entry.isDirectory())
+      .filter((entry) => entry.isDirectory() && !entry.isSymbolicLink())
       .flatMap((entry) => directories(path.join(directory, entry.name))),
   ];
 }
 
-const rel = (absolutePath) => path.relative(repoRoot, absolutePath).split(path.sep).join("/");
 const isResult = (file) => /\/result-[^/]+\.md$/.test(file);
 const isText = (file) => /\.(?:md|json|yml|yaml|txt)$/i.test(file);
 
@@ -89,7 +97,7 @@ for (const conclusions of files.filter((item) => item.endsWith("/conclusions.md"
 }
 
 for (const entry of fs.readdirSync(researchRoot, { withFileTypes: true })) {
-  if (!entry.isDirectory() || ["baseline", "implementation", "templates"].includes(entry.name)) continue;
+  if (entry.isSymbolicLink() || !entry.isDirectory() || ["baseline", "implementation", "templates"].includes(entry.name)) continue;
   const cardPath = path.join(researchRoot, entry.name, "README.md");
   if (!fs.existsSync(cardPath)) {
     fail(`Package ${entry.name} lacks a package card README.md`);
@@ -145,7 +153,9 @@ for (const file of textFiles) {
 
 for (const directory of directories(researchRoot)) {
   if (path.basename(directory) !== "attachments") continue;
-  for (const file of fs.readdirSync(directory)) {
+  for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+    if (entry.isSymbolicLink() || !entry.isFile()) continue;
+    const file = entry.name;
     if (file === "README.md" || file === "code-reference.md") continue;
     const fullPath = path.join(directory, file);
     if (!isText(fullPath)) continue;

@@ -10,6 +10,7 @@ node scripts/validate-ci-status.mjs
 
 node scripts/validate-research.mjs
 node scripts/generate-research-evidence-manifest.mjs --check
+node --test tests/research-evidence.test.mjs
 
 ./scripts/bootstrap-agent-workflow.sh --check
 ./scripts/validate-opencode-bridge.sh
