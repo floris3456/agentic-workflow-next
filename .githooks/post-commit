@@ -1,19 +1,6 @@
 #!/usr/bin/env bash
 set -u
 
-[[ "$(git symbolic-ref --quiet --short HEAD 2>/dev/null || true)" == "template-development" ]] || exit 0
-git_dir="$(git rev-parse --git-dir)"
-marker="$git_dir/template-development-sync-failed"
-sha="$(git rev-parse HEAD)"
-if git push origin HEAD:refs/heads/template-development; then
-  rm -f "$marker"
-  echo "Template-development synchronization: pushed $sha" >&2
-  exit 0
-fi
-{
-  printf '%s\n' "template-development"
-  printf '%s\n' "$sha"
-  date -u +'%Y-%m-%dT%H:%M:%SZ'
-} > "$marker"
-echo "Template-development push failed for $sha. Stop mutation and recover synchronization." >&2
-exit 1
+# Automatic push on every commit is eliminated.
+# Push when remote durability, review, CI, transfer, or checkpoint evidence is useful.
+exit 0

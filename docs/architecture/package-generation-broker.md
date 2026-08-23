@@ -5,7 +5,7 @@
 The template-development package-generation broker provides one bounded networked
 execution surface for the existing deterministic change-package generator when a
 maintainer's current execution environment cannot perform the generator's required
-fresh canonical Git fetches.
+fresh canonical Git fetches. Packaging is conditional upon transfer or release request, rather than a mandatory ceremony.
 
 It does not add a new package format, a general remote shell, or a second source
 of provenance truth. `scripts/create-change-package.mjs` remains the package

@@ -3,10 +3,11 @@
 ## Purpose
 
 The `template-development` branch is the durable cross-branch ledger for work on
-the reusable agentic workflow template. It provides compaction-safe template-task
+the reusable agentic workflow template. It provides template-task
 continuity, exact provenance across independent source branches, portable
-upstream/downstream change transfer, and separation from project implementation
-history.
+upstream/downstream change transfer when requested, and separation from project
+implementation history. Context continuity relies on zero compaction, retaining
+the last 5,000 raw chat tokens and re-reading durable repository records.
 
 ## Authority model
 
@@ -17,8 +18,8 @@ history.
   exact reviewed base/head ranges independently.
 - Component AS-BUILT/deviation records stay on the source branch beside the code
   they describe; this file records the cross-branch maintenance architecture.
-- Task records, developer/Scout/bridge reports, CI, and orchestration notes are
-  procedural memory or evidence, never human acceptance.
+- Task records, developer reports, CI, and orchestration notes are procedural
+  evidence, never human acceptance.
 - Human approval of one exact reviewed `developer` SHA is the only authority that
   advances `main`.
 
@@ -38,16 +39,15 @@ and `web-orchestration` branches. The maintenance agent/runtime and portable
 package machinery are the explicit template-development-owned implementation.
 The web orchestrator selects source routes proportionally:
 
-- bounded direct connected-GitHub edits when exact paths/edits are known and
-  remote readback plus focused checks can prove the outcome more simply;
-- isolated/local or delegated source execution when repository context/tools,
-  interacting edits, generation/tests, uncertainty, or independent
-  implementation materially improves confidence; and
+- default substantive development uses the Dual developer route (`dual`), where
+  the lead developer designs the concrete implementation and Spark executes
+  implementation/testing;
+- `small` for very simple bounded local work with trivial or no testing;
+- `heavy` for difficult/important but still small bounded work; and
 - Workspace Maintenance when the template-development-rooted authority and
   verified cross-worktree tool boundary are the appropriate execution surface.
 
-Only one mutating source route runs at a time. Read-only Scouts may overlap when
-the hardened Scout boundary is ready. Direct/delegated work executing inside a
+Only one mutating source route runs at a time. Direct work executing inside a
 source branch's own authoritative context follows that branch's normal task,
 AS-BUILT/deviation, synchronization, validation, and handoff procedure. Workspace
 Maintenance is route-sensitive instead: it keeps its template-development-rooted
@@ -60,8 +60,9 @@ changed source range is independently reviewed against exact remote GitHub.
 Workspace Maintenance exposes only the public routes `small` and `heavy`.
 `small` maps to `small-workspace-maintainer`; `heavy` maps to
 `workspace-maintainer`. The web orchestrator selects the route and neither agent
-selects or recommends its own escalation. Both agents keep their OpenCode project
-rooted in the registered `template-development` worktree for the whole session.
+selects or recommends its own escalation. Workspace Maintenance never substitutes
+for Dual or Spark. Both agents keep their OpenCode project rooted in the registered
+`template-development` worktree for the whole session.
 Unlike the generic `template-maintainer` source route, they do not enter another
 worktree's OpenCode context or inherit that target's agent workflow. Their stable
 repository instruction authority is the template-development root `AGENTS.md`,
@@ -230,16 +231,17 @@ to repository-root layout.
 
 ## Template task continuity
 
-Explicit reusable-template work creates or resumes one public-safe
-`docs/work/current/<task-id>-<slug>.md` record before consequential source
-publication. It replaces ordinary web task-context continuity for the whole
-template task. The record keeps exact live refs, source ranges, material
-observations/interpretations, route/active-work state, publication/recovery state,
-checks, blockers, decisions, remaining work, and next action when applicable.
+Explicit reusable-template work uses one stable canonical task record
+`docs/work/current/<task-id>-<slug>.md` as instruction authority. Optional
+separate concise task progress `docs/work/current/<task-id>-progress.md` captures
+resumable execution state (current position, observations, checks run, blockers,
+remaining work, next action) when needed for continuity across sessions. Context
+retention uses zero compaction, retaining the last 5,000 raw chat tokens and
+instructing agents to re-read durable repository records.
 
-A successful working-cycle handoff is not finalization. Finalization preserves the
-approved task-record Git blob unchanged when moving it to the same basename under
-`docs/work/archive/`; collision or blob mismatch is refused.
+A successful working-cycle handoff is not finalization. Archival is an optional,
+non-blocking move of the completed task record to `docs/work/archive/`; collision
+or blob mismatch is refused.
 
 ## Source snapshot
 
@@ -257,7 +259,8 @@ bases explicit in task records and package manifests.
 
 `scripts/create-change-package.mjs` produces one directory per task containing
 `manifest.json`, `template-development.patch`, `developer.patch`, and
-`web-orchestration.patch`. New packages use manifest schema 3.
+`web-orchestration.patch`. New packages use manifest schema 3. Packaging is
+conditional upon transfer or release request.
 
 Before output, the generator:
 
@@ -309,13 +312,16 @@ not commit, push, merge, or promote. Every branch's own review/commit/push
 process remains authoritative. Patch conflict is an explicit adaptation task,
 never permission to silently alter canonical package contents.
 
-## Synchronization
+## Synchronization and recovery
 
-Tracked ledger hooks permit commits only on `template-development`. The
-post-commit hook immediately pushes the branch. A failed push records private Git
-recovery state and blocks further commits. The recovery script preserves the
-failed commit and allows only the repository's guarded fast-forward or one
-conflict-free exact-head recovery path; it never rewrites remote history.
+Tracked ledger hooks permit commits only on `template-development`. Automatic
+push-after-every-commit is removed; push occurs when remote durability, review,
+CI, transfer, or checkpoint evidence is useful. If an ambiguous mutation occurs,
+dependent mutation is halted until process/session/local Git/remote Git state
+are reconciled from evidence without automatic replay. The recovery script
+preserves the failed commit and allows only the repository's guarded
+fast-forward or one conflict-free exact-head recovery path; it never rewrites
+remote history.
 
 ## Generated repositories
 
@@ -329,9 +335,9 @@ merging the ledger or independent source histories.
 The `web-orchestration` source installs minimal permanent developer instructions
 plus **five conditionally routed Project Sources**:
 
-1. `skill-workflow.md` — ordinary lookup/research/review, proportional scouting,
-   direct-versus-delegated implementation, exact review/correction, and
-   conditional finalization.
+1. `skill-workflow.md` — ordinary lookup/research/review, route selection
+   (default substantive `dual`, shortcuts `small`/`heavy`), direct-versus-delegated
+   implementation, exact review/correction, and conditional finalization.
 2. `skill-recovery.md` — exceptional issue/command/publication/agent/Git
    reconciliation with strict ambiguous-mutation no-replay semantics.
 3. `skill-template-maintenance.md` — reusable-template continuity, source work,
@@ -343,18 +349,9 @@ plus **five conditionally routed Project Sources**:
    engineering skill containing destinations, missions, evidence roles, and the
    retained craft toolbox.
 
-The previous MCP-ON/MCP-OFF architecture and model-name mapping are retired.
-Capabilities constrain the action that needs them rather than defining a global
-mode. Connected GitHub, public web/GitHub, Scouts, direct mutation, delegation,
-and other specialized capabilities are selected locally only when they serve the
-human's outcome. If a capability is unavailable, only the dependent action is
-unavailable; safe independent work and the strongest justified predecessor
-outcome continue without simulating the missing effect.
-
-Permanent instructions retain only stable role/evidence, proportionality,
-authority/safety, capability-local execution, completion, and the five-row
-procedure router. Detailed bridge, Scout, recovery, finalization, promotion, and
-prompt craft mechanics live in their conditionally loaded skill owner.
+The permanent instructions retain only stable role/evidence, proportionality,
+authority/safety, capability-local execution, completion, and the procedure
+router. Detailed mechanics live in their conditionally loaded skill owner.
 
 The permanent completion boundary is a hard final-response gate: every launched
 route must be terminal and absorbed with publications, visible interactions, and
@@ -366,12 +363,8 @@ are not blockers or completion conditions. Package validation pins that rule.
 ## Ordinary task continuity
 
 `web-orchestration-only/task-context/**` remains the public-safe continuity owner
-for consequential ordinary orchestration tasks. The new template records
-`Material capability limits` only when an unavailable action/evidence source
-actually affects the task. It does not snapshot the transient tool surface or
-persist a global orchestration mode. Existing historical records remain truthful
-history and may retain old mode terminology; they are not rewritten merely to
-match current architecture.
+for consequential ordinary orchestration tasks. Context uses zero compaction,
+retaining the last 5,000 raw chat tokens and re-reading durable records.
 
 ## Prompt creation as built
 
@@ -406,13 +399,11 @@ never requests private chain-of-thought/hidden scratch work.
 
 ## Trust boundaries
 
-The independent read-only Scout runtime remains fail-closed. The inspected ref is
+The read-only inspection boundaries remain fail-closed. The inspected ref is
 untrusted evidence and may not control checkout hooks, executable extensions,
 system instructions, model/permission policy, repository-instruction injection,
 LSP/package-manager/process side effects, or filesystem access outside the exact
-requested view. If that hardened runtime is unavailable, the orchestrator uses
-exact direct inspection rather than falling back to ordinary developer OpenCode
-or ref-owned instructions.
+requested view.
 
 Package schema 3 closes the complementary cross-branch provenance boundary for
 all three ranges: exact task bases plus exact reviewed heads define package
@@ -427,20 +418,13 @@ package membership or a self-referential commit identity.
 
 - `web-orchestration-only/validate-package.mjs` enforces the exact five-Source
   Project inventory, capability-local permanent semantics, routed triggers,
-  unified prompt destinations/missions/evidence/craft, hardened Scout boundary,
-  recovery no-replay, template-maintenance provenance, human exact-SHA
-  promotion, bridge-envelope shapes, public safety, and new task-context schema.
-- `web-orchestration-only/validate-package.test.mjs` provides focused negative
-  fixtures for those architectural boundaries, the small/heavy contract,
-  claim-first blocker reasoning, the route-sensitive Workspace target-rule
-  contract, and the branch-owned push-CI contract.
-- `web-orchestration` push Actions run `31917651395` succeeded at exact source SHA
-  `3891a17bd62b8e4871310766f2a05175aa42cf87`; later procedure-source updates run
-  through the same canonical push validation path.
+  unified prompt destinations/missions/evidence/craft, recovery no-replay,
+  template-maintenance provenance, human exact-SHA promotion, public safety,
+  and new task-context schema.
 - `scripts/validate-template-development.mjs` validates ledger structure, source
-  snapshot shape, task/archive rules, forbidden source-tree absence, executable
-  bits, both Workspace route identities, the route-sensitive target-rule
-  authority contract, and committed change packages through the shared verifier.
+  snapshot shape, task rules, forbidden source-tree absence, executable bits,
+  both Workspace route identities, the route-sensitive target-rule authority
+  contract, and committed change packages through the shared verifier.
 - `tests/change-package.test.mjs` covers deterministic schema-3 three-range
   generation with a source snapshot intentionally independent from range bases,
   deceptive origin, wrong/non-ancestor bases, forged heads, later canonical

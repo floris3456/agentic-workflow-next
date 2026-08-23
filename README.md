@@ -14,48 +14,54 @@ Project package.
 - `docs/architecture/decisions/`: accepted architectural decisions and their
   consequences.
 - `docs/design/`: accepted maintenance design and branch responsibilities.
-- `docs/deviations.md`: material design-versus-reality differences.
-- `docs/work/current/` and `docs/work/archive/`: compaction-safe not-yet-finalized
-  and immutable finalized task records.
-- `changes/<task-id>/`: portable three-range manifests and patches produced after
-  exact-range review.
+- `docs/deviations.md`: material implemented-versus-normative reality differences.
+- `docs/work/current/` and `docs/work/archive/`: canonical task records, optional
+  separate concise task progress, and archived completed records.
+- `changes/<task-id>/`: portable three-range manifests and patches produced when
+  packaging is requested after exact-range review.
 - `scripts/`: deterministic package, application, synchronization, and
   validation tools.
-- `.opencode/agents/workspace-maintainer.md`, its dedicated skill, and the
-  repository-owned `workspace_*` plugin: the authoritative template-rooted
-  maintenance runtime for verified registered worktrees without
-  target-instruction takeover or host-path publication. Its adjacent package
-  manifest pins both OpenCode and the plugin helper API to 1.18.16 while installed
-  dependencies and lockfiles remain local generated state.
+- `.opencode/agents/workspace-maintainer.md`, `.opencode/agents/small-workspace-maintainer.md`,
+  their dedicated skill, and the repository-owned `workspace_*` plugin: the
+  authoritative template-rooted maintenance runtime for verified registered
+  worktrees without target-instruction takeover or host-path publication. Its
+  adjacent package manifest pins both OpenCode and the plugin helper API to
+  1.18.16 while installed dependencies and lockfiles remain local generated
+  state.
 
-Actual component truth stays with the code it describes. A bridge change updates
-the component AS-BUILT on `developer`; a Project-package change updates its
+Actual component truth stays with the code it describes. A developer change
+updates component records on `developer`; a web-orchestration change updates its
 records on `web-orchestration`. This ledger correlates those independent exact
 refs and the overall maintenance task without duplicating either tree.
 
 ## Normal maintenance flow
 
-1. Begin a task here and record exact source refs before changing source code.
-2. Work on the canonical template's real `developer` and/or `web-orchestration`
-   branches using the proportional source route, and maintain the rooted
-   maintenance runtime/package machinery here when they are in scope.
-3. Keep each source branch's normal records current and review its exact remote
-   range under the branch's existing rules.
-4. Create a portable change package from reviewed exact template-development,
-   developer, and web-orchestration ranges. The template-development range ends
-   before package storage so it cannot contain itself.
+1. Web orchestration leads task design, sets up the canonical task-record here,
+   and records exact source refs before source work.
+2. Source work executes on the canonical template's `developer` or
+   `web-orchestration` branches using the selected route: default substantive
+   Dual (`dual`) or bounded shortcuts (`small`/`heavy`). Maintenance
+   runtime/package machinery is maintained directly on `template-development`.
+3. Keep each branch's normal records current and review its exact remote range
+   under the branch's existing rules.
+4. When transfer or release packaging is requested, create a portable change
+   package from reviewed exact template-development, developer, and
+   web-orchestration ranges. The template-development range ends before package
+   storage so it cannot contain itself.
 5. Apply the package to the downstream project's corresponding branches as new,
    independently reviewed tasks.
 6. Advance any `main` only through that repository's ordinary exact-SHA human
    approval and guarded promotion.
-7. Reconcile this ledger and archive the exact approved maintenance task record.
+7. Reconcile this ledger's source snapshot at meaningful checkpoints. Task
+   completion is not blocked on ceremonial archival.
 
 Never merge this branch into `developer`, `web-orchestration`, or `main`.
 
 For an explicitly routed repository-wide maintenance operation, start
-`workspace-maintainer` with this worktree as the OpenCode directory. It discovers
-targets from Git and keeps target instructions as evidence; it does not turn a
-target into the OpenCode project or weaken human authority over `main`.
+`workspace-maintainer` or `small-workspace-maintainer` with this worktree as the
+OpenCode directory. It discovers targets from Git and keeps target instructions
+as evidence; it does not turn a target into the OpenCode project or weaken human
+authority over `main`.
 
 ## Generated projects
 

@@ -6,23 +6,32 @@ branch.
 
 ## Always-active boundaries
 
-- Work here only when the human explicitly identifies template maintenance.
-- Create the task record before source-branch implementation.
+- Template maintenance is led by web orchestration. Work here only when the
+  human explicitly identifies template maintenance.
+- Consequential work uses one canonical task-record for the accepted plan.
+  Resumable execution state may be recorded in an optional separate concise
+  task-progress file. Tiny one-turn work may skip a task-record.
+- Context uses zero compaction and no fallback compaction: retain the last
+  5,000 raw chat tokens plus normal instructions, and re-read durable repository
+  files (canonical task-record, optional task-progress, AS-BUILT, deviations,
+  actionable docs, exact Git state).
 - Keep every persisted value public-safe. Never store credentials, private chat,
   personal data, host-local absolute paths, or raw private agent identifiers.
 - Record exact remote refs; reports and task notes are navigation, not proof.
 - Do not copy source trees into this branch. Product, bridge, and Project-package
-  edits belong on their canonical source branches, using a bounded direct
-  connected-GitHub route when proportionality selects it or isolated source
-  checkouts when local execution is warranted. The explicitly
-  template-development-rooted Workspace Maintenance Agent/runtime and package
-  machinery are authoritative maintenance assets on this branch.
+  edits belong on their canonical source branches. The default substantive source
+  developer route is Dual (`dual`), with `small` and `heavy` as small bounded
+  shortcuts. The explicitly template-development-rooted Workspace Maintenance
+  Agent/runtime and package machinery are authoritative maintenance assets on
+  this branch.
 - Do not merge histories. Transfer reviewed content only through a deterministic
-  change package.
+  change package when packaging/transfer is requested. Task completion is not
+  blocked on ceremonial archival.
 - Keep one mutating template-maintenance task at a time. Read-only inspection may
   run concurrently.
-- Push every ledger commit immediately. A failed push stops ledger mutation until
-  synchronization recovery proves the failed commit is remote.
+- Push when remote durability, review, CI, transfer, or checkpoint evidence is
+  useful. Ambiguous mutation stops dependent mutation until local and remote Git
+  state are reconciled from evidence; never automatically replay.
 - Human exact-SHA approval remains required for every `main` promotion.
 - Do not launch subagents. The orchestrator selects any implementation route.
 
@@ -34,7 +43,8 @@ branch.
 - Workspace Maintenance uses only the public selectors `small` and `heavy`.
   `small` maps to `small-workspace-maintainer`; `heavy` maps to
   `workspace-maintainer`. The web orchestrator selects the route; neither agent
-  selects or recommends its own escalation.
+  selects or recommends its own escalation. Workspace Maintenance never substitutes
+  for Dual or Spark.
 - Both Workspace Maintenance agents are the explicit exception to the generic
   source route. Their OpenCode project remains the registered
   `template-development` worktree for the entire session. This root file, the

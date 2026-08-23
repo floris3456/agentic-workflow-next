@@ -1,11 +1,9 @@
 # Template-maintenance work records
 
-`current/` contains one public-safe, compaction-safe record per template task
-until that task is finalized. A successful maintainer handoff may report
-`completed` while its record remains in `current/`; that status means the working
-cycle completed successfully, not that archival has occurred. After exact
-source/application review and durable-record reconciliation, the exact approved
-blob moves unchanged to the same basename under `archive/`.
+`current/` contains canonical task records and optional separate concise task-progress files.
 
-These records concern development of the reusable template only. Downstream
-project work uses that project's normal task records.
+A task record is stable instruction authority: requested outcome, material scope, constraints, required work, expected checks, accepted design, and explicit exceptions. Resumable execution state (current position, attempts, checks run, blockers, next action) belongs in optional separate task-progress, not in the task record.
+
+Completed, cancelled, or superseded task records do not stay in `current/` merely because an archival ceremony has not happened. When archival is desired after review, the record is moved to `archive/`.
+
+These records concern development of the reusable template only. Downstream project work uses that project's normal task records.

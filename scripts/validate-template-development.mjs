@@ -177,11 +177,10 @@ if (existsSync(join(root, "docs/work/templates/maintainer-response-template.md")
   fail("Maintainer response template must contain exactly the six canonical fields");
 
 const headings = [
-  "Task ID", "Status", "Task-start template-development SHA",
-  "Review-base template-development SHA", "Public-safe task brief", "Current objective",
-  "Current position", "Source ranges", "Observed", "Interpretation", "Attempts",
-  "Changed approach", "Checks", "Blockers / required decisions", "Remaining work",
-  "Next action", "Relevant durable records", "Last handoff commit",
+  "Task ID", "Public-safe task brief",
+  "Current position", "Source ranges", "Material observations",
+  "Checks already run", "Blockers / required decisions", "Remaining work",
+  "Next action", "Relevant durable records",
 ];
 if (existsSync(join(root, "docs/work/templates/task-progress-template.md"))) {
   const template = read("docs/work/templates/task-progress-template.md");

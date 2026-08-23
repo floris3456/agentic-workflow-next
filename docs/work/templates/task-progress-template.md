@@ -1,12 +1,6 @@
-# Template-maintenance task progress
+# Task progress
 
 ## Task ID
-
-## Status
-
-## Task-start template-development SHA
-
-## Review-base template-development SHA
 
 ## Public-safe task brief
 
@@ -14,21 +8,13 @@ Summarize the requested outcome, scope, constraints, and material decisions.
 Never copy or quote private chat or persist secrets, personal data, host-local
 absolute paths, or raw private agent identifiers.
 
-## Current objective
-
 ## Current position
 
 ## Source ranges
 
-## Observed
+## Material observations
 
-## Interpretation
-
-## Attempts
-
-## Changed approach
-
-## Checks
+## Checks already run
 
 ## Blockers / required decisions
 
@@ -37,8 +23,3 @@ absolute paths, or raw private agent identifiers.
 ## Next action
 
 ## Relevant durable records
-
-## Last handoff commit
-
-Record the previous pushed ledger handoff SHA, or `None` before the first
-handoff. Do not amend a handoff snapshot merely to insert its own SHA.

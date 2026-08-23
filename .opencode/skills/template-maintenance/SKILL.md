@@ -1,6 +1,6 @@
 ---
 name: template-maintenance
-description: Coordinate a compaction-safe reusable-template task across exact source branches and portable downstream application.
+description: Coordinate a reusable-template task across exact source branches and portable downstream application.
 compatibility: template-development ledger branch
 ---
 
@@ -10,14 +10,16 @@ compatibility: template-development ledger branch
 
 1. Require the current branch to be `template-development`, a clean tracked tree,
    and local HEAD equal to `origin/template-development`.
-2. Read `source-lock.json`, the not-yet-finalized task record, AS-BUILT, design
-   record, and deviations before source work.
-3. For a new task, create
-   `docs/work/current/<task-id>-<slug>.md` from the task template first and record
-   a concise public-safe brief that preserves the requested outcome, scope,
-   constraints, and material decisions without quoting or reproducing private
-   chat, personal data, secrets, host-local absolute paths, or raw private agent
-   identifiers.
+2. Read `source-lock.json`, the canonical task record, optional task-progress
+   when present, AS-BUILT, design record, and deviations before source work.
+   Context uses zero compaction and no fallback compaction: retain the last 5,000
+   raw tokens and re-read durable repository files.
+3. For a consequential task, create `docs/work/current/<task-id>-<slug>.md`
+   from the canonical task-record structure and record a concise public-safe
+   brief that preserves the requested outcome, scope, constraints, and material
+   decisions without quoting or reproducing private chat, personal data, secrets,
+   host-local absolute paths, or raw private agent identifiers. Tiny one-turn
+   work may skip a task-record.
 4. Resolve exact live canonical source refs. Treat `source-lock.json` as the latest
    reconciled canonical source snapshot, not a task review base. Reconcile it only
    from independently verified exact remote refs; task records keep their own
@@ -26,10 +28,9 @@ compatibility: template-development ledger branch
 ## Source work
 
 - Keep product, bridge, and Project-package edits on the canonical repository's
-  real `developer` and `web-orchestration` branches. Use a bounded direct connected-GitHub route when
-  proportionality makes it the shortest safe remotely provable route; otherwise
-  use isolated source worktrees when local repository context/tools materially
-  help. Never materialize source trees in this ledger.
+  real `developer` and `web-orchestration` branches. Substantive developer work
+  uses the Dual developer route by default (`dual`), with `small` and `heavy` as
+  bounded shortcuts. Never materialize source trees in this ledger.
 - Maintain the template-development-rooted Workspace Maintenance Agent/runtime,
   package machinery, and their cross-branch records on `template-development`.
   Treat those files as this branch's intentional maintenance implementation, not
@@ -56,26 +57,29 @@ compatibility: template-development ledger branch
 
 ## Maintain the ledger
 
-Keep the not-yet-finalized task record useful after compaction: exact current
-position, direct observations, interpretations, attempts, changed approach,
-checks, blockers, remaining work, next action, source ranges, and relevant
-durable records. Do not store private reasoning or sensitive data.
+Keep the canonical task-record stable as instruction authority. When execution
+continuity needs resumable state, maintain separate concise task-progress:
+current position, direct observations, changed approach, checks run, blockers,
+remaining work, next action, source ranges, and relevant durable records. Do not
+store private reasoning, duplicated plans, or sensitive data.
 
 Keep `source-lock.json` current at meaningful maintenance checkpoints by writing
 only independently verified exact canonical `main`, `developer`, and
 `web-orchestration` refs. Package creation does not consume, freeze, or advance
 the source snapshot.
 
-Push every ledger commit immediately to `origin/template-development`. On a
-failed push, stop mutation and use the directed recovery script; never claim a
-local-only SHA as a handoff.
+Push when remote durability, review, CI, transfer, or checkpoint evidence is
+useful. On an ambiguous mutation or failed push, stop dependent mutation and
+reconcile local and remote state from evidence; never automatically replay.
 
 ## Package and apply
 
-After exact source-range review, use the tracked `scripts/create-change-package.mjs`
-generator with the reviewed template-development, developer, and web ranges. The
-reviewed template-development head must precede the commit that stores the new
-package; all paths beneath `changes/**` are ledger-only package storage and are
+Generate a package only when transfer, downstream application, or release
+packaging is requested. After exact source-range review, use the tracked
+`scripts/create-change-package.mjs` generator with the reviewed
+template-development, developer, and web ranges. The reviewed
+template-development head must precede the commit that stores the new package;
+all paths beneath `changes/**` are ledger-only package storage and are
 automatically excluded from `template-development.patch`. When superseding an
 earlier package, preserve the historical package unchanged, store the superseding
 package in a distinct revision directory (for example `changes/<task-id>.rev2/`),
@@ -111,9 +115,8 @@ remains authoritative.
 
 ## Handoff
 
-Bring AS-BUILT, deviations, source locks, and task progress current, then create
-and push a dedicated task-progress snapshot commit. Its successful push ends the
-working cycle. Return only:
+Bring AS-BUILT, deviations, source locks, and task progress current. Push the
+ledger when remote review or checkpoint evidence is needed. Return only:
 
 ```text
 Status:
@@ -126,8 +129,8 @@ Task record:
 
 `Status` is exactly `completed`, `blocked`, `failed`, or `needs decision`.
 `completed` requires the exact pushed ledger SHA; all other statuses use `none`.
-A `completed` handoff ends the working cycle but does not by itself finalize or
-archive the task record.
+A `completed` handoff ends the working cycle and is not blocked on ceremonial
+finalization or archival.
 
 A Workspace-routed source task uses the Workspace completion shape defined by
 `workspace-maintenance`; changing a target branch does not create a second
@@ -138,7 +141,7 @@ constraints.
 ## Finalization
 
 After source and downstream application review, reconcile durable records and
-move the exact approved task blob unchanged to the same basename under
-`docs/work/archive/`. This move is the transition from not-yet-finalized to
-finalized. Refuse an archive collision or blob mismatch. Commit and push
-finalization; never self-approve source work or promotion.
+move the approved task record to the same basename under `docs/work/archive/`
+when desired. Archival is non-blocking for task outcome. Refuse an archive
+collision or blob mismatch. Commit and push finalization; never self-approve
+source work or promotion.

@@ -8,45 +8,46 @@ operating workflow.
 
 ## Task sequence
 
-1. Record the public-safe task brief on `template-development`, read
-   `source-lock.json`, and independently establish exact live canonical refs.
-   The source lock is the latest reconciled canonical source snapshot, not a task
-   review-base lock.
+1. Web orchestration leads task design, records the public-safe task brief on
+   `template-development`, reads `source-lock.json`, and independently establishes
+   exact live canonical refs. The source lock is the latest reconciled canonical
+   source snapshot, not a task review-base lock.
 2. Inspect the downstream symptom and canonical template evidence.
 3. Decide whether the reusable fix belongs in the template-development-rooted
    maintenance runtime/package machinery, on `developer`, on
    `web-orchestration`, or across those authorities.
-4. Select each source branch's implementation route proportionally. For bounded
-   direct/delegated work executing under a source branch's own authoritative
-   context, follow that branch's normal task, durable-record, synchronization,
-   validation, and review procedure. For Workspace Maintenance, keep the stable
-   template-development-rooted Workspace authority instead of inheriting the
-   target agent workflow; inspect target rules as evidence and apply relevant
-   target compatibility/output constraints to the branch state being produced.
-   Applicable constraints include public safety, `main` authority,
-   synchronization, file placement/format, durable implementation truth, and
-   relevant validation. A target record may be maintained as an output artifact
-   without transferring target agent/task/handoff authority. If the task changes
-   a target rule itself, read the old rule to understand existing behavior and
-   impact, but do not let it veto its own authorized modification.
+4. Select each source branch's implementation route: default substantive Dual
+   (`dual`), or bounded shortcuts (`small`/`heavy`). For bounded direct/delegated
+   work executing under a source branch's own authoritative context, follow that
+   branch's normal task, durable-record, synchronization, validation, and review
+   procedure. For Workspace Maintenance, keep the stable template-development-rooted
+   Workspace authority instead of inheriting the target agent workflow; inspect
+   target rules as evidence and apply relevant target compatibility/output
+   constraints to the branch state being produced. Applicable constraints include
+   public safety, `main` authority, synchronization, file placement/format,
+   durable implementation truth, and relevant validation. A target record may be
+   maintained as an output artifact without transferring target agent/task/handoff
+   authority. If the task changes a target rule itself, read the old rule to
+   understand existing behavior and impact, but do not let it veto its own
+   authorized modification.
 5. Review the exact remote range for each changed branch. Record each task's exact
    base and reviewed head in the maintenance record independently of
    `source-lock.json` and independently of later branch work. A Workspace-routed
    task has one Workspace handoff; review the exact pushed target SHA rather than
    demanding a second target-agent handoff.
-6. Produce the portable package with the tracked
-   `scripts/create-change-package.mjs`. The supplied checkout origin must match
-   the canonical repository. The generator fetches current canonical
-   `template-development`, `developer`, and `web-orchestration` tips into a
-   sterile temporary object database. Each supplied base and reviewed head must
-   resolve exactly from fetched canonical objects; the base must be an ancestor
-   of the reviewed head, and the reviewed head must be an ancestor of (or equal
-   to) the current canonical tip. The template-development reviewed head must
-   precede the new package storage. All paths beneath `changes/**` are ledger-only
-   change-package storage and are never included in a generated portable
-   `template-development.patch`. The generator computes changed paths with
-   `--no-renames`, removes all `changes/**` paths, and generates the patch from
-   the remaining exact paths using literal pathspecs (`:(literal)<path>`).
+6. When transfer or release packaging is requested, produce the portable package
+   with the tracked `scripts/create-change-package.mjs`. The supplied checkout
+   origin must match the canonical repository. The generator fetches current
+   canonical `template-development`, `developer`, and `web-orchestration` tips
+   into a sterile temporary object database. Each supplied base and reviewed head
+   must resolve exactly from fetched canonical objects; the base must be an
+   ancestor of the reviewed head, and the reviewed head must be an ancestor of (or
+   equal to) the current canonical tip. The template-development reviewed head
+   must precede the new package storage. All paths beneath `changes/**` are
+   ledger-only change-package storage and are never included in a generated
+   portable `template-development.patch`. The generator computes changed paths
+   with `--no-renames`, removes all `changes/**` paths, and generates the patch
+   from the remaining exact paths using literal pathspecs (`:(literal)<path>`).
 7. If the maintainer execution surface cannot provide the generator's required
    canonical network access, create one strict
    `docs/work/package-requests/<task-id>.json` request instead of hand-building a
@@ -74,8 +75,7 @@ operating workflow.
 11. Reconcile `source-lock.json` directly from independently verified exact live
     canonical `main`, `developer`, and `web-orchestration` refs at meaningful
     maintenance checkpoints. Package creation neither consumes nor advances this
-    snapshot. Update integrated records and archive the approved maintenance task
-    when its actual finalization requirements are met.
+    snapshot. Task completion is not blocked on ceremonial archival.
 
 ## Package broker boundary
 
