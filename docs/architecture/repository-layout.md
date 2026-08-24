@@ -2,35 +2,21 @@
 
 ```text
 /
-├── AGENTS.md
-├── README.md
-├── CONTRIBUTING.md
-├── opencode.json
-├── .githooks/                     tracked local hooks
+├── AGENTS.md                     universal ambient repository rules
+├── opencode.json                 project-wide OpenCode configuration
 ├── .opencode/
-│   ├── agents/
+│   ├── agents/                   role-specific system instructions + frontmatter
+│   ├── skills/                   conditional developer procedures
+│   ├── tools/                    repository-local OpenCode tools
 │   └── package.json
-├── docs/
-│   ├── architecture/
-│   ├── work/
-│   └── ...
-├── scripts/
+├── docs/                         explanatory architecture, work records, AS-BUILT/deviations
+├── scripts/                      repository mechanics and validators
 ├── tests/
-├── tools/                         repository-owned utilities and generators
+├── tools/                        repository-owned utilities/generators
 ├── contracts/
-└── research/
+└── research/                     durable research evidence/artifact structure
 ```
 
-`web-orchestration` is a separate branch with independent content; it is not a root path in this tree.
+`web-orchestration` is a separate branch, not a directory in this worktree. Research production is owned by the web orchestrator; the `research/` tree here is an evidence/artifact location rather than a developer OpenCode workflow.
 
-### Placement rules
-
-- Implemented task truth and durable process references: `docs/work/`
-- Branch and acceptance contracts: `docs/architecture/`
-- Script-level mechanics: `scripts/`
-- Repository-owned utilities and generators: `tools/`
-- Active implementation agents: `.opencode/agents/{lead-developer,spark-implementer,small-developer,heavy-developer}.md`
-
-## Cleanup principle
-
-Active architecture should describe the current operative route model. Historical or archived notes may still contain legacy ceremony.
+Active local developer roles are `.opencode/agents/{lead-developer,spark-implementer,small-developer,heavy-developer}.md`. Conditional procedures are under `.opencode/skills/` and should not be duplicated into `AGENTS.md` or agent bodies unless a short trigger/default is role-critical.
