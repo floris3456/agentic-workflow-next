@@ -1,12 +1,11 @@
 {
   "schema_version": 1,
   "canonical_repository": "https://github.com/floris3456/agentic-workflow-next.git",
-  "recorded_at": "2026-08-23T03:35:53Z",
+  "recorded_at": "2026-08-24T00:54:22Z",
   "sources": {
     "main": "6127611113dfdb66f93a0cfd2d355359aa370833",
-    "developer": "0d4823e22d9f0eccb6a809d5ef0807942cecf19f",
-    "web-orchestration": "e12cea6092ea6bd66d5b1451e488d38e229bc47d"
+    "developer": "0dfed89077b042bab0ff9461011f933c10f3628a",
+    "web-orchestration": "d319eb5ebc9cf11bf7cfdd121bde3d49a24200ae"
   },
-  "last_reconciled_task": "TEMPLATE-DIRECT-HOST-ORCHESTRATION-001",
   "last_change_package": "changes/TEMPLATE-PACKAGE-SUPERSESSION-001.rev5/manifest.json"
 }

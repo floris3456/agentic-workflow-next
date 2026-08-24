@@ -1,76 +1,32 @@
 # Template-development ledger
 
-This independent branch records work on the reusable agentic workflow template
-and owns the template-development-rooted maintenance runtime. It deliberately
-contains no copy of project implementation, bridge source, or the ChatGPT
-Project package.
+This independent branch coordinates maintenance of the reusable agentic-workflow template and owns the template-development-rooted Workspace Maintenance/runtime and deterministic package machinery. It contains no copy of project implementation or web-orchestrator source and is never merged into the source branches.
 
-## What lives here
+## Runtime layout
 
-- `source-lock.json`: exact canonical `main`, `developer`, and
-  `web-orchestration` refs last reconciled with this ledger.
-- `docs/architecture/AS-BUILT.md`: the current cross-branch template-maintenance
-  system.
-- `docs/architecture/decisions/`: accepted architectural decisions and their
-  consequences.
-- `docs/design/`: accepted maintenance design and branch responsibilities.
-- `docs/deviations.md`: material implemented-versus-normative reality differences.
-- `docs/work/current/` and `docs/work/archive/`: canonical task records, optional
-  separate concise task progress, and archived completed records.
-- `changes/<task-id>/`: portable three-range manifests and patches produced when
-  packaging is requested after exact-range review.
-- `scripts/`: deterministic package, application, synchronization, and
-  validation tools.
-- `.opencode/agents/workspace-maintainer.md`, `.opencode/agents/small-workspace-maintainer.md`,
-  their dedicated skill, and the repository-owned `workspace_*` plugin: the
-  authoritative template-rooted maintenance runtime for verified registered
-  worktrees without target-instruction takeover or host-path publication. Its
-  adjacent package manifest pins both OpenCode and the plugin helper API to
-  1.18.16 while installed dependencies and lockfiles remain local generated
-  state.
+- `AGENTS.md`: tiny universal rules shared by every template-development OpenCode role.
+- `.opencode/agents/`: role-specific system instructions and mechanical permissions.
+- `.opencode/skills/template-maintenance/`: conditional procedure for the template coordinator.
+- `.opencode/skills/workspace-maintenance/`: conditional procedure for verified cross-worktree maintenance.
+- `.opencode/plugins/workspace-maintenance.ts` plus `scripts/workspace-maintenance-*.mjs`: guarded `workspace_*` tools.
+- `docs/architecture/AS-BUILT.md`: reconstructive current implementation truth.
 
-Actual component truth stays with the code it describes. A developer change
-updates component records on `developer`; a web-orchestration change updates its
-records on `web-orchestration`. This ledger correlates those independent exact
-refs and the overall maintenance task without duplicating either tree.
+## Ledger data
 
-## Normal maintenance flow
+- `source-lock.json`: latest reconciled exact canonical `main`, `developer`, and `web-orchestration` refs.
+- `docs/work/current/`: only genuinely live task records; optional concise progress is used when resumption needs it.
+- `docs/deviations.md`: material implemented-versus-expected differences.
+- `changes/`: immutable deterministic package revisions created only when transfer/release packaging is requested.
 
-1. Web orchestration leads task design, sets up the canonical task-record here,
-   and records exact source refs before source work.
-2. Source work executes on the canonical template's `developer` or
-   `web-orchestration` branches using the selected route: default substantive
-   Dual (`dual`) or bounded shortcuts (`small`/`heavy`). Maintenance
-   runtime/package machinery is maintained directly on `template-development`.
-3. Keep each branch's normal records current and review its exact remote range
-   under the branch's existing rules.
-4. When transfer or release packaging is requested, create a portable change
-   package from reviewed exact template-development, developer, and
-   web-orchestration ranges. The template-development range ends before package
-   storage so it cannot contain itself.
-5. Apply the package to the downstream project's corresponding branches as new,
-   independently reviewed tasks.
-6. Advance any `main` only through that repository's ordinary exact-SHA human
-   approval and guarded promotion.
-7. Reconcile this ledger's source snapshot at meaningful checkpoints. Task
-   completion is not blocked on ceremonial archival.
+Actual component truth stays with the source that owns it. Developer implementation and records stay on `developer`; web-orchestrator implementation stays on `web-orchestration`; this ledger correlates exact refs rather than duplicating either tree.
 
-Never merge this branch into `developer`, `web-orchestration`, or `main`.
+## Maintenance in practice
 
-For an explicitly routed repository-wide maintenance operation, start
-`workspace-maintainer` or `small-workspace-maintainer` with this worktree as the
-OpenCode directory. It discovers targets from Git and keeps target instructions
-as evidence; it does not turn a target into the OpenCode project or weaken human
-authority over `main`.
+Web owns task design and route selection. `template-maintainer` coordinates cross-branch maintenance. The small/heavy Workspace agents are separate bounded routes that remain rooted here while operating only through verified `workspace_*` tools; target instructions are evidence/output constraints, not transferred agent authority.
 
-## Generated projects
+Generate a package only for an explicit transfer/downstream/release need, using `scripts/create-change-package.mjs` over exact reviewed ranges. Apply packages with `scripts/apply-change-package.mjs`; downstream commit/push/review remains owned by that branch. Any `main` promotion still requires explicit human approval of the exact SHA.
 
-Create from the GitHub template with **Include all branches**. The generated
-ledger is then available alongside the project's three operational branches.
-Configure its `source-lock.json` with the canonical template URL and the exact
-template refs used by the project. GitHub template generation does not create an
-ongoing upstream relationship, so the recorded remote and refs are the durable
-link.
+For deeper explanation see `docs/design/template-maintenance-workflow.md`; for implemented reality and security boundaries see `docs/architecture/AS-BUILT.md`.
 
 ## Validate
 

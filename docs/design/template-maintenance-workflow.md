@@ -33,8 +33,8 @@ operating workflow.
 5. Review the exact remote range for each changed branch. Record each task's exact
    base and reviewed head in the maintenance record independently of
    `source-lock.json` and independently of later branch work. A Workspace-routed
-   task has one Workspace handoff; review the exact pushed target SHA rather than
-   demanding a second target-agent handoff.
+   task produces one Workspace result; review the exact pushed target SHA rather
+   than demanding a second target-agent ceremony.
 6. When transfer or release packaging is requested, produce the portable package
    with the tracked `scripts/create-change-package.mjs`. The supplied checkout
    origin must match the canonical repository. The generator fetches current

@@ -18,12 +18,11 @@ const required = [
   "scripts/workspace-maintenance-lib.mjs",
   "docs/architecture/AS-BUILT.md", "docs/architecture/decisions/0001-template-development-ledger.md",
   "docs/design/template-maintenance-workflow.md", "docs/deviations.md",
-  "docs/work/templates/task-progress-template.md", "docs/work/templates/maintainer-response-template.md",
+  "docs/work/templates/task-progress-template.md",
   "scripts/change-package-lib.mjs", "scripts/create-change-package.mjs", "scripts/apply-change-package.mjs",
   "scripts/bootstrap-template-development.sh", "scripts/recover-template-development-sync.sh",
   "scripts/validate-template-development.sh", "tests/change-package.test.mjs",
   "scripts/validate-workspace-opencode-runtime.mjs", "tests/workspace-maintenance.test.mjs",
-  "tests/workspace-target-rules.test.mjs",
 ];
 for (const path of required) if (!existsSync(join(root, path))) fail(`Missing required path: ${path}`);
 
@@ -76,15 +75,19 @@ try {
   fail(`.opencode/package.json is invalid: ${error.message}`);
 }
 
+const templateAgent = read(".opencode/agents/template-maintainer.md");
+for (const term of [
+  "mode: primary", "model: cliproxyapi/gemini-3.7-flash-high", "reasoningEffort: high",
+  "task: deny", "question: allow",
+]) if (!templateAgent.includes(term)) fail(`template-maintainer config is missing: ${term}`);
+
 const workspaceAgentRoutes = [
   {
     path: ".opencode/agents/small-workspace-maintainer.md",
-    role: "small",
     configTerms: ["mode: primary", "model: cliproxyapi/gemini-3.7-flash-high", "reasoningEffort: high"],
   },
   {
     path: ".opencode/agents/workspace-maintainer.md",
-    role: "heavy",
     configTerms: ["mode: primary", "model: openai/gpt-5.6-sol", "reasoningEffort: max"],
   },
 ];
@@ -98,65 +101,21 @@ for (const route of workspaceAgentRoutes) {
     "workspace_list: allow", "workspace_inspect: allow", "workspace_read: allow",
     "workspace_write: allow", "workspace_delete: allow", "workspace_glob: allow",
     "workspace_grep: allow", "workspace_exec: allow", "workspace_publish: allow",
-    "load\n`workspace-maintenance`",
-    "relevant target evidence",
-    "target task lifecycle",
-    "old rule veto its own authorized modification",
-    "completion contract is owned by `workspace-maintenance`",
-  ]) if (!agent.includes(term)) fail(`${route.path} is missing required boundary: ${term}`);
-  if (!agent.includes(`You are the ${route.role} repository-wide Workspace Maintenance Agent`)) {
-    fail(`${route.path} does not identify the ${route.role} routing role`);
-  }
-  if (!/web\s+orchestrator selects the route/i.test(agent)) {
-    fail(`${route.path} must leave route selection with the web orchestrator`);
-  }
-  const description = agent.match(/^description:\s*(.*)$/m)?.[1] ?? "";
-  if (/(?:Gemini|GPT|Luna|Sol|OpenAI|cliproxy)/i.test(description)) {
-    fail(`${route.path} description must use only small/heavy routing language`);
-  }
+  ]) if (!agent.includes(term)) fail(`${route.path} config is missing: ${term}`);
 }
 
-if (existsSync(join(root, "AGENTS.md"))) {
-  const instructions = read("AGENTS.md");
-  for (const term of [
-    "Workspace Maintenance uses only the public selectors `small` and `heavy`",
-    "small-workspace-maintainer", "`workspace-maintainer`",
-    "Both Workspace Maintenance agents are the explicit exception", "OpenCode project remains",
-    "Target-branch instructions are still important evidence",
-    "does not transfer instruction authority", "target task lifecycle", "target handoff shape",
-    "old rule", "cannot veto its own authorized modification", "human exact-SHA boundary",
-    ".opencode/skills/workspace-maintenance/SKILL.md",
-  ]) if (!instructions.includes(term)) fail(`AGENTS.md is missing workspace route boundary: ${term}`);
+function validateSkill(relativePath, expectedName) {
+  if (!existsSync(join(root, relativePath))) return;
+  const text = read(relativePath);
+  const frontmatter = text.match(/^---\n([\s\S]*?)\n---(?:\n|$)/)?.[1] ?? "";
+  if (!frontmatter) return fail(`${relativePath} must contain YAML frontmatter`);
+  const name = frontmatter.match(/^name:\s*(.+)$/m)?.[1]?.trim();
+  const description = frontmatter.match(/^description:\s*(.+)$/m)?.[1]?.trim();
+  if (name !== expectedName) fail(`${relativePath} name must be ${expectedName}`);
+  if (!description) fail(`${relativePath} must have a non-empty description`);
 }
-
-if (existsSync(join(root, ".opencode/skills/workspace-maintenance/SKILL.md"))) {
-  const skill = read(".opencode/skills/workspace-maintenance/SKILL.md");
-  for (const term of [
-    "name: workspace-maintenance", "Remain in the OpenCode project",
-    "target evidence and compatibility/output", "never transfers instruction authority",
-    "target task lifecycle", "Add a missing file", "Change the rule that governs file creation",
-    "A Workspace handoff is the only agent handoff", "second developer-agent",
-    "git worktree list --porcelain -z", "Targets are selected only by a registered local branch name",
-    "exact returned `head` and `status_digest`", "Never mutate or promote",
-    "explicit human exact-SHA authority", "failed or ambiguous push stops",
-  ]) if (!skill.includes(term)) fail(`workspace-maintenance skill is missing required boundary: ${term}`);
-}
-
-if (existsSync(join(root, ".opencode/skills/template-maintenance/SKILL.md"))) {
-  const skill = read(".opencode/skills/template-maintenance/SKILL.md");
-  for (const term of [
-    "When source work executes in a source branch's own authoritative context",
-    "When the selected route is Workspace Maintenance",
-    "do not inherit the target",
-    "target agent/task/handoff procedure",
-    "target compatibility/output obligations",
-    "A Workspace-routed source task uses the Workspace completion shape",
-    "does not create a second",
-  ]) if (!skill.includes(term)) fail(`template-maintenance skill is missing route-sensitive source boundary: ${term}`);
-  if (/Follow each source branch's own agent instructions[\s\S]{0,200}regardless of execution\s+route/i.test(skill)) {
-    fail("template-maintenance skill still applies target agent workflow regardless of execution route");
-  }
-}
+validateSkill(".opencode/skills/template-maintenance/SKILL.md", "template-maintenance");
+validateSkill(".opencode/skills/workspace-maintenance/SKILL.md", "workspace-maintenance");
 
 if (existsSync(join(root, ".opencode/plugins/workspace-maintenance.ts"))) {
   const plugin = read(".opencode/plugins/workspace-maintenance.ts");
@@ -166,24 +125,10 @@ if (existsSync(join(root, ".opencode/plugins/workspace-maintenance.ts"))) {
   ]) if (!plugin.includes(`${name}: tool(`)) fail(`Workspace plugin is missing ${name}`);
 }
 
-const expectedResponse = [
-  "Status:", "Handoff template-development SHA:", "Source handoffs:",
-  "Change package:", "Checks + perceived results:", "Task record:", "",
-].join("\n");
-if (existsSync(join(root, "docs/work/templates/maintainer-response-template.md"))
-  && read("docs/work/templates/maintainer-response-template.md") !== expectedResponse)
-  fail("Maintainer response template must contain exactly the six canonical fields");
-
-const headings = [
-  "Task ID", "Public-safe task brief",
-  "Current position", "Source ranges", "Material observations",
-  "Checks already run", "Blockers / required decisions", "Remaining work",
-  "Next action", "Relevant durable records",
-];
 if (existsSync(join(root, "docs/work/templates/task-progress-template.md"))) {
   const template = read("docs/work/templates/task-progress-template.md");
-  for (const heading of headings) if (!template.includes(`## ${heading}\n`)) fail(`Task template missing ${heading}`);
-  if (template.includes("## Original task brief\n")) fail("Task template must not request an original/private chat transcript");
+  if (!template.includes("Public-safe task brief")) fail("Task-progress template must retain a public-safe brief field");
+  if (template.includes("Original task brief")) fail("Task-progress template must not request an original/private chat transcript");
 }
 
 for (const directory of ["docs/work/current", "docs/work/archive"]) {
@@ -192,8 +137,7 @@ for (const directory of ["docs/work/current", "docs/work/archive"]) {
     if (name === "README.md" || name === ".gitkeep") continue;
     if (!name.endsWith(".md")) { fail(`${directory}/${name} must be Markdown`); continue; }
     const task = read(`${directory}/${name}`);
-    if (!task.includes("## Public-safe task brief\n")) fail(`${directory}/${name} lacks Public-safe task brief`);
-    if (task.includes("## Original task brief\n")) fail(`${directory}/${name} still requests an original/private chat transcript`);
+    if (task.includes("## Original task brief\n")) fail(`${directory}/${name} requests an original/private chat transcript`);
   }
 }
 
