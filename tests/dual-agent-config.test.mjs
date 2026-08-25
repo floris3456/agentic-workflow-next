@@ -84,7 +84,7 @@ test("Dual permissions preserve lead review and Spark-only implementation bounda
 test("bounded primary routes are present and cannot delegate", () => {
   for (const [agentName, model] of [
     ["small-developer", "cliproxyapi/gemini-3.7-flash-high"],
-    ["heavy-developer", "cliproxyapi/claude-opus-5#high"],
+    ["heavy-developer", "openai/gpt-5.6-sol"],
   ]) {
     const agent = frontmatter(`.opencode/agents/${agentName}.md`);
     assert.equal(agent.mode, "primary");

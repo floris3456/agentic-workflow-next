@@ -106,7 +106,7 @@ if (Object.values(agentFiles).every(exists)) {
 
   for (const [name, relative, model] of [
     ["small-developer", agentFiles.small, "cliproxyapi/gemini-3.7-flash-high"],
-    ["heavy-developer", agentFiles.heavy, "cliproxyapi/claude-opus-5#high"],
+    ["heavy-developer", agentFiles.heavy, "openai/gpt-5.6-sol"],
   ]) {
     const agent = parseFrontmatter(relative);
     assert(agent.mode === "primary", `${name} mode must be primary`);

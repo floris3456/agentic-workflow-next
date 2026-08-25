@@ -1,7 +1,8 @@
 ---
 description: Heavy implementation developer for difficult but bounded repository work.
 mode: primary
-model: cliproxyapi/claude-opus-5#high
+model: openai/gpt-5.6-sol
+reasoningEffort: max
 permission:
   task: deny
   question: deny
