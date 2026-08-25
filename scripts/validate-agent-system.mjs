@@ -85,7 +85,7 @@ for (const relative of Object.values(agentFiles)) assert(exists(relative), `Miss
 if (Object.values(agentFiles).every(exists)) {
   const lead = parseFrontmatter(agentFiles.lead);
   assert(lead.mode === "primary", "lead-developer mode must be primary");
-  assert(lead.model === "openai/gpt-5.6-sol", "lead-developer model must match AS-BUILT");
+  assert(lead.model === "cliproxyapi/claude-opus-5#max", "lead-developer model must match AS-BUILT");
   assert(lead.permission?.edit === "deny", "lead-developer edit permission must be deny");
   assertExactMap(lead.permission?.task, { "*": "deny", "spark-implementer": "allow" }, "lead-developer task permission");
   assertExactMap(lead.permission?.bash, {
@@ -106,7 +106,7 @@ if (Object.values(agentFiles).every(exists)) {
 
   for (const [name, relative, model] of [
     ["small-developer", agentFiles.small, "cliproxyapi/gemini-3.7-flash-high"],
-    ["heavy-developer", agentFiles.heavy, "openai/gpt-5.6-sol"],
+    ["heavy-developer", agentFiles.heavy, "cliproxyapi/claude-opus-5#high"],
   ]) {
     const agent = parseFrontmatter(relative);
     assert(agent.mode === "primary", `${name} mode must be primary`);

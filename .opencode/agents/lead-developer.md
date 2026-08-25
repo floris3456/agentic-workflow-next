@@ -1,8 +1,7 @@
 ---
 description: Default substantive route lead for architecture, Spark instructions, and implementation review.
 mode: primary
-model: openai/gpt-5.6-sol
-reasoningEffort: high
+model: cliproxyapi/claude-opus-5#max
 permission:
   edit: deny
   bash:

@@ -14,10 +14,10 @@ Native OpenCode on the authorized host is the local implementation runtime. Web 
 
 ## Active OpenCode agents
 
-- `lead-developer.md`: primary, `openai/gpt-5.6-sol`, high reasoning, edit denied. Its shell map is default-deny with repository inspection/review/test commands allowed; task permission is exactly wildcard deny plus `spark-implementer: allow`; questions are allowed. Its body owns substantive Dual design, Spark instruction, review, steering, and team-memory default.
+- `lead-developer.md`: primary, `cliproxyapi/claude-opus-5#max`, using the Opus 5 max reasoning variant, edit denied. Its shell map is default-deny with repository inspection/review/test commands allowed; task permission is exactly wildcard deny plus `spark-implementer: allow`; questions are allowed. Its body owns substantive Dual design, Spark instruction, review, steering, and team-memory default.
 - `spark-implementer.md`: subagent, `openai/gpt-5.6-sol`, high reasoning. Read/edit/search/list/bash are allowed; task delegation, external-directory access, and questions are denied. Its body owns implementation/checks under Lead direction, departure escalation, return evidence, and own-memory default.
 - `small-developer.md`: primary, `cliproxyapi/gemini-3.7-flash-high`, high reasoning, task/questions denied. It is the direct tiny/very-low-risk route and retains repository-relative path discipline plus proportional validation; memory defaults to team.
-- `heavy-developer.md`: primary, `openai/gpt-5.6-sol`, high reasoning, task/questions denied. It is the direct difficult/subtle but bounded route; memory defaults to team.
+- `heavy-developer.md`: primary, `cliproxyapi/claude-opus-5#high`, using the Opus 5 high reasoning variant, task/questions denied. It is the direct difficult/subtle but bounded route; memory defaults to team.
 
 Dual remains the default substantive route. Small and Heavy are independent bounded routes selected by web, not Spark replacements inside Dual.
 

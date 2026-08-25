@@ -46,7 +46,7 @@ function frontmatter(relative) {
 test("Dual permissions preserve lead review and Spark-only implementation boundaries", () => {
   const lead = frontmatter(".opencode/agents/lead-developer.md");
   assert.equal(lead.mode, "primary");
-  assert.equal(lead.model, "openai/gpt-5.6-sol");
+  assert.equal(lead.model, "cliproxyapi/claude-opus-5#max");
   assert.equal(lead.permission.edit, "deny");
   assert.deepEqual(lead.permission.task, { "*": "deny", "spark-implementer": "allow" });
   assert.deepEqual(lead.permission.bash, {
@@ -84,7 +84,7 @@ test("Dual permissions preserve lead review and Spark-only implementation bounda
 test("bounded primary routes are present and cannot delegate", () => {
   for (const [agentName, model] of [
     ["small-developer", "cliproxyapi/gemini-3.7-flash-high"],
-    ["heavy-developer", "openai/gpt-5.6-sol"],
+    ["heavy-developer", "cliproxyapi/claude-opus-5#high"],
   ]) {
     const agent = frontmatter(`.opencode/agents/${agentName}.md`);
     assert.equal(agent.mode, "primary");
