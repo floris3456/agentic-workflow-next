@@ -1,32 +1,35 @@
 # Template-development ledger
 
-This independent branch coordinates maintenance of the reusable agentic-workflow template and owns the template-development-rooted Workspace Maintenance/runtime and deterministic package machinery. It contains no copy of project implementation or web-orchestrator source and is never merged into the source branches.
+This independent branch owns the reusable template's maintenance runtime, cross-branch source snapshot, and deterministic change-package machinery. It contains no copy of developer or orchestrator source and is never merged into those source branches.
 
 ## Runtime layout
 
-- `AGENTS.md`: tiny universal rules shared by every template-development OpenCode role.
-- `.opencode/agents/`: role-specific system instructions and mechanical permissions.
-- `.opencode/skills/template-maintenance/`: conditional procedure for the template coordinator.
-- `.opencode/skills/workspace-maintenance/`: conditional procedure for verified cross-worktree maintenance.
-- `.opencode/plugins/workspace-maintenance.ts` plus `scripts/workspace-maintenance-*.mjs`: guarded `workspace_*` tools.
+- `AGENTS.md`: universal repository authority and safety rules.
+- `.opencode/agents/small-maintainer.md`: small capacity for easy, bounded maintenance.
+- `.opencode/agents/heavy-maintainer.md`: heavy capacity for difficult, subtle, important, or risky bounded maintenance.
+- `.opencode/skills/maintenance/`: the shared maintenance contract for an explicit verified target.
+- `.opencode/skills/change-package/`: package and source-lock procedure loaded only when that rare work is required.
+- `.opencode/plugins/workspace-maintenance.ts` plus `scripts/workspace-maintenance-*.mjs`: guarded target inspection, mutation, checks, and non-`main` publication.
 - `docs/architecture/AS-BUILT.md`: reconstructive current implementation truth.
+
+Small and heavy are the same role at different model capacity. Both remain rooted in `template-development` and operate on `template-development` itself or another authorized registered worktree through the same `workspace_*` boundary. The explicit target and bounded task define where authority applies; target instruction files are evidence and output constraints, not a second workflow.
 
 ## Ledger data
 
 - `source-lock.json`: latest reconciled exact canonical `main`, `developer`, and `web-orchestration` refs.
-- `docs/work/current/`: only genuinely live task records; optional concise progress is used when resumption needs it.
-- `docs/deviations.md`: material implemented-versus-expected differences.
-- `changes/`: immutable deterministic package revisions created only when transfer/release packaging is requested.
+- `docs/work/current/`: genuinely live accepted task records or unresolved human decisions.
+- `docs/deviations.md`: material final divergence from applicable accepted expectations.
+- `changes/`: immutable deterministic package revisions created only for explicit transfer or release needs.
 
-Actual component truth stays with the source that owns it. Developer implementation and records stay on `developer`; web-orchestrator implementation stays on `web-orchestration`; this ledger correlates exact refs rather than duplicating either tree.
+Actual component implementation truth stays on the branch that owns it. This ledger correlates exact refs rather than duplicating source trees.
 
 ## Maintenance in practice
 
-Web owns task design and route selection. `template-maintainer` coordinates cross-branch maintenance. The small/heavy Workspace agents are separate bounded routes that remain rooted here while operating only through verified `workspace_*` tools; target instructions are evidence/output constraints, not transferred agent authority.
+Choose small for easy bounded work and heavy for difficult, subtle, important, or risky bounded work. Give the selected agent an explicit verified target and outcome. The agent establishes exact state, edits directly, iterates on ordinary failures, runs proportional checks, maintains applicable durable truth, and returns concise observable evidence.
 
-Generate a package only for an explicit transfer/downstream/release need, using `scripts/create-change-package.mjs` over exact reviewed ranges. Apply packages with `scripts/apply-change-package.mjs`; downstream commit/push/review remains owned by that branch. Any `main` promotion still requires explicit human approval of the exact SHA.
+`main` is inspection-only for maintenance. Any `main` promotion remains a separate human-authorized exact-SHA operation.
 
-For deeper explanation see `docs/design/template-maintenance-workflow.md`; for implemented reality and security boundaries see `docs/architecture/AS-BUILT.md`.
+Generate or apply a package only for an explicit downstream transfer or release need by loading `change-package` and using the tracked scripts. For the rationale behind the role/target split see `docs/design/maintenance-routing.md`; for the complete implementation and security boundaries see `docs/architecture/AS-BUILT.md`.
 
 ## Validate
 

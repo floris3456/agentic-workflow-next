@@ -12,19 +12,6 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const expectedVersion = "1.18.16";
 const executable = resolve(process.env.OPENCODE_1_18_16_BIN
   ?? join(root, ".opencode", "node_modules", ".bin", "opencode"));
-const allowedTools = new Set([
-  "question",
-  "skill",
-  "workspace_list",
-  "workspace_inspect",
-  "workspace_read",
-  "workspace_write",
-  "workspace_delete",
-  "workspace_glob",
-  "workspace_grep",
-  "workspace_exec",
-  "workspace_publish",
-]);
 
 function wildcard(pattern, value) {
   const expression = pattern.replace(/[.+^${}()|[\]\\]/g, "\\$&").replaceAll("*", ".*");
@@ -131,13 +118,19 @@ try {
     json(base, "/skill", true),
     json(base, "/experimental/tool/ids", true),
   ]);
-  const agent = agents.find((candidate) => candidate.name === "workspace-maintainer");
-  assert(agent, "workspace-maintainer was not discovered from template-development");
-  assert.equal(agent.mode, "primary");
-  assert.deepEqual(agent.model, { providerID: "openai", modelID: "gpt-5.6-sol" });
-  assert.equal(agent.options?.reasoningEffort, "max");
-  assert(Array.isArray(agent.permission), "workspace-maintainer permission inventory is missing");
 
+  const routeSpecs = [
+    {
+      name: "small-maintainer",
+      model: { providerID: "cliproxyapi", modelID: "gemini-3.7-flash-high" },
+      reasoningEffort: "high",
+    },
+    {
+      name: "heavy-maintainer",
+      model: { providerID: "openai", modelID: "gpt-5.6-sol" },
+      reasoningEffort: "max",
+    },
+  ];
   const toolPermissions = {
     question: "allow",
     workspace_list: "allow",
@@ -150,24 +143,47 @@ try {
     workspace_exec: "allow",
     workspace_publish: "allow",
   };
+  const allowedSkills = new Set(["maintenance", "change-package"]);
 
-  for (const tool of toolIds) {
-    if (tool === "skill") continue;
-    const expected = toolPermissions[tool] ?? "deny";
-    assert.equal(permissionAction(agent.permission, tool), expected, `${tool} must resolve to ${expected}`);
+  for (const spec of routeSpecs) {
+    const agent = agents.find((candidate) => candidate.name === spec.name);
+    assert(agent, `${spec.name} was not discovered from template-development`);
+    assert.equal(agent.mode, "primary");
+    assert.deepEqual(agent.model, spec.model);
+    assert.equal(agent.options?.reasoningEffort, spec.reasoningEffort);
+    assert(Array.isArray(agent.permission), `${spec.name} permission inventory is missing`);
+
+    for (const tool of toolIds) {
+      if (tool === "skill") continue;
+      const expected = toolPermissions[tool] ?? "deny";
+      assert.equal(permissionAction(agent.permission, tool), expected, `${spec.name}: ${tool} must resolve to ${expected}`);
+    }
+    for (const required of Object.keys(toolPermissions)) {
+      assert(toolIds.includes(required), `${required} was not loaded by the real runtime`);
+    }
+    for (const skill of skills) {
+      const expected = allowedSkills.has(skill.name) ? "allow" : "deny";
+      assert.equal(
+        permissionAction(agent.permission, "skill", skill.name),
+        expected,
+        `${spec.name}: ${skill.name} skill permission is incorrect`,
+      );
+    }
   }
-  for (const required of Object.keys(toolPermissions)) assert(toolIds.includes(required), `${required} was not loaded by the real runtime`);
-  for (const skill of skills) {
-    assert.equal(
-      permissionAction(agent.permission, "skill", skill.name),
-      skill.name === "workspace-maintenance" ? "allow" : "deny",
-      `${skill.name} skill permission is incorrect`,
-    );
+
+  for (const [name, path] of [
+    ["maintenance", join(root, ".opencode", "skills", "maintenance", "SKILL.md")],
+    ["change-package", join(root, ".opencode", "skills", "change-package", "SKILL.md")],
+  ]) {
+    const skill = skills.find((candidate) => candidate.name === name);
+    assert(skill, `${name} skill was not discovered`);
+    assert.equal(resolve(skill.location), path);
   }
-  const workspaceSkill = skills.find((skill) => skill.name === "workspace-maintenance");
-  assert(workspaceSkill, "workspace-maintenance skill was not discovered");
-  assert.equal(resolve(workspaceSkill.location), join(root, ".opencode", "skills", "workspace-maintenance", "SKILL.md"));
-  console.log(`Pinned OpenCode ${expectedVersion} workspace agent, plugin, tool, and skill inventory passed.`);
+  for (const obsolete of ["template-maintainer", "small-workspace-maintainer", "workspace-maintainer"]) {
+    assert(!agents.some((candidate) => candidate.name === obsolete), `${obsolete} must not remain registered`);
+  }
+
+  console.log(`Pinned OpenCode ${expectedVersion} unified maintenance agent, skill, tool, and permission inventory passed.`);
 } finally {
   if (child) await stop(child);
   await rm(temporary, { recursive: true, force: true });
