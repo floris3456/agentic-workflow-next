@@ -2,39 +2,29 @@
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { validatePackageSupersessionChain, validateSourceLock } from "./change-package-lib.mjs";
+import { validateChangePackage, validatePackageSupersessionChain, validateSourceLock } from "./change-package-lib.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const failures = [];
 const fail = (message) => failures.push(message);
 const read = (path) => readFileSync(join(root, path), "utf8");
-
 const required = [
   "README.md", "AGENTS.md", "source-lock.json", "opencode.json",
   ".github/workflows/validate-template-development.yml",
-  ".opencode/agents/small-maintainer.md", ".opencode/agents/heavy-maintainer.md",
-  ".opencode/skills/maintenance/SKILL.md", ".opencode/skills/change-package/SKILL.md",
+  ".opencode/agents/template-maintainer.md", ".opencode/skills/template-maintenance/SKILL.md",
+  ".opencode/agents/small-workspace-maintainer.md", ".opencode/agents/workspace-maintainer.md",
+  ".opencode/skills/workspace-maintenance/SKILL.md",
   ".opencode/plugins/workspace-maintenance.ts", ".opencode/.gitignore", ".opencode/package.json",
   "scripts/workspace-maintenance-lib.mjs",
   "docs/architecture/AS-BUILT.md", "docs/architecture/decisions/0001-template-development-ledger.md",
-  "docs/design/maintenance-routing.md", "docs/deviations.md",
+  "docs/design/template-maintenance-workflow.md", "docs/deviations.md",
   "docs/work/templates/task-progress-template.md",
   "scripts/change-package-lib.mjs", "scripts/create-change-package.mjs", "scripts/apply-change-package.mjs",
   "scripts/bootstrap-template-development.sh", "scripts/recover-template-development-sync.sh",
   "scripts/validate-template-development.sh", "tests/change-package.test.mjs",
-  "scripts/validate-maintenance-opencode-runtime.mjs", "tests/workspace-maintenance.test.mjs",
+  "scripts/validate-workspace-opencode-runtime.mjs", "tests/workspace-maintenance.test.mjs",
 ];
 for (const path of required) if (!existsSync(join(root, path))) fail(`Missing required path: ${path}`);
-
-for (const path of [
-  ".opencode/agents/template-maintainer.md",
-  ".opencode/agents/small-workspace-maintainer.md",
-  ".opencode/agents/workspace-maintainer.md",
-  ".opencode/skills/template-maintenance",
-  ".opencode/skills/workspace-maintenance",
-  "docs/design/template-maintenance-workflow.md",
-  "scripts/validate-workspace-opencode-runtime.mjs",
-]) if (existsSync(join(root, path))) fail(`Obsolete split-maintenance path remains: ${path}`);
 
 const allowedTopLevel = new Set([
   ".gitattributes", ".githooks", ".github", ".gitignore", ".opencode",
@@ -47,18 +37,6 @@ for (const entry of readdirSync(root, { withFileTypes: true })) {
 }
 for (const forbidden of ["web-orchestration-only", "contracts", "src", "tools", "research", "evidence", "raw-evidence"])
   if (existsSync(join(root, forbidden))) fail(`Source implementation must not be materialized here: ${forbidden}`);
-
-if (existsSync(join(root, ".opencode/agents"))) {
-  const agents = readdirSync(join(root, ".opencode/agents")).filter((name) => name.endsWith(".md")).sort();
-  const expected = ["heavy-maintainer.md", "small-maintainer.md"];
-  if (JSON.stringify(agents) !== JSON.stringify(expected)) fail(`Maintenance agent inventory must be exactly: ${expected.join(", ")}`);
-}
-if (existsSync(join(root, ".opencode/skills"))) {
-  const skills = readdirSync(join(root, ".opencode/skills"), { withFileTypes: true })
-    .filter((entry) => entry.isDirectory()).map((entry) => entry.name).sort();
-  const expected = ["change-package", "maintenance"];
-  if (JSON.stringify(skills) !== JSON.stringify(expected)) fail(`Maintenance skill inventory must be exactly: ${expected.join(", ")}`);
-}
 
 try {
   validateSourceLock(JSON.parse(read("source-lock.json")));
@@ -78,7 +56,7 @@ if (existsSync(join(root, ".github/workflows/validate-template-development.yml")
 
 try {
   const config = JSON.parse(read("opencode.json"));
-  if (config.default_agent !== "small-maintainer") fail("small-maintainer must remain the default maintenance capacity");
+  if (config.default_agent !== "template-maintainer") fail("template-maintainer must remain the default agent");
   if (config.permission?.task !== "deny") fail("Template OpenCode must deny task/subagent launches");
   if (config.permission?.external_directory === "allow") fail("Template OpenCode must not broadly allow external directories");
 } catch (error) {
@@ -97,47 +75,47 @@ try {
   fail(`.opencode/package.json is invalid: ${error.message}`);
 }
 
-function frontmatter(path) {
-  if (!existsSync(join(root, path))) return "";
-  const match = read(path).match(/^---\n([\s\S]*?)\n---(?:\n|$)/);
-  if (!match) fail(`${path} must contain YAML frontmatter`);
-  return match?.[1] ?? "";
-}
+const templateAgent = read(".opencode/agents/template-maintainer.md");
+for (const term of [
+  "mode: primary", "model: cliproxyapi/gemini-3.7-flash-high", "reasoningEffort: high",
+  "task: deny", "question: allow",
+]) if (!templateAgent.includes(term)) fail(`template-maintainer config is missing: ${term}`);
 
-const sharedAgentTerms = [
-  "mode: primary", '"*": deny', "task: deny", "bash: deny", "edit: deny",
-  "question: allow", "external_directory: deny",
-  "skill:\n    \"*\": deny\n    maintenance: allow\n    change-package: allow",
-  "workspace_list: allow", "workspace_inspect: allow", "workspace_read: allow",
-  "workspace_write: allow", "workspace_delete: allow", "workspace_glob: allow",
-  "workspace_grep: allow", "workspace_exec: allow", "workspace_publish: allow",
+const workspaceAgentRoutes = [
+  {
+    path: ".opencode/agents/small-workspace-maintainer.md",
+    configTerms: ["mode: primary", "model: cliproxyapi/gemini-3.7-flash-high", "reasoningEffort: high"],
+  },
+  {
+    path: ".opencode/agents/workspace-maintainer.md",
+    configTerms: ["mode: primary", "model: openai/gpt-5.6-sol", "reasoningEffort: max"],
+  },
 ];
-for (const route of [
-  {
-    path: ".opencode/agents/small-maintainer.md",
-    terms: ["model: cliproxyapi/gemini-3.7-flash-high", "reasoningEffort: high"],
-  },
-  {
-    path: ".opencode/agents/heavy-maintainer.md",
-    terms: ["model: openai/gpt-5.6-sol", "reasoningEffort: max"],
-  },
-]) {
-  const config = frontmatter(route.path);
-  for (const term of [...sharedAgentTerms, ...route.terms]) {
-    if (!config.includes(term)) fail(`${route.path} frontmatter is missing: ${term}`);
-  }
+for (const route of workspaceAgentRoutes) {
+  if (!existsSync(join(root, route.path))) continue;
+  const agent = read(route.path);
+  for (const term of [
+    ...route.configTerms,
+    '"*": deny', "task: deny", "bash: deny", "edit: deny", "question: allow", "external_directory: deny",
+    "skill:\n    \"*\": deny\n    workspace-maintenance: allow",
+    "workspace_list: allow", "workspace_inspect: allow", "workspace_read: allow",
+    "workspace_write: allow", "workspace_delete: allow", "workspace_glob: allow",
+    "workspace_grep: allow", "workspace_exec: allow", "workspace_publish: allow",
+  ]) if (!agent.includes(term)) fail(`${route.path} config is missing: ${term}`);
 }
 
 function validateSkill(relativePath, expectedName) {
-  const config = frontmatter(relativePath);
-  if (!config) return;
-  const name = config.match(/^name:\s*(.+)$/m)?.[1]?.trim();
-  const description = config.match(/^description:\s*(.+)$/m)?.[1]?.trim();
+  if (!existsSync(join(root, relativePath))) return;
+  const text = read(relativePath);
+  const frontmatter = text.match(/^---\n([\s\S]*?)\n---(?:\n|$)/)?.[1] ?? "";
+  if (!frontmatter) return fail(`${relativePath} must contain YAML frontmatter`);
+  const name = frontmatter.match(/^name:\s*(.+)$/m)?.[1]?.trim();
+  const description = frontmatter.match(/^description:\s*(.+)$/m)?.[1]?.trim();
   if (name !== expectedName) fail(`${relativePath} name must be ${expectedName}`);
   if (!description) fail(`${relativePath} must have a non-empty description`);
 }
-validateSkill(".opencode/skills/maintenance/SKILL.md", "maintenance");
-validateSkill(".opencode/skills/change-package/SKILL.md", "change-package");
+validateSkill(".opencode/skills/template-maintenance/SKILL.md", "template-maintenance");
+validateSkill(".opencode/skills/workspace-maintenance/SKILL.md", "workspace-maintenance");
 
 if (existsSync(join(root, ".opencode/plugins/workspace-maintenance.ts"))) {
   const plugin = read(".opencode/plugins/workspace-maintenance.ts");
@@ -176,7 +154,7 @@ for (const path of [
   "scripts/create-change-package.mjs", "scripts/apply-change-package.mjs",
   "scripts/bootstrap-template-development.sh", "scripts/recover-template-development-sync.sh",
   "scripts/validate-template-development.mjs", "scripts/validate-template-development.sh",
-  "scripts/validate-maintenance-opencode-runtime.mjs",
+  "scripts/validate-workspace-opencode-runtime.mjs",
 ]) {
   const full = join(root, path);
   if (existsSync(full) && (statSync(full).mode & 0o111) === 0) fail(`Executable bit missing: ${path}`);
