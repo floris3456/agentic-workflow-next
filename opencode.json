@@ -1,6 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "default_agent": "template-maintainer",
+  "default_agent": "small-maintainer",
   "share": "disabled",
   "permission": {
     "task": "deny"

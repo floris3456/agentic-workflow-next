@@ -1,32 +1,41 @@
 # Template-development ledger
 
-This independent branch coordinates maintenance of the reusable agentic-workflow template and owns the template-development-rooted Workspace Maintenance/runtime and deterministic package machinery. It contains no copy of project implementation or web-orchestrator source and is never merged into the source branches.
+This independent branch owns the reusable template's maintenance runtime, cross-branch source snapshot, and deterministic change-package machinery. It contains no copy of developer or orchestrator source and is never merged into those source branches.
 
 ## Runtime layout
 
-- `AGENTS.md`: tiny universal rules shared by every template-development OpenCode role.
-- `.opencode/agents/`: role-specific system instructions and mechanical permissions.
-- `.opencode/skills/template-maintenance/`: conditional procedure for the template coordinator.
-- `.opencode/skills/workspace-maintenance/`: conditional procedure for verified cross-worktree maintenance.
-- `.opencode/plugins/workspace-maintenance.ts` plus `scripts/workspace-maintenance-*.mjs`: guarded `workspace_*` tools.
+- `AGENTS.md`: universal repository authority and safety rules.
+- `.opencode/agents/small-maintainer.md`: small capacity for easy bounded template maintenance.
+- `.opencode/agents/heavy-maintainer.md`: heavy capacity for difficult, subtle, important, or risky bounded template maintenance.
+- `.opencode/skills/maintenance/`: the shared Template Maintainer contract for one explicit verified target.
+- `.opencode/skills/change-package/`: package/transfer/source-lock procedure loaded only when that work is required.
+- `.opencode/plugins/workspace-maintenance.ts` plus `scripts/workspace-maintenance-*.mjs`: guarded target inspection, mutation, checks, and non-`main` publication.
 - `docs/architecture/AS-BUILT.md`: reconstructive current implementation truth.
+
+Small and Heavy are capacity variants of one Template Maintainer role. Both remain rooted in `template-development` and may operate on this worktree or another authorized registered worktree through the same `workspace_*` boundary.
+
+Template Maintainer owns reusable template structure wherever it appears: OpenCode config/instructions, agent/skill architecture, template tooling/validation, docs/file layout and conventions, and package/source-lock machinery. Actual project implementation/content remains Developer-owned; Dual is the default substantive Developer route.
+
+A target's instruction files and project records are evidence/output constraints rather than a second maintenance workflow. Template maintenance preserves project-specific content/behavior unless the authorized template change requires a mechanical migration.
 
 ## Ledger data
 
-- `source-lock.json`: latest reconciled exact canonical `main`, `developer`, and `web-orchestration` refs.
-- `docs/work/current/`: only genuinely live task records; optional concise progress is used when resumption needs it.
-- `docs/deviations.md`: material implemented-versus-expected differences.
-- `changes/`: immutable deterministic package revisions created only when transfer/release packaging is requested.
+- `source-lock.json`: latest reconciled exact canonical `main`, `developer`, and orchestration refs.
+- `docs/work/current/`: genuinely live accepted task records or unresolved human decisions.
+- `docs/deviations.md`: material final divergence from applicable accepted expectations.
+- `changes/`: immutable deterministic package revisions created only for explicit transfer/release needs.
 
-Actual component truth stays with the source that owns it. Developer implementation and records stay on `developer`; web-orchestrator implementation stays on `web-orchestration`; this ledger correlates exact refs rather than duplicating either tree.
+Actual component implementation truth stays on the branch that owns it. This ledger correlates exact refs rather than duplicating source trees.
 
 ## Maintenance in practice
 
-Web owns task design and route selection. `template-maintainer` coordinates cross-branch maintenance. The small/heavy Workspace agents are separate bounded routes that remain rooted here while operating only through verified `workspace_*` tools; target instructions are evidence/output constraints, not transferred agent authority.
+Choose Small for easy bounded template work and Heavy for difficult/subtle/important/risky bounded template work. Give the selected agent one explicit verified target and bounded template outcome. It establishes exact state, edits directly, iterates on ordinary failures, uses focused checks while working, runs proportional broader validation when ready, maintains applicable durable truth, and returns concise observable evidence.
 
-Generate a package only for an explicit transfer/downstream/release need, using `scripts/create-change-package.mjs` over exact reviewed ranges. Apply packages with `scripts/apply-change-package.mjs`; downstream commit/push/review remains owned by that branch. Any `main` promotion still requires explicit human approval of the exact SHA.
+If project development exposes a reusable template concern, Developer reports it to the Orchestrator instead of changing template structure inside the project task. The Orchestrator may backlog it for human review after the current task; approved work returns here as an ordinary bounded Template Maintainer task.
 
-For deeper explanation see `docs/design/template-maintenance-workflow.md`; for implemented reality and security boundaries see `docs/architecture/AS-BUILT.md`.
+`main` is inspection-only for maintenance. Any `main` promotion remains a separate human-authorized exact-SHA operation.
+
+Generate/apply a package or reconcile source-lock only when explicitly required by loading `change-package`. For the role boundary see `docs/design/maintenance-routing.md`; for complete implementation/security boundaries see `docs/architecture/AS-BUILT.md`.
 
 ## Validate
 

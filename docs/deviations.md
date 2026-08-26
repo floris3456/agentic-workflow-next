@@ -85,10 +85,11 @@
 
 - Planned behavior: keep `template-development` implementation-neutral and carry
   only `developer` plus `web-orchestration` ranges in each portable package.
-- Observed reality: the accepted Workspace Maintenance Agent, its sole skill
-  authority, contained worktree tools, package machinery, and their executable
-  validation intentionally run with `template-development` as their project and
-  source root. At the time this deviation was accepted, a two-range package could
+- Observed reality: the Template Maintainer runtime, its Small/Heavy capacity
+  variants, shared `maintenance`/conditional `change-package` skills, guarded
+  worktree tools, package machinery, and executable validation intentionally run
+  with `template-development` as their project and source root. At the time this
+  deviation was accepted, a two-range package could
   carry the then-current developer bridge route while omitting the agent/runtime
   that route required. The bridge has since been retired; the three-range package
   design remains current because template-development still owns executable
@@ -111,8 +112,9 @@
   SHA.
 - Evidence: generator/application fixtures cover template range ancestry,
   canonical advance, self-package rejection, digest tampering, wrong-base dry
-  run, and clean application; the real pinned OpenCode inventory check loads the
-  rooted agent, plugin, and sole allowed skill.
+  run, and clean application; the real pinned OpenCode inventory check loads both
+  Template Maintainer capacity variants, the guarded plugin/tools, and the two
+  allowed maintenance skills.
 - Effect: architecture and transfer bytes now match the actual feature without
   copying product/source trees into the maintenance branch or weakening any
   branch's own commit, push, review, or promotion procedure.
