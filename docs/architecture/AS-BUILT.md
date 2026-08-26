@@ -7,7 +7,7 @@ Native OpenCode on the authorized host is the local implementation runtime. Web 
 ## Instruction and configuration layers
 
 - `opencode.json` selects `lead-developer`, disables sharing, denies global task launches, keeps external-directory access approval-gated, and disables automatic compaction/pruning.
-- `AGENTS.md` is intentionally tiny ambient context: universal public-safety, exact-SHA `main`, mutation-reconciliation, durable-truth precedence, and mandatory triggers for `implementation-truth`/`git-safety` only.
+- `AGENTS.md` is intentionally tiny ambient context: universal public-safety, exact-SHA `main`, mutation reconciliation, durable-truth precedence, the reusable-template ownership boundary, and mandatory triggers for `implementation-truth`/`git-safety`.
 - `.opencode/agents/*.md` keeps executable frontmatter plus role-specific system instructions. Global repository policy is not repeated in each role body.
 - `.opencode/skills/*/SKILL.md` holds conditional procedure. Current developer skills are `implementation-truth`, `git-safety`, and `agent-memory`; the retired bridge/workflow-era skill set remains absent.
 - `docs/architecture/agent-system.md` explains this layering; documentation is not a second ambient instruction manual.
@@ -20,6 +20,8 @@ Native OpenCode on the authorized host is the local implementation runtime. Web 
 - `heavy-developer.md`: primary, `openai/gpt-5.6-sol`, max reasoning, task/questions denied. It is the direct difficult/subtle but bounded shortcut; memory defaults to team.
 
 Dual is the default substantive developer route. Small and Heavy are independent bounded shortcuts selected only when Dual would be unnecessary overhead; they are not Spark replacements inside Dual.
+
+Reusable template structure in the developer worktree is Template Maintainer-owned even though Developer consumes that structure at runtime. Developer roles report reusable template concerns to the Orchestrator rather than changing template-owned config/instructions/architecture/layout during project implementation; actual project implementation and current project documentation content remain Developer-owned.
 
 ## Conditional skills
 

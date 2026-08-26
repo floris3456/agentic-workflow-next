@@ -23,6 +23,9 @@ Dual is the default substantive local route. `lead-developer` is the developer b
 - `git-safety`: evidence-based reconciliation for uncertain Git effects and exact-SHA promotion boundaries.
 - `agent-memory`: advisory recall/capture only when reusable memory is actually useful.
 
+## Template boundary
+
+Reusable template structure in this worktree—OpenCode config/instructions, agent/skill architecture, template tooling, and template-owned file/document layout—is maintained by Template Maintainer rather than Developer. If project work exposes a reusable template concern, Developer reports it to the current Orchestrator instead of changing template structure inside the project task. Project implementation and filling project documentation with current project facts remain Developer-owned.
 ## Research boundary
 
 Research creation, prompts, packages, review, and synthesis are web-orchestrator responsibilities. The developer branch may contain durable research evidence and may consume research conclusions supplied by accepted work, but it exposes no developer research workflow skill.
