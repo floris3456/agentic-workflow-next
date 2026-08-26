@@ -8,24 +8,24 @@ Native OpenCode on the authorized host is the local implementation runtime. Web 
 
 - `opencode.json` selects `lead-developer`, disables sharing, denies global task launches, keeps external-directory access approval-gated, and disables automatic compaction/pruning.
 - `AGENTS.md` is intentionally tiny ambient context: universal public-safety, exact-SHA `main`, mutation-reconciliation, durable-truth precedence, and mandatory triggers for `implementation-truth`/`git-safety` only.
-- `.opencode/agents/*.md` keeps executable frontmatter plus concise role-specific system instructions. Global repository policy is not repeated in each role body.
-- `.opencode/skills/*/SKILL.md` holds conditional procedures. Current developer skills are `implementation-truth`, `git-safety`, and `agent-memory`; the retired bridge/workflow-era skill set remains absent.
+- `.opencode/agents/*.md` keeps executable frontmatter plus role-specific system instructions. Global repository policy is not repeated in each role body.
+- `.opencode/skills/*/SKILL.md` holds conditional procedure. Current developer skills are `implementation-truth`, `git-safety`, and `agent-memory`; the retired bridge/workflow-era skill set remains absent.
 - `docs/architecture/agent-system.md` explains this layering; documentation is not a second ambient instruction manual.
 
 ## Active OpenCode agents
 
-- `lead-developer.md`: primary, `cliproxyapi/claude-opus-5#max`, using the Opus 5 max reasoning variant, edit denied. Its shell map is default-deny with repository inspection/review/test commands allowed; task permission is exactly wildcard deny plus `spark-implementer: allow`; questions are allowed. Its body owns substantive Dual design, Spark instruction, review, steering, and team-memory default.
-- `spark-implementer.md`: subagent, `openai/gpt-5.6-sol`, high reasoning. Read/edit/search/list/bash are allowed; task delegation, external-directory access, and questions are denied. Its body owns implementation/checks under Lead direction, departure escalation, return evidence, and own-memory default.
-- `small-developer.md`: primary, `cliproxyapi/gemini-3.7-flash-high`, high reasoning, task/questions denied. It is the direct tiny/very-low-risk route and retains repository-relative path discipline plus proportional validation; memory defaults to team.
-- `heavy-developer.md`: primary, `openai/gpt-5.6-sol`, max reasoning, task/questions denied. It is the direct difficult/subtle but bounded route; memory defaults to team.
+- `lead-developer.md`: primary, `cliproxyapi/claude-opus-5#max`, edit denied. Its shell map is default-deny with repository inspection/review/test commands allowed; task permission is exactly wildcard deny plus `spark-implementer: allow`; questions are allowed. Lead is the developer brain: it reconstructs affected implementation reality, chooses the concrete architecture, gives Spark complete instructions, reviews the actual diff/check evidence, and steers corrections; memory defaults to `team`.
+- `spark-implementer.md`: subagent, `openai/gpt-5.6-sol`, high reasoning. Read/edit/search/list/bash are allowed; task delegation, external-directory access, and questions are denied. Spark executes inside Lead's design, iterates on ordinary implementation failures with focused checks, runs broader relevant validation when ready, reviews the final diff once, returns concise evidence instead of routine full-diff transmission, and returns material design/scope/interface departures to Lead before implementing them; memory defaults to `own`.
+- `small-developer.md`: primary, `cliproxyapi/gemini-3.7-flash-high`, high reasoning, task/questions denied. It is a direct very-simple bounded shortcut and retains repository-relative path discipline plus proportional validation; memory defaults to team.
+- `heavy-developer.md`: primary, `openai/gpt-5.6-sol`, max reasoning, task/questions denied. It is the direct difficult/subtle but bounded shortcut; memory defaults to team.
 
-Dual remains the default substantive route. Small and Heavy are independent bounded routes selected by web, not Spark replacements inside Dual.
+Dual is the default substantive developer route. Small and Heavy are independent bounded shortcuts selected only when Dual would be unnecessary overhead; they are not Spark replacements inside Dual.
 
 ## Conditional skills
 
-- `implementation-truth` loads when implemented behavior/configuration/interfaces/architecture or a represented durable fact changes. It keeps the applicable AS-BUILT current in the same change, records only material intended-versus-actual deviations, and avoids record churn for unchanged facts.
-- `git-safety` loads for uncertain mutation outcomes, synchronization ambiguity, pushes needing reconciliation, or promotion. It requires evidence-based reconciliation before retry, one mutating route while state is uncertain, useful rather than ceremonial pushes, and exact human authorization for `main`.
-- `agent-memory` loads before explicit capture or when memory scope semantics need more than a role's default. It describes advisory own/team recall, author visibility, safe concise capture, and non-blocking service failure; the tool/library enforce the hard safety/role rules.
+- `implementation-truth` loads when code, configuration, interfaces, dependencies, runtime behavior, or architecture change. For every changed code scope it identifies the owning AS-BUILT and keeps that document complete enough to reconstruct current implementation, preserves still-valid truth, records only material final deviations, and avoids documentation churn when durable truth did not change.
+- `git-safety` loads for uncertain Git effects, unexpected local/remote disagreement, publication reconciliation, or promotion. It determines what actually happened from the smallest useful evidence, absorbs an already-existing effect, retries only when absence and safety are proven, keeps one mutating route while uncertainty remains, and verifies exact remote refs after claimed publication or promotion.
+- `agent-memory` loads for explicit capture or non-default recall scope. Memory remains advisory and concise; it is not a task log, progress record, command history, evidence store, or replacement for AS-BUILT/deviations/docs. Service failure is non-blocking and the tool/library enforce hard safety/role constraints.
 
 ## AgentMemory implementation
 
@@ -53,7 +53,7 @@ Dual remains the default substantive route. Small and Heavy are independent boun
 
 Research creation, prompt/package preparation, review, and synthesis are owned by the web orchestrator. `research/` remains a durable public-safe evidence/artifact structure with its own validator; developer OpenCode exposes no research workflow skill. Local developers may consume research evidence/conclusions supplied by accepted work but do not own research production.
 
-Consequential work may use a stable canonical task record plus optional concise task-progress for resumption. AS-BUILT describes current implementation reality; deviations describe material implemented divergence from an applicable accepted expectation. Material Spark departures from Lead design are surfaced before implementation rather than encoded as a mandatory special working-file ceremony.
+Consequential work may use a stable canonical task record plus optional concise task-progress for resumption. AS-BUILT describes current implementation reality; deviations describe material implemented divergence from an applicable accepted expectation. Material Spark departures from Lead design are surfaced to Lead before implementation; no mandatory special proposal-file ceremony is active.
 
 Deterministic transfer/release package generation remains available only when explicitly requested. There is no mandatory push-every-commit, handoff-only commit, archive/finalization, snapshot, retry-count, package-generation, or lifecycle ceremony.
 

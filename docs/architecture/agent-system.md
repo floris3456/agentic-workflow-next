@@ -15,13 +15,13 @@ OpenCode responsibilities are deliberately separated by scope and frequency:
 
 ## Routes
 
-Dual is the default substantive local route: `lead-developer` designs, instructs, reviews, and steers; `spark-implementer` performs source implementation and checks. `small-developer` and `heavy-developer` are independent bounded direct routes chosen by web, not substitutes inside Dual.
+Dual is the default substantive local route. `lead-developer` is the developer brain: it reconstructs current implementation, chooses the concrete architecture, gives Spark complete instructions, and reviews/steers the result. `spark-implementer` performs the source work, iterates on ordinary failures inside Lead's design, and returns material decisions to Lead before departing from that design. `small-developer` and `heavy-developer` are independent bounded shortcuts chosen only when Dual would be unnecessary overhead, never substitutes inside Dual.
 
 ## Conditional developer skills
 
-- `implementation-truth`: same-change AS-BUILT/deviation maintenance when implemented facts change.
-- `git-safety`: reconciliation for ambiguous Git state and exact-SHA promotion boundaries.
-- `agent-memory`: memory-specific scope and safe explicit capture procedure.
+- `implementation-truth`: reconstructive AS-BUILT/deviation maintenance when implemented reality changes.
+- `git-safety`: evidence-based reconciliation for uncertain Git effects and exact-SHA promotion boundaries.
+- `agent-memory`: advisory recall/capture only when reusable memory is actually useful.
 
 ## Research boundary
 

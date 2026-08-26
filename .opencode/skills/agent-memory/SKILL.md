@@ -1,14 +1,21 @@
 ---
 name: agent-memory
-description: Use advisory AgentMemory recall and capture safely when memory operations are relevant.
+description: Recall or store concise advisory knowledge that is useful across future developer sessions.
 compatibility: developer AgentMemory tools
 ---
 
 # Agent memory
 
-Load this skill before explicit memory capture or when memory scope/semantics need more than the role's default.
+Load this skill when explicit memory capture is useful or when recall scope needs to differ from the role default.
 
-- Memory is advisory; current repository/task truth wins on conflict.
-- Recall may use `own` or `team`; the role body defines the default, and rendered memories keep visible author attribution.
-- Remember only concise reusable facts. Do not store reasoning traces, credentials/secrets, private runtime identifiers, unnecessary absolute host paths, or raw logs; the tool also rejects unsafe capture.
-- If the local memory service is unavailable or times out, continue normal developer work without it.
+Memory is advisory. Current task instructions and repository truth always win.
+
+Recall only when previous developer knowledge could materially help the current task. Use the role's default scope unless there is a reason to choose `own` or `team`.
+
+Remember only concise knowledge likely to be useful in future sessions: stable implementation facts, recurring constraints, useful conventions, or lessons that are not already better represented by durable repository documentation.
+
+Do not use memory as a task log, progress record, command history, evidence store, or replacement for AS-BUILT, deviations, or repository documentation.
+
+Never store reasoning traces, secrets, private runtime identifiers, unnecessary host-local paths, or raw logs.
+
+If memory is unavailable, continue normally.

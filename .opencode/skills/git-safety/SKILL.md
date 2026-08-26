@@ -1,14 +1,21 @@
 ---
 name: git-safety
-description: Reconcile ambiguous Git mutations and synchronization, and protect exact-SHA main promotion.
+description: Reconcile uncertain Git effects and protect exact-SHA publication and promotion.
 compatibility: developer repository
 ---
 
 # Git safety
 
-Load this skill when a mutation outcome is uncertain, local/remote state is ambiguous, a push needs reconciliation, or promotion is requested.
+Load this skill when a Git mutation has an uncertain result, local and remote state disagree unexpectedly, publication needs reconciliation, or `main` promotion is requested.
 
-- Inspect the existing process/session, working tree, local refs, upstream refs, and remote refs needed to determine what actually happened before retrying anything.
-- Never automatically replay an operation whose effect is uncertain. Keep one mutating route at a time until state is reconciled.
-- Push when remote durability, review, CI, transfer, or checkpoint evidence is useful; there is no push-every-commit ceremony.
-- Never rewrite or advance `main` without explicit human authorization of the exact developer SHA and the repository's promotion mechanism.
+Never repeat an operation merely because its response was missing, failed, or timed out.
+
+First determine what actually happened from the smallest useful evidence: current process/session state, working tree, HEAD, branch, upstream state, remote refs, ancestry, and affected tree.
+
+If the intended effect already exists, continue from it. Retry only when evidence shows the previous operation did not take effect and repeating it cannot create a duplicate or conflicting result.
+
+Keep one mutating route until the uncertainty is resolved. Stop on unexpected branch movement, conflicting trees, or evidence you cannot safely reconcile.
+
+Never rewrite or advance `main` without explicit human approval of the exact reviewed developer SHA and the repository's guarded promotion procedure.
+
+After any claimed publication or promotion, verify the exact remote ref before treating it as durable.
