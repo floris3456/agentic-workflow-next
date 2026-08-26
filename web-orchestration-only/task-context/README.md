@@ -38,3 +38,5 @@ Historical records remain truthful history. They may retain old schemas, routing
 bridge, mode, finalization, or other retired terminology. Do not rewrite them
 merely to match the current workflow. The validator accepts them as historical
 public-safe Markdown rather than imposing the current template retroactively.
+
+`template-maintenance-backlog.md` is separate pending-decision continuity for reusable-template concerns discovered during project work. It is evidence, not execution authority. After the current project task, Web presents pending items to the human; approved items transfer into the canonical `template-development` task record, while rejected items may remain only long enough to preserve the decision clearly.

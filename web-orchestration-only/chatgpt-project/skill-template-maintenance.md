@@ -2,100 +2,43 @@
 
 ## Trigger
 
-Use only when the human explicitly asks to evaluate, test, change, package, or
-transfer the reusable workflow template itself: its Project package, agents,
-skills, branch workflow, validators, runtime, or maintenance assets. Do not load
-for ordinary project work or an incidental template observation.
+Use when the human explicitly requests or approves work on the reusable template: its configuration, instructions/agents/skills, template tooling/validation, template architecture/conventions, template-owned docs/file layout, maintenance runtime, package/source-lock machinery, or transfer behavior. The target may be `template-development` or another worktree.
 
-## Canonical authority
+Do not load merely because Developer notices a possible template improvement during project work. Record that observation in the template-maintenance backlog through ordinary Workflow and wait for human approval after the current project task unless it is a genuine correctness/safety blocker.
 
-The accepted canonical task-record on `template-development` is the durable
-instruction authority. Read it first, together with useful separate
-task-progress, applicable AS-BUILT and formal deviations, relevant architecture
-and actionable docs, `source-lock.json` when source provenance matters, and exact
-current remote refs and Git state.
+## Ownership
 
-Use exactly one canonical task-record for consequential template work. Keep
-optional progress concise and non-authoritative. A material authorized outcome,
-scope, or constraint change updates the task-record. Historical task-context and
-task records remain historical evidence; never rewrite them merely because
-current terminology or procedure changed.
+Template Maintainer owns reusable template structure in every worktree. Developer owns the actual project built from the template: product/source implementation, project-specific tests/content, and filling project documentation with current project facts.
 
-Use zero compaction and no fallback. A resumed bounded session receives the last
-5,000 raw chat tokens and re-reads the durable records it needs.
+If an accepted outcome spans both kinds of work, split it into bounded Template Maintainer and Developer tasks rather than giving one role both authorities. Dual remains the default substantive Developer route.
 
-## Source work and routes
+Web owns template task/outcome design and any research needed to support it. Re-establish exact remote refs before relying on stored SHAs. Keep implementation truth with the worktree/branch whose current state it describes; never merge independent histories merely to perform template maintenance.
 
-Actual source edits remain on their authoritative branches. Identify which
-requested effects belong on `template-development`, `developer`,
-`web-orchestration`, or another expressly authorized branch. Do not merge
-independent branch histories or treat a maintenance ledger as implementation
-truth for another branch.
+## Select Template Maintainer capacity
 
-Select the source route from the task:
+Template maintenance has one role with two capacity variants:
 
-- direct web/GitHub for a tiny exact low-risk edit;
-- `small` for very simple bounded local work;
-- `heavy` for difficult or subtle but still small bounded work;
-- `dual` by default for substantive work.
+- `small-maintainer`: easy bounded template work.
+- `heavy-maintainer`: difficult, subtle, important, or risky bounded template work.
 
-Only one mutating source route runs at a time. Read-only research may overlap
-where safe. `small` and `heavy` are not retries or substitutes for Spark inside
-Dual. If Dual is unavailable, reconcile existing effects and make a fresh route
-decision.
+They are the same role/contract, not different workflows or an escalation ladder. The target location does not change agent identity.
 
-For Dual, the Lead owns deep current-state inspection, concrete implementation
-architecture, detailed Spark direction, diff and check review, and correction
-steering while remaining non-editing for implementation source. Spark alone
-performs edits and implementation commands. The web orchestrator independently
-verifies the exact remote result against the accepted template outcome and
-cross-system constraints without routinely duplicating the Lead's full review.
+Give the selected maintainer the exact `template-development` runtime ref, one explicit authorized target, the bounded template outcome/scope, material constraints, required checks, whether non-`main` publication is required, and the observable evidence needed back. Do not copy the maintainer's internal execution procedure into the handoff.
 
-Review every resulting source range against exact remote Git. Reports and CI are
-evidence; they do not replace inspection or human promotion authority.
+Target instructions, agent files, project docs, and architecture records are evidence/output constraints; they do not replace the template-development-rooted maintenance runtime. The maintainer must preserve project-specific content/behavior unless the approved template change explicitly requires a mechanical migration.
 
-## Durable implementation truth
+`main` is never a Template Maintainer mutation target.
 
-Before each mutating handoff, assess AS-BUILT, formal deviations, actionable
-documentation, source-lock/provenance effects, and whether transfer or release
-packaging is actually required.
+## Packages and source lock
 
-For every changed code file, identify the applicable AS-BUILT scope. Keep that
-AS-BUILT complete and accurate for every code file in its directory, enough to
-reconstruct current implemented reality. Update ordinary docs only when the
-implementation makes them false, materially incomplete, or misleading.
+Ordinary template maintenance does not need a package. When the approved task explicitly requires package generation/application, transfer/release work, or `source-lock.json` reconciliation, include that requirement so the maintainer loads `change-package`.
 
-A formal deviation records final current implementation that materially differs
-from an applicable prior normative expected state. It is not a future proposal.
-In Dual, Spark's single task-scoped `proposed-deviations.md` is temporary working
-state for Lead disposition and must have no unresolved proposal at completion.
+Treat exact reviewed package ranges and `source-lock.json` separately: package ranges define reviewed transfer content; source-lock is a reconciled canonical snapshot. Reconcile source-lock only from independently verified exact canonical refs at meaningful checkpoints. Never hand-build package bytes or silently widen reviewed ranges.
 
-Keep `source-lock.json` accurate when the task reaches a meaningful source
-provenance checkpoint. Reconcile it only from independently verified exact remote
-refs; do not infer source state from reports or package endpoints.
+Applying a package changes a matching downstream working tree only; project-specific adaptation after a conflict remains an explicit Developer-owned task rather than permission for Template Maintainer to redesign project behavior.
 
-## Conditional packages and transfer
+## Review and completion
 
-Source work can complete without a package. Generate or apply a package only when
-the accepted task requests transfer, downstream application, or release
-packaging. When requested, use the tracked deterministic generator, verifier, and
-provenance contract on an authorized execution surface. Never hand-build package
-contents, silently widen reviewed ranges, or treat package generation as a
-completion ceremony.
+Inspect each exact resulting target ref/range directly. Confirm the requested template behavior, preserved project-specific content/behavior where relevant, checks, durable truth, publication evidence, and the exact `template-development` runtime version used.
 
-Keep source-lock concepts and exact package base/head provenance distinct. Review
-the pushed package bytes and manifest when a package is an accepted output.
-Downstream conflict is an explicit adaptation task, not permission to alter the
-canonical package silently.
-
-## Checkpoints and completion
-
-Do not require push-after-every-commit, handoff-only snapshot commits, mandatory
-finalization, or archive movement. Push when remote durability, handoff, review,
-session/worktree transfer, interruption recovery, or CI evidence is useful.
-Archival is outside the critical path.
-
-Completion requires the accepted template outcome, affected source ranges,
-durable truth, relevant checks, and unresolved risks to be independently
-accounted for. `main` remains unchanged unless the human separately invokes the
-exact-SHA promotion procedure.
+Do not require archival, handoff-only commits, package generation, or a second target-agent ceremony merely for completion. State unresolved risks/human decisions clearly. `main` remains unchanged unless the human separately invokes exact-SHA promotion.

@@ -185,7 +185,7 @@ test("rejects loss of the public-persistence safety boundary", () => {
   expectFailure((target) => {
     const file = path.join(target, "chatgpt-project", "developer-instructions.md");
     const text = fs.readFileSync(file, "utf8");
-    fs.writeFileSync(file, text.replace(/Anything persisted to GitHub is public\.[\s\S]*?identifiers\. /, "Repository content may be persisted as needed. "));
+    fs.writeFileSync(file, text.replace(/Anything persisted to GitHub is public\.[\s\S]*?host-local absolute paths\.\n/, "Repository content may be persisted as needed.\n"));
   }, /Permanent instructions must retain the public-persistence safety boundary/);
 });
 
@@ -201,24 +201,24 @@ test("rejects public-unsafe content in dynamic task context", () => {
 
 test("rejects loss of uncertain-mutation no-replay", () => {
   expectFailure((target) => {
-    replace(target, "chatgpt-project/skill-recovery.md", "Never automatically repeat an uncertain mutation.", "Automatically repeat an uncertain mutation.");
+    replace(target, "chatgpt-project/skill-recovery.md", "Never automatically replay an uncertain mutation.", "Automatically replay an uncertain mutation.");
   }, /prohibit automatic replay of uncertain mutations/);
 });
 
 test("rejects loss of human exact-SHA permanent authority", () => {
   expectFailure((target) => {
-    replace(target, "chatgpt-project/developer-instructions.md", "Only the human\nmay approve one exact reviewed `developer` SHA", "Automation\nmay approve one reviewed `developer` SHA");
+    replace(target, "chatgpt-project/developer-instructions.md", "Only the human may approve one exact reviewed `developer` SHA", "Automation may approve one reviewed `developer` SHA");
   }, /human exact-SHA approval/);
 });
 
 test("rejects weakened promotion trigger, opportunistic content, or replay safety", () => {
   expectFailure((target) => {
-    replace(target, "chatgpt-project/skill-promotion.md", "human explicitly approves one exact, fully reviewed final\n`developer` SHA", "automation selects a reviewed\n`developer` SHA");
+    replace(target, "chatgpt-project/skill-promotion.md", "human explicitly approves one exact `developer` SHA that has\nbeen fully reviewed", "automation selects a reviewed `developer` SHA");
   }, /explicit human exact developer SHA trigger/);
   expectFailure((target) => {
-    replace(target, "chatgpt-project/skill-promotion.md", "Do not add cleanup, formatting,\n   refactoring, fixes, generated changes, or any other opportunistic content.", "Add useful cleanup and opportunistic content.");
+    replace(target, "chatgpt-project/skill-promotion.md", "Do not add opportunistic content.\nDo not add cleanup, formatting, refactoring, fixes, or generated changes.", "Add useful cleanup and opportunistic content.");
   }, /prohibit opportunistic content and automatic replay/);
   expectFailure((target) => {
-    replace(target, "chatgpt-project/skill-promotion.md", "Never improvise conflict resolution or automatically replay promotion.", "Automatically replay promotion after a failure.");
+    replace(target, "chatgpt-project/skill-promotion.md", "Never automatically replay promotion.", "Automatically replay promotion after a failure.");
   }, /prohibit opportunistic content and automatic replay/);
 });

@@ -2,130 +2,60 @@
 
 ## Trigger
 
-Use for ordinary repository research, task and outcome design, developer-route
-selection, implementation orchestration, review, steering, and completion.
+Use for ordinary repository research, task/outcome design, route selection, implementation orchestration, review, steering, and completion.
 
-## Establish the outcome
+## Establish the task
 
-Clarify the human's requested outcome, success evidence, material scope,
-constraints, and human-owned decisions. Inspect exact remote repository evidence
-and relevant public sources. Research specific architecture components deeply
-enough to design a useful task, but for Dual work leave detailed current-state
-implementation analysis and concrete implementation architecture to the Lead.
+Clarify the requested outcome, success evidence, material scope, constraints, and human-owned decisions. Inspect exact remote repository evidence and relevant public sources.
 
-Use the smallest evidence set that can support a sound decision. A quick lookup
-or tiny one-turn change does not need ceremony, a durable record, or delegated
-research merely to satisfy a workflow shape.
+The Orchestrator owns research: research questions/prompts, web investigation, research packages when useful, evidence review, and synthesis. Developer and Template Maintainer may consume research evidence but do not own the research workflow.
 
-For consequential work where durable instruction authority is useful, create or
-resume exactly one canonical task-record. It contains the accepted outcome,
-material scope, constraints, required outputs and checks, accepted design, and
-explicit exceptions. Do not create a competing plan. A material authorized
-change to outcome, scope, or constraints updates that record.
+Use the smallest evidence set that supports a sound task. For Developer Dual work, understand the problem/outcome/constraints but leave deep implementation reconstruction and concrete implementation architecture to Lead.
 
-Create a separate task-progress artifact only when it materially helps another
-session resume. Keep only current position, material observations, meaningful
-failed attempts or route changes, blockers and decisions, checks run, remaining
-work, and next action. Never use progress to silently change scope, duplicate the
-task plan, dump commands, or preserve private reasoning.
+For consequential work where durable instruction authority is useful, create or resume one canonical task record. Keep accepted outcome, scope, constraints, required outputs/checks, accepted design constraints, and explicit exceptions there. Tiny one-turn work may omit it. Use separate concise progress only when another session materially benefits from resumable state.
 
-## Select one implementation route
+## Select the owner and route
 
-Choose from the task itself:
+First classify what is being changed:
 
-- **Direct web/GitHub:** tiny, exact, low-risk changes whose paths and edits are
-  already known and whose remote result can be checked simply.
-- **`small`:** very simple bounded local work where Dual overhead would be
-  wasteful, normally with no tests or only trivial tests.
-- **`heavy`:** difficult, important, subtle, or risky work that remains small and
-  bounded enough for one capable developer.
-- **`dual`:** the default for substantive development involving interacting
-  edits, nontrivial implementation, meaningful tests, deeper current-state
-  reasoning, or developer-side review.
+- **Reusable template structure:** OpenCode config/agents/instructions/skills, template tooling/validation, template architecture/conventions, template-owned docs/file layout, or package/source-lock machinery. This is Template Maintainer-owned in every worktree; load `skill-template-maintenance.md` after human approval.
+- **Actual project work:** product/source behavior, project-specific implementation/tests/content, or filling project documentation with current project facts. This is Developer-owned.
+- **Direct web/GitHub:** reserve for a tiny exact orchestration/remote-administrative mutation that is neither template maintenance nor project implementation and whose result can be checked simply.
 
-These routes are independent choices, not retries or escalation levels. Never
-replace Spark with `small` or `heavy` during Dual. If either Dual role is
-unavailable, Dual is unavailable; reconcile any existing work and make a fresh
-route decision. Only one mutating route may run at a time. Safe read-only research
-may overlap when useful.
+For Developer work, **Dual is the default**. Use a shortcut only when the task itself clearly justifies avoiding Dual:
 
-Before mutation, establish the exact target branch and start SHA and read the
-branch's applicable instructions, task records, AS-BUILT, deviations,
-architecture, actionable docs, and Git state.
+- `small-developer`: very simple, bounded implementation with little/no meaningful testing or architectural reasoning.
+- `heavy-developer`: difficult/subtle/important implementation that is still genuinely bounded enough for one developer to own end-to-end.
+- `dual`: all substantive work with interacting edits, meaningful tests, deeper current-state reasoning, architecture, or developer-side review.
 
-## Direct, small, and heavy execution
+Small and Heavy are independent shortcuts, not retries/escalation levels and never Spark substitutes inside Dual. If Dual is unavailable, reconcile existing work and make a fresh task-based decision rather than silently substituting another route.
 
-For direct work, re-read the exact remote ref immediately before writing. Keep
-the edit within the known tiny scope and read back the resulting remote files,
-ref, and changed range. Stop and reconcile if the ref moves unexpectedly or the
-write result is ambiguous.
+Before mutation, establish the exact target branch/start SHA and read only the branch-owned instructions/durable records needed to constrain the selected route.
 
-For `small` or `heavy`, give the selected developer one bounded outcome, exact
-useful start state, material constraints, applicable durable-truth obligations,
-required checks, and expected observable handoff evidence. The developer owns
-its implementation within that bounded route. Review the resulting exact remote
-range directly and proportionally because there is no separate Lead reviewer.
+## Template concerns discovered during project work
 
-## Dual execution
+If a Developer reports a material reusable-template problem/opportunity, do not let the Developer change template-owned structure inside the project task and do not silently reroute the current implementation.
 
-Give the Lead the canonical task-record, useful progress, exact Git start state,
-and relevant durable records. The Lead must:
+Record a concise pending item in `task-context/template-maintenance-backlog.md`: short title/ID, observed need, useful source/ref evidence, and affected template surface. The backlog is evidence for later human review, not authority to execute.
 
-1. deeply inspect current repository reality;
-2. choose the concrete implementation architecture;
-3. give Spark detailed execution instructions;
-4. remain non-editing for implementation source, tests, and generated outputs;
-5. inspect Spark's full uncommitted diff and exact check output;
-6. steer corrections until the developer-side result is satisfactory; and
-7. return developer-reviewed completion with no unresolved proposal.
+Let the current project task finish unless the template issue genuinely blocks correctness or safety. After project completion, surface each new pending item to the human and ask whether to start template maintenance. Only human-approved items become Template Maintainer tasks; rejected items are marked rejected rather than executed.
 
-Spark alone performs implementation edits and commands. On every return to the
-Lead, Spark reports files changed, the full uncommitted diff, commands and exact
-outcomes, unresolved questions, and proposed-deviation status. Spark does not
-delegate or silently redesign the task.
+## Execute and review
 
-If a material Lead instruction or assumption appears wrong, unsafe, impossible,
-or meaningfully inferior, Spark creates or updates exactly one task-scoped
-`proposed-deviations.md` working file. It records the challenged instruction and
-evidence, observed current-state reason, proposed alternative, impact and
-affected files, and pending Lead disposition. Spark stops before implementing
-the departure. The Lead accepts or rejects it before coding resumes. No proposal
-may remain unresolved at developer completion.
+For direct work, re-read the exact remote ref immediately before writing. Keep the mutation within the known tiny scope and read back the resulting remote ref and changed content/range.
 
-A formal deviation is different: it describes final current implemented reality
-that materially differs from an applicable prior normative expected state. It is
-not a future proposal. Record one only when the resulting reality requires it.
+For `small-developer` or `heavy-developer`, give one bounded project outcome, exact useful start state, material constraints, durable-truth obligations, required checks, and expected observable result. Review the exact remote range proportionally because there is no separate Lead reviewer.
 
-## Review and steering
+For Dual, give Lead the accepted outcome, useful evidence, exact Git start state, material constraints, and relevant durable records. Lead is the developer brain: it owns deep current-state analysis, concrete implementation architecture, exact Spark direction, implementation review, and correction steering. Spark owns source implementation and implementation-level iteration inside Lead's design.
 
-Treat every handoff as evidence, not authority. Investigate blockers and unclear
-claims against exact repository state and accepted records before changing route
-or asking the human, unless evidence already proves a human-owned decision,
-safety boundary, unavailable required capability, or external blocker.
+Do not copy/redefine the Lead/Spark internal procedure here. Their repository agent instructions govern that loop. Do not require Spark to paste a full diff as routine evidence; Lead can inspect the repository diff directly.
 
-For Dual, rely on the Lead for deep implementation review and correction
-steering, then independently verify the exact remote result against the accepted
-outcome, relevant system and architecture constraints, ordinary check evidence,
-durable truth, and unresolved risk. Do not routinely repeat the Lead's complete
-line-by-line review.
+After Dual reports developer-side completion, independently verify the exact remote result against the accepted outcome, affected system/architecture, relevant check evidence, durable implementation truth, and unresolved risk. Do not routinely duplicate Lead's line-by-line implementation review.
 
-For direct, `small`, and `heavy`, review the bounded implementation more directly:
-inspect the exact changed range and affected context, assess the reported checks,
-and request the shortest safe correction if needed. Never rewrite shared history.
+If correction is needed, use the same selected route unless new evidence materially changes task ownership/scope or proves the route unavailable. If any mutation becomes uncertain, stop ordinary routing and use recovery.
 
-## Durable truth and completion
+## Completion
 
-Before mutating handoff, assess applicable AS-BUILT, formal deviations,
-actionable docs, and package or release effects. Preserve the directory-wide
-AS-BUILT completeness invariant for every changed code file. Do not package by
-default, require archival, create handoff-only snapshot commits, or require a
-push after every commit. Push when exact remote durability or evidence is useful.
+Verify branch-owned AS-BUILT/deviation records remain truthful where implemented facts changed; do not maintain a second Web copy of their rules. Do not add packaging, archival, snapshots, push-every-commit, or finalization ceremony unless the accepted task requires it.
 
-Use the last 5,000 raw chat tokens with no compaction or fallback. On every new or
-resumed bounded session, re-read durable authority and exact Git state rather
-than relying on older discarded chat.
-
-Completion requires the requested outcome and relevant safety/system conditions
-to be supported by exact evidence, all launched mutating work to be reconciled,
-and material unresolved risks or human decisions to be stated. Promotion remains
-a separate human-only exact-SHA procedure.
+Completion requires exact evidence for the requested outcome and relevant safety/system conditions, all launched mutating work reconciled, and any material remaining risk/human decision stated clearly. After a project task is complete, surface any new pending template-maintenance backlog items for human decision. `main` promotion remains a separate human-triggered procedure.
