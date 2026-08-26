@@ -1,45 +1,40 @@
-# Web-orchestration package
+# Web-orchestrator persistence
 
-This independent branch stores public-safe installation material and durable
-orchestration context for the Web orchestrator.
+This independent branch stores concise public-safe continuity and reusable
+installation material for the web orchestrator.
 
 ## Authority
 
-The Web orchestrator owns public research, useful task and outcome design, route
-selection, orchestration, and independent final verification. Remote implementation
-truth comes from the branch that owns it. Agent reports, task records, progress,
-checks, and CI are evidence. Only the human may approve one exact reviewed
-`developer` SHA for `main`.
-
-This branch is independent and is not merged into implementation or
-template-development histories.
+- These files are orchestration instructions and memory, not authoritative
+  implementation evidence.
+- Exact implementation facts come from remote `developer` or accepted `main`.
+- The web orchestrator owns orchestration, web research, useful task/outcome
+  design, route selection, and independent final outcome/system verification.
+- Dual Lead and Spark reports, local developer reports, CI, and task progress are
+  evidence, not human acceptance.
+- Only the human may approve one exact reviewed `developer` SHA for `main`.
+- This branch is independent and is not normally merged with implementation
+  branches.
 
 ## Contents
 
-- `chatgpt-project/developer-instructions.md`: continuous Web role, universal
-  authority and safety, context policy, and Source router.
-- `chatgpt-project/skill-workflow.md`: ordinary task design, route selection,
-  orchestration, review, and completion.
-- `chatgpt-project/skill-recovery.md`: exceptional uncertain-effect
-  reconciliation.
-- `chatgpt-project/skill-maintenance.md`: routing to the unified small/heavy
-  maintenance role on an explicit verified target.
-- `chatgpt-project/skill-promotion.md`: human-only exact-SHA main promotion.
-- `chatgpt-project/skill-prompt-creation.md`: concise context transfer across an
-  execution boundary.
-- `task-context/`: the current task-record template, optional progress, and
-  preserved historical public evidence.
-- `ORCHESTRATION-EVOLUTION.md`: repository-ready design for a future shared
-  Web/Local orchestration package; it is design, not current runtime authority.
-- `AS-BUILT.md`: complete current package implementation truth.
-- `validate-package.mjs` and `validate-package.test.mjs`: structural and hard
-  safety checks.
-- `.github/workflows/validate-web-orchestration.yml`: push validation and
-  exact-SHA status reporting.
+- `task-context/TEMPLATE.md`: canonical ordinary task-record template for
+  consequential work that benefits from durable authority.
+- `task-context/<task-id>-progress.md`: optional concise resumable execution state;
+  it is never required for every task and never replaces the task-record.
+- Historical `task-context/*.md` files: unchanged historical evidence that may
+  retain obsolete terminology.
+- `chatgpt-project/`: permanent instructions plus five conditionally routed
+  Sources for workflow, recovery, template maintenance, promotion, and prompt
+  creation.
+- `validate-package.mjs` and `validate-package.test.mjs`: structural package,
+  task-template, public-safety, and CI-posture checks.
+- `.github/workflows/validate-web-orchestration.yml`: ordinary push validation
+  with exact-SHA status reporting.
 
 Anything persisted here is public disclosure. Never store secrets, credentials,
-private chat, personal data, raw private runtime identifiers, or host-local
-absolute paths.
+private chat details, personal data, raw sensitive values, or host-local absolute
+paths.
 
 ## Validate
 
@@ -47,3 +42,7 @@ absolute paths.
 node web-orchestration-only/validate-package.mjs
 node --test
 ```
+
+Every push to `web-orchestration` runs the same validator and discovery-mode Node
+tests. The workflow has read-only repository access, does not persist checkout
+credentials, and publishes its result against the exact pushed SHA.

@@ -1,117 +1,67 @@
 # Web orchestration package AS-BUILT
 
-## Scope and branch role
+## Scope
 
-`web-orchestration` is an independent public package branch. It owns the Web
-orchestrator's installation instructions, conditional Project Sources, task
-record template and historical public context, package validator/tests, and push
-validation workflow. It is not merged into `developer`, `template-development`,
-or `main`.
+This AS-BUILT document describes all code files in `web-orchestration-only/`:
+- `validate-package.mjs` — canonical standalone package and structural validator.
+- `validate-package.test.mjs` — automated test suite and negative-fixture tests.
 
-Remote implementation facts come from the branch that owns them. This package
-defines orchestration behavior; it is not implementation truth for developer or
-maintenance source.
+## Implemented architecture
 
-## ChatGPT Project package
+### Package validator (`validate-package.mjs`)
 
-`web-orchestration-only/chatgpt-project/developer-instructions.md` is the only
-permanent Project instruction body. It defines the Web role, remote-Git evidence
-authority, human exact-SHA main authority, one-mutating-route rule, public
-persistence boundary, uncertain-effect no-replay rule, the no-compaction
-5,000-token reread policy, and the Source router. It does not carry ordinary,
-maintenance, recovery, promotion, or prompt-creation procedure.
+`validate-package.mjs` is an executable ES module (Node >= 22.13.0) that validates the structural integrity, inventories, safety invariants, and core semantic boundaries of the `web-orchestration` branch and ChatGPT Project installation package without relying on external dependencies.
 
-Five Sources load conditionally:
+It executes the following validations:
+1. **Directory inventories and file sanity:**
+   - Enforces exact file inventories for the root directory (`AS-BUILT.md`, `README.md`, `chatgpt-project`, `task-context`, `validate-package.mjs`, `validate-package.test.mjs`) and `chatgpt-project/` (`README.md`, `developer-instructions.md`, `skill-workflow.md`, `skill-recovery.md`, `skill-template-maintenance.md`, `skill-promotion.md`, `skill-prompt-creation.md`).
+   - Verifies that all required targets are regular files, readable, non-empty, valid UTF-8, and contain no NUL bytes.
+   - Enforces directory existence for `chatgpt-project/` and `task-context/`.
+2. **Task-context inventory and structure:**
+   - Ensures `task-context/` contains required `README.md` and `TEMPLATE.md`, and that any other files are valid Markdown documents matching `^[A-Za-z0-9][A-Za-z0-9._-]{0,127}\.md$`.
+   - Validates `task-context/TEMPLATE.md` structure: title `# Task record: <task-id>`, identity field `- Task ID: <task-id>`, and exactly seven canonical sections (`## Accepted outcome`, `## Material scope`, `## Constraints`, `## Required outputs`, `## Required checks`, `## Accepted design`, `## Explicit exceptions`).
+   - Rejects the presence of volatile task-progress sections in `task-context/TEMPLATE.md`.
+   - Verifies `task-context/README.md` articulates the separation between authoritative task records and resumable execution progress, while preserving historical records without retroactive schema migration.
+3. **Project Source routing and structure:**
+   - Verifies that the procedure router in `developer-instructions.md` contains exactly one trigger row for each of the five conditionally routed Project Sources (`skill-workflow.md`, `skill-recovery.md`, `skill-template-maintenance.md`, `skill-promotion.md`, `skill-prompt-creation.md`) and no unknown Sources.
+   - Ensures each skill file begins with a top-level Markdown title (`# ...`) and contains a `## Trigger` section.
+   - Checks that `chatgpt-project/README.md` references each of the five skills exactly once in its installation inventory.
+   - Verifies that deterministic rendering placeholders (`<owner>/<repository>`, `https://github.com/<owner>/<repository>`) are present in installation documentation and developer instructions.
+4. **Public safety and authority boundaries:**
+   - Confirms public-persistence safety rules in `README.md` and `developer-instructions.md`.
+   - Confirms that `developer-instructions.md` reserves `developer`-to-`main` promotion exclusively to human exact-SHA approval.
+   - Confirms that `skill-recovery.md` prohibits automatic replay of uncertain mutations and mandates evidence-based reconciliation.
+   - Confirms that `skill-promotion.md` requires explicit human exact-SHA triggers and prohibits opportunistic modifications or automatic replay.
+   - Scans all loaded text files for public-unsafe patterns, rejecting host-local absolute paths, credential/token-like patterns (`sk-...`, `ghp_...`, `github_pat_...`), and private key blocks.
 
-- `skill-workflow.md` owns ordinary research, outcome and task design, durable
-  task-record use, route selection, direct/developer/Dual orchestration, review,
-  durable-truth assessment, and independent completion verification. It relies
-  on Lead as the developer brain in Dual and does not duplicate Lead/Spark
-  internals or require full-diff transfer.
-- `skill-recovery.md` is the exceptional reconciliation procedure. It inspects
-  available session/process, local Git, remote Git, task, and external-effect
-  evidence; absorbs an existing effect; permits retry only after absence is
-  proven; and prevents overlapping mutation. It contains no recovery state
-  machine.
-- `skill-maintenance.md` routes bounded work to `small-maintainer` or
-  `heavy-maintainer`, which are capacity variants of one template-development-
-  rooted role. Web supplies an exact runtime ref, one explicit verified target,
-  bounded outcome, constraints, checks, publication expectation, and evidence
-  contract without copying the agent's internal procedure. Explicit package or
-  source-lock work is identified so the agent can load `change-package`.
-- `skill-promotion.md` permits main promotion only after explicit human approval
-  of one exact reviewed developer SHA. It rechecks refs/preconditions, uses only
-  the guarded operation, bans opportunistic content and automatic replay, and
-  verifies exact remote results.
-- `skill-prompt-creation.md` treats a prompt as context transfer across an
-  execution boundary. It adapts to established destination capabilities,
-  preserves Observed/Interpretation/Requested-outcome roles, transfers only
-  mission-specific state, and omits receiver-owned workflow.
+### Package test suite (`validate-package.test.mjs`)
 
-`chatgpt-project/README.md` defines deterministic external rendering,
-five-Source installation, capability configuration, public/private boundaries,
-and upgrade steps. Rendering replaces the repository placeholders outside Git;
-rendered private deployment configuration is never committed.
+`validate-package.test.mjs` executes under `node --test` using standard Node assertions (`node:assert/strict`), child process execution (`node:child_process`), and temporary directories (`node:os`, `node:fs`).
 
-## Task context and future design
+It verifies:
+1. **Passing canonical state:**
+   - Validates that the untouched package passes validation cleanly.
+2. **CI workflow contract:**
+   - Inspects `.github/workflows/validate-web-orchestration.yml` to verify that push validation triggers on branch `web-orchestration`, has read-only repository permissions (`contents: read`), publishes exact-SHA statuses (`statuses: write`), disables credential persistence, runs the canonical package validator and discovery-mode `node --test`, and accesses no secrets.
+3. **Negative fixture tests (isolated via temporary directory copies):**
+   - Package and Project Source inventory drift (unexpected/missing files).
+   - Non-regular files, NUL bytes, invalid UTF-8, and blank files.
+   - Acceptance of historical task records with retired schemas and separate task-progress records (`<task-id>-progress.md`).
+   - Rejection of invalid filenames in `task-context/`.
+   - Missing or unknown routed Sources in `developer-instructions.md`.
+   - Malformed skill files missing titles or `## Trigger` sections.
+   - Incomplete installation inventories or missing render placeholders.
+   - Task template section removal or mixing of execution progress into task records.
+   - Weakening of historical truth semantics in `task-context/README.md`.
+   - Weakening of the public-persistence safety boundary.
+   - Detection of host-local paths or credential tokens in dynamic task-context files.
+   - Removal of uncertain-mutation no-replay guards in recovery instructions.
+   - Weakening of human exact-SHA promotion authority in developer instructions.
+   - Weakening of promotion triggers, opportunistic content bans, or promotion replay safety in promotion instructions.
 
-`task-context/TEMPLATE.md` defines the current seven-section canonical task
-record: accepted outcome, material scope, constraints, required outputs, required
-checks, accepted design, and explicit exceptions. `task-context/README.md`
-separates that durable authority from optional concise `<task-id>-progress.md`
-execution state and requires historical records to remain unchanged evidence.
-Other tracked task-context files are historical public records and are not
-retroactively migrated to the current schema.
+## Verification
 
-`ORCHESTRATION-EVOLUTION.md` is non-runtime design for a future general
-`orchestration` package. It recommends one shared core plus exactly one continuous
-Web or Local capability profile, shared conditional Sources, deterministic
-installation composition, and capability-driven differences. It explicitly
-records that the current branch/package rename and Local profile are not yet
-authorized or implemented.
-
-`README.md` describes current package authority, inventory, public boundary, and
-validation entry points.
-
-## Validator
-
-`validate-package.mjs` is a dependency-free executable ES module for Node
-22.13.0 or newer. It:
-
-- enforces the exact root and Project Source inventories;
-- requires regular, readable, non-empty UTF-8 text without NUL bytes;
-- permits flexible public-safe historical Markdown under `task-context/`;
-- validates the current task template and task/progress separation;
-- validates one router row per known Source plus basic Source structure;
-- checks deterministic render placeholders and installation inventory;
-- checks hard public-safety, one-route, no-replay, context, maintenance-role, and
-  human exact-SHA promotion concepts;
-- rejects obsolete active split-maintenance and Lead/Spark handoff artifacts; and
-- scans every loaded text file for host-local paths, credential-like tokens, and
-  private keys.
-
-The validator checks durable concepts and mechanical structure rather than exact
-instruction prose.
-
-## Tests and CI
-
-`validate-package.test.mjs` runs with Node's built-in test runner. It verifies the
-canonical package and CI contract, then uses isolated temporary copies for
-negative fixtures covering inventory drift, invalid file types/bytes/UTF-8,
-historical task compatibility, task-progress separation, router/Source structure,
-render placeholders, public-safety loss, unsafe dynamic context, uncertain-
-mutation replay, obsolete maintenance terminology, Dual-protocol residue, and
-promotion weakening.
-
-`.github/workflows/validate-web-orchestration.yml` runs only on pushes to
-`web-orchestration`. It checks out without persisted credentials, pins Node
-22.13.0, runs the package validator and discovery-mode tests, has read-only
-contents permission, and publishes an exact-SHA status through `statuses: write`.
-
-Verification routes:
-
-```bash
-node web-orchestration-only/validate-package.mjs
-node --test web-orchestration-only/validate-package.test.mjs
-node --test
-```
+The code files are verified by:
+- `node web-orchestration-only/validate-package.mjs`
+- `node --test web-orchestration-only/validate-package.test.mjs`
+- `node --test` (discovery mode as executed by `.github/workflows/validate-web-orchestration.yml`)
