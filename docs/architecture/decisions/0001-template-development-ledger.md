@@ -1,7 +1,11 @@
 # ADR-0001: Use an independent template-development ledger
 
-- Status: Accepted
+- Status: Accepted; runtime details below are historical and superseded by the current unified Template Maintainer implementation.
 - Date: 2026-08-14
+
+## Current implementation note
+
+The ledger decision remains active: `template-development` is still an independent maintenance/package branch and is not merged into source branches. The original Workspace Maintenance Agent, sole-skill wording, and compaction assumptions below describe the implementation at the time of this ADR. Current runtime truth is in `docs/architecture/AS-BUILT.md`: one Template Maintainer role has Small/Heavy capacity variants, uses shared `maintenance` plus conditional `change-package`, and relies on durable repository rereads rather than a compaction-recovery system.
 
 ## Context
 
