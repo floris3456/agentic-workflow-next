@@ -37,3 +37,7 @@ node web-orchestration-only/validate-package.mjs
 node --test web-orchestration-only/validate-package.test.mjs
 node --test
 ```
+
+## Future orchestration design
+
+`ORCHESTRATION-EVOLUTION.md` is non-runtime design only. It records the planned later move to one shared Orchestrator with a tiny Web\/Local variant delta; it does not change the active Web Project package.

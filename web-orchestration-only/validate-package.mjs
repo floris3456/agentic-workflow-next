@@ -19,6 +19,7 @@ const skills = [
 const projectFiles = ["README.md", "developer-instructions.md", ...skills];
 const rootEntries = [
   "AS-BUILT.md",
+  "ORCHESTRATION-EVOLUTION.md",
   "README.md",
   "chatgpt-project",
   "task-context",

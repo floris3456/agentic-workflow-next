@@ -27,6 +27,7 @@ installation material for the web orchestrator.
 - `chatgpt-project/`: permanent instructions plus five conditionally routed
   Sources for workflow, recovery, template maintenance, promotion, and prompt
   creation.
+- `ORCHESTRATION-EVOLUTION.md`: non-runtime design for the later shared Web/Local Orchestrator package; the current Web runtime remains unchanged until that migration is explicitly implemented.
 - `validate-package.mjs` and `validate-package.test.mjs`: structural package,
   task-template, public-safety, and CI-posture checks.
 - `.github/workflows/validate-web-orchestration.yml`: ordinary push validation
