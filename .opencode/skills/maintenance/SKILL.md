@@ -26,7 +26,7 @@ Use this correspondence when relevant:
 - Web `developer-instructions.md` ↔ Local `local-orchestrator.md` plus root `AGENTS.md` where the rule is ambient.
 - Web `skill-workflow.md` ↔ Local `orchestration-workflow/SKILL.md`.
 - Web `skill-recovery.md` ↔ Local `recovery/SKILL.md`.
-- Web `skill-template-maintenance.md` ↔ Local `workspace/SKILL.md`.
+- Web `skill-workspace.md` ↔ Local `workspace/SKILL.md`.
 - Web `skill-promotion.md` ↔ Local `promotion/SKILL.md`.
 - Web `skill-prompt-creation.md` ↔ Local `prompt-creation/SKILL.md`.
 
