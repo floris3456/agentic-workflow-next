@@ -100,6 +100,37 @@ function fixture(context) {
   };
 }
 
+function currentFixture(context) {
+  const input = fixture(context);
+  git(input.source, ["remote", "add", "current-fixture", input.remote]);
+  git(input.source, ["checkout", "-B", "workspace", input.templateTip]);
+  git(input.source, ["push", "current-fixture", "workspace"]);
+  git(input.source, ["checkout", "-B", "orchestration", input.webHead]);
+  git(input.source, ["push", "current-fixture", "orchestration"]);
+  git(input.source, ["remote", "remove", "current-fixture"]);
+  const lock = {
+    schema_version: 2,
+    canonical_repository: canonicalUrl,
+    recorded_at: "2026-08-26T00:00:00Z",
+    sources: { main: "f".repeat(40), developer: input.developerTip, orchestration: input.webHead },
+    last_change_package: "changes/PREVIOUS/manifest.json",
+  };
+  writeFileSync(join(input.template, "source-lock.json"), `${JSON.stringify(lock, null, 2)}\n`);
+  return { ...input, lock, workspaceBase: input.templateBase, workspaceHead: input.templateHead, orchestrationBase: input.webBase, orchestrationHead: input.webHead };
+}
+
+function createCurrentPackage(input, output, expected = 0) {
+  const args = [
+    join(input.template, "scripts", "create-change-package.mjs"),
+    "--repository", input.source, "--task-id", "CURRENT-001",
+    "--workspace-base", input.workspaceBase, "--workspace-head", input.workspaceHead,
+    "--developer-base", input.developerBase, "--developer-head", input.developerHead,
+    "--orchestration-base", input.orchestrationBase, "--orchestration-head", input.orchestrationHead,
+    "--output", output,
+  ];
+  return run("node", args, root, expected, input.environment);
+}
+
 function createPackage(input, output, overrides = {}, expected = 0) {
   const args = [
     join(input.template, "scripts", "create-change-package.mjs"),
@@ -116,6 +147,20 @@ function createPackage(input, output, overrides = {}, expected = 0) {
   ];
   return run("node", args, root, expected, input.environment);
 }
+
+test("current schema 4 package uses workspace and orchestration branch identities", (context) => {
+  const input = currentFixture(context);
+  const output = join(input.directory, "current-package");
+  const result = createCurrentPackage(input, output);
+  assert.match(result.stdout, /workspace .*developer .*orchestration/);
+  const checked = validateChangePackage(output, "CURRENT-001");
+  assert.equal(checked.schemaVersion, 4);
+  assert.equal(checked.provenanceVerified, true);
+  assert.deepEqual(Object.keys(checked.manifest.ranges).sort(), ["developer", "orchestration", "workspace"]);
+  assert.equal(checked.manifest.provenance.source_lock.schema_version, 2);
+  assert.equal(existsSync(join(output, "workspace.patch")), true);
+  assert.equal(existsSync(join(output, "orchestration.patch")), true);
+});
 
 test("creates deterministic provenance schema 3 with all reviewed ranges and a non-self-referential source snapshot", (context) => {
   const input = fixture(context);

@@ -2,12 +2,12 @@
 set -euo pipefail
 
 branch="$(git branch --show-current)"
-[[ "$branch" == "template-development" || "$branch" == "workspace" ]] || {
-  echo "This maintenance checkout permits commits only on the active rename pair; current state is ${branch:-detached HEAD}." >&2
+[[ "$branch" == "workspace" ]] || {
+  echo "This checkout permits commits only on workspace; current state is ${branch:-detached HEAD}." >&2
   exit 1
 }
-marker="$(git rev-parse --git-dir)/${branch}-sync-failed"
+marker="$(git rev-parse --git-dir)/workspace-sync-failed"
 [[ ! -e "$marker" ]] || {
-  echo "A prior ${branch} push failed. Recover synchronization before committing." >&2
+  echo "A prior workspace push failed. Recover synchronization before committing." >&2
   exit 1
 }

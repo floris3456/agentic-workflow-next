@@ -1,8 +1,8 @@
-name: Validate template development
+name: Validate workspace
 
 on:
   push:
-    branches: [template-development]
+    branches: [workspace]
   workflow_dispatch:
 
 permissions:
@@ -26,13 +26,13 @@ jobs:
       - run: npm install --prefix .opencode --ignore-scripts --no-audit --no-fund
       - run: node .opencode/node_modules/opencode-ai/postinstall.mjs
       - run: chmod +x .githooks/* scripts/*.sh scripts/*.mjs
-      - run: ./scripts/validate-template-development.sh
+      - run: ./scripts/validate-workspace.sh
       - name: Publish exact-SHA validation status
         if: ${{ always() && github.event_name == 'push' }}
         env:
           GH_STATUS_TOKEN: ${{ github.token }}
           VALIDATION_JOB_STATUS: ${{ job.status }}
-          STATUS_CONTEXT: agentic-template/validate-template-development
+          STATUS_CONTEXT: agentic-template/validate-workspace
           RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
         shell: bash
         run: |
@@ -45,7 +45,7 @@ jobs:
           payload="$(jq -cn \
             --arg state "${state}" \
             --arg target_url "${RUN_URL}" \
-            --arg description "Canonical template validation: ${state}" \
+            --arg description "Canonical workspace validation: ${state}" \
             --arg context "${STATUS_CONTEXT}" \
             '{state:$state,target_url:$target_url,description:$description,context:$context}')"
           curl --fail-with-body --silent --show-error \

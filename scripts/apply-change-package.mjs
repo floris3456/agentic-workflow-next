@@ -17,7 +17,7 @@ function parse(argv) {
     const name = filtered[index];
     const value = filtered[index + 1];
     if (!name?.startsWith("--") || !value || value.startsWith("--")) {
-      fail("Usage: apply-change-package.mjs [--package <directory> | --task-id <id>] --repository <path> --target <template-development|developer|web-orchestration> [--apply]");
+      fail("Usage: apply-change-package.mjs [--package <directory> | --task-id <id>] --repository <path> --target <workspace|developer|orchestration|template-development|web-orchestration> [--apply]");
     }
     if (result.has(name)) fail(`Duplicate argument ${name}`);
     result.set(name, value);
@@ -37,8 +37,8 @@ function git(repository, args) {
 const { apply, values } = parse(process.argv.slice(2));
 const repository = resolve(values.get("--repository") ?? fail("Missing --repository"));
 const target = values.get("--target") ?? fail("Missing --target");
-if (!["template-development", "developer", "web-orchestration"].includes(target)) {
-  fail("target must be template-development, developer, or web-orchestration");
+if (!["workspace", "developer", "orchestration", "template-development", "web-orchestration"].includes(target)) {
+  fail("target must be a current or historical package branch name");
 }
 
 let packageDirectory;

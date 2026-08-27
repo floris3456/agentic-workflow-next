@@ -38,14 +38,14 @@ async function fixture(t) {
   await git(root, "init", "--bare", origin);
   await git(root, "init", "--bare", foreign);
   await mkdir(template);
-  await git(template, "init", "--initial-branch=template-development");
+  await git(template, "init", "--initial-branch=workspace");
   await configureRepository(template);
   await git(template, "remote", "add", "origin", origin);
   await writeFile(join(template, "AGENTS.md"), "ROOT TEMPLATE AUTHORITY\n", "utf8");
   await writeFile(join(template, "base.txt"), "base\n", "utf8");
   await git(template, "add", ".");
   await git(template, "commit", "-m", "Create security fixture");
-  await git(template, "push", "--set-upstream", "origin", "template-development");
+  await git(template, "push", "--set-upstream", "origin", "workspace");
   await git(template, "branch", "developer");
   await git(template, "worktree", "add", developer, "developer");
   await git(developer, "push", "--set-upstream", "origin", "developer");

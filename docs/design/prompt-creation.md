@@ -4,7 +4,7 @@
 
 Prompt creation is an Orchestrator-owned context-transfer capability for crossing an execution boundary. It is not a substitute for doing work in the current context.
 
-The active Web implementation is `web-orchestration-only/chatgpt-project/skill-prompt-creation.md`. Template-development does not duplicate that runtime procedure; this document records the reusable design boundary only.
+The active Web implementation is `web-orchestration-only/chatgpt-project/skill-prompt-creation.md`. Workspace does not duplicate that runtime procedure; this document records the reusable design boundary only.
 
 ## Core contract
 
@@ -32,8 +32,8 @@ Add structure, stages, alternatives, examples, schemas, or targeted verification
 
 ## Ownership and future variants
 
-Research and prompt creation are Orchestrator-owned; Developer and Template Maintainer consume resulting evidence/prompts rather than owning this workflow.
+Research and prompt creation are Orchestrator-owned; Developer and Workspace Maintainer consume resulting evidence/prompts rather than owning this workflow.
 
-The planned shared Web/Local Orchestrator keeps this ordinary prompt contract shared. Web may also create prompt packages when its installed procedure supports them. Local may create ordinary prompts but not prompt packages, and uses its connected Tavily MCP for public web research. Those variant rules belong in the future Orchestrator installation, not in Developer or Template Maintainer runtime instructions.
+The planned shared Web/Local Orchestrator keeps this ordinary prompt contract shared. Both Web and Local may create ordinary prompts and prompt packages. Web uses native ChatGPT web research; Local uses its connected Tavily MCP for public web research and must never read `web-orchestration-only/`. Those runtime-specific rules belong in the Orchestrator implementations, not in Developer or Workspace Maintainer runtime instructions.
 
 Validators should check only mechanical package/safety boundaries that materially matter. They must not encode the wording, section inventory, or optional craft techniques of this design as exact prompt prose.

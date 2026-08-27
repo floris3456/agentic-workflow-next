@@ -72,14 +72,14 @@ test("workspace gate keeps template authority while safely maintaining exact reg
   await git(fixture, "init", "--bare", origin);
   await git(fixture, "init", "--bare", foreignOrigin);
   await mkdir(template);
-  await git(template, "init", "--initial-branch=template-development");
+  await git(template, "init", "--initial-branch=workspace");
   await configureRepository(template);
   await git(template, "remote", "add", "origin", origin);
   await writeFile(join(template, "AGENTS.md"), "ROOT TEMPLATE AUTHORITY\n", "utf8");
   await writeFile(join(template, "base.txt"), "shared fixture\n", "utf8");
   await git(template, "add", ".");
   await git(template, "commit", "-m", "Create fixture repository");
-  await git(template, "push", "--set-upstream", "origin", "template-development");
+  await git(template, "push", "--set-upstream", "origin", "workspace");
 
   const developer = await addWorktree(template, fixture, "developer");
   const main = await addWorktree(template, fixture, "main");
@@ -121,9 +121,9 @@ test("workspace gate keeps template authority while safely maintaining exact reg
 
   const gate = new WorkspaceMaintenanceGate(template, { fixtureOrigins: [origin] });
   const inventory = await gate.list();
-  assert.equal(inventory.instruction_root, "template-development");
+  assert.equal(inventory.instruction_root, "workspace");
   assert.equal(inventory.rejected_registered_entries, 3);
-  for (const target of ["template-development", "developer", "main", "web-orchestration", detachedHead]) {
+  for (const target of ["workspace", "developer", "main", "web-orchestration", detachedHead]) {
     assert.ok(inventory.targets.some((entry) => entry.target === target), `missing public target ${target}`);
   }
   const publicInventory = JSON.stringify(inventory);
@@ -139,7 +139,7 @@ test("workspace gate keeps template authority while safely maintaining exact reg
   await assert.rejects(() => gate.inspect("stale"), /stale or non-working/);
   await assert.rejects(
     () => new WorkspaceMaintenanceGate(main).list(),
-    /must remain rooted on template-development/,
+    /must remain rooted on workspace/,
   );
 
   // Main remains technically reachable, while policy and human authority—not a
@@ -173,7 +173,7 @@ test("workspace gate keeps template authority while safely maintaining exact reg
   );
   assert.match(await gate.read("developer", "AGENTS.md"), /CONFLICTING TARGET INSTRUCTION/);
   assert.equal(await readFile(join(template, "AGENTS.md"), "utf8"), "ROOT TEMPLATE AUTHORITY\n");
-  assert.equal((await gate.authority()).verified.public.branch, "template-development");
+  assert.equal((await gate.authority()).verified.public.branch, "workspace");
 
   const outside = join(fixture, "outside");
   await mkdir(outside);

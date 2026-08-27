@@ -11,17 +11,17 @@ const read = (path) => readFileSync(join(root, path), "utf8");
 
 const required = [
   "README.md", "AGENTS.md", "source-lock.json", "opencode.json",
-  ".github/workflows/validate-template-development.yml",
+  ".github/workflows/validate-workspace.yml",
   ".opencode/agents/small-maintainer.md", ".opencode/agents/heavy-maintainer.md",
   ".opencode/skills/maintenance/SKILL.md", ".opencode/skills/change-package/SKILL.md",
   ".opencode/plugins/workspace-maintenance.ts", ".opencode/.gitignore", ".opencode/package.json",
   "scripts/workspace-maintenance-lib.mjs",
-  "docs/architecture/AS-BUILT.md", "docs/architecture/decisions/0001-template-development-ledger.md",
+  "docs/architecture/AS-BUILT.md", "docs/architecture/decisions/0001-workspace-ledger.md",
   "docs/design/maintenance-routing.md", "docs/deviations.md",
   "docs/work/templates/task-progress-template.md",
   "scripts/change-package-lib.mjs", "scripts/create-change-package.mjs", "scripts/apply-change-package.mjs",
-  "scripts/bootstrap-template-development.sh", "scripts/recover-template-development-sync.sh",
-  "scripts/validate-template-development.sh", "tests/change-package.test.mjs",
+  "scripts/bootstrap-workspace.sh", "scripts/recover-workspace-sync.sh",
+  "scripts/validate-workspace.sh", "tests/change-package.test.mjs",
   "scripts/validate-maintenance-opencode-runtime.mjs", "tests/workspace-maintenance.test.mjs",
 ];
 for (const path of required) if (!existsSync(join(root, path))) fail(`Missing required path: ${path}`);
@@ -45,7 +45,7 @@ for (const entry of readdirSync(root, { withFileTypes: true })) {
   if (entry.name === ".git") continue;
   if (!allowedTopLevel.has(entry.name)) fail(`Unexpected top-level source-tree entry: ${entry.name}`);
 }
-for (const forbidden of ["web-orchestration-only", "contracts", "src", "tools", "research", "evidence", "raw-evidence"])
+for (const forbidden of ["orchestration-only", "contracts", "src", "tools", "research", "evidence", "raw-evidence"])
   if (existsSync(join(root, forbidden))) fail(`Source implementation must not be materialized here: ${forbidden}`);
 
 if (existsSync(join(root, ".opencode/agents"))) {
@@ -66,14 +66,14 @@ try {
   fail(`source-lock.json is invalid: ${error.message}`);
 }
 
-if (existsSync(join(root, ".github/workflows/validate-template-development.yml"))) {
-  const workflow = read(".github/workflows/validate-template-development.yml");
+if (existsSync(join(root, ".github/workflows/validate-workspace.yml"))) {
+  const workflow = read(".github/workflows/validate-workspace.yml");
   for (const term of [
-    "branches: [template-development]",
+    "branches: [workspace]",
     "sudo apt-get update && sudo apt-get install --yes bubblewrap",
     "sudo sysctl --write kernel.apparmor_restrict_unprivileged_userns=0",
-    "./scripts/validate-template-development.sh",
-  ]) if (!workflow.includes(term)) fail(`Template-development CI is missing ${term}`);
+    "./scripts/validate-workspace.sh",
+  ]) if (!workflow.includes(term)) fail(`Workspace CI is missing ${term}`);
 }
 
 try {
@@ -87,11 +87,11 @@ try {
 
 try {
   const packageFile = JSON.parse(read(".opencode/package.json"));
-  if (packageFile.dependencies?.["@opencode-ai/plugin"] !== "1.18.16") {
-    fail("Workspace plugin dependency must remain pinned to @opencode-ai/plugin 1.18.16");
+  if (packageFile.dependencies?.["@opencode-ai/plugin"] !== "1.18.23") {
+    fail("Workspace plugin dependency must remain pinned to @opencode-ai/plugin 1.18.23");
   }
-  if (packageFile.dependencies?.["opencode-ai"] !== "1.18.16") {
-    fail("Workspace runtime dependency must remain pinned to OpenCode 1.18.16");
+  if (packageFile.dependencies?.["opencode-ai"] !== "1.18.23") {
+    fail("Workspace runtime dependency must remain pinned to OpenCode 1.18.23");
   }
 } catch (error) {
   fail(`.opencode/package.json is invalid: ${error.message}`);
@@ -174,8 +174,8 @@ if (existsSync(join(root, "changes"))) {
 for (const path of [
   ".githooks/pre-commit", ".githooks/post-commit", ".githooks/pre-push",
   "scripts/create-change-package.mjs", "scripts/apply-change-package.mjs",
-  "scripts/bootstrap-template-development.sh", "scripts/recover-template-development-sync.sh",
-  "scripts/validate-template-development.mjs", "scripts/validate-template-development.sh",
+  "scripts/bootstrap-workspace.sh", "scripts/recover-workspace-sync.sh",
+  "scripts/validate-workspace.mjs", "scripts/validate-workspace.sh",
   "scripts/validate-maintenance-opencode-runtime.mjs",
 ]) {
   const full = join(root, path);
@@ -202,8 +202,8 @@ for (const file of files(root)) {
 }
 
 if (failures.length) {
-  console.error(`Template-development validation failed (${failures.length}):`);
+  console.error(`Workspace validation failed (${failures.length}):`);
   for (const failure of failures) console.error(`- ${failure}`);
   process.exit(1);
 }
-console.log("Template-development validation passed.");
+console.log("Workspace validation passed.");

@@ -9,8 +9,8 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const expectedVersion = "1.18.16";
-const executable = resolve(process.env.OPENCODE_1_18_16_BIN
+const expectedVersion = "1.18.23";
+const executable = resolve(process.env.OPENCODE_1_18_23_BIN
   ?? join(root, ".opencode", "node_modules", ".bin", "opencode"));
 
 function wildcard(pattern, value) {
@@ -50,20 +50,27 @@ async function json(base, pathname, directory = false) {
 }
 
 async function stop(child) {
-  if (child.exitCode !== null) return;
-  child.kill("SIGTERM");
-  await Promise.race([
-    new Promise((resolvePromise) => child.once("exit", resolvePromise)),
+  const waitForExit = () => Promise.race([
+    child.exitCode !== null ? Promise.resolve() : new Promise((resolvePromise) => child.once("exit", resolvePromise)),
     new Promise((resolvePromise) => setTimeout(resolvePromise, 3_000)),
   ]);
-  if (child.exitCode === null) child.kill("SIGKILL");
+  if (child.exitCode === null) {
+    child.kill("SIGTERM");
+    await waitForExit();
+  }
+  if (child.exitCode === null) {
+    child.kill("SIGKILL");
+    await waitForExit();
+  }
+  child.stdout?.destroy();
+  child.stderr?.destroy();
 }
 
 await access(executable, fsConstants.X_OK).catch(() => {
-  throw new Error("Pinned OpenCode 1.18.16 executable is unavailable; install .opencode dependencies or set OPENCODE_1_18_16_BIN");
+  throw new Error("Pinned OpenCode 1.18.23 executable is unavailable; install .opencode dependencies or set OPENCODE_1_18_23_BIN");
 });
 
-const temporary = await mkdtemp(join(tmpdir(), "template-opencode-inventory-"));
+const temporary = await mkdtemp(join(tmpdir(), "workspace-opencode-inventory-"));
 let child;
 try {
   const directories = Object.fromEntries(["home", "config", "cache", "data", "state", "tmp"]
@@ -147,7 +154,7 @@ try {
 
   for (const spec of routeSpecs) {
     const agent = agents.find((candidate) => candidate.name === spec.name);
-    assert(agent, `${spec.name} was not discovered from template-development`);
+    assert(agent, `${spec.name} was not discovered from workspace`);
     assert.equal(agent.mode, "primary");
     assert.deepEqual(agent.model, spec.model);
     assert.equal(agent.options?.reasoningEffort, spec.reasoningEffort);

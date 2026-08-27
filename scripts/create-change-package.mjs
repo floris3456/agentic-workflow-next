@@ -107,11 +107,38 @@ function sterileGitEnvironment(directory) {
 
 const values = argumentsMap(process.argv.slice(2));
 const known = new Set([
-  "--repository", "--task-id", "--template-base", "--template-head",
-  "--developer-base", "--developer-head", "--web-base", "--web-head", "--output",
-  "--revision", "--supersedes",
+  "--repository", "--task-id", "--workspace-base", "--workspace-head",
+  "--template-base", "--template-head", "--developer-base", "--developer-head",
+  "--orchestration-base", "--orchestration-head", "--web-base", "--web-head",
+  "--output", "--revision", "--supersedes",
 ]);
 for (const name of values.keys()) if (!known.has(name)) fail(`Unknown argument ${name}`);
+
+const currentFlags = ["--workspace-base", "--workspace-head", "--orchestration-base", "--orchestration-head"];
+const legacyFlags = ["--template-base", "--template-head", "--web-base", "--web-head"];
+const currentMode = currentFlags.some((name) => values.has(name));
+if (currentMode && legacyFlags.some((name) => values.has(name))) fail("Do not mix current workspace/orchestration flags with legacy template/web flags");
+const profile = currentMode ? {
+  schemaVersion: 4,
+  sourceLockSchema: 2,
+  maintenanceTarget: "workspace",
+  maintenanceArg: "workspace",
+  maintenancePatch: "workspace.patch",
+  orchestrationTarget: "orchestration",
+  orchestrationArg: "orchestration",
+  orchestrationPatch: "orchestration.patch",
+  provenanceMode: "canonical-remote-fetch-v3",
+} : {
+  schemaVersion: 3,
+  sourceLockSchema: 1,
+  maintenanceTarget: "template-development",
+  maintenanceArg: "template",
+  maintenancePatch: "template-development.patch",
+  orchestrationTarget: "web-orchestration",
+  orchestrationArg: "web",
+  orchestrationPatch: "web-orchestration.patch",
+  provenanceMode: "canonical-remote-fetch-v2",
+};
 
 const repository = resolve(required(values, "--repository"));
 const taskId = required(values, "--task-id");
@@ -119,11 +146,9 @@ if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(taskId)) fail("task-id is invalid
 runGit(repository, ["rev-parse", "--git-dir"]);
 
 let targetRevision = values.has("--revision") ? Number(values.get("--revision")) : undefined;
-if (targetRevision !== undefined && (!Number.isInteger(targetRevision) || targetRevision < 1)) {
-  fail("--revision must be a positive integer");
-}
+if (targetRevision !== undefined && (!Number.isInteger(targetRevision) || targetRevision < 1)) fail("--revision must be a positive integer");
 
-let supersedesEntry = undefined;
+let supersedesEntry;
 const supersedesInput = values.get("--supersedes");
 if (supersedesInput) {
   const supersededResolved = resolve(supersedesInput);
@@ -133,56 +158,34 @@ if (supersedesInput) {
   } catch (error) {
     fail(`Superseded package is invalid: ${error.message}`);
   }
-  if (checkedSuperseded.manifest.task_id !== taskId) {
-    fail(`Superseded package task_id (${checkedSuperseded.manifest.task_id}) does not match current task-id (${taskId})`);
-  }
+  if (checkedSuperseded.manifest.task_id !== taskId) fail(`Superseded package task_id (${checkedSuperseded.manifest.task_id}) does not match current task-id (${taskId})`);
   const supersededRev = checkedSuperseded.manifest.revision ?? 1;
-  if (targetRevision === undefined) {
-    targetRevision = supersededRev + 1;
-  } else if (targetRevision <= supersededRev) {
-    fail(`--revision (${targetRevision}) must be strictly greater than superseded package revision (${supersededRev})`);
-  }
+  if (targetRevision === undefined) targetRevision = supersededRev + 1;
+  else if (targetRevision <= supersededRev) fail(`--revision (${targetRevision}) must be strictly greater than superseded package revision (${supersededRev})`);
   let relPath = relative(repository, checkedSuperseded.directory);
-  if (relPath.startsWith("..") || !relPath) {
-    relPath = relative(root, checkedSuperseded.directory);
-  }
-  if (relPath.startsWith("..") || !relPath) {
-    relPath = `changes/${basename(checkedSuperseded.directory)}`;
-  }
+  if (relPath.startsWith("..") || !relPath) relPath = relative(root, checkedSuperseded.directory);
+  if (relPath.startsWith("..") || !relPath) relPath = `changes/${basename(checkedSuperseded.directory)}`;
   const { normalizedPath } = resolveSupersededPath(relPath, resolve(repository, "changes"));
-  supersedesEntry = {
-    package_path: normalizedPath,
-    package_sha256: checkedSuperseded.manifest.package_sha256,
-    revision: supersededRev,
-  };
+  supersedesEntry = { package_path: normalizedPath, package_sha256: checkedSuperseded.manifest.package_sha256, revision: supersededRev };
 }
 
 const lock = JSON.parse(readFileSync(resolve(root, "source-lock.json"), "utf8"));
-try {
-  validateSourceLock(lock);
-} catch (error) {
-  fail(`source-lock.json is invalid: ${error.message}`);
-}
+try { validateSourceLock(lock); } catch (error) { fail(`source-lock.json is invalid: ${error.message}`); }
+if (lock.schema_version !== profile.sourceLockSchema) fail(`This package mode requires source-lock schema ${profile.sourceLockSchema}`);
 const remote = runGit(repository, ["remote", "get-url", "origin"]).trim();
-try {
-  assertRemoteMatchesCanonical(remote, lock.canonical_repository);
-} catch (error) {
-  fail(error.message);
-}
+try { assertRemoteMatchesCanonical(remote, lock.canonical_repository); } catch (error) { fail(error.message); }
 
-const templateBase = exact(required(values, "--template-base"), "template-base");
-const templateHead = exact(required(values, "--template-head"), "template-head");
+const maintenanceBase = exact(required(values, `--${profile.maintenanceArg}-base`), `${profile.maintenanceArg}-base`);
+const maintenanceHead = exact(required(values, `--${profile.maintenanceArg}-head`), `${profile.maintenanceArg}-head`);
 const developerBase = exact(required(values, "--developer-base"), "developer-base");
 const developerHead = exact(required(values, "--developer-head"), "developer-head");
-const webBase = exact(required(values, "--web-base"), "web-base");
-const webHead = exact(required(values, "--web-head"), "web-head");
+const orchestrationBase = exact(required(values, `--${profile.orchestrationArg}-base`), `${profile.orchestrationArg}-base`);
+const orchestrationHead = exact(required(values, `--${profile.orchestrationArg}-head`), `${profile.orchestrationArg}-head`);
 
 const output = resolve(required(values, "--output"));
-if (existsSync(output) && (!statSync(output).isDirectory() || readdirSync(output).length !== 0)) {
-  fail("output must be a missing or empty directory");
-}
+if (existsSync(output) && (!statSync(output).isDirectory() || readdirSync(output).length !== 0)) fail("output must be a missing or empty directory");
 
-const temporary = mkdtempSync(join(tmpdir(), "template-package-canonical-"));
+const temporary = mkdtempSync(join(tmpdir(), "workspace-package-canonical-"));
 try {
   const canonicalRepo = join(temporary, "canonical.git");
   mkdirSync(canonicalRepo);
@@ -190,113 +193,68 @@ try {
   runGit(canonicalRepo, ["init", "--bare"], { env });
   runGit(canonicalRepo, [
     "fetch", "--no-tags", "--force", lock.canonical_repository,
-    "+refs/heads/template-development:refs/remotes/canonical/template-development",
+    `+refs/heads/${profile.maintenanceTarget}:refs/remotes/canonical/${profile.maintenanceTarget}`,
     "+refs/heads/developer:refs/remotes/canonical/developer",
-    "+refs/heads/web-orchestration:refs/remotes/canonical/web-orchestration",
+    `+refs/heads/${profile.orchestrationTarget}:refs/remotes/canonical/${profile.orchestrationTarget}`,
   ], { env });
-  const fetchedTemplate = runGit(canonicalRepo, ["rev-parse", "refs/remotes/canonical/template-development^{commit}"], { env }).trim();
+  const fetchedMaintenance = runGit(canonicalRepo, ["rev-parse", `refs/remotes/canonical/${profile.maintenanceTarget}^{commit}`], { env }).trim();
   const fetchedDeveloper = runGit(canonicalRepo, ["rev-parse", "refs/remotes/canonical/developer^{commit}"], { env }).trim();
-  const fetchedWeb = runGit(canonicalRepo, ["rev-parse", "refs/remotes/canonical/web-orchestration^{commit}"], { env }).trim();
+  const fetchedOrchestration = runGit(canonicalRepo, ["rev-parse", `refs/remotes/canonical/${profile.orchestrationTarget}^{commit}`], { env }).trim();
   for (const [reviewedHead, canonicalTip, label] of [
-    [templateHead, fetchedTemplate, "template-development"],
+    [maintenanceHead, fetchedMaintenance, profile.maintenanceTarget],
     [developerHead, fetchedDeveloper, "developer"],
-    [webHead, fetchedWeb, "web-orchestration"],
+    [orchestrationHead, fetchedOrchestration, profile.orchestrationTarget],
   ]) {
     let resolved;
     try {
-      resolved = execFileSync("git", ["-C", canonicalRepo, "rev-parse", `${reviewedHead}^{commit}`], {
-        encoding: "utf8",
-        stdio: ["ignore", "pipe", "pipe"],
-        env,
-      }).trim();
-    } catch {
-      fail(`${label} reviewed head did not resolve exactly from canonical fetch`);
-    }
+      resolved = execFileSync("git", ["-C", canonicalRepo, "rev-parse", `${reviewedHead}^{commit}`], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], env }).trim();
+    } catch { fail(`${label} reviewed head did not resolve exactly from canonical fetch`); }
     if (resolved !== reviewedHead) fail(`${label} reviewed head did not resolve exactly from canonical fetch`);
-    try {
-      execFileSync("git", ["-C", canonicalRepo, "merge-base", "--is-ancestor", reviewedHead, canonicalTip], {
-        stdio: "ignore",
-        env,
-      });
-    } catch {
-      fail(`${label} reviewed head is not an ancestor of the current canonical tip`);
-    }
+    try { execFileSync("git", ["-C", canonicalRepo, "merge-base", "--is-ancestor", reviewedHead, canonicalTip], { stdio: "ignore", env }); }
+    catch { fail(`${label} reviewed head is not an ancestor of the current canonical tip`); }
   }
 
-  const template = range(canonicalRepo, templateBase, templateHead, "template-development", env, (path) => !isPackageStoragePath(path));
-  if (template.paths.some(isPackageStoragePath)) {
-    fail("template-development range must not contain package storage paths beneath changes/");
-  }
+  const maintenance = range(canonicalRepo, maintenanceBase, maintenanceHead, profile.maintenanceTarget, env, (path) => !isPackageStoragePath(path));
+  if (maintenance.paths.some(isPackageStoragePath)) fail(`${profile.maintenanceTarget} range must not contain package storage paths beneath changes/`);
   const developer = range(canonicalRepo, developerBase, developerHead, "developer", env);
-  const web = range(canonicalRepo, webBase, webHead, "web-orchestration", env);
-  const templatePatch = template.patch;
+  const orchestration = range(canonicalRepo, orchestrationBase, orchestrationHead, profile.orchestrationTarget, env);
+  const maintenancePatch = maintenance.patch;
   const developerPatch = developer.patch;
-  const webPatch = web.patch;
+  const orchestrationPatch = orchestration.patch;
   const sourceDate = process.env.SOURCE_DATE_EPOCH;
-  const createdAt = sourceDate && /^\d+$/.test(sourceDate)
-    ? new Date(Number(sourceDate) * 1000).toISOString()
-    : new Date().toISOString();
+  const createdAt = sourceDate && /^\d+$/.test(sourceDate) ? new Date(Number(sourceDate) * 1000).toISOString() : new Date().toISOString();
+  const canonicalTips = {
+    [profile.maintenanceTarget]: fetchedMaintenance,
+    developer: fetchedDeveloper,
+    [profile.orchestrationTarget]: fetchedOrchestration,
+  };
+  const headRelations = Object.fromEntries(Object.keys(canonicalTips).map((target) => [target, "reviewed-head-ancestor-of-canonical-tip"]));
+  const ranges = {
+    [profile.maintenanceTarget]: { base: maintenanceBase, head: maintenanceHead, changed_paths: maintenance.paths, patch: profile.maintenancePatch, patch_sha256: sha256(maintenancePatch) },
+    developer: { base: developerBase, head: developerHead, changed_paths: developer.paths, patch: "developer.patch", patch_sha256: sha256(developerPatch) },
+    [profile.orchestrationTarget]: { base: orchestrationBase, head: orchestrationHead, changed_paths: orchestration.paths, patch: profile.orchestrationPatch, patch_sha256: sha256(orchestrationPatch) },
+  };
   const core = {
-    schema_version: 3,
+    schema_version: profile.schemaVersion,
     task_id: taskId,
     ...(targetRevision !== undefined ? { revision: targetRevision } : {}),
     ...(supersedesEntry !== undefined ? { supersedes: supersedesEntry } : {}),
     canonical_repository: lock.canonical_repository,
     created_at: createdAt,
-    provenance: {
-      mode: "canonical-remote-fetch-v2",
-      source_lock: lock,
-      source_lock_sha256: sourceLockDigest(lock),
-      canonical_tips: {
-        "template-development": fetchedTemplate,
-        developer: fetchedDeveloper,
-        "web-orchestration": fetchedWeb,
-      },
-      head_relations: {
-        "template-development": "reviewed-head-ancestor-of-canonical-tip",
-        developer: "reviewed-head-ancestor-of-canonical-tip",
-        "web-orchestration": "reviewed-head-ancestor-of-canonical-tip",
-      },
-    },
-    ranges: {
-      "template-development": {
-        base: templateBase,
-        head: templateHead,
-        changed_paths: template.paths,
-        patch: "template-development.patch",
-        patch_sha256: sha256(templatePatch),
-      },
-      developer: {
-        base: developerBase,
-        head: developerHead,
-        changed_paths: developer.paths,
-        patch: "developer.patch",
-        patch_sha256: sha256(developerPatch),
-      },
-      "web-orchestration": {
-        base: webBase,
-        head: webHead,
-        changed_paths: web.paths,
-        patch: "web-orchestration.patch",
-        patch_sha256: sha256(webPatch),
-      },
-    },
+    provenance: { mode: profile.provenanceMode, source_lock: lock, source_lock_sha256: sourceLockDigest(lock), canonical_tips: canonicalTips, head_relations: headRelations },
+    ranges,
   };
-  const patches = {
-    "template-development": templatePatch,
-    developer: developerPatch,
-    "web-orchestration": webPatch,
-  };
+  const patches = { [profile.maintenanceTarget]: maintenancePatch, developer: developerPatch, [profile.orchestrationTarget]: orchestrationPatch };
   const manifest = { ...core, package_sha256: packageDigest(core, patches) };
   if (!existsSync(output)) mkdirSync(output, { recursive: true });
-  writeFileSync(resolve(output, "template-development.patch"), templatePatch);
+  writeFileSync(resolve(output, profile.maintenancePatch), maintenancePatch);
   writeFileSync(resolve(output, "developer.patch"), developerPatch);
-  writeFileSync(resolve(output, "web-orchestration.patch"), webPatch);
+  writeFileSync(resolve(output, profile.orchestrationPatch), orchestrationPatch);
   writeFileSync(resolve(output, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
   const checked = validateChangePackage(output, taskId);
-  if (!checked.provenanceVerified || checked.schemaVersion !== 3) fail("newly generated package did not validate as provenance schema 3");
+  if (!checked.provenanceVerified || checked.schemaVersion !== profile.schemaVersion) fail(`newly generated package did not validate as provenance schema ${profile.schemaVersion}`);
   assertPackagePublicSafe(checked);
-  console.log(`Created provenance-verified template change package ${taskId}${targetRevision ? ` (rev ${targetRevision})` : ""}: template-development ${template.paths.length} path(s), developer ${developer.paths.length} path(s), web-orchestration ${web.paths.length} path(s).`);
+  console.log(`Created provenance-verified change package ${taskId}${targetRevision ? ` (rev ${targetRevision})` : ""}: ${profile.maintenanceTarget} ${maintenance.paths.length} path(s), developer ${developer.paths.length} path(s), ${profile.orchestrationTarget} ${orchestration.paths.length} path(s).`);
 } finally {
   rmSync(temporary, { recursive: true, force: true });
 }

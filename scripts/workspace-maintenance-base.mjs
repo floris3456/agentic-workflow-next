@@ -71,7 +71,7 @@ export class WorkspaceMaintenanceBase {
     const entry = inventory.entries.find((candidate) => resolve(candidate.path) === inventory.root);
     if (!entry) throw new Error("Instruction root is not a registered worktree");
     const verified = await this.verifyEntry(inventory, entry);
-    if (verified.entry.branch !== "refs/heads/template-development") throw new Error("Workspace Maintenance Agent must remain rooted on template-development");
+    if (verified.entry.branch !== "refs/heads/workspace") throw new Error("Workspace Maintenance Agent must remain rooted on workspace");
     return { inventory, verified };
   }
 
@@ -82,7 +82,7 @@ export class WorkspaceMaintenanceBase {
     for (const entry of inventory.entries) {
       try { targets.push((await this.verifyEntry(inventory, entry)).public); } catch { rejected++; }
     }
-    return { instruction_root: "template-development", targets, rejected_registered_entries: rejected };
+    return { instruction_root: "workspace", targets, rejected_registered_entries: rejected };
   }
 
   async target(target) {

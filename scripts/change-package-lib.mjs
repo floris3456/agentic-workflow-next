@@ -3,13 +3,17 @@ import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { basename, dirname, join, relative, resolve } from "node:path";
 
 const exactSha = /^[0-9a-f]{40}$/;
-const sourceLockTargets = ["developer", "web-orchestration"];
+const sourceLockTargetsV1 = ["developer", "web-orchestration"];
+const sourceLockTargetsV2 = ["developer", "orchestration"];
 const packageTargetsV2 = ["developer", "web-orchestration"];
 const packageTargetsV3 = ["template-development", ...packageTargetsV2];
+const packageTargetsV4 = ["workspace", "developer", "orchestration"];
 const patchNames = {
   "template-development": "template-development.patch",
+  workspace: "workspace.patch",
   developer: "developer.patch",
   "web-orchestration": "web-orchestration.patch",
+  orchestration: "orchestration.patch",
 };
 
 export function sha256(input) {
@@ -93,14 +97,15 @@ export function assertRemoteMatchesCanonical(remote, canonicalRepository) {
 }
 
 export function validateSourceLock(lock) {
-  if (!lock || typeof lock !== "object" || Array.isArray(lock) || lock.schema_version !== 1) {
-    throw new Error("source-lock schema_version must be 1");
+  if (!lock || typeof lock !== "object" || Array.isArray(lock) || ![1, 2].includes(lock.schema_version)) {
+    throw new Error("source-lock schema_version must be 1 or 2");
   }
   const identity = canonicalRepositoryIdentity(lock.canonical_repository);
   if (!lock.sources || typeof lock.sources !== "object" || Array.isArray(lock.sources)) throw new Error("source-lock sources are missing");
-  const expected = ["main", ...sourceLockTargets];
+  const targets = lock.schema_version === 2 ? sourceLockTargetsV2 : sourceLockTargetsV1;
+  const expected = ["main", ...targets];
   if (Object.keys(lock.sources).sort().join("\0") !== [...expected].sort().join("\0")) {
-    throw new Error("source-lock sources must contain exactly main, developer, and web-orchestration");
+    throw new Error(`source-lock schema ${lock.schema_version} sources do not match the expected branch inventory`);
   }
   for (const branch of expected) {
     if (!exactSha.test(lock.sources[branch] ?? "")) throw new Error(`source-lock ${branch} must be an exact SHA`);
@@ -127,7 +132,9 @@ function validateRange(entry, target, directory) {
 }
 
 export function packageDigest(manifestWithoutDigest, patches, legacyWebPatch) {
-  const targetOrder = manifestWithoutDigest.schema_version === 3 ? packageTargetsV3 : packageTargetsV2;
+  const targetOrder = manifestWithoutDigest.schema_version === 4
+    ? packageTargetsV4
+    : manifestWithoutDigest.schema_version === 3 ? packageTargetsV3 : packageTargetsV2;
   const patchMap = Buffer.isBuffer(patches)
     ? { developer: patches, "web-orchestration": legacyWebPatch }
     : patches;
@@ -237,8 +244,10 @@ export function validateChangePackage(directory, expectedTaskId, options = {}) {
       throw new Error("Package supersedes.revision must be a positive integer");
     }
   }
-  if (![1, 2, 3].includes(manifest.schema_version)) throw new Error("Unsupported package manifest schema_version");
-  const targets = manifest.schema_version === 3 ? packageTargetsV3 : packageTargetsV2;
+  if (![1, 2, 3, 4].includes(manifest.schema_version)) throw new Error("Unsupported package manifest schema_version");
+  const targets = manifest.schema_version === 4
+    ? packageTargetsV4
+    : manifest.schema_version === 3 ? packageTargetsV3 : packageTargetsV2;
   if (!manifest.ranges || typeof manifest.ranges !== "object" || Array.isArray(manifest.ranges)
     || Object.keys(manifest.ranges).sort().join("\0") !== [...targets].sort().join("\0")) {
     throw new Error("Package ranges do not match the manifest schema target inventory");
@@ -246,6 +255,7 @@ export function validateChangePackage(directory, expectedTaskId, options = {}) {
   const patches = Object.fromEntries(targets.map((target) => [target, validateRange(manifest.ranges?.[target], target, directory)]));
   const developerPatch = patches.developer;
   const webPatch = patches["web-orchestration"];
+  const orchestrationPatch = patches.orchestration;
 
   if (manifest.schema_version === 1) {
     canonicalRepositoryIdentity(manifest.canonical_repository);
@@ -254,10 +264,14 @@ export function validateChangePackage(directory, expectedTaskId, options = {}) {
   const canonical = canonicalRepositoryIdentity(manifest.canonical_repository);
   const provenance = manifest.provenance;
   if (!provenance || typeof provenance !== "object" || Array.isArray(provenance)) throw new Error("Package provenance is missing");
-  const expectedMode = manifest.schema_version === 3 ? "canonical-remote-fetch-v2" : "canonical-remote-fetch-v1";
+  const expectedMode = manifest.schema_version === 4
+    ? "canonical-remote-fetch-v3"
+    : manifest.schema_version === 3 ? "canonical-remote-fetch-v2" : "canonical-remote-fetch-v1";
   if (provenance.mode !== expectedMode) throw new Error("Package provenance mode is invalid");
   const lock = provenance.source_lock;
   const lockIdentity = validateSourceLock(lock);
+  if (manifest.schema_version === 4 && lock.schema_version !== 2) throw new Error("Schema 4 package requires source-lock schema 2");
+  if (manifest.schema_version < 4 && lock.schema_version !== 1) throw new Error("Historical package schema requires source-lock schema 1");
   if (lockIdentity.url !== canonical.url) throw new Error("Package source-lock canonical repository does not match manifest");
   if (provenance.source_lock_sha256 !== sourceLockDigest(lock)) throw new Error("Package source-lock digest is invalid");
   for (const field of ["canonical_tips", "head_relations"]) {
@@ -272,12 +286,13 @@ export function validateChangePackage(directory, expectedTaskId, options = {}) {
       throw new Error(`${target} reviewed-head relation is invalid`);
     }
   }
-  if (manifest.schema_version === 3) {
+  if ([3, 4].includes(manifest.schema_version)) {
     const files = readdirSync(resolve(directory)).sort();
     const expectedFiles = ["manifest.json", ...targets.map((target) => patchNames[target])].sort();
-    if (files.join("\0") !== expectedFiles.join("\0")) throw new Error("Schema 3 package file inventory is invalid");
-    if (options.strictPackageStorage !== false && manifest.ranges["template-development"].changed_paths.some(isPackageStoragePath)) {
-      throw new Error("template-development range must not contain package storage paths beneath changes/");
+    if (files.join("\0") !== expectedFiles.join("\0")) throw new Error(`Schema ${manifest.schema_version} package file inventory is invalid`);
+    const storageTarget = manifest.schema_version === 4 ? "workspace" : "template-development";
+    if (options.strictPackageStorage !== false && manifest.ranges[storageTarget].changed_paths.some(isPackageStoragePath)) {
+      throw new Error(`${storageTarget} range must not contain package storage paths beneath changes/`);
     }
   }
   if (!/^[0-9a-f]{64}$/.test(manifest.package_sha256 ?? "")) throw new Error("Package binding digest is invalid");
@@ -291,8 +306,10 @@ export function validateChangePackage(directory, expectedTaskId, options = {}) {
     provenanceVerified: true,
     patches,
     templateDevelopmentPatch: patches["template-development"],
+    workspacePatch: patches.workspace,
     developerPatch,
     webPatch,
+    orchestrationPatch,
     directory: resolve(directory),
   };
 }
@@ -388,8 +405,9 @@ export function validatePackageSupersessionChain(changesDir) {
       throw new Error(`Ambiguous package supersession for task ${taskId}: multiple active packages`);
     }
     const active = activeList[0];
-    if (active.manifest.schema_version === 3 && active.manifest.ranges["template-development"]?.changed_paths.some((p) => p.startsWith("changes/") && p !== "changes/README.md")) {
-      throw new Error(`Active package ${active.directoryName} template-development range contains package storage paths beneath changes/`);
+    const storageTarget = active.manifest.schema_version === 4 ? "workspace" : active.manifest.schema_version === 3 ? "template-development" : undefined;
+    if (storageTarget && active.manifest.ranges[storageTarget]?.changed_paths.some((p) => p.startsWith("changes/") && p !== "changes/README.md")) {
+      throw new Error(`Active package ${active.directoryName} ${storageTarget} range contains package storage paths beneath changes/`);
     }
     assertPackagePublicSafe(active);
     activePackages.set(taskId, active);

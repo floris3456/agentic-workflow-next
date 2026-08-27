@@ -130,8 +130,8 @@ async function synchronizationMarker(verified, branch) {
   const directory = await gitDirectory(verified.worktree);
   const name = branch === "developer"
     ? "agent-workflow-sync-failed"
-    : branch === "template-development"
-      ? "template-development-sync-failed"
+    : branch === "workspace"
+      ? "workspace-sync-failed"
       : "workspace-maintenance-sync-failed";
   return join(directory, name);
 }
