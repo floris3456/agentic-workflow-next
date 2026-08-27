@@ -1,68 +1,28 @@
-# Evolution to shared orchestration
+# Orchestration architecture
 
-## Status
+## Current state
 
-Design only. The current `web-orchestration` branch/package remains the active Web Orchestrator implementation. Do not rename/generalize it or claim a Local Orchestrator runtime until a later human-approved implementation task.
+`orchestration` contains two native runtime representations of one Orchestrator contract:
 
-## Goal
+- `web-orchestration-only/chatgpt-project/` is the ChatGPT Project/Web representation.
+- `.opencode/` is the Local OpenCode representation.
 
-Future `orchestration` should contain one Orchestrator instruction system with two installation variants: Web and Local. They should share the same role, authority, owner/route selection, task continuity, recovery, template-maintenance, promotion, and ordinary prompt-creation behavior.
+Two physical copies are intentional because ChatGPT Project Sources and OpenCode agents/skills require different layouts. There is no generated shared instruction layer.
 
-Do not create two orchestration architectures or a runtime capability router. The variant should change only behavior that genuinely differs.
+## Shared semantics
 
-## Shared core
+Both variants own research, prompt and prompt-package creation, task/outcome design, Developer-vs-Workspace ownership classification, route selection, orchestration, recovery, workspace backlog handling, promotion guarding, and independent final verification. Dual is the default substantive Developer route.
 
-The shared core should preserve the current validated Web architecture:
+Workspace Maintainer owns workspace-level structure whether reusable or project-specific. Developer owns actual project implementation/content.
 
-- Orchestrator owns research, task/outcome design, route selection, orchestration, and independent final verification.
-- Reusable template structure is Template Maintainer-owned in every worktree; actual project implementation/content is Developer-owned.
-- Dual is the default substantive Developer route; Small/Heavy are bounded shortcuts only.
-- Developer-discovered template concerns go to the Orchestrator backlog and require post-task human approval before Template Maintainer execution.
-- Lead remains the developer brain in Dual; the Orchestrator does not duplicate Lead/Spark internals.
-- Uncertain mutations are reconciled before retry and one mutating route remains active at a time.
-- Human exact-SHA authority remains required for `main`.
-- The five ordinary conditional Sources remain shared unless implementation proves a real procedural difference.
+## Runtime-specific behavior
 
-## The only intended variant differences
+Web uses native ChatGPT web research. Remote Desktop Commander is its indirect medium for local repository/OpenCode interaction; the underlying Developer and Workspace Maintainer runtimes remain OpenCode-owned.
 
-### Web
+Local uses the connected Tavily MCP for public web research. Local must never read or use `web-orchestration-only/`; that directory is the separate Web runtime representation and would create conflicting instruction context.
 
-Use the Web deployment's existing web-research capability for public web research. Web may create ordinary prompts and prompt packages when the installed Web capability/procedure supports them.
+Both variants may create ordinary prompts and prompt packages.
 
-### Local
+## Paired maintenance
 
-Use the connected Tavily MCP for public web research. Do not substitute another search route merely because one is available.
-
-Local may create ordinary ready-to-use prompts through the shared prompt-creation procedure, but it does not create prompt packages. Any prompt-package capability/procedure remains Web-only and should not be installed into the Local variant.
-
-Apart from those two differences, Local should inherit the same orchestration instructions and conditional Sources as Web. Do not invent Local-specific filesystem/process/Git behavior merely from the word “Local”; tool permissions/configuration may differ mechanically, but prose should diverge only when an actual required behavior differs.
-
-## Proposed package shape
-
-When implemented, prefer deterministic composition rather than duplicated files:
-
-```text
-orchestration-only/
-  shared/developer-instructions.md
-  variants/web.md
-  variants/local.md
-  sources/skill-workflow.md
-  sources/skill-recovery.md
-  sources/skill-template-maintenance.md
-  sources/skill-promotion.md
-  sources/skill-prompt-creation.md
-```
-
-Install shared permanent instructions plus exactly one tiny variant fragment and the shared Sources. If prompt packages need separate procedural content, keep that content Web-only rather than burdening the shared prompt Source with Local-only prohibitions.
-
-## Later implementation sequence
-
-1. Start from the then-current validated `web-orchestration` state; do not redesign Web and generalize simultaneously.
-2. Create the new `orchestration` branch/package without rewriting current branch history.
-3. Extract shared permanent instructions and shared Sources while proving the rendered Web variant preserves the accepted Web behavior.
-4. Add the Local variant with only the Tavily-search requirement and prompt-package prohibition.
-5. Validate each rendered variant mechanically: expected Source inventory, required variant fragment, public-safety/human authority, and absence of capabilities the variant must not expose. Do not validate exact prose.
-6. In a coordinated Template Maintainer task, update template source-lock/package references from the old Web branch/package identity to the new orchestration identity. Preserve historical package manifests/records unchanged.
-7. Move installed consumers to the new package, verify both variants, then retire the old Web-only name only when no active consumer depends on it.
-
-The implementation should not add a runtime selector, generalized capability registry, or separate Web/Local workflow copies. If a future real tool difference requires a procedural split, add the smallest variant-specific instruction at that time.
+Workspace Maintainer treats corresponding Web Project Sources and Local OpenCode skills as paired representations. Shared orchestration behavior changes update both when appropriate; tool/runtime-specific behavior remains only on the applicable side. Validators prove inventory, configuration, safety and runtime wiring rather than prose equality.

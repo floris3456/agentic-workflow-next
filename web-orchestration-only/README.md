@@ -30,7 +30,7 @@ installation material for the web orchestrator.
 - `ORCHESTRATION-EVOLUTION.md`: non-runtime design for the later shared Web/Local Orchestrator package; the current Web runtime remains unchanged until that migration is explicitly implemented.
 - `validate-package.mjs` and `validate-package.test.mjs`: structural package,
   task-template, public-safety, and CI-posture checks.
-- `.github/workflows/validate-web-orchestration.yml`: ordinary push validation
+- `.github/workflows/validate-orchestration.yml`: ordinary push validation
   with exact-SHA status reporting.
 
 Anything persisted here is public disclosure. Never store secrets, credentials,
@@ -44,6 +44,6 @@ node web-orchestration-only/validate-package.mjs
 node --test
 ```
 
-Every push to `web-orchestration` runs the same validator and discovery-mode Node
+Every push to `orchestration` runs the same validator and discovery-mode Node
 tests. The workflow has read-only repository access, does not persist checkout
 credentials, and publishes its result against the exact pushed SHA.

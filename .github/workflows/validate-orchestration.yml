@@ -1,8 +1,8 @@
-name: Validate web orchestration
+name: Validate orchestration
 
 on:
   push:
-    branches: [web-orchestration]
+    branches: [orchestration]
 
 permissions:
   contents: read
@@ -22,7 +22,7 @@ jobs:
         with:
           node-version: 22.13.0
       - name: Run orchestration package validator
-        run: node web-orchestration-only/validate-package.mjs
+        run: node validate-orchestration.mjs
       - name: Run Node tests
         run: node --test
       - name: Publish exact-SHA validation status
@@ -30,7 +30,7 @@ jobs:
         env:
           GH_STATUS_TOKEN: ${{ github.token }}
           VALIDATION_JOB_STATUS: ${{ job.status }}
-          STATUS_CONTEXT: agentic-template/validate-web-orchestration
+          STATUS_CONTEXT: agentic-template/validate-orchestration
           RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
         shell: bash
         run: |
@@ -43,7 +43,7 @@ jobs:
           payload="$(jq -cn \
             --arg state "${state}" \
             --arg target_url "${RUN_URL}" \
-            --arg description "Canonical web validation: ${state}" \
+            --arg description "Canonical orchestration validation: ${state}" \
             --arg context "${STATUS_CONTEXT}" \
             '{state:$state,target_url:$target_url,description:$description,context:$context}')"
           curl --fail-with-body --silent --show-error \

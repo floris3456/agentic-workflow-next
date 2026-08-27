@@ -31,12 +31,12 @@ position, observations, failed attempts or route changes, blockers and decisions
 checks already run, remaining work, and one next action. Do not duplicate the
 task plan, dump commands or private reasoning, or silently change scope.
 
-Explicit reusable-template maintenance uses its canonical accepted task record on
-`template-development`; do not create a competing ordinary record here.
+Explicit reusable-workspace maintenance uses its canonical accepted task record on
+`workspace`; do not create a competing ordinary record here.
 
 Historical records remain truthful history. They may retain old schemas, routing,
 bridge, mode, finalization, or other retired terminology. Do not rewrite them
 merely to match the current workflow. The validator accepts them as historical
 public-safe Markdown rather than imposing the current template retroactively.
 
-`template-maintenance-backlog.md` is separate pending-decision continuity for reusable-template concerns discovered during project work. It is evidence, not execution authority. After the current project task, Web presents pending items to the human; approved items transfer into the canonical `template-development` task record, while rejected items may remain only long enough to preserve the decision clearly.
+`workspace-backlog.md` is separate pending-decision continuity for workspace-level concerns discovered during project work. It is evidence, not execution authority. After the current project task, Web presents pending items to the human; approved items transfer into the canonical `workspace` task record, while rejected items may remain only long enough to preserve the decision clearly.

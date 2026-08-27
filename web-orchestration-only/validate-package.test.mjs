@@ -55,15 +55,15 @@ test("canonical package validates with simplified architecture checks", () => {
 });
 
 test("canonical push CI is read-only except exact-SHA status reporting", () => {
-  const workflow = fs.readFileSync(path.join(root, "..", ".github", "workflows", "validate-web-orchestration.yml"), "utf8");
-  assert.match(workflow, /push:\s*\n\s+branches:\s*\[web-orchestration\]/);
+  const workflow = fs.readFileSync(path.join(root, "..", ".github", "workflows", "validate-orchestration.yml"), "utf8");
+  assert.match(workflow, /push:\s*\n\s+branches:\s*\[orchestration\]/);
   assert.match(workflow, /permissions:\s*\n\s+contents:\s+read\s*\n\s+statuses:\s+write/);
   assert.match(workflow, /persist-credentials:\s*false/);
-  assert.match(workflow, /run:\s+node web-orchestration-only\/validate-package\.mjs/);
+  assert.match(workflow, /run:\s+node validate-orchestration\.mjs/);
   assert.match(workflow, /run:\s+node --test\s*(?:\n|$)/);
   assert.match(workflow, /Publish exact-SHA validation status/);
   assert.match(workflow, /always\(\) && github\.event_name == 'push'/);
-  assert.match(workflow, /agentic-template\/validate-web-orchestration/);
+  assert.match(workflow, /agentic-template\/validate-orchestration/);
   assert.match(workflow, /statuses\/\$\{GITHUB_SHA\}/);
   assert.match(workflow, /Authorization: Bearer \$\{GH_STATUS_TOKEN\}/);
   assert.match(workflow, /actions\/runs\/\$\{\{ github\.run_id \}\}/);
@@ -131,7 +131,7 @@ test("rejects invalid task-context entries", () => {
 
 test("rejects a missing routed Source and an unknown routed Source", () => {
   expectFailure((target) => {
-    replace(target, "chatgpt-project/developer-instructions.md", "| Human asks for a ready-to-use prompt for another execution context | `skill-prompt-creation.md` |\n", "");
+    replace(target, "chatgpt-project/developer-instructions.md", "| Human asks for a ready-to-use prompt or prompt package for another execution context | `skill-prompt-creation.md` |\n", "");
   }, /exactly one trigger row/);
   expectFailure((target) => {
     replace(target, "chatgpt-project/developer-instructions.md", "`skill-prompt-creation.md`", "`skill-unknown.md`");

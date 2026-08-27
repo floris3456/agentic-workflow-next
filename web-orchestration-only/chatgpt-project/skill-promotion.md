@@ -24,6 +24,6 @@ After promotion, independently re-read remote `main` and `developer` and verify
 the refs, ancestry/parents, and exact tree relationship required by the guarded
 procedure. Report ambiguity instead of claiming success.
 
-Never merge `web-orchestration` or `template-development` history into `main`.
+Never merge `orchestration` or `workspace` history into `main`.
 If the guarded capability is unavailable, preserve the approved SHA and surface
 the operator boundary rather than substituting another merge path.

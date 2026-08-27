@@ -2,7 +2,7 @@
 
 ## Trigger
 
-Use when the human asks for a ready-to-use prompt for a different execution
+Use when the human asks for a ready-to-use prompt or prompt package for a different execution
 context. Do not manufacture a handoff when the current context should simply do
 the work itself.
 
@@ -27,9 +27,9 @@ observable evidence, concise rationale, checks, or uncertainty when useful;
 never ask for private chain-of-thought or hidden scratch work.
 
 ## Destination
-### Fresh web orchestrator
+### Fresh Web Orchestrator
 
-A fresh web-orchestration Project already owns its permanent rules and routed
+A fresh Web Orchestrator Project already owns its permanent rules and routed
 Sources. Do not copy them. Transfer only task-specific state: repository/project
 identity when needed, requested outcome, exact useful refs/paths/artifacts,
 material evidence and interpretations, constraints, unknowns, dependencies, and
@@ -93,17 +93,17 @@ active/uncertain, pending publication or interaction, blockers/human decisions,
 material failed attempts or changed approach, and the safest next read/action.
 Do not dump conversation history or turn missing state into invented completion.
 
-### Template-maintenance transfer
+### Workspace-maintenance transfer
 
-For upstream transfer, carry the observable project symptom/need, exact useful
-evidence/refs, reusable outcome, and project-specific constraints separated from
-proposed template-wide requirements. Ask the template context to verify the
-canonical problem rather than blindly copying a project patch.
+For workspace transfer, carry the observable project/workspace symptom, exact useful
+evidence/refs, requested workspace outcome, and whether reuse across projects is established or merely proposed. Ask Workspace Maintainer to verify the problem rather than blindly copying a project patch.
 
-For downstream transfer from a reviewed canonical package, identify the package,
-exact canonical source refs, target project/branches, and known adaptation risk.
-Patch conflict is an adaptation decision, not permission to silently alter the
-canonical package.
+For transfer from a reviewed canonical package, identify the package, exact canonical source refs, target project/branches, and known adaptation risk. Patch conflict is an adaptation decision, not permission to silently alter the reviewed package.
+
+
+### Prompt package
+
+When the human asks for a prompt package, provide the ready-to-use prompt plus only the bounded supporting context/artifacts the receiver actually needs. The package follows the same Observed / Interpretation / Requested outcome rules and must not become a conversation dump or a copy of receiver-owned workflow.
 
 ## Prompt craft
 

@@ -12,7 +12,7 @@ const texts = new Map();
 const skills = [
   "skill-workflow.md",
   "skill-recovery.md",
-  "skill-template-maintenance.md",
+  "skill-workspace.md",
   "skill-promotion.md",
   "skill-prompt-creation.md",
 ];

@@ -7,7 +7,7 @@ layer for `<owner>/<repository>` at
 
 ## Install
 
-1. Validate one exact untouched `web-orchestration` revision with
+1. Validate one exact untouched `orchestration` revision with
    `node web-orchestration-only/validate-package.mjs`.
 2. Render that revision in an external untracked staging directory. Replace
    `<owner>/<repository>` and `https://github.com/<owner>/<repository>` with the
@@ -20,7 +20,7 @@ layer for `<owner>/<repository>` at
 
    - `skill-workflow.md`
    - `skill-recovery.md`
-   - `skill-template-maintenance.md`
+   - `skill-workspace.md`
    - `skill-promotion.md`
    - `skill-prompt-creation.md`
 5. Configure narrowly scoped capabilities useful to the deployment: exact
@@ -44,8 +44,8 @@ commit private conversations, credentials, connector or host configuration,
 personal data, host-local absolute paths, or Project-specific private context.
 
 Ordinary durable task authority and optional progress belong under the sibling
-`task-context/` directory when useful. Explicit reusable-template maintenance
-uses the canonical accepted task record on `template-development`. All persisted
+`task-context/` directory when useful. Explicit reusable-workspace maintenance
+uses the canonical accepted task record on `workspace`. All persisted
 content must remain public-safe.
 
 Implementation branches do not depend on this branch for source or implemented
