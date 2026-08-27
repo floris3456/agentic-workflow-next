@@ -25,7 +25,7 @@ Dual is the default substantive local route. `lead-developer` is the developer b
 
 ## Template boundary
 
-Reusable template structure in this worktree—OpenCode config/instructions, agent/skill architecture, template tooling, and template-owned file/document layout—is maintained by Template Maintainer rather than Developer. If project work exposes a reusable template concern, Developer reports it to the current Orchestrator instead of changing template structure inside the project task. Project implementation and filling project documentation with current project facts remain Developer-owned.
+Workspace-level structure in this worktree—reusable or project-specific OpenCode config/instructions, agent/skill architecture, orchestration instructions, workspace tooling/architecture, and workspace-owned file/document layout—is maintained by Workspace Maintainer rather than Developer. If project work exposes a workspace concern, Developer reports it to the current Orchestrator instead of changing workspace-owned structure inside the project task. Project implementation and project documentation content remain Developer-owned.
 ## Research boundary
 
 Research creation, prompts, packages, review, and synthesis are web-orchestrator responsibilities. The developer branch may contain durable research evidence and may consume research conclusions supplied by accepted work, but it exposes no developer research workflow skill.

@@ -17,6 +17,6 @@
 └── research/                     durable research evidence/artifact structure
 ```
 
-`web-orchestration` is a separate branch, not a directory in this worktree. Research production is owned by the web orchestrator; the `research/` tree here is an evidence/artifact location rather than a developer OpenCode workflow.
+`orchestration` is a separate branch, not a directory in this worktree. Research production is Orchestrator-owned; the `research/` tree here is an evidence/artifact location rather than a Developer workflow. `workspace` is the separate Workspace Maintainer branch for workspace-level structure and maintenance machinery.
 
 Active local developer roles are `.opencode/agents/{lead-developer,spark-implementer,small-developer,heavy-developer}.md`. Conditional procedures are under `.opencode/skills/` and should not be duplicated into `AGENTS.md` or agent bodies unless a short trigger/default is role-critical.

@@ -2,12 +2,12 @@
 
 ## Current implementation
 
-Native OpenCode on the authorized host is the local implementation runtime. Web owns orchestration, research, route selection, and independent final outcome verification. `developer` is the implementation branch; `main` changes only through explicit human-approved exact-SHA promotion. No bridge, replacement RPC/control plane, compaction recovery platform, or mandatory package/handoff lifecycle is active.
+Native OpenCode on the authorized host is the local implementation runtime. The current Orchestrator (Web or Local) owns orchestration, research, route selection, and independent final outcome verification. `developer` is the implementation branch; `main` changes only through explicit human-approved exact-SHA promotion. No bridge, replacement RPC/control plane, compaction recovery platform, or mandatory package/handoff lifecycle is active.
 
 ## Instruction and configuration layers
 
 - `opencode.json` selects `lead-developer`, disables sharing, denies global task launches, keeps external-directory access approval-gated, and disables automatic compaction/pruning.
-- `AGENTS.md` is intentionally tiny ambient context: universal public-safety, exact-SHA `main`, mutation reconciliation, durable-truth precedence, the reusable-template ownership boundary, and mandatory triggers for `implementation-truth`/`git-safety`.
+- `AGENTS.md` is intentionally tiny ambient context: universal public-safety, exact-SHA `main`, mutation reconciliation, durable-truth precedence, the Workspace Maintainer ownership boundary, and mandatory triggers for `implementation-truth`/`git-safety`.
 - `.opencode/agents/*.md` keeps executable frontmatter plus role-specific system instructions. Global repository policy is not repeated in each role body.
 - `.opencode/skills/*/SKILL.md` holds conditional procedure. Current developer skills are `implementation-truth`, `git-safety`, and `agent-memory`; the retired bridge/workflow-era skill set remains absent.
 - `docs/architecture/agent-system.md` explains this layering; documentation is not a second ambient instruction manual.
@@ -21,7 +21,7 @@ Native OpenCode on the authorized host is the local implementation runtime. Web 
 
 Dual is the default substantive developer route. Small and Heavy are independent bounded shortcuts selected only when Dual would be unnecessary overhead; they are not Spark replacements inside Dual.
 
-Reusable template structure in the developer worktree is Template Maintainer-owned even though Developer consumes that structure at runtime. Developer roles report reusable template concerns to the Orchestrator rather than changing template-owned config/instructions/architecture/layout during project implementation; actual project implementation and current project documentation content remain Developer-owned.
+Workspace-level structure in the developer worktree is Workspace Maintainer-owned even though Developer consumes that structure at runtime. This includes reusable or project-specific OpenCode configuration/instructions, agent/skill architecture, orchestration instructions, workspace tooling/architecture and workspace-owned layout. Developer roles report discovered workspace concerns to the Orchestrator rather than changing that structure during project implementation; actual project implementation and current project documentation content remain Developer-owned.
 
 ## Conditional skills
 
@@ -53,7 +53,7 @@ Reusable template structure in the developer worktree is Template Maintainer-own
 
 ## Research and records
 
-Research creation, prompt/package preparation, review, and synthesis are owned by the web orchestrator. `research/` remains a durable public-safe evidence/artifact structure with its own validator; developer OpenCode exposes no research workflow skill. Local developers may consume research evidence/conclusions supplied by accepted work but do not own research production.
+Research creation, prompt/package preparation, review, and synthesis are owned by the current Orchestrator (Web or Local). `research/` remains a durable public-safe evidence/artifact structure with its own validator; developer OpenCode exposes no research workflow skill. Local developers may consume research evidence/conclusions supplied by accepted work but do not own research production.
 
 Consequential work may use a stable canonical task record plus optional concise task-progress for resumption. AS-BUILT describes current implementation reality; deviations describe material implemented divergence from an applicable accepted expectation. Material Spark departures from Lead design are surfaced to Lead before implementation; no mandatory special proposal-file ceremony is active.
 
@@ -63,4 +63,5 @@ Deterministic transfer/release package generation remains available only when ex
 
 - `developer`: active implementation.
 - `main`: exact human-approved implementation only.
-- `web-orchestration`: separate retained orchestration branch; it is not a path in the developer tree and has no developer OpenCode configuration.
+- `orchestration`: separate paired Web/Local Orchestrator branch; it is not a path in the developer tree.
+- `workspace`: separate Workspace Maintainer/runtime branch for workspace-level structure, source lock and conditional package machinery.

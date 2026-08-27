@@ -1,6 +1,6 @@
 # Agentic workflow template
 
-This repository is a reusable template for human-controlled, web-orchestrated software development with direct local implementation as the default.
+This repository is a reusable template for human-controlled, Orchestrator-led software development with direct local implementation as the default.
 
 ## Start here
 
@@ -10,11 +10,12 @@ This repository is a reusable template for human-controlled, web-orchestrated so
 4. Read [`docs/work/README.md`](docs/work/README.md) before starting work.
 5. Use [`docs/architecture/repository-layout.md`](docs/architecture/repository-layout.md) for file placement.
 
-## Three-branch model
+## Branch model
 
 - `developer` is the active implementation branch.
 - `main` is exact human-approved implementation via `./scripts/promote-developer-to-main.sh`.
-- `web-orchestration` is an independent branch for project installation/context continuity.
+- `orchestration` contains the paired Web and Local Orchestrator runtime representations.
+- `workspace` contains the Workspace Maintainer runtime, workspace-level architecture, source lock, and conditional transfer-package machinery.
 
 Dual (`lead-developer` + `spark-implementer`) is the default substantive route for non-trivial local implementation. `small-developer` and `heavy-developer` are direct bounded alternatives when Dual is unnecessary.
 
